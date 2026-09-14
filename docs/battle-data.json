@@ -1,0 +1,211 @@
+{
+  "_comment": "End-Distopirism 전투 데이터. SPEC-001 §12.8 확정치. 프리팹 직렬화를 대체한다",
+  "_version": "1.0.0",
+  "_updated": "2026-09-14",
+
+  "rules": {
+    "coinBaseProbability": 0.6,
+    "mentalityMax": 100,
+    "mentalityOnClashWin": 2,
+    "mentalityOnDeadlock": -10,
+    "mentalityRegenPerTurn": 4,
+    "mentalityRegenCap": 30,
+    "confusionThreshold": 20,
+    "confusionPenalty": 20,
+    "levelDiffStep": 4,
+    "deadlockLimit": 3
+  },
+
+  "characters": [
+    {
+      "id": "helper",
+      "name": "조력자",
+      "maxHp": 400,
+      "atkLevel": 32,
+      "defLevel": 12,
+      "maxCoin": 3,
+      "mentality": 100,
+      "role": "탱커"
+    },
+    {
+      "id": "main",
+      "name": "메인 캐릭터",
+      "maxHp": 320,
+      "atkLevel": 29,
+      "defLevel": 5,
+      "maxCoin": 5,
+      "mentality": 100,
+      "role": "표준"
+    },
+    {
+      "id": "police",
+      "name": "지하 경찰",
+      "maxHp": 230,
+      "atkLevel": 35,
+      "defLevel": 5,
+      "maxCoin": 2,
+      "mentality": 100,
+      "role": "글래스캐논"
+    }
+  ],
+
+  "skills": [
+    {
+      "id": 1001,
+      "name": "마무리",
+      "baseDamage": 9,
+      "coinPower": 2,
+      "archetype": "표준",
+      "maxInDeck": 3,
+      "effect": {
+        "timing": "onDamage",
+        "onWin": { "type": "execute", "hpThresholdPercent": 1 },
+        "onLose": { "type": "mentality", "percentOfCurrent": -5 }
+      },
+      "text": "합 승리 시 상대 체력이 1% 미만이면 즉시 처형. 합 패배 시 내 정신력 5% 감소"
+    },
+    {
+      "id": 1002,
+      "name": "무모한 일격",
+      "baseDamage": 6,
+      "coinPower": 1,
+      "archetype": "안정",
+      "maxInDeck": 3,
+      "effect": {
+        "timing": "beforeDamage",
+        "onWin": { "type": "selfHpCost", "amount": 10, "thenBonusDamage": "successCount*2" }
+      },
+      "text": "합 승리 시 내 체력 10 감소 후 성공 코인 수 × 2 추가 피해"
+    },
+    {
+      "id": 1003,
+      "name": "연속 찌르기",
+      "baseDamage": 7,
+      "coinPower": 1,
+      "archetype": "안정",
+      "maxInDeck": 3,
+      "effect": {
+        "timing": "onClashEnd",
+        "onWin": { "type": "applyStatus", "target": "opponent", "status": "bleed", "turns": 3 },
+        "onLose": { "type": "applyStatus", "target": "self", "status": "confusion", "turns": 1 }
+      },
+      "text": "합 승리 시 상대에게 출혈. 합 패배 시 나에게 혼란"
+    },
+    {
+      "id": 1004,
+      "name": "강력한 한 방",
+      "baseDamage": 8,
+      "coinPower": 3,
+      "archetype": "도박",
+      "maxInDeck": 3,
+      "effect": {
+        "timing": "beforeDamageCalc",
+        "onWin": { "type": "damageModifier", "target": "self", "amount": 8 },
+        "onLose": { "type": "damageModifier", "target": "opponent", "amount": 12 }
+      },
+      "text": "합 승리 시 내 피해 +8. 합 패배 시 상대 피해 +12"
+    },
+    {
+      "id": 1005,
+      "name": "독 바르기",
+      "baseDamage": 9,
+      "coinPower": 1,
+      "archetype": "안정",
+      "maxInDeck": 3,
+      "effect": {
+        "timing": "onClashEnd",
+        "onWin": { "type": "applyStatus", "target": "opponent", "status": "poison", "turns": 3 }
+      },
+      "text": "합 승리 시 상대에게 3턴 독"
+    },
+    {
+      "id": 1006,
+      "name": "방어 태세",
+      "baseDamage": 0,
+      "coinPower": 0,
+      "archetype": "유틸",
+      "maxInDeck": 1,
+      "effect": {
+        "timing": "onTakeDamage",
+        "onLose": { "type": "nullifyDamage" }
+      },
+      "text": "합에서 패배해도 피해를 받지 않는다. 덱에 1장만 넣을 수 있다"
+    },
+    {
+      "id": 1007,
+      "name": "사기 진작",
+      "baseDamage": 5,
+      "coinPower": 1,
+      "archetype": "표준",
+      "maxInDeck": 3,
+      "effect": {
+        "timing": "onClashEnd",
+        "onWin": { "type": "nextTurnCoin", "target": "allies", "amount": 1 },
+        "onLose": { "type": "nextTurnCoin", "target": "allies", "amount": -2 }
+      },
+      "text": "합 승리 시 아군 다음 턴 코인 +1. 합 패배 시 아군 다음 턴 코인 -2"
+    },
+    {
+      "id": 1008,
+      "name": "파열",
+      "baseDamage": 6,
+      "coinPower": 2,
+      "archetype": "표준",
+      "maxInDeck": 3,
+      "effect": {
+        "timing": "onClashEnd",
+        "onWin": { "type": "applyStatus", "target": "opponent", "status": "defenseDown", "turns": 1 },
+        "onLose": { "type": "applyStatus", "target": "self", "status": "bleed", "turns": 2 }
+      },
+      "text": "합 승리 시 상대에게 방어력 감소. 합 패배 시 나에게 2턴 출혈"
+    },
+    {
+      "id": 1009,
+      "name": "화염 공격",
+      "baseDamage": 9,
+      "coinPower": 2,
+      "archetype": "표준",
+      "maxInDeck": 3,
+      "effect": {
+        "timing": "onCoinSuccess+onDamageCalc",
+        "always": { "type": "atkBonusPerCoin", "amount": 2, "thenBonusDamage": "successCount*2" }
+      },
+      "text": "코인 성공 시 공격력 +2. 피해를 입힐 때 성공 코인 수 × 2 추가"
+    }
+  ],
+
+  "statusEffects": [
+    {
+      "id": "bleed",
+      "name": "출혈",
+      "timing": "onClashStart",
+      "effect": { "hpPercentDamage": 1, "of": "maxHp" },
+      "defaultTurns": 3,
+      "stackable": true
+    },
+    {
+      "id": "confusion",
+      "name": "혼란",
+      "timing": "onCoinRoll",
+      "effect": { "mentalityModifier": -20 },
+      "defaultTurns": 1,
+      "stackable": false
+    },
+    {
+      "id": "poison",
+      "name": "독",
+      "timing": "onDamageCalc",
+      "effect": { "incomingDamagePercent": 5, "outgoingDamagePercent": -10 },
+      "defaultTurns": 3,
+      "stackable": false
+    },
+    {
+      "id": "defenseDown",
+      "name": "방어력 감소",
+      "timing": "onDamageCalc",
+      "effect": { "defenseMultiplier": 0.5 },
+      "defaultTurns": 1,
+      "stackable": false
+    }
+  ]
+}
