@@ -1,0 +1,201 @@
+#==============================================
+# End-Distopirism2 .gitignore
+# 유니티(원본) + 웹 포팅(Node/TS) 양쪽을 함께 관리하는 리포지토리용
+#==============================================
+
+
+#----------------------------------------------
+# Unity - 에디터가 자동 생성하는 폴더 (커밋 금지)
+#----------------------------------------------
+#임포트 캐시, 재생성 가능하며 용량이 매우 큼
+/[Ll]ibrary/
+#임시 파일 저장소
+/[Tt]emp/
+#에디터 작업 캐시
+/[Oo]bj/
+#빌드 산출물
+/[Bb]uild/
+/[Bb]uilds/
+#패키지 로컬 캐시
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+
+#하위 경로에 유니티 프로젝트가 있는 경우도 동일하게 제외
+**/[Ll]ibrary/
+**/[Tt]emp/
+**/[Oo]bj/
+**/[Bb]uild/
+**/[Bb]uilds/
+**/[Ll]ogs/
+**/[Uu]ser[Ss]ettings/
+**/[Mm]emoryCaptures/
+
+#Unity 3D 애셋 스토어 자동 생성 폴더
+/[Aa]ssets/AssetStoreTools*
+/[Aa]ssets/[Ss]treamingAssets/aa.meta
+/[Aa]ssets/[Ss]treamingAssets/aa/*
+
+
+#----------------------------------------------
+# Unity - IDE / 솔루션 파일 (사람마다 달라 충돌 유발)
+#----------------------------------------------
+ExportedObj/
+.consulo/
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+
+#Rider
+.idea/
+#Visual Studio
+.vs/
+#VSCode - 팀 공용 설정만 남기고 개인 설정은 제외
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+
+#----------------------------------------------
+# Unity - 빌드/크래시 산출물
+#----------------------------------------------
+*.apk
+*.aab
+*.unitypackage
+*.unitypackage.meta
+*.app
+crashlytics-build.properties
+/[Aa]ssets/[Pp]lugins/[Ee]ditor/JetBrains*
+sysinfo.txt
+
+#Addressable 빌드 캐시
+/[Aa]ssets/AddressableAssetsData/*/*.bin*
+/[Ss]erver[Dd]ata/
+
+
+#----------------------------------------------
+# Unity - meta 파일 규칙
+#----------------------------------------------
+#무시된 폴더의 meta 파일까지 따라서 무시 (고아 meta 방지)
+/[Ll]ibrary/**/*.meta
+/[Tt]emp/**/*.meta
+#주의: Assets 아래의 .meta 는 반드시 커밋해야 함 (GUID 유실 시 참조 전부 끊김)
+
+
+#----------------------------------------------
+# 웹 포팅 - Node / 패키지
+#----------------------------------------------
+node_modules/
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+
+#패키지 매니저 로그
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+
+#----------------------------------------------
+# 웹 포팅 - 빌드 산출물 / 캐시
+#----------------------------------------------
+dist/
+dist-ssr/
+build/
+out/
+.output/
+.vercel/
+.netlify/
+
+#번들러 캐시
+.vite/
+.cache/
+.parcel-cache/
+.turbo/
+.swc/
+.rollup.cache/
+
+#TypeScript 증분 빌드 정보
+*.tsbuildinfo
+
+#테스트 커버리지
+coverage/
+.nyc_output/
+#Playwright / Vitest 산출물
+/playwright-report/
+/test-results/
+/blob-report/
+.playwright/
+
+
+#----------------------------------------------
+# 환경 변수 - 키 유출 방지
+#----------------------------------------------
+.env
+.env.*
+#예시 파일은 커밋해서 팀이 필요한 키 목록을 알 수 있게 함
+!.env.example
+
+
+#----------------------------------------------
+# OS / 에디터 잡파일
+#----------------------------------------------
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+*~
+*.swp
+*.swo
+
+
+#----------------------------------------------
+# 대용량 원본 자료 - 필요 시 주석 해제
+#----------------------------------------------
+#아래는 원본 리포(647MB)를 불린 항목들. 웹 포팅 리포에는 가공된 에셋만 두고
+#원본은 별도 보관하는 것을 권장. 함께 관리해야 하면 Git LFS 사용을 검토할 것.
+#/2024_발표 자료/
+#/2024_도록_자료/
+#/Art Team Resource/
+#/굿즈 시안/
+
+#포토샵/클립스튜디오 등 편집 원본 (스프라이트 export 결과만 커밋)
+*.psd
+*.psb
+*.clip
+*.sai
+*.sai2
+*.ai
+#단, 유니티에서 직접 참조 중인 psd 가 있다면 위 두 줄을 지울 것
+
+
+#----------------------------------------------
+# 기타
+#----------------------------------------------
+#작업용 임시 산출물
+/scratch/
+/tmp/
+*.log
