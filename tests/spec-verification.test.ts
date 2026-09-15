@@ -114,6 +114,30 @@ describe('§11-3 동점은 교착으로 처리된다', () => {
     expect(attacker.hp).toBe(attacker.base.maxHp);
     expect(defender.hp).toBe(defender.base.maxHp);
   });
+
+  it('G-5 교착으로 끝나면 합 종료 효과가 양쪽 다 발동하지 않는다', () => {
+    //같은 카드를 들려 보내면 피해가 같아져 교착이 된다
+    function runWith(skillId: number) {
+      const attacker = makeCombatant('a', 'main', 'ally', [skillId]);
+      const defender = makeCombatant('b', 'main', 'enemy', [skillId]);
+      const resolver = makeResolver(alwaysFailRng, [attacker, defender]);
+      const events = resolver.resolve(attacker, skillId, defender, skillId);
+      return { attacker, defender, events };
+    }
+
+    //사기 진작 — 승리 시 아군 코인 +1, 패배 시 -2. 둘 다 나오면 안 된다
+    const morale = runWith(1007);
+    expect(morale.events.some((e) => e.type === 'deadlockLimit')).toBe(true);
+    expect(morale.attacker.nextTurnCoinModifier).toBe(0);
+    expect(morale.defender.nextTurnCoinModifier).toBe(0);
+
+    //파열 — 승리 시 상대 방어력감소, 패배 시 나에게 출혈. 상태이상이 하나도 붙으면 안 된다
+    const rupture = runWith(1008);
+    expect(rupture.events.some((e) => e.type === 'deadlockLimit')).toBe(true);
+    expect(rupture.events.some((e) => e.type === 'statusApplied')).toBe(false);
+    expect(rupture.attacker.statuses).toHaveLength(0);
+    expect(rupture.defender.statuses).toHaveLength(0);
+  });
 });
 
 describe('§11-4 상태이상 4종이 명시된 타이밍에 발동한다', () => {

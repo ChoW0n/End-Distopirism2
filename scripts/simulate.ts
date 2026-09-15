@@ -9,6 +9,7 @@ import { dirname, resolve } from 'node:path';
 import { Battle, type BattleOrder } from '../src/domain/battle.js';
 import { WeightedEnemyAi, type EnemyAiContext } from '../src/domain/ai.js';
 import { ClashResolver } from '../src/domain/clash.js';
+import { CameraDirector, type CameraCommand } from '../src/camera/director.js';
 import { createSeededRng } from '../src/domain/rng.js';
 import { loadBattleCatalog } from '../src/platform/node-data.js';
 import type { BattleCatalog } from '../src/domain/data.js';
@@ -253,6 +254,8 @@ function runBattle(catalog: BattleCatalog, seed: number, verbose: boolean): RunR
 
   const labels = makeLabels(battle);
   const logger = verbose ? new BattleLogger(catalog, battle, labels) : null;
+  //카메라 감독은 전투당 하나. 도메인이 낸 이벤트를 로거와 같이 나눠 본다
+  const director = verbose ? new CameraDirector() : null;
 
   let turns = 0;
   while (!battle.isFinished && turns < MAX_TURNS) {
@@ -272,6 +275,8 @@ function runBattle(catalog: BattleCatalog, seed: number, verbose: boolean): RunR
     //전투 진행을 먼저 시키고 로그를 넘긴다. 로거가 없을 때 호출이 통째로 생략되면 안 된다
     const resolveEvents = battle.resolve();
     logger?.consume(resolveEvents);
+    //같은 이벤트 배열을 그대로 넘긴다. 카메라용으로 따로 만들지 않는다
+    if (director) printCameraCommands(turns, director.consume(resolveEvents), labels);
     if (battle.isFinished) break;
 
     const endEvents = battle.endTurn();
@@ -288,6 +293,28 @@ function runBattle(catalog: BattleCatalog, seed: number, verbose: boolean): RunR
     }));
 
   return { winner: battle.winner, turns, survivors };
+}
+
+//카메라 명령을 한 줄씩 찍는다. 이 턴의 교전 로그 바로 뒤에 붙는다
+function printCameraCommands(
+  turn: number,
+  commands: readonly CameraCommand[],
+  labels: Map<string, string>,
+): void {
+  const name = (id: string): string => labels.get(id) ?? id;
+
+  for (const command of commands) {
+    if (command.type === 'focus') {
+      const [first, second] = command.subjectIds;
+      console.log(`[턴${turn}] [카메라] focus → ${name(first)} vs ${name(second)} (zoom ${command.zoom})`);
+      continue;
+    }
+    if (command.type === 'shake') {
+      console.log(`[턴${turn}] [카메라] shake (강도 ${command.intensity.toFixed(2)})`);
+      continue;
+    }
+    console.log(`[턴${turn}] [카메라] idle`);
+  }
 }
 
 //아군의 타겟과 카드를 적 AI 로직 그대로 고른다
