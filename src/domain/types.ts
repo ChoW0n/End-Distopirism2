@@ -145,9 +145,21 @@ export interface StatusEffectData {
   stackable: boolean;
 }
 
+//적 AI 가중치 수치. SPEC §13.4
+export interface EnemyAiRules {
+  hpDangerRatio: number;
+  hpDangerDefensiveBonus: number;
+  mentalityDangerThreshold: number;
+  mentalityDangerArchetypeWeight: Record<SkillArchetype, number>;
+  threatRatio: number;
+  threatDefensiveBonus: number;
+  redundantStatusPenalty: number;
+}
+
 //battle-data.json 전체
 export interface BattleData {
   rules: BattleRules;
+  enemyAi: EnemyAiRules;
   characters: CharacterData[];
   skills: SkillData[];
   statusEffects: StatusEffectData[];

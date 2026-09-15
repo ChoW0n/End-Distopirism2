@@ -2,7 +2,7 @@
 //원본 BattleManager 가 상태·연출·UI·입력을 다 들고 있었던 게 재설계 실패의 원인이라
 //여기서는 상태 전이와 규칙 적용만 하고 결과는 이벤트로만 내보낸다
 
-import { RandomEnemyAi, type EnemyAi } from './ai.js';
+import { WeightedEnemyAi, type EnemyAi, type EnemyAiContext } from './ai.js';
 import { ClashResolver, type ClashContext } from './clash.js';
 import { Combatant, type CombatantInit } from './combatant.js';
 import { BattleCatalog, BattleDataError } from './data.js';
@@ -38,6 +38,7 @@ export class Battle {
   private readonly resolver: ClashResolver;
   private readonly rng: Rng;
   private readonly enemyAi: EnemyAi;
+  private readonly aiContext: EnemyAiContext;
   private pendingPairs: BattleOrder[] = [];
 
   turn = 0;
@@ -52,7 +53,7 @@ export class Battle {
     options: BattleOptions = {},
   ) {
     this.rng = options.rng ?? systemRng;
-    this.enemyAi = options.enemyAi ?? new RandomEnemyAi();
+    this.enemyAi = options.enemyAi ?? new WeightedEnemyAi();
 
     for (const init of [...allies, ...enemies]) {
       if (this.combatantsById.has(init.id)) {
@@ -67,6 +68,7 @@ export class Battle {
       alliesOf: (combatant) => this.sideOf(combatant.side),
     };
     this.resolver = new ClashResolver(catalog, this.rng, context);
+    this.aiContext = { catalog, resolver: this.resolver, rng: this.rng };
   }
 
   //전투에 있는 모든 참가자
@@ -142,7 +144,8 @@ export class Battle {
       //앞선 합에서 누가 쓰러졌으면 이 쌍은 건너뛴다
       if (attacker.isDefeated || defender.isDefeated) continue;
 
-      const defenderSkillId = this.enemyAi.chooseSkill(defender, this.aliveOf('ally'), this.rng);
+      //매칭된 아군만 넘긴다. 위협도와 중복 상태이상 판단이 실제 상대를 봐야 맞는다
+      const defenderSkillId = this.enemyAi.chooseSkill(defender, [attacker], this.aiContext);
       events.push(...this.resolver.resolve(attacker, pair.skillId, defender, defenderSkillId));
 
       if (this.checkBattleEnd(events)) {

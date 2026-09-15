@@ -16,6 +16,22 @@
     "deadlockLimit": 3
   },
 
+  "enemyAi": {
+    "_comment": "SPEC-001 §13. 적 카드 선택 가중치. 아군에게는 쓰지 않는다",
+    "hpDangerRatio": 0.3,
+    "hpDangerDefensiveBonus": 3.0,
+    "mentalityDangerThreshold": 40,
+    "mentalityDangerArchetypeWeight": {
+      "안정": 2.0,
+      "표준": 1.2,
+      "도박": 0.4,
+      "유틸": 1.0
+    },
+    "threatRatio": 0.25,
+    "threatDefensiveBonus": 2.0,
+    "redundantStatusPenalty": 0.2
+  },
+
   "characters": [
     {
       "id": "helper",

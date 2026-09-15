@@ -5,6 +5,7 @@ import type {
   BattleData,
   BattleRules,
   CharacterData,
+  EnemyAiRules,
   SkillData,
   SkillEffect,
   SkillEffectBody,
@@ -169,6 +170,25 @@ function parseRules(raw: unknown): BattleRules {
   };
 }
 
+//적 AI 가중치 수치를 읽는다
+function parseEnemyAi(raw: unknown): EnemyAiRules {
+  const source = obj(raw, 'enemyAi');
+  const weights = obj(source['mentalityDangerArchetypeWeight'], 'enemyAi.mentalityDangerArchetypeWeight');
+  const archetypeWeight = {} as Record<SkillArchetype, number>;
+  for (const archetype of ARCHETYPES) {
+    archetypeWeight[archetype] = num(weights, archetype, 'enemyAi.mentalityDangerArchetypeWeight');
+  }
+  return {
+    hpDangerRatio: num(source, 'hpDangerRatio', 'enemyAi'),
+    hpDangerDefensiveBonus: num(source, 'hpDangerDefensiveBonus', 'enemyAi'),
+    mentalityDangerThreshold: num(source, 'mentalityDangerThreshold', 'enemyAi'),
+    mentalityDangerArchetypeWeight: archetypeWeight,
+    threatRatio: num(source, 'threatRatio', 'enemyAi'),
+    threatDefensiveBonus: num(source, 'threatDefensiveBonus', 'enemyAi'),
+    redundantStatusPenalty: num(source, 'redundantStatusPenalty', 'enemyAi'),
+  };
+}
+
 //캐릭터 한 명을 읽는다
 function parseCharacter(raw: unknown, index: number): CharacterData {
   const path = `characters[${index}]`;
@@ -235,6 +255,7 @@ export function parseBattleData(raw: unknown): BattleData {
   const source = obj(raw, 'root');
   const data: BattleData = {
     rules: parseRules(source['rules']),
+    enemyAi: parseEnemyAi(source['enemyAi']),
     characters: arr(source, 'characters', 'root').map(parseCharacter),
     skills: arr(source, 'skills', 'root').map(parseSkill),
     statusEffects: arr(source, 'statusEffects', 'root').map(parseStatusEffect),
@@ -273,6 +294,10 @@ export class BattleCatalog {
 
   get rules(): BattleRules {
     return this.data.rules;
+  }
+
+  get enemyAi(): EnemyAiRules {
+    return this.data.enemyAi;
   }
 
   //캐릭터를 찾는다. 없으면 던진다
