@@ -13,13 +13,13 @@
     "confusionThreshold": 20,
     "confusionPenalty": 20,
     "levelDiffStep": 4,
-    "deadlockLimit": 3
+    "deadlockLimit": 3,
+    "oneSidedGivesMentality": false,
+    "oneSidedConsumesCoin": false
   },
 
   "enemyAi": {
-    "_comment": "SPEC-001 §13. 적 카드 선택 가중치. 아군에게는 쓰지 않는다",
-    "hpDangerRatio": 0.3,
-    "hpDangerDefensiveBonus": 3.0,
+    "_comment": "SPEC-001 §13. 적의 타겟·카드 선택 가중치. 아군에게는 쓰지 않는다",
     "mentalityDangerThreshold": 40,
     "mentalityDangerArchetypeWeight": {
       "안정": 2.0,
@@ -27,9 +27,11 @@
       "도박": 0.4,
       "유틸": 1.0
     },
-    "threatRatio": 0.25,
-    "threatDefensiveBonus": 2.0,
-    "redundantStatusPenalty": 0.2
+    "redundantStatusPenalty": 0.2,
+    "aiTargetLowHpBias": 1.0,
+    "aiTargetDuplicatePenalty": 0.5,
+    "aiGuardThreatThresholds": [0.15, 0.30, 0.50],
+    "aiGuardWeights": [0, 0.5, 2.0, 4.0]
   },
 
   "characters": [
@@ -194,7 +196,7 @@
     {
       "id": "bleed",
       "name": "출혈",
-      "timing": "onClashStart",
+      "timing": "onTurnStart",
       "effect": { "hpPercentDamage": 1, "of": "maxHp" },
       "defaultTurns": 3,
       "stackable": true

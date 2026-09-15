@@ -3,6 +3,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { createSeededRng } from '../src/domain/rng.js';
+import type { BattleEvent } from '../src/domain/types.js';
 import { alwaysFailRng, catalog, makeCombatant, makeResolver } from './helpers.js';
 
 describe('§11-1 코인 성공 확률에 정신력이 반영된다', () => {
@@ -116,19 +117,33 @@ describe('§11-3 동점은 교착으로 처리된다', () => {
 });
 
 describe('§11-4 상태이상 4종이 명시된 타이밍에 발동한다', () => {
-  it('출혈은 합 시작 시 최대체력의 1% 를 깎고 중첩된다', () => {
-    const attacker = makeCombatant('a', 'main', 'ally');
-    const defender = makeCombatant('b', 'main', 'enemy');
-    const resolver = makeResolver(alwaysFailRng, [attacker, defender]);
+  it('출혈은 턴 시작에 최대체력의 1% 를 깎고 중첩된다', () => {
+    const bleeding = makeCombatant('b', 'main', 'enemy');
+    const resolver = makeResolver(alwaysFailRng, [bleeding]);
+    const events: BattleEvent[] = [];
 
-    defender.applyStatus('bleed', 3, true);
-    defender.applyStatus('bleed', 3, true);
-    const events = resolver.resolve(attacker, 1001, defender, 1001);
+    bleeding.applyStatus('bleed', 3, true);
+    bleeding.applyStatus('bleed', 3, true);
+    resolver.applyTurnStartStatuses(bleeding, events);
 
     //메인 캐릭터 최대체력 320 의 1% 는 3, 2중첩이면 6
     const ticked = events.find((e) => e.type === 'statusTicked');
     expect(ticked).toMatchObject({ combatantId: 'b', status: 'bleed', damage: 6 });
-    expect(defender.hp).toBe(320 - 6);
+    expect(bleeding.hp).toBe(320 - 6);
+  });
+
+  it('출혈은 한 턴에 여러 교전을 치러도 한 번만 들어간다', () => {
+    //D-7 로 한 캐릭터가 합 1건 + 일방 피격까지 받을 수 있어 교전마다 넣으면 중복된다
+    const attacker = makeCombatant('a', 'main', 'ally', [1001]);
+    const bleeding = makeCombatant('b', 'main', 'enemy', [1001]);
+    const resolver = makeResolver(alwaysFailRng, [attacker, bleeding]);
+
+    bleeding.applyStatus('bleed', 3, true);
+    const clashEvents = resolver.resolve(attacker, 1001, bleeding, 1001);
+    const oneSidedEvents = resolver.resolveOneSided(attacker, 1001, bleeding);
+
+    const ticks = [...clashEvents, ...oneSidedEvents].filter((e) => e.type === 'statusTicked');
+    expect(ticks).toHaveLength(0);
   });
 
   it('혼란은 실제 정신력이 아니라 계산값만 20 낮춘다', () => {

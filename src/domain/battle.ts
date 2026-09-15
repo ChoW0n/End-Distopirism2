@@ -19,6 +19,12 @@ export interface BattleOrder {
   skillId: number;
 }
 
+//매칭 판정으로 확정된 교전 하나 (SPEC §3)
+export type Engagement =
+  | { kind: 'clash'; allyId: string; enemyId: string; allySkillId: number }
+  | { kind: 'allyOneSided'; allyId: string; targetId: string; skillId: number }
+  | { kind: 'enemyOneSided'; enemyId: string; targetId: string };
+
 //전투를 만들 때 넘기는 설정
 export interface BattleOptions {
   rng?: Rng;
@@ -39,7 +45,9 @@ export class Battle {
   private readonly rng: Rng;
   private readonly enemyAi: EnemyAi;
   private readonly aiContext: EnemyAiContext;
-  private pendingPairs: BattleOrder[] = [];
+  //이번 턴에 적이 고른 타겟. 턴 시작에 정해지고 아군 입력에 영향받지 않는다
+  private readonly enemyTargets = new Map<string, string>();
+  private engagements: Engagement[] = [];
 
   turn = 0;
   phase: BattlePhase = 'turnStart';
@@ -76,6 +84,16 @@ export class Battle {
     return [...this.combatantsById.values()];
   }
 
+  //전투가 끝났는지
+  get isFinished(): boolean {
+    return this.phase === 'finished';
+  }
+
+  //이번 턴에 확정된 교전 목록. 매칭 판정 뒤에 채워진다
+  get plannedEngagements(): readonly Engagement[] {
+    return this.engagements;
+  }
+
   //id 로 참가자를 찾는다. 없으면 던진다
   combatant(id: string): Combatant {
     const found = this.combatantsById.get(id);
@@ -93,7 +111,7 @@ export class Battle {
     return this.sideOf(side).filter((c) => !c.isDefeated);
   }
 
-  //턴을 연다. 코인을 회복시키고 아군 입력을 기다리는 상태로 넘어간다
+  //턴을 연다. 코인 회복 → 지속 상태이상 → 적 타겟 선택 순이다
   startTurn(): BattleEvent[] {
     this.expectPhase('turnStart');
     this.turn += 1;
@@ -105,11 +123,35 @@ export class Battle {
       events.push({ type: 'coinRestored', combatantId: combatant.id, coin });
     }
 
+    //출혈은 캐릭터당 턴 1회다. 교전마다 넣으면 한 턴에 여러 번 맞는다 (SPEC §3)
+    for (const combatant of this.combatants) {
+      if (combatant.isDefeated) continue;
+      this.resolver.applyTurnStartStatuses(combatant, events);
+    }
+    if (this.checkBattleEnd(events)) return events;
+
+    this.chooseEnemyTargets(events);
+
     this.phase = 'awaitingOrders';
     return events;
   }
 
-  //아군 지시를 받는다. 적이 낼 카드는 AI 가 정하고 매칭쌍이 이 시점에 확정된다
+  //적이 각자 아군 하나를 겨눈다. 아군 입력 전에 확정해야 아군이 합을 강제할 수 없다
+  private chooseEnemyTargets(events: BattleEvent[]): void {
+    this.enemyTargets.clear();
+    const candidates = this.aliveOf('ally');
+    if (candidates.length === 0) return;
+
+    const alreadyTargeted = new Set<string>();
+    for (const enemy of this.aliveOf('enemy')) {
+      const targetId = this.enemyAi.chooseTarget(enemy, candidates, alreadyTargeted, this.aiContext);
+      this.enemyTargets.set(enemy.id, targetId);
+      alreadyTargeted.add(targetId);
+      events.push({ type: 'enemyTargeted', enemyId: enemy.id, targetId });
+    }
+  }
+
+  //아군 지시를 받고 매칭 판정까지 끝낸다. 서로 겨눴으면 합, 아니면 각자 일방 공격이다
   submitOrders(orders: readonly BattleOrder[]): void {
     this.expectPhase('awaitingOrders');
 
@@ -129,34 +171,103 @@ export class Battle {
       used.add(actor.id);
     }
 
-    this.pendingPairs = [...orders];
+    this.engagements = this.matchEngagements(orders);
     this.phase = 'resolving';
   }
 
-  //매칭쌍을 순서대로 붙인다. 한 쌍이 끝날 때마다 전투 종료 조건을 본다
+  //매칭 판정. 아군 지시를 먼저 놓고 남은 적의 일방 공격을 뒤에 붙인다
+  private matchEngagements(orders: readonly BattleOrder[]): Engagement[] {
+    const engagements: Engagement[] = [];
+    const enemiesInClash = new Set<string>();
+
+    for (const order of orders) {
+      //상호 지정일 때만 합이다
+      if (this.enemyTargets.get(order.targetId) === order.actorId) {
+        engagements.push({
+          kind: 'clash',
+          allyId: order.actorId,
+          enemyId: order.targetId,
+          allySkillId: order.skillId,
+        });
+        enemiesInClash.add(order.targetId);
+        continue;
+      }
+      engagements.push({
+        kind: 'allyOneSided',
+        allyId: order.actorId,
+        targetId: order.targetId,
+        skillId: order.skillId,
+      });
+    }
+
+    for (const enemy of this.aliveOf('enemy')) {
+      if (enemiesInClash.has(enemy.id)) continue;
+      const targetId = this.enemyTargets.get(enemy.id);
+      if (!targetId) continue;
+      engagements.push({ kind: 'enemyOneSided', enemyId: enemy.id, targetId });
+    }
+
+    return engagements;
+  }
+
+  //교전을 순서대로 실행한다. 쓰러진 캐릭터가 낀 교전은 건너뛴다
   resolve(): BattleEvent[] {
     this.expectPhase('resolving');
     const events: BattleEvent[] = [];
 
-    for (const pair of this.pendingPairs) {
-      const attacker = this.combatant(pair.actorId);
-      const defender = this.combatant(pair.targetId);
-      //앞선 합에서 누가 쓰러졌으면 이 쌍은 건너뛴다
-      if (attacker.isDefeated || defender.isDefeated) continue;
+    for (const engagement of this.engagements) {
+      const [attacker, target] = this.participantsOf(engagement);
+      if (attacker.isDefeated || target.isDefeated) continue;
 
-      //매칭된 아군만 넘긴다. 위협도와 중복 상태이상 판단이 실제 상대를 봐야 맞는다
-      const defenderSkillId = this.enemyAi.chooseSkill(defender, [attacker], this.aiContext);
-      events.push(...this.resolver.resolve(attacker, pair.skillId, defender, defenderSkillId));
+      events.push(...this.runEngagement(engagement, attacker, target));
 
       if (this.checkBattleEnd(events)) {
-        this.pendingPairs = [];
+        this.engagements = [];
         return events;
       }
     }
 
-    this.pendingPairs = [];
+    this.engagements = [];
     this.phase = 'turnEnd';
     return events;
+  }
+
+  //교전에 참여하는 두 사람을 공격자·대상 순으로 꺼낸다
+  private participantsOf(engagement: Engagement): [Combatant, Combatant] {
+    if (engagement.kind === 'clash') {
+      return [this.combatant(engagement.allyId), this.combatant(engagement.enemyId)];
+    }
+    if (engagement.kind === 'allyOneSided') {
+      return [this.combatant(engagement.allyId), this.combatant(engagement.targetId)];
+    }
+    return [this.combatant(engagement.enemyId), this.combatant(engagement.targetId)];
+  }
+
+  //교전 한 건을 실행한다. 적이 낼 카드는 이 시점에 AI 가 고른다
+  private runEngagement(
+    engagement: Engagement,
+    attacker: Combatant,
+    target: Combatant,
+  ): BattleEvent[] {
+    if (engagement.kind === 'clash') {
+      const enemySkillId = this.enemyAi.chooseSkill(
+        target,
+        { target: attacker, isClash: true, opponentSkillId: engagement.allySkillId },
+        this.aiContext,
+      );
+      return this.resolver.resolve(attacker, engagement.allySkillId, target, enemySkillId);
+    }
+
+    if (engagement.kind === 'allyOneSided') {
+      return this.resolver.resolveOneSided(attacker, engagement.skillId, target);
+    }
+
+    const skillId = this.enemyAi.chooseSkill(
+      attacker,
+      { target, isClash: false, opponentSkillId: null },
+      this.aiContext,
+    );
+    return this.resolver.resolveOneSided(attacker, skillId, target);
   }
 
   //턴을 닫는다. 정신력이 조금 돌아오고 상태이상의 지속 턴이 줄어든다

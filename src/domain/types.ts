@@ -22,6 +22,9 @@ export interface BattleRules {
   confusionPenalty: number;
   levelDiffStep: number;
   deadlockLimit: number;
+  //일방 공격은 겨룬 게 아니라서 기본값이 둘 다 false 다 (SPEC §4.7)
+  oneSidedGivesMentality: boolean;
+  oneSidedConsumesCoin: boolean;
 }
 
 //캐릭터 기본 스탯
@@ -132,7 +135,7 @@ export interface SkillData {
 export interface StatusEffectData {
   id: StatusId;
   name: string;
-  timing: 'onClashStart' | 'onCoinRoll' | 'onDamageCalc';
+  timing: 'onTurnStart' | 'onCoinRoll' | 'onDamageCalc';
   effect: {
     hpPercentDamage?: number;
     of?: 'maxHp';
@@ -147,13 +150,15 @@ export interface StatusEffectData {
 
 //적 AI 가중치 수치. SPEC §13.4
 export interface EnemyAiRules {
-  hpDangerRatio: number;
-  hpDangerDefensiveBonus: number;
   mentalityDangerThreshold: number;
   mentalityDangerArchetypeWeight: Record<SkillArchetype, number>;
-  threatRatio: number;
-  threatDefensiveBonus: number;
   redundantStatusPenalty: number;
+  //타겟 선택 (§13.6)
+  aiTargetLowHpBias: number;
+  aiTargetDuplicatePenalty: number;
+  //방어 태세 위협도 구간 (§13.7). 경계가 n개면 가중치는 n+1개다
+  aiGuardThreatThresholds: number[];
+  aiGuardWeights: number[];
 }
 
 //battle-data.json 전체
@@ -176,7 +181,10 @@ export type MentalityReason =
 export type BattleEvent =
   | { type: 'turnStart'; turn: number }
   | { type: 'coinRestored'; combatantId: string; coin: number }
+  | { type: 'enemyTargeted'; enemyId: string; targetId: string }
   | { type: 'clashStart'; attackerId: string; defenderId: string; attackerSkillId: number; defenderSkillId: number }
+  | { type: 'oneSidedStart'; attackerId: string; targetId: string; skillId: number }
+  | { type: 'oneSidedEnd'; attackerId: string; targetId: string }
   | { type: 'coinRolled'; combatantId: string; rolls: boolean[]; successCount: number; probability: number }
   | { type: 'damageCalculated'; combatantId: string; damage: number; successCount: number; levelBonus: number }
   | { type: 'clashRoundWin'; winnerId: string; loserId: string; winnerDamage: number; loserDamage: number }

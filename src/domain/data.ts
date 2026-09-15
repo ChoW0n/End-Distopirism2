@@ -60,6 +60,25 @@ function literal<T extends string>(source: Json, key: string, allowed: readonly 
   return value as T;
 }
 
+//참/거짓을 꺼낸다
+function bool(source: Json, key: string, path: string): boolean {
+  const value = source[key];
+  if (typeof value !== 'boolean') {
+    throw new BattleDataError(`${path}.${key} 가 참/거짓이 아니다`);
+  }
+  return value;
+}
+
+//숫자 배열을 꺼낸다
+function numArray(source: Json, key: string, path: string): number[] {
+  return arr(source, key, path).map((value, index) => {
+    if (typeof value !== 'number' || !Number.isFinite(value)) {
+      throw new BattleDataError(`${path}.${key}[${index}] 가 숫자가 아니다`);
+    }
+    return value;
+  });
+}
+
 //배열을 꺼낸다
 function arr(source: Json, key: string, path: string): unknown[] {
   const value = source[key];
@@ -167,6 +186,8 @@ function parseRules(raw: unknown): BattleRules {
     confusionPenalty: num(source, 'confusionPenalty', 'rules'),
     levelDiffStep: num(source, 'levelDiffStep', 'rules'),
     deadlockLimit: num(source, 'deadlockLimit', 'rules'),
+    oneSidedGivesMentality: bool(source, 'oneSidedGivesMentality', 'rules'),
+    oneSidedConsumesCoin: bool(source, 'oneSidedConsumesCoin', 'rules'),
   };
 }
 
@@ -178,14 +199,21 @@ function parseEnemyAi(raw: unknown): EnemyAiRules {
   for (const archetype of ARCHETYPES) {
     archetypeWeight[archetype] = num(weights, archetype, 'enemyAi.mentalityDangerArchetypeWeight');
   }
+  const thresholds = numArray(source, 'aiGuardThreatThresholds', 'enemyAi');
+  const guardWeights = numArray(source, 'aiGuardWeights', 'enemyAi');
+  //구간 경계가 n개면 구간은 n+1개다. 어긋나면 위협도에 맞는 가중치를 못 찾는다
+  if (guardWeights.length !== thresholds.length + 1) {
+    throw new BattleDataError('enemyAi.aiGuardWeights 개수가 구간 경계보다 1 많아야 한다');
+  }
+
   return {
-    hpDangerRatio: num(source, 'hpDangerRatio', 'enemyAi'),
-    hpDangerDefensiveBonus: num(source, 'hpDangerDefensiveBonus', 'enemyAi'),
     mentalityDangerThreshold: num(source, 'mentalityDangerThreshold', 'enemyAi'),
     mentalityDangerArchetypeWeight: archetypeWeight,
-    threatRatio: num(source, 'threatRatio', 'enemyAi'),
-    threatDefensiveBonus: num(source, 'threatDefensiveBonus', 'enemyAi'),
     redundantStatusPenalty: num(source, 'redundantStatusPenalty', 'enemyAi'),
+    aiTargetLowHpBias: num(source, 'aiTargetLowHpBias', 'enemyAi'),
+    aiTargetDuplicatePenalty: num(source, 'aiTargetDuplicatePenalty', 'enemyAi'),
+    aiGuardThreatThresholds: thresholds,
+    aiGuardWeights: guardWeights,
   };
 }
 
@@ -243,7 +271,7 @@ function parseStatusEffect(raw: unknown, index: number): StatusEffectData {
   return {
     id: literal<StatusId>(source, 'id', STATUS_IDS, path),
     name: str(source, 'name', path),
-    timing: literal(source, 'timing', ['onClashStart', 'onCoinRoll', 'onDamageCalc'] as const, path),
+    timing: literal(source, 'timing', ['onTurnStart', 'onCoinRoll', 'onDamageCalc'] as const, path),
     effect: parsed,
     defaultTurns: num(source, 'defaultTurns', path),
     stackable: source['stackable'] === true,

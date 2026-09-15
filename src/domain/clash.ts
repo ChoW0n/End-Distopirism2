@@ -24,12 +24,13 @@ interface CoinRoll {
   probability: number;
 }
 
-//합이 끝났을 때의 승패 정보. 교착 3회로 끝나면 승자가 없어서 null 이 된다
+//교전이 끝났을 때의 승패 정보. 교착 3회로 끝나면 승자가 없어서 null 이 된다
 interface ClashOutcome {
   winner: Combatant;
   loser: Combatant;
   winnerSkill: SkillData;
-  loserSkill: SkillData;
+  //일방 공격은 맞는 쪽이 카드를 내지 않아서 없다 (SPEC §4.7)
+  loserSkill: SkillData | null;
   damage: number;
   successCount: number;
 }
@@ -138,14 +139,6 @@ export class ClashResolver {
       defenderSkillId,
     });
 
-    //합 시작 시점의 출혈. battle-data.json 의 timing 이 onClashStart 라 여기서 판정한다
-    this.tickBleed(attacker, events);
-    this.tickBleed(defender, events);
-    if (attacker.isDefeated || defender.isDefeated) {
-      events.push({ type: 'clashEnd', attackerId: attacker.id, defenderId: defender.id, winnerId: null });
-      return events;
-    }
-
     //교착 카운터는 이 합 안에서만 산다. 매칭쌍마다 따로 세는 것이 D-3 의 결정이다
     let deadlockCount = 0;
     let outcome: ClashOutcome | null = null;
@@ -248,6 +241,65 @@ export class ClashResolver {
     return events;
   }
 
+  //턴 시작에 걸리는 지속 상태이상을 처리한다. 지금은 출혈 하나다
+  //교전 단위가 아니라 턴 단위인 이유는 D-7 로 한 캐릭터가 한 턴에 여러 교전에 끼기 때문이다
+  applyTurnStartStatuses(combatant: Combatant, events: BattleEvent[]): void {
+    this.tickBleed(combatant, events);
+  }
+
+  //일방 공격. 겨룰 상대가 없으니 자동 승리로 보고 그대로 때린다 (SPEC §4.7)
+  //코인 차감과 정신력 회복은 겨뤘을 때만 나오므로 여기서는 기본적으로 일어나지 않는다
+  resolveOneSided(attacker: Combatant, skillId: number, target: Combatant): BattleEvent[] {
+    const events: BattleEvent[] = [];
+    const skill = this.catalog.skill(skillId);
+    const rules = this.catalog.rules;
+
+    events.push({ type: 'oneSidedStart', attackerId: attacker.id, targetId: target.id, skillId });
+
+    const roll = this.rollCoins(attacker);
+    events.push({
+      type: 'coinRolled',
+      combatantId: attacker.id,
+      rolls: roll.rolls,
+      successCount: roll.successCount,
+      probability: roll.probability,
+    });
+
+    const hit = this.calculateDamage(attacker, target, skill, roll.successCount);
+    events.push({
+      type: 'damageCalculated',
+      combatantId: attacker.id,
+      damage: hit.damage,
+      successCount: roll.successCount,
+      levelBonus: hit.levelBonus,
+    });
+
+    if (rules.oneSidedConsumesCoin) {
+      target.loseCoin();
+      events.push({ type: 'coinLost', combatantId: target.id, coin: target.coin });
+    }
+    if (rules.oneSidedGivesMentality) {
+      this.changeMentality(attacker, rules.mentalityOnClashWin, 'clashWin', events);
+    }
+
+    const outcome: ClashOutcome = {
+      winner: attacker,
+      loser: target,
+      winnerSkill: skill,
+      loserSkill: null,
+      damage: hit.damage,
+      successCount: roll.successCount,
+    };
+    this.applyOutcome(outcome, events);
+    this.applyClashEndEffect(attacker, target, skill, 'win', events);
+
+    this.checkConfusion(attacker, events);
+    this.checkConfusion(target, events);
+
+    events.push({ type: 'oneSidedEnd', attackerId: attacker.id, targetId: target.id });
+    return events;
+  }
+
   //출혈 피해를 넣는다. 중첩된 개수만큼 겹쳐서 들어간다
   private tickBleed(combatant: Combatant, events: BattleEvent[]): void {
     const stacks = combatant.stackCount('bleed');
@@ -268,8 +320,8 @@ export class ClashResolver {
     //강력한 한 방 — 이기면 내 피해가 늘고, 지면 상대 피해가 더 크게 늘어난다
     const winnerModifier = bodyOfType(effectBody(winnerSkill, 'win'), 'damageModifier');
     if (winnerModifier?.target === 'self') damage += winnerModifier.amount;
-    const loserModifier = bodyOfType(effectBody(loserSkill, 'lose'), 'damageModifier');
-    if (loserModifier?.target === 'opponent') damage += loserModifier.amount;
+    const loserModifier = loserSkill && bodyOfType(effectBody(loserSkill, 'lose'), 'damageModifier');
+    if (loserModifier && loserModifier.target === 'opponent') damage += loserModifier.amount;
 
     //무모한 일격 — 내 체력을 먼저 지불하고 그만큼 추가 피해를 얻는다
     const cost = bodyOfType(effectBody(winnerSkill, 'win'), 'selfHpCost');
@@ -285,7 +337,7 @@ export class ClashResolver {
     if (flame) damage += successCount * flame.bonusDamagePerCoin;
 
     //방어 태세 — 패배한 쪽이 냈으면 피해를 통째로 막는다
-    if (bodyOfType(effectBody(loserSkill, 'lose'), 'nullifyDamage')) {
+    if (loserSkill && bodyOfType(effectBody(loserSkill, 'lose'), 'nullifyDamage')) {
       events.push({ type: 'damageNullified', combatantId: loser.id, skillId: loserSkill.id });
       damage = 0;
     }
@@ -307,7 +359,7 @@ export class ClashResolver {
     }
 
     //마무리 — 패배한 쪽이 냈으면 현재 정신력의 비율만큼 깎인다
-    const mentalityPenalty = bodyOfType(effectBody(loserSkill, 'lose'), 'mentality');
+    const mentalityPenalty = loserSkill && bodyOfType(effectBody(loserSkill, 'lose'), 'mentality');
     if (mentalityPenalty) {
       const delta = Math.round((loser.mentality * mentalityPenalty.percentOfCurrent) / 100);
       this.changeMentality(loser, delta, 'skill', events);
@@ -319,7 +371,9 @@ export class ClashResolver {
   //합이 끝난 뒤 발동하는 효과. 승자는 onWin, 패자는 onLose 를 각자 받는다
   private applyClashEndEffects(outcome: ClashOutcome, events: BattleEvent[]): void {
     this.applyClashEndEffect(outcome.winner, outcome.loser, outcome.winnerSkill, 'win', events);
-    this.applyClashEndEffect(outcome.loser, outcome.winner, outcome.loserSkill, 'lose', events);
+    if (outcome.loserSkill) {
+      this.applyClashEndEffect(outcome.loser, outcome.winner, outcome.loserSkill, 'lose', events);
+    }
   }
 
   //카드 하나의 합 종료 효과를 적용한다
