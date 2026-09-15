@@ -1,0 +1,17 @@
+{
+  "name": "end-distopirism2",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "End-Distopirism 웹 포팅. 전투 도메인은 렌더러 비의존 순수 TypeScript",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
