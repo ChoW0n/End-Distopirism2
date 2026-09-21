@@ -1,0 +1,41 @@
+{
+  "_주석": "UI·연출 수치. 단위는 캐릭터 키(H) 배수, 시간은 초. 픽셀 값을 넣지 않는다. 근거: SPEC-004 §7·§8",
+  "dash": {
+    "zoneWidth": 3.2,
+    "zoneDepth": 0.9,
+    "pairGap": 0.55,
+    "lateralJitter": [0.06, 0.16],
+    "depthJitter": 0.12,
+    "safeDistance": 0.45,
+    "retries": 30,
+    "speed": 2.4,
+    "oneSided": "attackerOnly"
+  },
+  "float": {
+    "amplitude": 0.012,
+    "periodSec": 2.6
+  },
+  "arrow": {
+    "start": "headCenter",
+    "curveHeight": 0.5,
+    "segments": 50,
+    "drawSec": 0.5,
+    "headLength": 0.07,
+    "headAngleDeg": 20,
+    "colorStart": "#ffcc33",
+    "colorEnd": "#ff6600"
+  },
+  "bar": {
+    "width": 0.42,
+    "height": 0.035,
+    "gap": 0.018,
+    "topMargin": 0.1,
+    "tweenSec": 0.5,
+    "easing": "outQuad"
+  },
+  "badge": {
+    "rise": 0.35,
+    "riseSec": 1.0,
+    "deadlockMax": 3
+  }
+}
