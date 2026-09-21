@@ -112,6 +112,35 @@ describe('교전이 시작되면 전용기 동작이 나간다', () => {
     //컷신으로 빠졌으니 a1 의 전용기 프레임은 나오지 않는다
     expect(framesFor(commands, 'a1')[0]).not.toEqual(sprites.frameSequence('S1'));
   });
+
+  it('컷신이 피해 판정을 새로 만들지 않는다 (SPEC-002 §7)', () => {
+    const battle = makeBattle(S1);
+    const ally = battle.combatant('a1');
+    const enemy = battle.combatant('e1');
+
+    battle.startTurn();
+    battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: S2 }]);
+    battle.resolve();
+    ally.attributes.attack = catalog.rules.ultimateThreshold;
+    battle.endTurn();
+    battle.startTurn();
+
+    const hpBefore = enemy.hp;
+    battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: ULT }]);
+    const events = battle.resolve();
+    const hpAfterDomain = enemy.hp;
+
+    //연출을 만들어도 도메인 상태가 더 움직이지 않는다
+    const commands = makePresenter().consume(events);
+    expect(enemy.hp).toBe(hpAfterDomain);
+    expect(enemy.hp).toBeLessThan(hpBefore);
+
+    //순서는 합 확정 → 연출 → 기존 피해 적용이다
+    const cutsceneAt = commands.findIndex((c) => c.type === 'playCutscene');
+    const effectAt = commands.findIndex((c) => c.type === 'spawnEffect');
+    expect(cutsceneAt).toBeGreaterThanOrEqual(0);
+    if (effectAt >= 0) expect(cutsceneAt).toBeLessThan(effectAt);
+  });
 });
 
 describe('§6-1 명중했을 때만 이펙트가 난다', () => {
