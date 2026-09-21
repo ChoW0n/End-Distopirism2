@@ -295,6 +295,8 @@ export class ClashResolver {
     };
     this.applyOutcome(outcome, events);
     this.applyClashEndEffect(attacker, target, skill, 'win', events);
+    //일방 공격도 속성을 올린다. 교전 대부분이 일방이라 합 승리로만 주면 궁극기가 너무 늦다 (v2.0 §2.1 D-11 개정)
+    this.grantAttribute(attacker, skill, events);
 
     this.checkConfusion(attacker, events);
     this.checkConfusion(target, events);

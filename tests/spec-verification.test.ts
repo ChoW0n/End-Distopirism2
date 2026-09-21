@@ -244,11 +244,14 @@ describe('§11-5 전용기 수치가 v2.0 §1.1 표와 일치한다', () => {
     }
   });
 
-  it('궁극기는 수치 미정 표시가 붙어 있다', () => {
+  it('궁극기는 임시 수치를 갖고 속성을 올리지 않는다', () => {
     const ultimate = catalog.ultimate;
     expect(ultimate.slot).toBe('ULT');
+    //궁극기는 속성을 올리지 않는다. 쓰면 오히려 0으로 돌아간다
     expect(ultimate.attribute).toBeNull();
-    expect(ultimate.tbd).toBe(true);
+    //2026-09-21 임시값. 확정되면 이 수치와 tbd 표시가 같이 바뀐다
+    expect(ultimate.tbd).toBe(false);
+    expect(ultimate.baseDamage).toBeGreaterThan(0);
   });
 
   it('모든 전용기가 설명문을 갖고 있다', () => {

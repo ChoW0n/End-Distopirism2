@@ -78,7 +78,7 @@ describe('§2 속성 누적', () => {
     expect(attacker.attributeTotal).toBe(1);
   });
 
-  it('일방 공격은 이겨도 속성이 오르지 않는다', () => {
+  it('일방 공격도 속성이 오른다 (D-11 개정)', () => {
     const attacker = makeCombatant('a', 'main', 'ally');
     const target = makeCombatant('b', 'main', 'enemy');
     const resolver = makeResolver(alwaysFailRng, [attacker, target]);
@@ -86,8 +86,9 @@ describe('§2 속성 누적', () => {
     const events = resolver.resolveOneSided(attacker, S2, target);
 
     expect(target.hp).toBeLessThan(target.base.maxHp);
-    expect(attacker.attributeTotal).toBe(0);
-    expect(events.some((e) => e.type === 'attributeGained')).toBe(false);
+    //S2 는 방어 속성이다. 일방 공격도 한 번에 1개만 올린다
+    expect(attacker.attributes).toEqual({ attack: 0, defense: 1, support: 0 });
+    expect(events.filter((e) => e.type === 'attributeGained')).toHaveLength(1);
   });
 });
 
@@ -99,16 +100,25 @@ describe('§3 궁극기', () => {
     combatant.attributes.support = support;
   }
 
-  it('속성 합이 3이 되는 턴의 종료 시점에 ultimateReady 가 나온다', () => {
+  //발동 임계치는 데이터가 정한다. 테스트에 숫자를 박지 않는다
+  const T = catalog.rules.ultimateThreshold;
+
+  //합이 정확히 total 이 되도록 세 속성에 나눠 담는다
+  function fillTotal(combatant: Combatant, total: number): void {
+    const base = Math.floor(total / 3);
+    fill(combatant, base + (total % 3), base, base);
+  }
+
+  it('속성 합이 임계치에 닿는 턴의 종료 시점에 ultimateReady 가 나온다', () => {
     const battle = makeBattle(S1);
     const ally = battle.combatant('a1');
 
     battle.startTurn();
     battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: S2 }]);
     const resolved = battle.resolve();
-    //합에서 이겨 방어 1을 얻은 상태에 공격·보조를 채워 합 3을 만든다
+    //합에서 이겨 방어 1을 얻은 상태에 나머지를 채워 임계치를 만든다
     expect(resolved.some((e) => e.type === 'attributeGained')).toBe(true);
-    fill(ally, 1, 1, 1);
+    fillTotal(ally, T);
 
     const end = battle.endTurn();
     expect(end.some((e) => e.type === 'ultimateReady' && e.combatantId === 'a1')).toBe(true);
@@ -124,7 +134,7 @@ describe('§3 궁극기', () => {
     battle.startTurn();
     battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: S2 }]);
     battle.resolve();
-    fill(ally, 1, 1, 0);
+    fillTotal(ally, T - 1);
 
     expect(battle.endTurn().some((e) => e.type === 'ultimateReady')).toBe(false);
     expect(ally.ultimatePending).toBe(false);
@@ -137,7 +147,7 @@ describe('§3 궁극기', () => {
     battle.startTurn();
     battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: S2 }]);
     battle.resolve();
-    fill(ally, 1, 1, 1);
+    fillTotal(ally, T);
     battle.endTurn();
     expect(ally.deck).toHaveLength(3);
 
@@ -156,7 +166,7 @@ describe('§3 궁극기', () => {
     battle.startTurn();
     battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: S2 }]);
     battle.resolve();
-    fill(ally, 1, 1, 1);
+    fillTotal(ally, T);
     battle.endTurn();
     battle.startTurn();
     expect(ally.deck).toContain(ULT);
@@ -171,14 +181,14 @@ describe('§3 궁극기', () => {
     expect(ally.deck).toHaveLength(3);
   });
 
-  it('속성 조합은 자유다 — 한 속성에 3이 몰려도 발동한다', () => {
+  it('속성 조합은 자유다 — 한 속성에 몰려도 발동한다', () => {
     const battle = makeBattle(S1);
     const ally = battle.combatant('a1');
 
     battle.startTurn();
     battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: S2 }]);
     battle.resolve();
-    fill(ally, 3, 0, 0);
+    fill(ally, T, 0, 0);
 
     expect(battle.endTurn().some((e) => e.type === 'ultimateReady')).toBe(true);
   });
@@ -190,21 +200,21 @@ describe('§3 궁극기', () => {
     battle.startTurn();
     battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: S2 }]);
     battle.resolve();
-    fill(ally, 1, 1, 1);
+    fillTotal(ally, T);
     battle.endTurn();
     battle.startTurn();
     expect(ally.deck).toContain(ULT);
 
-    //카드를 쥔 채 속성이 다시 3이어도 중복 통지는 없다
+    //카드를 쥔 채 속성이 다시 임계치여도 중복 통지는 없다
     battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: S2 }]);
     battle.resolve();
-    fill(ally, 1, 1, 1);
+    fillTotal(ally, T);
     expect(battle.endTurn().some((e) => e.type === 'ultimateReady')).toBe(false);
   });
 });
 
-describe('§3.2 수치 미정 카드', () => {
-  it('AI 는 궁극기를 고르지 않는다', () => {
+describe('§3.2 궁극기 임시 수치', () => {
+  it('임시 수치가 들어간 뒤로는 AI 도 궁극기를 고른다', () => {
     const enemy = makeCombatant('e', 'main', 'enemy');
     enemy.addCard(ULT);
     expect(enemy.deck).toContain(ULT);
@@ -213,9 +223,10 @@ describe('§3.2 수치 미정 카드', () => {
     const ai = new WeightedEnemyAi();
     const context = { catalog, resolver: makeResolver(alwaysFailRng, [enemy, target]), rng: alwaysFailRng };
 
+    let picked = 0;
     for (let i = 0; i < 200; i += 1) {
-      const picked = ai.chooseSkill(enemy, { target, isClash: true, opponentSkillId: S1 }, context);
-      expect(picked).not.toBe(ULT);
+      if (ai.chooseSkill(enemy, { target, isClash: true, opponentSkillId: S1 }, context) === ULT) picked += 1;
     }
+    expect(picked).toBeGreaterThan(0);
   });
 });
