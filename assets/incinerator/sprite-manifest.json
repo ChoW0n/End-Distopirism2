@@ -1,0 +1,928 @@
+{
+ "version": 1,
+ "character": "incinerator",
+ "canvas": [
+  2400,
+  1500
+ ],
+ "ground": [
+  1200,
+  1340
+ ],
+ "frames": [
+  {
+   "id": "00-idle",
+   "file": "frames/00-idle.png",
+   "scale": 1.0,
+   "scaleMatch": 1.0,
+   "anchor": [
+    1200,
+    1340
+   ],
+   "headCenter": [
+    1208.5,
+    225.9
+   ],
+   "axeHead": [
+    972,
+    1080
+   ],
+   "bladeTip": [
+    1390,
+    1129
+   ],
+   "tipSource": "자동 검출",
+   "bbox": [
+    909,
+    0,
+    1542,
+    1340
+   ]
+  },
+  {
+   "id": "01-advance",
+   "file": "frames/01-advance.png",
+   "scale": 1.0,
+   "scaleMatch": 0.902,
+   "anchor": [
+    1200,
+    1340
+   ],
+   "headCenter": [
+    1796.8,
+    718.8
+   ],
+   "axeHead": [
+    754,
+    895
+   ],
+   "bladeTip": [
+    1179,
+    1001
+   ],
+   "tipSource": "자동 검출",
+   "bbox": [
+    543,
+    472,
+    1915,
+    1340
+   ]
+  },
+  {
+   "id": "02-retreat",
+   "file": "frames/02-retreat.png",
+   "scale": 1.0526,
+   "scaleMatch": 0.935,
+   "anchor": [
+    1200,
+    1340
+   ],
+   "headCenter": [
+    1201.3,
+    199.4
+   ],
+   "axeHead": [
+    1516,
+    827
+   ],
+   "bladeTip": [
+    1168,
+    717
+   ],
+   "tipSource": "자동 검출",
+   "bbox": [
+    752,
+    0,
+    1649,
+    1340
+   ]
+  },
+  {
+   "id": "03-guard",
+   "file": "frames/03-guard.png",
+   "scale": 1.1111,
+   "scaleMatch": 0.943,
+   "anchor": [
+    1200,
+    1340
+   ],
+   "headCenter": [
+    1330.2,
+    227.9
+   ],
+   "axeHead": [
+    1640,
+    35
+   ],
+   "bladeTip": [
+    1294,
+    324
+   ],
+   "tipSource": "자동 검출",
+   "bbox": [
+    855,
+    0,
+    1858,
+    1340
+   ]
+  },
+  {
+   "id": "04-hit",
+   "file": "frames/04-hit.png",
+   "scale": 1.0526,
+   "scaleMatch": 0.908,
+   "anchor": [
+    1200,
+    1340
+   ],
+   "headCenter": [
+    1141.9,
+    161.1
+   ],
+   "axeHead": [
+    1518,
+    994
+   ],
+   "bladeTip": [
+    1238,
+    711
+   ],
+   "tipSource": "자동 검출",
+   "bbox": [
+    819,
+    0,
+    1635,
+    1340
+   ]
+  },
+  {
+   "id": "05-skill1-ready",
+   "file": "frames/05-skill1-ready.png",
+   "scale": 1.0526,
+   "scaleMatch": 0.938,
+   "anchor": [
+    1200,
+    1340
+   ],
+   "headCenter": [
+    1396.9,
+    235.9
+   ],
+   "axeHead": [
+    870,
+    965
+   ],
+   "bladeTip": [
+    810,
+    16
+   ],
+   "tipSource": "수동 확정",
+   "bbox": [
+    743,
+    0,
+    1735,
+    1340
+   ]
+  },
+  {
+   "id": "06-skill1-cast",
+   "file": "frames/06-skill1-cast.png",
+   "scale": 1.25,
+   "scaleMatch": 0.901,
+   "anchor": [
+    1200,
+    1340
+   ],
+   "headCenter": [
+    1505.8,
+    402.2
+   ],
+   "axeHead": [
+    1990,
+    1077
+   ],
+   "bladeTip": [
+    1807,
+    1253
+   ],
+   "tipSource": "자동 검출",
+   "bbox": [
+    670,
+    103,
+    2100,
+    1340
+   ]
+  },
+  {
+   "id": "07-skill2-ready",
+   "file": "frames/07-skill2-ready.png",
+   "scale": 1.0526,
+   "scaleMatch": 0.935,
+   "anchor": [
+    1200,
+    1340
+   ],
+   "headCenter": [
+    1139.3,
+    620.5
+   ],
+   "axeHead": [
+    581,
+    1081
+   ],
+   "bladeTip": [
+    184,
+    1040
+   ],
+   "tipSource": "자동 검출",
+   "bbox": [
+    3,
+    386,
+    1452,
+    1340
+   ]
+  },
+  {
+   "id": "08-skill2-peak",
+   "file": "frames/08-skill2-peak.png",
+   "scale": 1.1111,
+   "scaleMatch": 0.923,
+   "anchor": [
+    1200,
+    1340
+   ],
+   "headCenter": [
+    1062.4,
+    920.5
+   ],
+   "axeHead": [
+    1679,
+    1075
+   ],
+   "bladeTip": [
+    1608,
+    1279
+   ],
+   "tipSource": "자동 검출",
+   "bbox": [
+    253,
+    293,
+    1795,
+    1340
+   ]
+  },
+  {
+   "id": "09-skill3-anticipation",
+   "file": "frames/09-skill3-anticipation.png",
+   "scale": 1.0,
+   "scaleMatch": 0.907,
+   "anchor": [
+    1200,
+    1340
+   ],
+   "headCenter": [
+    1174.2,
+    674.7
+   ],
+   "axeHead": [
+    191,
+    1013
+   ],
+   "bladeTip": [
+    320,
+    1203
+   ],
+   "tipSource": "자동 검출",
+   "bbox": [
+    82,
+    436,
+    1430,
+    1340
+   ]
+  },
+  {
+   "id": "10-skill3-cast",
+   "file": "frames/10-skill3-cast.png",
+   "scale": 1.3333,
+   "scaleMatch": 0.939,
+   "anchor": [
+    1200,
+    1340
+   ],
+   "headCenter": [
+    1065.4,
+    469.7
+   ],
+   "axeHead": [
+    564,
+    994
+   ],
+   "bladeTip": [
+    1616,
+    242
+   ],
+   "tipSource": "수동 확정",
+   "bbox": [
+    317,
+    23,
+    1609,
+    1340
+   ]
+  },
+  {
+   "id": "11-skill3-finish",
+   "file": "frames/11-skill3-finish.png",
+   "scale": 1.1765,
+   "scaleMatch": 0.918,
+   "anchor": [
+    1200,
+    1340
+   ],
+   "headCenter": [
+    1079.0,
+    559.2
+   ],
+   "axeHead": [
+    1535,
+    1116
+   ],
+   "bladeTip": [
+    1380,
+    1315
+   ],
+   "tipSource": "자동 검출",
+   "bbox": [
+    69,
+    285,
+    1661,
+    1341
+   ]
+  }
+ ],
+ "effects": [
+  {
+   "id": "slash-diagonal",
+   "name": "기존 대각 베기",
+   "anchor": "bladeTip",
+   "size": [
+    575,
+    287
+   ],
+   "pivot": [
+    470,
+    246
+   ],
+   "blend": "source-over",
+   "loop": false,
+   "frames": [
+    {
+     "file": "effects/slash-diagonal/00-aligned.png",
+     "ms": 45
+    },
+    {
+     "file": "effects/slash-diagonal/01-aligned.png",
+     "ms": 70
+    },
+    {
+     "file": "effects/slash-diagonal/02-aligned.png",
+     "ms": 100
+    }
+   ]
+  },
+  {
+   "id": "impact",
+   "name": "명중 섬광",
+   "anchor": "hitPoint",
+   "size": [
+    548,
+    320
+   ],
+   "pivot": [
+    282,
+    150
+   ],
+   "blend": "source-over",
+   "loop": false,
+   "frames": [
+    {
+     "file": "effects/impact/00-aligned.png",
+     "ms": 35
+    },
+    {
+     "file": "effects/impact/01-aligned.png",
+     "ms": 55
+    },
+    {
+     "file": "effects/impact/02-aligned.png",
+     "ms": 85
+    }
+   ]
+  },
+  {
+   "id": "fire-upright",
+   "name": "수직 화염",
+   "anchor": "groundPoint",
+   "size": [
+    542,
+    350
+   ],
+   "pivot": [
+    264,
+    315
+   ],
+   "blend": "source-over",
+   "loop": false,
+   "frames": [
+    {
+     "file": "effects/fire-upright/00-aligned.png",
+     "ms": 70
+    },
+    {
+     "file": "effects/fire-upright/01-aligned.png",
+     "ms": 100
+    },
+    {
+     "file": "effects/fire-upright/02-aligned.png",
+     "ms": 150
+    }
+   ]
+  },
+  {
+   "id": "ash-mixed",
+   "name": "기존 연기·잔불",
+   "anchor": "emissionPoint",
+   "size": [
+    552,
+    275
+   ],
+   "pivot": [
+    269,
+    161
+   ],
+   "blend": "source-over",
+   "loop": false,
+   "frames": [
+    {
+     "file": "effects/ash-mixed/00-aligned.png",
+     "ms": 100
+    },
+    {
+     "file": "effects/ash-mixed/01-aligned.png",
+     "ms": 160
+    },
+    {
+     "file": "effects/ash-mixed/02-aligned.png",
+     "ms": 220
+    }
+   ]
+  },
+  {
+   "id": "slash-horizontal",
+   "name": "수평 베기",
+   "anchor": "bladeTip",
+   "size": [
+    479,
+    267
+   ],
+   "pivot": [
+    408,
+    149
+   ],
+   "blend": "source-over",
+   "loop": false,
+   "frames": [
+    {
+     "file": "effects/slash-horizontal/00-aligned.png",
+     "ms": 45
+    },
+    {
+     "file": "effects/slash-horizontal/01-aligned.png",
+     "ms": 70
+    },
+    {
+     "file": "effects/slash-horizontal/02-aligned.png",
+     "ms": 100
+    }
+   ]
+  },
+  {
+   "id": "slash-rising",
+   "name": "올려베기",
+   "anchor": "bladeTip",
+   "size": [
+    527,
+    318
+   ],
+   "pivot": [
+    406,
+    50
+   ],
+   "blend": "source-over",
+   "loop": false,
+   "frames": [
+    {
+     "file": "effects/slash-rising/00-aligned.png",
+     "ms": 45
+    },
+    {
+     "file": "effects/slash-rising/01-aligned.png",
+     "ms": 70
+    },
+    {
+     "file": "effects/slash-rising/02-aligned.png",
+     "ms": 100
+    }
+   ]
+  },
+  {
+   "id": "slash-downward",
+   "name": "내려찍기",
+   "anchor": "bladeTip",
+   "size": [
+    549,
+    562
+   ],
+   "pivot": [
+    342,
+    487
+   ],
+   "blend": "source-over",
+   "loop": false,
+   "frames": [
+    {
+     "file": "effects/slash-downward/00-aligned.png",
+     "ms": 45
+    },
+    {
+     "file": "effects/slash-downward/01-aligned.png",
+     "ms": 70
+    },
+    {
+     "file": "effects/slash-downward/02-aligned.png",
+     "ms": 100
+    }
+   ]
+  },
+  {
+   "id": "ground-impact",
+   "name": "지면 충격",
+   "anchor": "groundPoint",
+   "size": [
+    579,
+    526
+   ],
+   "pivot": [
+    287,
+    315
+   ],
+   "blend": "source-over",
+   "loop": false,
+   "frames": [
+    {
+     "file": "effects/ground-impact/00-aligned.png",
+     "ms": 40
+    },
+    {
+     "file": "effects/ground-impact/01-aligned.png",
+     "ms": 65
+    },
+    {
+     "file": "effects/ground-impact/02-aligned.png",
+     "ms": 110
+    }
+   ]
+  },
+  {
+   "id": "fire-horizontal",
+   "name": "수평 화염 분출",
+   "anchor": "emissionPoint",
+   "size": [
+    563,
+    262
+   ],
+   "pivot": [
+    81,
+    124
+   ],
+   "blend": "source-over",
+   "loop": false,
+   "frames": [
+    {
+     "file": "effects/fire-horizontal/00-aligned.png",
+     "ms": 55
+    },
+    {
+     "file": "effects/fire-horizontal/01-aligned.png",
+     "ms": 85
+    },
+    {
+     "file": "effects/fire-horizontal/02-aligned.png",
+     "ms": 120
+    }
+   ]
+  },
+  {
+   "id": "fire-rising",
+   "name": "대각 화염 분출",
+   "anchor": "emissionPoint",
+   "size": [
+    546,
+    310
+   ],
+   "pivot": [
+    87,
+    270
+   ],
+   "blend": "source-over",
+   "loop": false,
+   "frames": [
+    {
+     "file": "effects/fire-rising/00-aligned.png",
+     "ms": 55
+    },
+    {
+     "file": "effects/fire-rising/01-aligned.png",
+     "ms": 85
+    },
+    {
+     "file": "effects/fire-rising/02-aligned.png",
+     "ms": 120
+    }
+   ]
+  },
+  {
+   "id": "smoke",
+   "name": "분리 연기",
+   "anchor": "emissionPoint",
+   "size": [
+    507,
+    317
+   ],
+   "pivot": [
+    49,
+    270
+   ],
+   "blend": "source-over",
+   "loop": false,
+   "frames": [
+    {
+     "file": "effects/smoke/00-aligned.png",
+     "ms": 100
+    },
+    {
+     "file": "effects/smoke/01-aligned.png",
+     "ms": 160
+    },
+    {
+     "file": "effects/smoke/02-aligned.png",
+     "ms": 240
+    }
+   ]
+  },
+  {
+   "id": "embers",
+   "name": "분리 잔불",
+   "anchor": "emissionPoint",
+   "size": [
+    493,
+    253
+   ],
+   "pivot": [
+    34,
+    197
+   ],
+   "blend": "source-over",
+   "loop": false,
+   "frames": [
+    {
+     "file": "effects/embers/00-aligned.png",
+     "ms": 70
+    },
+    {
+     "file": "effects/embers/01-aligned.png",
+     "ms": 140
+    },
+    {
+     "file": "effects/embers/02-aligned.png",
+     "ms": 220
+    }
+   ]
+  }
+ ],
+ "cutscene": {
+  "size": [
+   1774,
+   887
+  ],
+  "layers": [
+   {
+    "id": "body-underpaint",
+    "file": "layers/body-underpaint.png",
+    "pos": [
+     479,
+     169
+    ],
+    "pivot": [
+     804,
+     553
+    ],
+    "z": 5,
+    "parent": "body-core",
+    "visibleDefault": true,
+    "motionDeg": 0
+   },
+   {
+    "id": "coat-rear",
+    "file": "layers/coat-rear.png",
+    "pos": [
+     0,
+     21
+    ],
+    "pivot": [
+     802,
+     390
+    ],
+    "z": 10,
+    "parent": "body-core",
+    "visibleDefault": true,
+    "motionDeg": 0.6
+   },
+   {
+    "id": "body-core",
+    "file": "layers/body-core.png",
+    "pos": [
+     490,
+     112
+    ],
+    "pivot": [
+     804,
+     553
+    ],
+    "z": 20,
+    "parent": "root",
+    "visibleDefault": true,
+    "motionDeg": 0
+   },
+   {
+    "id": "coat-front",
+    "file": "layers/coat-front.png",
+    "pos": [
+     0,
+     394
+    ],
+    "pivot": [
+     741,
+     470
+    ],
+    "z": 30,
+    "parent": "body-core",
+    "visibleDefault": true,
+    "motionDeg": -0.55
+   },
+   {
+    "id": "coat-side",
+    "file": "layers/coat-side.png",
+    "pos": [
+     852,
+     584
+    ],
+    "pivot": [
+     878,
+     635
+    ],
+    "z": 31,
+    "parent": "body-core",
+    "visibleDefault": true,
+    "motionDeg": 0.8
+   },
+   {
+    "id": "arm-axe",
+    "file": "layers/arm-axe.png",
+    "pos": [
+     778,
+     207
+    ],
+    "pivot": [
+     872,
+     286
+    ],
+    "z": 40,
+    "parent": "body-core",
+    "visibleDefault": true,
+    "motionDeg": 0.25
+   },
+   {
+    "id": "head-hood",
+    "file": "layers/head-hood.png",
+    "pos": [
+     813,
+     0
+    ],
+    "pivot": [
+     1030,
+     311
+    ],
+    "z": 50,
+    "parent": "body-core",
+    "visibleDefault": true,
+    "motionDeg": 0.25
+   },
+   {
+    "id": "eye-screen-left-closed",
+    "file": "layers/eye-screen-left-closed.png",
+    "pos": [
+     1064,
+     167
+    ],
+    "pivot": [
+     1105,
+     205
+    ],
+    "z": 60,
+    "parent": "head-hood",
+    "visibleDefault": false,
+    "motionDeg": 0
+   },
+   {
+    "id": "eye-screen-left-open",
+    "file": "layers/eye-screen-left-open.png",
+    "pos": [
+     1064,
+     167
+    ],
+    "pivot": [
+     1105,
+     205
+    ],
+    "z": 60,
+    "parent": "head-hood",
+    "visibleDefault": true,
+    "motionDeg": 0
+   },
+   {
+    "id": "eye-screen-right-closed",
+    "file": "layers/eye-screen-right-closed.png",
+    "pos": [
+     1124,
+     228
+    ],
+    "pivot": [
+     1149,
+     251
+    ],
+    "z": 61,
+    "parent": "head-hood",
+    "visibleDefault": false,
+    "motionDeg": 0
+   },
+   {
+    "id": "eye-screen-right-open",
+    "file": "layers/eye-screen-right-open.png",
+    "pos": [
+     1124,
+     228
+    ],
+    "pivot": [
+     1149,
+     251
+    ],
+    "z": 61,
+    "parent": "head-hood",
+    "visibleDefault": true,
+    "motionDeg": 0
+   },
+   {
+    "id": "mouth-closed",
+    "file": "layers/mouth-closed.png",
+    "pos": [
+     1074,
+     255
+    ],
+    "pivot": [
+     1098,
+     272
+    ],
+    "z": 62,
+    "parent": "head-hood",
+    "visibleDefault": true,
+    "motionDeg": 0
+   },
+   {
+    "id": "mouth-open",
+    "file": "layers/mouth-open.png",
+    "pos": [
+     1074,
+     255
+    ],
+    "pivot": [
+     1098,
+     272
+    ],
+    "z": 62,
+    "parent": "head-hood",
+    "visibleDefault": false,
+    "motionDeg": 0
+   }
+  ]
+ }
+}
