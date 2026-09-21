@@ -1,0 +1,22 @@
+{
+  "_comment": "SPEC-002 §5.4 전용기-이펙트 매핑. 캐릭터마다 프레임 포즈가 달라서 캐릭터별로 둔다",
+  "_authored": "사람이 쓰는 파일이다. normalize_sprites.py 가 만드는 sprite-manifest.json 과 분리해 둔 이유는 매니페스트를 다시 생성해도 이 값이 날아가지 않게 하려는 것이다",
+  "_howToAdd": "새 캐릭터는 assets/<캐릭터>/effect-bindings.json 을 같은 형식으로 넣기만 하면 된다. 코드는 고치지 않는다",
+  "version": 1,
+  "character": "incinerator",
+
+  "frames": {
+    "_comment": "프레임 id -> 그 프레임에서 터지는 이펙트. 준비 프레임(05/07/09)은 아직 때린 게 아니라 비운다",
+    "06-skill1-cast": ["slash-diagonal"],
+    "08-skill2-peak": ["slash-horizontal"],
+    "10-skill3-cast": ["slash-rising"],
+    "11-skill3-finish": ["slash-downward", "ground-impact"]
+  },
+
+  "defeat": ["smoke", "embers"],
+
+  "_unused": {
+    "_comment": "화염을 뿜는 기술이 생기기 전까지 호출하지 않는다. 자리를 채우려고 아무 데나 붙이지 않는다 (SPEC-002 §5.4)",
+    "effects": ["fire-horizontal", "fire-rising", "ash-mixed", "fire-upright"]
+  }
+}

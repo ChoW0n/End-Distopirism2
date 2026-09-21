@@ -73,6 +73,19 @@ export interface SpriteManifest {
   cutscene: CutsceneData | null;
 }
 
+//어느 프레임에서 어느 이펙트가 터지는지 (SPEC-002 §5.4)
+//캐릭터마다 프레임 포즈가 달라서 캐릭터별로 따로 둔다. 매니페스트와 달리 사람이 쓰는 파일이다
+export interface EffectBindings {
+  character: string;
+  //프레임 id → 그 프레임에서 터질 이펙트 id 목록
+  frames: Record<string, string[]>;
+  //격파 직후에 남는 잔류 이펙트
+  defeat: string[];
+}
+
+//바인딩이 없는 캐릭터를 위한 빈 값. 에셋이 아직 없으면 이펙트 없이 돌아간다
+export const EMPTY_BINDINGS: EffectBindings = { character: '', frames: {}, defeat: [] };
+
 //매니페스트가 규격과 다를 때 던진다
 export class SpriteManifestError extends Error {
   constructor(message: string) {
@@ -243,15 +256,56 @@ export function parseSpriteManifest(raw: unknown): SpriteManifest {
   return manifest;
 }
 
+//JSON.parse 결과를 검증된 이펙트 바인딩으로 바꾼다
+//_ 로 시작하는 키는 설명용이라 읽지 않는다
+export function parseEffectBindings(raw: unknown): EffectBindings {
+  const source = obj(raw, 'bindings');
+  const frames: Record<string, string[]> = {};
+
+  for (const [frameId, value] of Object.entries(obj(source['frames'], 'bindings.frames'))) {
+    if (frameId.startsWith('_')) continue;
+    if (!Array.isArray(value) || value.some((v) => typeof v !== 'string')) {
+      throw new SpriteManifestError(`bindings.frames.${frameId} 가 문자열 배열이 아니다`);
+    }
+    frames[frameId] = value as string[];
+  }
+
+  const defeat = source['defeat'];
+  if (defeat !== undefined && (!Array.isArray(defeat) || defeat.some((v) => typeof v !== 'string'))) {
+    throw new SpriteManifestError('bindings.defeat 가 문자열 배열이 아니다');
+  }
+
+  return {
+    character: str(source, 'character', 'bindings'),
+    frames,
+    defeat: (defeat as string[] | undefined) ?? [],
+  };
+}
+
 //id 로 빠르게 찾기 위한 조회표
 export class SpriteCatalog {
   private readonly framesById: Map<string, FrameData>;
   private readonly effectsById: Map<string, EffectData>;
 
-  //검증된 매니페스트를 받아 조회표를 만든다
-  constructor(readonly manifest: SpriteManifest) {
+  //검증된 매니페스트를 받아 조회표를 만든다. 바인딩은 없으면 빈 값으로 둔다
+  constructor(
+    readonly manifest: SpriteManifest,
+    readonly bindings: EffectBindings = EMPTY_BINDINGS,
+  ) {
     this.framesById = new Map(manifest.frames.map((f) => [f.id, f]));
     this.effectsById = new Map(manifest.effects.map((e) => [e.id, e]));
+
+    //바인딩이 실재하지 않는 프레임이나 이펙트를 가리키면 연출이 조용히 빠진다
+    for (const [frameId, effectIds] of Object.entries(bindings.frames)) {
+      this.frame(frameId);
+      for (const id of effectIds) this.effect(id);
+    }
+    for (const id of bindings.defeat) this.effect(id);
+  }
+
+  //이 프레임에서 터질 이펙트 목록. 바인딩이 없으면 빈 배열이다
+  effectsOnFrame(frameId: string): string[] {
+    return this.bindings.frames[frameId] ?? [];
   }
 
   get ground(): Point {

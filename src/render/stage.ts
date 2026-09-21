@@ -53,6 +53,11 @@ export class Stage {
   //캐릭터마다 스프라이트 조회표가 다르다. 없는 캐릭터는 배치할 수 없다
   constructor(private readonly catalogs: ReadonlyMap<string, SpriteCatalog>) {}
 
+  //이 캐릭터의 에셋이 들어와 있는지. 캐릭터마다 따로 들어오므로 섞인 상태가 정상이다
+  has(characterId: string): boolean {
+    return this.catalogs.has(characterId);
+  }
+
   //이 참가자의 스프라이트 조회표를 찾는다
   catalogFor(characterId: string): SpriteCatalog {
     const found = this.catalogs.get(characterId);

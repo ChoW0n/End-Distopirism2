@@ -4,24 +4,19 @@
 import { describe, expect, it } from 'vitest';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import { loadSpriteCatalog } from '../src/platform/node-manifest.js';
+import { loadCharacterAssets } from '../src/platform/node-manifest.js';
 import { Stage, StageError, type StagePlacement } from '../src/render/stage.js';
 import { SpriteCatalog, SpriteManifestError, parseSpriteManifest } from '../src/render/manifest.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const sprites = loadSpriteCatalog(resolve(here, '../assets/incinerator/sprite-manifest.json'));
+const assets = resolve(here, '../assets');
+const sprites = loadCharacterAssets(assets, 'incinerator')!;
 
-//세 캐릭터 전부 같은 매니페스트를 쓴다. 지금 매니페스트가 소각원 하나뿐이다
-const stage = new Stage(
-  new Map([
-    ['main', sprites],
-    ['helper', sprites],
-    ['police', sprites],
-  ]),
-);
+//에셋이 들어온 캐릭터만 무대에 오른다. 나머지는 매니페스트가 아직 없다
+const stage = new Stage(new Map([['incinerator', sprites]]));
 
 //무대 위 한 자리
-function at(combatantId: string, x: number, facing: 1 | -1 = 1, characterId = 'main'): StagePlacement {
+function at(combatantId: string, x: number, facing: 1 | -1 = 1, characterId = 'incinerator'): StagePlacement {
   return { combatantId, characterId, position: { x, y: sprites.ground.y }, facing };
 }
 
@@ -214,7 +209,8 @@ describe('§6 합성과 반전', () => {
 
   it('매니페스트가 없는 캐릭터는 배치할 수 없다', () => {
     const empty = new Stage(new Map<string, SpriteCatalog>());
-    expect(() => empty.catalogFor('main')).toThrow(StageError);
+    expect(empty.has('incinerator')).toBe(false);
+    expect(() => empty.catalogFor('incinerator')).toThrow(StageError);
   });
 });
 
