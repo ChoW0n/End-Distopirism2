@@ -310,6 +310,14 @@ export class SpriteCatalog {
     for (const id of [...bindings.ultimate, ...bindings.defeat]) this.effect(id);
   }
 
+  //캐릭터 키 H. UI 가 바·배지를 놓을 때 쓰는 기준 길이다 (SPEC-002 §5.1, SPEC-004 U-2)
+  //정지 프레임으로만 잰다. 공격 프레임은 키가 0.75~1.00 배로 흔들려서 매번 재면 바가 출렁인다
+  get characterHeight(): number {
+    const idle = this.frameEndingWith('idle') ?? this.manifest.frames[0];
+    if (!idle) throw new SpriteManifestError('프레임이 하나도 없다');
+    return idle.anchor.y - idle.bbox[1];
+  }
+
   //이 프레임에서 터질 이펙트 목록. 바인딩이 없으면 빈 배열이다
   effectsOnFrame(frameId: string): string[] {
     return this.bindings.frames[frameId] ?? [];

@@ -161,17 +161,49 @@ position.y += Mathf.Sin(Time.time * moveSpeed) * moveAmount;
 
 ---
 
-## 6. UI 명령 (초안)
+## 6. UI 명령 **[2026-09-21 구현본]**
 
 ```ts
 type UiCommand =
-  | { type: 'bar'; combatantId; kind: 'hp' | 'mentality'; ratio: number }
-  | { type: 'targetArrow'; sourceId; targetId; curve: Point[] }
+  | { type: 'bar'; combatantId; kind: 'hp' | 'mentality'; ratio;
+      origin: Point; size: { width, height }; tweenSec; easing }
+  | { type: 'targetArrow'; sourceId; targetId; curve: Point[];
+      head: [Point, Point, Point]; drawSec; colorStart; colorEnd }
   | { type: 'clearArrows' }
-  | { type: 'clashBadge'; combatantId; result: 'win' | 'lose' | 'deadlock' }
-  | { type: 'dashTo'; combatantId; position: Point }
+  | { type: 'clashBadge'; combatantId; result: 'win' | 'lose' | 'deadlock';
+      from: Point; to: Point; durationSec; text: string | null }
+  | { type: 'dashTo'; combatantId; position: Point; speed }
   | { type: 'dashBack'; combatantId }
+  | { type: 'float'; combatantId; base: Point; amplitude; periodSec }
 ```
+
+초안에서 늘어난 것과 이유:
+
+- **좌표·크기를 명령이 들고 있다.** U-1 대로 전부 무대 좌표다. 렌더러가 앵커를 다시 풀면
+  계산이 두 군데가 되고, 그게 원본 카메라 버그와 같은 구조다
+- **`float` 이 새로 생겼다.** 기준 높이 `base` 를 같이 줘서 렌더러가 `base + sin(t)·amplitude`
+  로만 그리게 한다. 원본처럼 `+=` 로 누적할 자리를 아예 없앤 것이다 (§5.3)
+- **`head` 는 화살촉 세 점**이다. `curve` 와 같은 이유로 여기서 계산해서 넘긴다
+- **`text` 는 교착 카운터**다. 스프라이트가 나오기 전까지 이걸로 그린다 (U-4)
+
+### 6.1 입력은 이벤트가 아니다
+
+적의 타겟은 `enemyTargeted` 이벤트로 오지만 **아군의 선택은 도메인 이벤트가 아니다.**
+플레이어 입력이라 `UiDirector.selectTarget(sourceId, targetId)` 로 따로 받는다.
+이걸 도메인 이벤트로 만들지 않는다 — 선택은 아직 전투에 반영되지 않은 상태고,
+도메인이 입력 단계를 알 필요가 없다.
+
+### 6.2 체력·정신력을 UI 가 따라 센다
+
+`damageApplied` 는 남은 체력을 주지만 `statusTicked` 는 깎인 양만 준다. `mentalityChanged`
+역시 바뀔 때만 온다. 그래서 `UiDirector` 가 두 값을 따라 센다.
+
+- 시작값은 캐릭터 데이터(`maxHp`, `mentality`)에서 가져온다. 임의값을 쓰지 않는다
+- `damageApplied` 는 확정값이라 받을 때마다 어긋난 값이 맞춰진다
+- 턴 시작마다 두 바를 한 번씩 다시 낸다. 놓친 변화가 있어도 여기서 맞는다
+
+**이걸 없애려면 도메인 이벤트를 늘려야 한다.** SPEC-001 v2.0 §4 가 이벤트 추가를 셋으로
+못 박았으므로 지금은 UI 쪽에서 감당한다. 나중에 필요하면 그때 스펙을 먼저 고친다.
 
 `curve` 는 이미 계산된 점 목록이다. 베지어 계산은 UI 계층 안에서 끝내고 렌더러에 곡선 공식을
 넘기지 않는다. 렌더러 교체 시 곡선 모양이 달라지면 안 되기 때문이다.
