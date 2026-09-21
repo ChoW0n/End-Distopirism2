@@ -79,12 +79,14 @@ export interface EffectBindings {
   character: string;
   //프레임 id → 그 프레임에서 터질 이펙트 id 목록
   frames: Record<string, string[]>;
+  //궁극기 전용 조합. 궁극기는 전용기 3과 마무리 프레임을 공유해서 프레임으로는 안 갈린다
+  ultimate: string[];
   //격파 직후에 남는 잔류 이펙트
   defeat: string[];
 }
 
 //바인딩이 없는 캐릭터를 위한 빈 값. 에셋이 아직 없으면 이펙트 없이 돌아간다
-export const EMPTY_BINDINGS: EffectBindings = { character: '', frames: {}, defeat: [] };
+export const EMPTY_BINDINGS: EffectBindings = { character: '', frames: {}, ultimate: [], defeat: [] };
 
 //매니페스트가 규격과 다를 때 던진다
 export class SpriteManifestError extends Error {
@@ -270,16 +272,21 @@ export function parseEffectBindings(raw: unknown): EffectBindings {
     frames[frameId] = value as string[];
   }
 
-  const defeat = source['defeat'];
-  if (defeat !== undefined && (!Array.isArray(defeat) || defeat.some((v) => typeof v !== 'string'))) {
-    throw new SpriteManifestError('bindings.defeat 가 문자열 배열이 아니다');
-  }
-
   return {
     character: str(source, 'character', 'bindings'),
     frames,
-    defeat: (defeat as string[] | undefined) ?? [],
+    ultimate: idList(source['ultimate'], 'bindings.ultimate'),
+    defeat: idList(source['defeat'], 'bindings.defeat'),
   };
+}
+
+//이펙트 id 목록 하나를 검증한다. 없으면 빈 배열로 둔다
+function idList(value: unknown, path: string): string[] {
+  if (value === undefined) return [];
+  if (!Array.isArray(value) || value.some((v) => typeof v !== 'string')) {
+    throw new SpriteManifestError(`${path} 가 문자열 배열이 아니다`);
+  }
+  return value as string[];
 }
 
 //id 로 빠르게 찾기 위한 조회표
@@ -300,7 +307,7 @@ export class SpriteCatalog {
       this.frame(frameId);
       for (const id of effectIds) this.effect(id);
     }
-    for (const id of bindings.defeat) this.effect(id);
+    for (const id of [...bindings.ultimate, ...bindings.defeat]) this.effect(id);
   }
 
   //이 프레임에서 터질 이펙트 목록. 바인딩이 없으면 빈 배열이다

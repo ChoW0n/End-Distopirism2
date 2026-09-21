@@ -112,7 +112,7 @@ describe('교전이 시작되면 전용기 동작이 나간다', () => {
     battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: ULT }]);
     const commands = makePresenter().consume(battle.resolve());
 
-    expect(commands.some((c) => c.type === 'playCutscene' && c.combatantId === 'a1')).toBe(true);
+    expect(commands.some((c) => c.type === 'ultimate' && c.phase === 'cutscene' && c.combatantId === 'a1')).toBe(true);
     //컷신으로 빠졌으니 a1 의 전용기 프레임은 나오지 않는다
     expect(framesFor(commands, 'a1')[0]).not.toEqual(sprites.frameSequence('S1'));
   });
@@ -140,7 +140,7 @@ describe('교전이 시작되면 전용기 동작이 나간다', () => {
     expect(enemy.hp).toBeLessThan(hpBefore);
 
     //순서는 합 확정 → 연출 → 기존 피해 적용이다
-    const cutsceneAt = commands.findIndex((c) => c.type === 'playCutscene');
+    const cutsceneAt = commands.findIndex((c) => c.type === 'ultimate' && c.phase === 'cutscene');
     const effectAt = commands.findIndex((c) => c.type === 'spawnEffect');
     expect(cutsceneAt).toBeGreaterThanOrEqual(0);
     if (effectAt >= 0) expect(cutsceneAt).toBeLessThan(effectAt);
@@ -388,5 +388,122 @@ describe('전투 한 판을 통째로 돌려도 깨지지 않는다', () => {
         expect(() => sprites.frame(frameId)).not.toThrow();
       }
     }
+  });
+});
+
+describe('궁극기가 렌더 명령까지 이어진다', () => {
+  //궁극기 명령만 골라낸다
+  function ultimates(commands: RenderCommand[]) {
+    return commands.filter((c): c is Extract<RenderCommand, { type: 'ultimate' }> => c.type === 'ultimate');
+  }
+
+  //속성을 채워 궁극기를 손에 쥐여 준다. 도메인 흐름을 그대로 탄다
+  function armUltimate(presenter: BattlePresenter) {
+    const battle = makeBattle(S1);
+    const ally = battle.combatant('a1');
+    const commands: RenderCommand[] = [];
+
+    presenter.consume(battle.startTurn());
+    battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: S2 }]);
+    presenter.consume(battle.resolve());
+
+    ally.attributes.attack = catalog.rules.ultimateThreshold;
+    commands.push(...presenter.consume(battle.endTurn()));
+    commands.push(...presenter.consume(battle.startTurn()));
+    return { battle, commands };
+  }
+
+  it('턴 종료에 ready, 다음 턴 시작에 cardAdded 가 나온다', () => {
+    const presenter = makePresenter();
+    const { battle, commands } = armUltimate(presenter);
+
+    expect(battle.combatant('a1').deck).toContain(ULT);
+    expect(ultimates(commands).map((c) => c.phase)).toEqual(['ready', 'cardAdded']);
+    for (const command of ultimates(commands)) expect(command.combatantId).toBe('a1');
+  });
+
+  it('cardAdded 는 한 번만 나온다', () => {
+    const presenter = makePresenter();
+    const { battle } = armUltimate(presenter);
+
+    //안 쓰고 한 턴을 더 흘려보내도 다시 알리지 않는다 (D-17)
+    battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: S2 }]);
+    battle.resolve();
+    const later = [...presenter.consume(battle.endTurn()), ...presenter.consume(battle.startTurn())];
+    expect(ultimates(later)).toHaveLength(0);
+  });
+
+  it('궁극기를 쓰면 cutscene 과 used 가 나온다', () => {
+    const presenter = makePresenter();
+    const { battle } = armUltimate(presenter);
+
+    battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: ULT }]);
+    const commands = presenter.consume(battle.resolve());
+    const phases = ultimates(commands).map((c) => c.phase);
+
+    //도메인이 카드를 먼저 소모하고 합을 굴린다. 그 순서를 프리젠터가 뒤집지 않는다
+    expect(phases).toEqual(['used', 'cutscene']);
+  });
+
+  it('cutscene 명령에 13레이어 배치가 실린다', () => {
+    const presenter = makePresenter();
+    const { battle } = armUltimate(presenter);
+
+    battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: ULT }]);
+    const cutscene = ultimates(presenter.consume(battle.resolve())).find((c) => c.phase === 'cutscene');
+
+    const layers = cutscene?.layers ?? [];
+    const all = sprites.manifest.cutscene?.layers ?? [];
+    //눈·입은 상태별로 하나만 켜지므로 전체 13장보다 적다 (SPEC-002 §7)
+    expect(layers.length).toBeGreaterThan(0);
+    expect(layers.length).toBeLessThan(all.length);
+    for (const layer of layers) {
+      expect(all.some((l) => l.id === layer.layerId)).toBe(true);
+      expect(Number.isFinite(layer.pivot.x)).toBe(true);
+      expect(Number.isFinite(layer.offset.y)).toBe(true);
+    }
+    //z 순서대로 나온다
+    expect(layers.map((l) => l.z)).toEqual([...layers.map((l) => l.z)].sort((a, b) => a - b));
+  });
+
+  it('다른 단계에는 레이어가 실리지 않는다', () => {
+    const presenter = makePresenter();
+    const { commands } = armUltimate(presenter);
+    for (const command of ultimates(commands)) expect(command.layers).toBeNull();
+  });
+
+  it('궁극기 이펙트는 §5.4 의 궁극기 바인딩을 쓴다', () => {
+    const presenter = makePresenter();
+    const { battle } = armUltimate(presenter);
+
+    battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: ULT }]);
+    const commands = presenter.consume(battle.resolve());
+    const ids = commands
+      .filter((c): c is Extract<RenderCommand, { type: 'spawnEffect' }> => c.type === 'spawnEffect')
+      .map((c) => c.placement.effectId);
+
+    //전용기 3 마무리에는 없고 궁극기에만 있는 것이 같이 나온다
+    for (const id of sprites.bindings.ultimate) expect(ids).toContain(id);
+    expect(sprites.effectsOnFrame('11-skill3-finish')).not.toContain('fire-upright');
+    expect(ids).toContain('fire-upright');
+  });
+
+  it('무기 궤적은 프레임에, 지면 충격·화염은 피해 뒤에 붙는다', () => {
+    const presenter = makePresenter();
+    const { battle } = armUltimate(presenter);
+
+    battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: ULT }]);
+    const commands = presenter.consume(battle.resolve());
+    const withFrame = commands
+      .filter((c): c is Extract<RenderCommand, { type: 'spawnEffect' }> => c.type === 'spawnEffect')
+      //적도 같은 교전에서 자기 전용기를 내므로 궁극기를 쓴 쪽만 본다
+      .filter((c) => c.frameId !== null && c.sourceId === 'a1')
+      .map((c) => c.placement.effectId);
+
+    expect(withFrame).toEqual(['slash-downward']);
+    const impacts = impactEffects(commands)
+      .filter((c) => c.sourceId === 'a1')
+      .map((c) => c.placement.effectId);
+    for (const id of ['ground-impact', 'fire-upright', 'embers']) expect(impacts).toContain(id);
   });
 });

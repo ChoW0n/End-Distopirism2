@@ -13,10 +13,13 @@
     "11-skill3-finish": ["slash-downward", "ground-impact"]
   },
 
+  "_ultimateComment": "궁극기는 전용기 3과 마무리 프레임을 공유해서 frames 키로는 안 갈린다. 그래서 따로 둔다",
+  "ultimate": ["slash-downward", "ground-impact", "fire-upright", "embers"],
+
   "defeat": ["smoke", "embers"],
 
   "_unused": {
     "_comment": "화염을 뿜는 기술이 생기기 전까지 호출하지 않는다. 자리를 채우려고 아무 데나 붙이지 않는다 (SPEC-002 §5.4)",
-    "effects": ["fire-horizontal", "fire-rising", "ash-mixed", "fire-upright"]
+    "effects": ["fire-horizontal", "fire-rising", "ash-mixed"]
   }
 }
