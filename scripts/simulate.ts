@@ -3,6 +3,7 @@
 //
 //  npm run sim -- --seed 1          한 판을 로그와 함께
 //  npm run sim -- --runs 200        200판 돌리고 승률만
+//  npm run sim -- --roster helper,main   로스터를 직접 지정 (기본은 데이터의 캐릭터 전원)
 
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
@@ -30,21 +31,25 @@ interface RunResult {
 }
 
 //명령줄 인자를 읽는다
-function parseArgs(argv: string[]): { seed: number; runs: number } {
+function parseArgs(argv: string[]): { seed: number; runs: number; roster: string[] | null } {
   let seed = 1;
   let runs = 1;
+  let roster: string[] | null = null;
   for (let i = 0; i < argv.length; i += 1) {
-    const value = Number(argv[i + 1]);
+    const next = argv[i + 1];
+    const value = Number(next);
     if (argv[i] === '--seed' && Number.isFinite(value)) seed = value;
     if (argv[i] === '--runs' && Number.isFinite(value)) runs = Math.max(1, Math.floor(value));
+    //캐릭터가 늘어날 때 코드를 고치지 않도록 로스터를 밖에서 받는다
+    if (argv[i] === '--roster' && next) roster = next.split(',').map((s) => s.trim()).filter(Boolean);
   }
-  return { seed, runs };
+  return { seed, runs, roster };
 }
 
-//3 대 3 미러 구성. 양 진영이 같은 캐릭터 3명을 쓴다. 덱은 캐릭터의 전용기에서 나온다
-function makeRoster(side: Side): CombatantInit[] {
+//미러 구성. 양 진영이 같은 캐릭터 목록을 쓴다. 덱은 캐릭터의 전용기에서 나온다
+function makeRoster(side: Side, characterIds: readonly string[]): CombatantInit[] {
   const prefix = side === 'ally' ? 'a' : 'e';
-  return (['helper', 'main', 'police'] as const).map((characterId, index) => ({
+  return characterIds.map((characterId, index) => ({
     id: `${prefix}${index + 1}`,
     characterId,
     side,
@@ -239,10 +244,18 @@ class BattleLogger {
 }
 
 //한 판을 끝까지 돌린다. verbose 면 매 교전을 한 줄씩 찍는다
-function runBattle(catalog: BattleCatalog, seed: number, verbose: boolean): RunResult {
+function runBattle(
+  catalog: BattleCatalog,
+  seed: number,
+  verbose: boolean,
+  roster: readonly string[],
+): RunResult {
   const rng = createSeededRng(seed);
   const ai = new WeightedEnemyAi();
-  const battle = new Battle(catalog, makeRoster('ally'), makeRoster('enemy'), { rng, enemyAi: ai });
+  const battle = new Battle(catalog, makeRoster('ally', roster), makeRoster('enemy', roster), {
+    rng,
+    enemyAi: ai,
+  });
 
   //아군도 같은 AI 로 둔다. 지금은 밸런스 관찰이 목적이라 전용 AI 가 필요 없다
   const resolver = new ClashResolver(catalog, rng, { alliesOf: (c) => battle.sideOf(c.side) });
@@ -357,14 +370,14 @@ function printSummary(result: RunResult): void {
 }
 
 //N 판을 돌리고 승률과 평균 턴 수만 낸다
-function printBatch(catalog: BattleCatalog, seed: number, runs: number): void {
+function printBatch(catalog: BattleCatalog, seed: number, runs: number, roster: readonly string[]): void {
   const tally = { ally: 0, enemy: 0, draw: 0 };
   let totalTurns = 0;
   let shortest = Number.POSITIVE_INFINITY;
   let longest = 0;
 
   for (let i = 0; i < runs; i += 1) {
-    const result = runBattle(catalog, seed + i, false);
+    const result = runBattle(catalog, seed + i, false, roster);
     if (result.winner === 'ally') tally.ally += 1;
     else if (result.winner === 'enemy') tally.enemy += 1;
     else tally.draw += 1;
@@ -382,12 +395,16 @@ function printBatch(catalog: BattleCatalog, seed: number, runs: number): void {
   console.log(`  평균 턴  ${(totalTurns / runs).toFixed(1)}  (최소 ${shortest} / 최대 ${longest})`);
 }
 
-const { seed, runs } = parseArgs(process.argv.slice(2));
+const { seed, runs, roster: rosterArg } = parseArgs(process.argv.slice(2));
 const catalog = loadBattleCatalog(DATA_PATH);
+//로스터를 안 주면 데이터에 있는 캐릭터 전원이 나온다. 캐릭터 추가가 데이터만으로 끝난다
+const roster = rosterArg ?? catalog.data.characters.map((c) => c.id);
+for (const id of roster) catalog.character(id);
 
 if (runs > 1) {
-  printBatch(catalog, seed, runs);
+  console.log(`로스터: ${roster.join(', ')}`);
+  printBatch(catalog, seed, runs, roster);
 } else {
-  console.log(`시드 ${seed}`);
-  printSummary(runBattle(catalog, seed, true));
+  console.log(`시드 ${seed} / 로스터: ${roster.join(', ')}`);
+  printSummary(runBattle(catalog, seed, true, roster));
 }

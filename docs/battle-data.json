@@ -69,6 +69,18 @@
       "mentality": 100,
       "role": "글래스캐논",
       "skills": [2021, 2022, 2023]
+    },
+    {
+      "_comment": "D-19. 에셋이 완성된 유일한 캐릭터라 로스터에 넣었다. 스탯은 제안값이고 시뮬로 확정한다",
+      "id": "incinerator",
+      "name": "소각원",
+      "maxHp": 360,
+      "atkLevel": 33,
+      "defLevel": 8,
+      "maxCoin": 4,
+      "mentality": 100,
+      "role": "근접",
+      "skills": [2031, 2032, 2033]
     }
   ],
 
@@ -174,6 +186,42 @@
       "id": 2023,
       "name": "지하 경찰 S3",
       "character": "police",
+      "slot": "S3",
+      "attribute": "support",
+      "baseDamage": 11,
+      "coinPower": 2,
+      "archetype": "안정",
+      "maxInDeck": 1,
+      "text": "궁극기 전 준비 기술. 합 승리 시 보조 속성 +1"
+    },
+    {
+      "id": 2031,
+      "name": "소각원 S1",
+      "character": "incinerator",
+      "slot": "S1",
+      "attribute": "attack",
+      "baseDamage": 7,
+      "coinPower": 1,
+      "archetype": "안정",
+      "maxInDeck": 1,
+      "text": "무난한 공격. 합 승리 시 공격 속성 +1"
+    },
+    {
+      "id": 2032,
+      "name": "소각원 S2",
+      "character": "incinerator",
+      "slot": "S2",
+      "attribute": "defense",
+      "baseDamage": 9,
+      "coinPower": 2,
+      "archetype": "표준",
+      "maxInDeck": 1,
+      "text": "강화 공격. 합 승리 시 방어 속성 +1"
+    },
+    {
+      "id": 2033,
+      "name": "소각원 S3",
+      "character": "incinerator",
       "slot": "S3",
       "attribute": "support",
       "baseDamage": 11,

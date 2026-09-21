@@ -215,12 +215,15 @@ describe('§11-5 전용기 수치가 v2.0 §1.1 표와 일치한다', () => {
     { slot: 'S3', attribute: 'support', baseDamage: 11, coinPower: 2 },
   ] as const;
 
-  it('전용기 9종 + 궁극기 1종이 있다', () => {
-    expect(catalog.data.skills).toHaveLength(10);
-    expect(catalog.data.skills.filter((s) => s.slot !== 'ULT')).toHaveLength(9);
+  //캐릭터는 나중에 계속 추가된다. 개수를 박지 않고 로스터에서 뽑는다
+  const roster = catalog.data.characters.map((c) => c.id);
+
+  it('캐릭터마다 전용기 3종이 있고 궁극기는 1종이다', () => {
+    expect(catalog.data.skills.filter((s) => s.slot !== 'ULT')).toHaveLength(roster.length * 3);
+    expect(catalog.data.skills.filter((s) => s.slot === 'ULT')).toHaveLength(1);
   });
 
-  it.each(['helper', 'main', 'police'])('%s 는 자기 전용기 3종만 들고 있다', (characterId) => {
+  it.each(roster)('%s 는 자기 전용기 3종만 들고 있다', (characterId) => {
     const deck = catalog.deckFor(characterId);
     expect(deck).toHaveLength(3);
     for (const id of deck) {
@@ -229,7 +232,7 @@ describe('§11-5 전용기 수치가 v2.0 §1.1 표와 일치한다', () => {
   });
 
   it.each(expected)('$slot 의 수치와 속성이 스펙과 같다', (row) => {
-    for (const characterId of ['helper', 'main', 'police']) {
+    for (const characterId of roster) {
       const skill = catalog.skill(skillOf(characterId, row.slot));
       expect(skill.attribute).toBe(row.attribute);
       expect(skill.baseDamage).toBe(row.baseDamage);
