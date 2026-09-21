@@ -1,10 +1,13 @@
 //SPEC-001 §11 의 검증 기준을 실행 가능한 형태로 옮긴 것
-//이 파일이 통과해야 "스펙대로 구현했다"고 말할 수 있다
+//v2.0 개정으로 카드 9종이 전용기 3종으로 바뀌었고, 코인·정신력·교착·레벨차는 v1.0 그대로다
 
 import { describe, expect, it } from 'vitest';
 import { createSeededRng } from '../src/domain/rng.js';
 import type { BattleEvent } from '../src/domain/types.js';
-import { alwaysFailRng, catalog, makeCombatant, makeResolver } from './helpers.js';
+import { alwaysFailRng, catalog, makeCombatant, makeResolver, skillOf } from './helpers.js';
+
+const MAIN_S1 = skillOf('main', 'S1');
+const MAIN_S2 = skillOf('main', 'S2');
 
 describe('§11-1 코인 성공 확률에 정신력이 반영된다', () => {
   //정신력을 바꿔가며 1000번 굴려 실제 성공률을 센다
@@ -22,7 +25,6 @@ describe('§11-1 코인 성공 확률에 정신력이 반영된다', () => {
   }
 
   it('정신력 100 이면 60% 근처다', () => {
-    expect(measure(100, 1)).toBeCloseTo(0.6, 1);
     expect(Math.abs(measure(100, 1) - 0.6)).toBeLessThanOrEqual(0.03);
   });
 
@@ -70,23 +72,21 @@ describe('§11-2 레벨차 보너스는 상대 방어레벨 기준이다', () =>
     const attacker = makeCombatant('a', 'main', 'ally');
     const weakDefender = makeCombatant('b', 'main', 'enemy');
     const toughDefender = makeCombatant('c', 'helper', 'enemy');
-    const skill = catalog.skill(1001);
-    const first = resolver.calculateDamage(attacker, weakDefender, skill, 0);
-    const second = resolver.calculateDamage(attacker, toughDefender, skill, 0);
+    const skill = catalog.skill(MAIN_S1);
 
     //메인(공29) 기준 방5 는 보너스 6, 방12 는 보너스 4 가 나와야 한다
-    expect(first.levelBonus).toBe(6);
-    expect(second.levelBonus).toBe(4);
+    expect(resolver.calculateDamage(attacker, weakDefender, skill, 0).levelBonus).toBe(6);
+    expect(resolver.calculateDamage(attacker, toughDefender, skill, 0).levelBonus).toBe(4);
   });
 });
 
 describe('§11-3 동점은 교착으로 처리된다', () => {
-  //같은 캐릭터가 같은 카드를 내고 코인이 전부 실패하면 피해가 정확히 같아진다
+  //같은 캐릭터가 같은 전용기를 내고 코인이 전부 실패하면 피해가 정확히 같아진다
   function runDeadlockClash() {
     const attacker = makeCombatant('a', 'main', 'ally');
     const defender = makeCombatant('b', 'main', 'enemy');
     const resolver = makeResolver(alwaysFailRng, [attacker, defender]);
-    const events = resolver.resolve(attacker, 1001, defender, 1001);
+    const events = resolver.resolve(attacker, MAIN_S1, defender, MAIN_S1);
     return { attacker, defender, events };
   }
 
@@ -100,8 +100,7 @@ describe('§11-3 동점은 교착으로 처리된다', () => {
   it('교착이 3회 쌓이면 합이 끝나고 양측 정신력이 10 깎인다', () => {
     const { attacker, defender, events } = runDeadlockClash();
 
-    const deadlocks = events.filter((e) => e.type === 'deadlock');
-    expect(deadlocks).toHaveLength(catalog.rules.deadlockLimit);
+    expect(events.filter((e) => e.type === 'deadlock')).toHaveLength(catalog.rules.deadlockLimit);
     expect(events.some((e) => e.type === 'deadlockLimit')).toBe(true);
     expect(attacker.mentality).toBe(90);
     expect(defender.mentality).toBe(90);
@@ -109,34 +108,19 @@ describe('§11-3 동점은 교착으로 처리된다', () => {
 
   it('교착으로 끝난 합에는 승자가 없고 피해도 없다', () => {
     const { attacker, defender, events } = runDeadlockClash();
-    const end = events.find((e) => e.type === 'clashEnd');
-    expect(end).toMatchObject({ winnerId: null });
+    expect(events.find((e) => e.type === 'clashEnd')).toMatchObject({ winnerId: null });
     expect(attacker.hp).toBe(attacker.base.maxHp);
     expect(defender.hp).toBe(defender.base.maxHp);
   });
 
-  it('G-5 교착으로 끝나면 합 종료 효과가 양쪽 다 발동하지 않는다', () => {
-    //같은 카드를 들려 보내면 피해가 같아져 교착이 된다
-    function runWith(skillId: number) {
-      const attacker = makeCombatant('a', 'main', 'ally', [skillId]);
-      const defender = makeCombatant('b', 'main', 'enemy', [skillId]);
-      const resolver = makeResolver(alwaysFailRng, [attacker, defender]);
-      const events = resolver.resolve(attacker, skillId, defender, skillId);
-      return { attacker, defender, events };
-    }
+  it('G-5 교착으로 끝나면 합 종료 효과도 속성 누적도 일어나지 않는다', () => {
+    const { attacker, defender, events } = runDeadlockClash();
 
-    //사기 진작 — 승리 시 아군 코인 +1, 패배 시 -2. 둘 다 나오면 안 된다
-    const morale = runWith(1007);
-    expect(morale.events.some((e) => e.type === 'deadlockLimit')).toBe(true);
-    expect(morale.attacker.nextTurnCoinModifier).toBe(0);
-    expect(morale.defender.nextTurnCoinModifier).toBe(0);
-
-    //파열 — 승리 시 상대 방어력감소, 패배 시 나에게 출혈. 상태이상이 하나도 붙으면 안 된다
-    const rupture = runWith(1008);
-    expect(rupture.events.some((e) => e.type === 'deadlockLimit')).toBe(true);
-    expect(rupture.events.some((e) => e.type === 'statusApplied')).toBe(false);
-    expect(rupture.attacker.statuses).toHaveLength(0);
-    expect(rupture.defender.statuses).toHaveLength(0);
+    expect(events.some((e) => e.type === 'deadlockLimit')).toBe(true);
+    expect(events.some((e) => e.type === 'statusApplied')).toBe(false);
+    expect(events.some((e) => e.type === 'attributeGained')).toBe(false);
+    expect(attacker.attributeTotal).toBe(0);
+    expect(defender.attributeTotal).toBe(0);
   });
 });
 
@@ -151,23 +135,24 @@ describe('§11-4 상태이상 4종이 명시된 타이밍에 발동한다', () =
     resolver.applyTurnStartStatuses(bleeding, events);
 
     //메인 캐릭터 최대체력 320 의 1% 는 3, 2중첩이면 6
-    const ticked = events.find((e) => e.type === 'statusTicked');
-    expect(ticked).toMatchObject({ combatantId: 'b', status: 'bleed', damage: 6 });
+    expect(events.find((e) => e.type === 'statusTicked')).toMatchObject({
+      combatantId: 'b',
+      status: 'bleed',
+      damage: 6,
+    });
     expect(bleeding.hp).toBe(320 - 6);
   });
 
   it('출혈은 한 턴에 여러 교전을 치러도 한 번만 들어간다', () => {
-    //D-7 로 한 캐릭터가 합 1건 + 일방 피격까지 받을 수 있어 교전마다 넣으면 중복된다
-    const attacker = makeCombatant('a', 'main', 'ally', [1001]);
-    const bleeding = makeCombatant('b', 'main', 'enemy', [1001]);
+    const attacker = makeCombatant('a', 'main', 'ally');
+    const bleeding = makeCombatant('b', 'main', 'enemy');
     const resolver = makeResolver(alwaysFailRng, [attacker, bleeding]);
 
     bleeding.applyStatus('bleed', 3, true);
-    const clashEvents = resolver.resolve(attacker, 1001, bleeding, 1001);
-    const oneSidedEvents = resolver.resolveOneSided(attacker, 1001, bleeding);
+    const clashEvents = resolver.resolve(attacker, MAIN_S2, bleeding, MAIN_S1);
+    const oneSidedEvents = resolver.resolveOneSided(attacker, MAIN_S1, bleeding);
 
-    const ticks = [...clashEvents, ...oneSidedEvents].filter((e) => e.type === 'statusTicked');
-    expect(ticks).toHaveLength(0);
+    expect([...clashEvents, ...oneSidedEvents].filter((e) => e.type === 'statusTicked')).toHaveLength(0);
   });
 
   it('혼란은 실제 정신력이 아니라 계산값만 20 낮춘다', () => {
@@ -184,9 +169,9 @@ describe('§11-4 상태이상 4종이 명시된 타이밍에 발동한다', () =
 
   it('독은 주는 피해를 10% 줄이고 받는 피해를 5% 늘린다', () => {
     const resolver = makeResolver(alwaysFailRng);
-    //강력한 한 방 8 + 코인 3×5 + 레벨차 보너스 6 = 29
-    const skill = catalog.skill(1004);
-    const base = 29;
+    //S2 는 9 + 코인 2×5 + 레벨차 보너스 6 = 25
+    const skill = catalog.skill(MAIN_S2);
+    const base = 25;
 
     const clean = makeCombatant('a', 'main', 'ally');
     const target = makeCombatant('b', 'main', 'enemy');
@@ -222,41 +207,57 @@ describe('§11-4 상태이상 4종이 명시된 타이밍에 발동한다', () =
   });
 });
 
-describe('§11-5 카드 9종의 수치와 효과가 스펙 표와 일치한다', () => {
-  //SPEC §6 표를 그대로 옮긴 기대값
+describe('§11-5 전용기 수치가 v2.0 §1.1 표와 일치한다', () => {
+  //v2.0 §1.1 제안값. 세 캐릭터가 같은 형식의 S1/S2/S3 를 하나씩 갖는다
   const expected = [
-    { id: 1001, name: '마무리', baseDamage: 9, coinPower: 2, timing: 'onDamage', maxInDeck: 3 },
-    { id: 1002, name: '무모한 일격', baseDamage: 6, coinPower: 1, timing: 'beforeDamage', maxInDeck: 3 },
-    { id: 1003, name: '연속 찌르기', baseDamage: 7, coinPower: 1, timing: 'onClashEnd', maxInDeck: 3 },
-    { id: 1004, name: '강력한 한 방', baseDamage: 8, coinPower: 3, timing: 'beforeDamageCalc', maxInDeck: 3 },
-    { id: 1005, name: '독 바르기', baseDamage: 9, coinPower: 1, timing: 'onClashEnd', maxInDeck: 3 },
-    { id: 1006, name: '방어 태세', baseDamage: 0, coinPower: 0, timing: 'onTakeDamage', maxInDeck: 1 },
-    { id: 1007, name: '사기 진작', baseDamage: 5, coinPower: 1, timing: 'onClashEnd', maxInDeck: 3 },
-    { id: 1008, name: '파열', baseDamage: 6, coinPower: 2, timing: 'onClashEnd', maxInDeck: 3 },
-    { id: 1009, name: '화염 공격', baseDamage: 9, coinPower: 2, timing: 'onCoinSuccess+onDamageCalc', maxInDeck: 3 },
-  ];
+    { slot: 'S1', attribute: 'attack', baseDamage: 7, coinPower: 1 },
+    { slot: 'S2', attribute: 'defense', baseDamage: 9, coinPower: 2 },
+    { slot: 'S3', attribute: 'support', baseDamage: 11, coinPower: 2 },
+  ] as const;
 
-  it('9종이 전부 있다', () => {
-    expect(catalog.data.skills).toHaveLength(9);
+  it('전용기 9종 + 궁극기 1종이 있다', () => {
+    expect(catalog.data.skills).toHaveLength(10);
+    expect(catalog.data.skills.filter((s) => s.slot !== 'ULT')).toHaveLength(9);
   });
 
-  it.each(expected)('$name 의 수치와 타이밍이 스펙과 같다', (row) => {
-    const skill = catalog.skill(row.id);
-    expect(skill.name).toBe(row.name);
-    expect(skill.baseDamage).toBe(row.baseDamage);
-    expect(skill.coinPower).toBe(row.coinPower);
-    expect(skill.effect.timing).toBe(row.timing);
-    expect(skill.maxInDeck).toBe(row.maxInDeck);
+  it.each(['helper', 'main', 'police'])('%s 는 자기 전용기 3종만 들고 있다', (characterId) => {
+    const deck = catalog.deckFor(characterId);
+    expect(deck).toHaveLength(3);
+    for (const id of deck) {
+      expect(catalog.skill(id).character).toBe(characterId);
+    }
   });
 
-  it('모든 카드가 설명문을 갖고 있다', () => {
+  it.each(expected)('$slot 의 수치와 속성이 스펙과 같다', (row) => {
+    for (const characterId of ['helper', 'main', 'police']) {
+      const skill = catalog.skill(skillOf(characterId, row.slot));
+      expect(skill.attribute).toBe(row.attribute);
+      expect(skill.baseDamage).toBe(row.baseDamage);
+      expect(skill.coinPower).toBe(row.coinPower);
+    }
+  });
+
+  it('전용기는 주인이 아닌 캐릭터의 덱에 없다', () => {
+    const helperDeck = catalog.deckFor('helper');
+    for (const id of catalog.deckFor('main')) {
+      expect(helperDeck).not.toContain(id);
+    }
+  });
+
+  it('궁극기는 수치 미정 표시가 붙어 있다', () => {
+    const ultimate = catalog.ultimate;
+    expect(ultimate.slot).toBe('ULT');
+    expect(ultimate.attribute).toBeNull();
+    expect(ultimate.tbd).toBe(true);
+  });
+
+  it('모든 전용기가 설명문을 갖고 있다', () => {
     for (const skill of catalog.data.skills) {
       expect(skill.text.length).toBeGreaterThan(0);
     }
   });
 
   it('밸런싱 원칙 1 — 변동폭이 3.0배를 넘지 않는다', () => {
-    //최대 코인 수는 캐릭터 중 가장 많은 값을 쓴다
     const maxCoin = Math.max(...catalog.data.characters.map((c) => c.maxCoin));
     for (const skill of catalog.data.skills) {
       if (skill.baseDamage === 0) continue;

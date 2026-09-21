@@ -67,8 +67,10 @@ export class Battle {
       if (this.combatantsById.has(init.id)) {
         throw new BattleDataError(`전투 참가자 id 가 중복된다: ${init.id}`);
       }
-      catalog.validateDeck(init.deck);
-      const combatant = new Combatant(init.id, init.side, catalog.character(init.characterId), init.deck);
+      //덱은 캐릭터의 전용기 3종에서 나온다. 카드 풀을 공유하지 않는다 (v2.0 §1)
+      const deck = catalog.deckFor(init.characterId);
+      catalog.validateDeck(deck);
+      const combatant = new Combatant(init.id, init.side, catalog.character(init.characterId), deck);
       this.combatantsById.set(init.id, combatant);
     }
 
@@ -121,6 +123,12 @@ export class Battle {
       if (combatant.isDefeated) continue;
       const coin = combatant.restoreCoin();
       events.push({ type: 'coinRestored', combatantId: combatant.id, coin });
+
+      //지난 턴 종료에 조건을 채운 캐릭터에게 궁극기 카드가 들어온다 (v2.0 §3.1)
+      if (combatant.ultimatePending) {
+        combatant.ultimatePending = false;
+        combatant.addCard(this.catalog.rules.ultimateSkillId);
+      }
     }
 
     //출혈은 캐릭터당 턴 1회다. 교전마다 넣으면 한 턴에 여러 번 맞는다 (SPEC §3)
@@ -249,17 +257,24 @@ export class Battle {
     attacker: Combatant,
     target: Combatant,
   ): BattleEvent[] {
+    const events: BattleEvent[] = [];
+
     if (engagement.kind === 'clash') {
       const enemySkillId = this.enemyAi.chooseSkill(
         target,
         { target: attacker, isClash: true, opponentSkillId: engagement.allySkillId },
         this.aiContext,
       );
-      return this.resolver.resolve(attacker, engagement.allySkillId, target, enemySkillId);
+      this.consumeUltimate(attacker, engagement.allySkillId, events);
+      this.consumeUltimate(target, enemySkillId, events);
+      events.push(...this.resolver.resolve(attacker, engagement.allySkillId, target, enemySkillId));
+      return events;
     }
 
     if (engagement.kind === 'allyOneSided') {
-      return this.resolver.resolveOneSided(attacker, engagement.skillId, target);
+      this.consumeUltimate(attacker, engagement.skillId, events);
+      events.push(...this.resolver.resolveOneSided(attacker, engagement.skillId, target));
+      return events;
     }
 
     const skillId = this.enemyAi.chooseSkill(
@@ -267,7 +282,9 @@ export class Battle {
       { target, isClash: false, opponentSkillId: null },
       this.aiContext,
     );
-    return this.resolver.resolveOneSided(attacker, skillId, target);
+    this.consumeUltimate(attacker, skillId, events);
+    events.push(...this.resolver.resolveOneSided(attacker, skillId, target));
+    return events;
   }
 
   //턴을 닫는다. 정신력이 조금 돌아오고 상태이상의 지속 턴이 줄어든다
@@ -297,11 +314,32 @@ export class Battle {
       for (const status of combatant.expireStatuses()) {
         events.push({ type: 'statusExpired', combatantId: combatant.id, status });
       }
+
+      this.checkUltimateReady(combatant, events);
     }
 
     events.push({ type: 'turnEnd', turn: this.turn });
     this.phase = 'turnStart';
     return events;
+  }
+
+  //속성 합이 기준에 닿았는지 본다. 판정은 턴 종료, 카드는 다음 턴 시작에 들어간다 (v2.0 §3.1)
+  private checkUltimateReady(combatant: Combatant, events: BattleEvent[]): void {
+    const rules = this.catalog.rules;
+    if (combatant.attributeTotal < rules.ultimateThreshold) return;
+    //이미 들고 있거나 들어오기로 된 상태면 다시 알리지 않는다
+    if (combatant.ultimatePending || combatant.deck.includes(rules.ultimateSkillId)) return;
+
+    combatant.ultimatePending = true;
+    events.push({ type: 'ultimateReady', combatantId: combatant.id });
+  }
+
+  //궁극기를 냈으면 카드를 소모하고 속성을 비운다 (v2.0 §3.1)
+  private consumeUltimate(actor: Combatant, skillId: number, events: BattleEvent[]): void {
+    if (skillId !== this.catalog.rules.ultimateSkillId) return;
+    actor.removeCard(skillId);
+    actor.resetAttributes();
+    events.push({ type: 'ultimateUsed', combatantId: actor.id, skillId });
   }
 
   //한쪽이 전멸했는지 본다. 끝났으면 전투를 닫는다

@@ -4,14 +4,17 @@
 import { describe, expect, it } from 'vitest';
 import { Battle, type Engagement } from '../src/domain/battle.js';
 import { WeightedEnemyAi, type EnemyAi } from '../src/domain/ai.js';
-import { alwaysFailRng, catalog, makeCombatant, makeResolver } from './helpers.js';
+import { alwaysFailRng, catalog, makeCombatant, makeResolver, skillOf } from './helpers.js';
 import type { Combatant, CombatantInit } from '../src/domain/combatant.js';
+
+const MAIN_S1 = skillOf('main', 'S1');
+const MAIN_S2 = skillOf('main', 'S2');
 
 //타겟과 카드를 미리 정해두는 AI. 매칭 결과를 시험하려면 적의 선택이 고정돼야 한다
 class ScriptedAi implements EnemyAi {
   constructor(
     private readonly targets: Record<string, string>,
-    private readonly skillId = 1001,
+    private readonly skillId = MAIN_S1,
   ) {}
 
   chooseTarget(enemy: Combatant): string {
@@ -34,13 +37,11 @@ function makeBattle(targets: Record<string, string>, ai: EnemyAi = new ScriptedA
     id,
     characterId: 'main',
     side: 'ally' as const,
-    deck: [1001, 1004],
   }));
   const enemies: CombatantInit[] = enemyIds.map((id) => ({
     id,
     characterId: 'main',
     side: 'enemy' as const,
-    deck: [1001, 1004],
   }));
   return new Battle(catalog, allies, enemies, { rng: alwaysFailRng, enemyAi: ai });
 }
@@ -60,9 +61,9 @@ describe('§3 매칭 판정', () => {
     const battle = makeBattle({ e1: 'a1', e2: 'a2', e3: 'a3' });
     battle.startTurn();
     battle.submitOrders([
-      { actorId: 'a1', targetId: 'e1', skillId: 1001 },
-      { actorId: 'a2', targetId: 'e1', skillId: 1001 },
-      { actorId: 'a3', targetId: 'e1', skillId: 1001 },
+      { actorId: 'a1', targetId: 'e1', skillId: MAIN_S1 },
+      { actorId: 'a2', targetId: 'e1', skillId: MAIN_S1 },
+      { actorId: 'a3', targetId: 'e1', skillId: MAIN_S1 },
     ]);
 
     const counts = countKinds(battle.plannedEngagements);
@@ -77,9 +78,9 @@ describe('§3 매칭 판정', () => {
     const battle = makeBattle({ e1: 'a1', e2: 'a2', e3: 'a3' });
     battle.startTurn();
     battle.submitOrders([
-      { actorId: 'a1', targetId: 'e1', skillId: 1001 },
-      { actorId: 'a2', targetId: 'e2', skillId: 1001 },
-      { actorId: 'a3', targetId: 'e3', skillId: 1001 },
+      { actorId: 'a1', targetId: 'e1', skillId: MAIN_S1 },
+      { actorId: 'a2', targetId: 'e2', skillId: MAIN_S1 },
+      { actorId: 'a3', targetId: 'e3', skillId: MAIN_S1 },
     ]);
 
     expect(countKinds(battle.plannedEngagements)).toEqual({
@@ -93,7 +94,7 @@ describe('§3 매칭 판정', () => {
     //a1 은 e1 을 겨누는데 e1 은 a2 를 겨눈다
     const battle = makeBattle({ e1: 'a2', e2: 'a1', e3: 'a3' });
     battle.startTurn();
-    battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: 1001 }]);
+    battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: MAIN_S1 }]);
 
     const counts = countKinds(battle.plannedEngagements);
     expect(counts.clash).toBe(0);
@@ -113,23 +114,23 @@ describe('§3 매칭 판정', () => {
 
 describe('§4.7 일방 공격', () => {
   it('이겨도 정신력이 오르지 않는다', () => {
-    const attacker = makeCombatant('a', 'main', 'ally', [1001]);
-    const target = makeCombatant('b', 'main', 'enemy', [1001]);
+    const attacker = makeCombatant('a', 'main', 'ally');
+    const target = makeCombatant('b', 'main', 'enemy');
     attacker.mentality = 50;
     const resolver = makeResolver(alwaysFailRng, [attacker, target]);
 
-    resolver.resolveOneSided(attacker, 1001, target);
+    resolver.resolveOneSided(attacker, MAIN_S1, target);
 
     expect(attacker.mentality).toBe(50);
     expect(target.hp).toBeLessThan(target.base.maxHp);
   });
 
   it('맞는 쪽 코인이 줄지 않는다', () => {
-    const attacker = makeCombatant('a', 'main', 'ally', [1001]);
-    const target = makeCombatant('b', 'main', 'enemy', [1001]);
+    const attacker = makeCombatant('a', 'main', 'ally');
+    const target = makeCombatant('b', 'main', 'enemy');
     const resolver = makeResolver(alwaysFailRng, [attacker, target]);
 
-    const events = resolver.resolveOneSided(attacker, 1001, target);
+    const events = resolver.resolveOneSided(attacker, MAIN_S1, target);
 
     expect(target.coin).toBe(target.base.maxCoin);
     expect(events.some((e) => e.type === 'coinLost')).toBe(false);
@@ -137,36 +138,27 @@ describe('§4.7 일방 공격', () => {
 
   it('교착이 생기지 않는다', () => {
     //합이었다면 같은 카드끼리 붙어 교착 3회로 끝났을 조합이다
-    const attacker = makeCombatant('a', 'main', 'ally', [1001]);
-    const target = makeCombatant('b', 'main', 'enemy', [1001]);
+    const attacker = makeCombatant('a', 'main', 'ally');
+    const target = makeCombatant('b', 'main', 'enemy');
     const resolver = makeResolver(alwaysFailRng, [attacker, target]);
 
-    const events = resolver.resolveOneSided(attacker, 1001, target);
+    const events = resolver.resolveOneSided(attacker, MAIN_S1, target);
 
     expect(events.some((e) => e.type === 'deadlock')).toBe(false);
-    expect(target.hp).toBe(target.base.maxHp - 15);
+    expect(target.hp).toBe(target.base.maxHp - 13);
   });
 
-  it('합 승리 효과는 그대로 발동한다', () => {
-    const attacker = makeCombatant('a', 'main', 'ally', [1005]);
-    const target = makeCombatant('b', 'main', 'enemy', [1001]);
+  it('맞는 쪽 카드는 관여하지 않는다', () => {
+    //맞는 쪽은 자기 타겟을 때리는 중이라 무엇을 들고 있든 피해가 그대로 들어간다
+    const attacker = makeCombatant('a', 'main', 'ally');
+    const target = makeCombatant('b', 'main', 'enemy');
     const resolver = makeResolver(alwaysFailRng, [attacker, target]);
 
-    //독 바르기의 승리 효과
-    resolver.resolveOneSided(attacker, 1005, target);
-    expect(target.hasStatus('poison')).toBe(true);
-  });
-
-  it('방어 태세로는 일방 공격을 막지 못한다', () => {
-    //맞는 쪽은 자기 타겟을 때리는 중이라 카드가 관여하지 않는다
-    const attacker = makeCombatant('a', 'main', 'ally', [1001]);
-    const target = makeCombatant('b', 'main', 'enemy', [1006]);
-    const resolver = makeResolver(alwaysFailRng, [attacker, target]);
-
-    const events = resolver.resolveOneSided(attacker, 1001, target);
+    const events = resolver.resolveOneSided(attacker, MAIN_S2, target);
 
     expect(events.some((e) => e.type === 'damageNullified')).toBe(false);
-    expect(target.hp).toBeLessThan(target.base.maxHp);
+    //S2 는 9 + 레벨차 6 = 15
+    expect(target.hp).toBe(target.base.maxHp - 15);
   });
 
   it('쓰러진 캐릭터가 낀 남은 교전은 건너뛴다', () => {
@@ -175,8 +167,8 @@ describe('§4.7 일방 공격', () => {
     battle.startTurn();
     battle.combatant('e1').hp = 1;
     battle.submitOrders([
-      { actorId: 'a1', targetId: 'e1', skillId: 1004 },
-      { actorId: 'a2', targetId: 'e1', skillId: 1004 },
+      { actorId: 'a1', targetId: 'e1', skillId: MAIN_S2 },
+      { actorId: 'a2', targetId: 'e1', skillId: MAIN_S2 },
     ]);
 
     const events = battle.resolve();
@@ -202,7 +194,7 @@ describe('전투 전체가 굴러간다', () => {
         .map((ally, index) => ({
           actorId: ally.id,
           targetId: battle.sideOf('enemy').filter((e) => !e.isDefeated)[index % 3]?.id ?? 'e1',
-          skillId: 1004,
+          skillId: MAIN_S2,
         }));
       battle.submitOrders(orders);
       battle.resolve();

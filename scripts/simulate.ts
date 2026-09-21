@@ -22,9 +22,6 @@ const DATA_PATH = resolve(here, '../docs/battle-data.json');
 //서로 물고 늘어져 끝나지 않는 판을 잘라내는 상한. 도메인 규칙이 아니라 러너의 안전장치다
 const MAX_TURNS = 100;
 
-//양 진영이 같이 쓰는 덱. 카드 9종을 고루 넣되 방어 태세는 1장 제한을 지킨다
-const DECK = [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009];
-
 //한 판의 결과
 interface RunResult {
   winner: Side | null;
@@ -44,14 +41,13 @@ function parseArgs(argv: string[]): { seed: number; runs: number } {
   return { seed, runs };
 }
 
-//3 대 3 미러 구성. 양 진영이 같은 캐릭터 3명을 쓴다
+//3 대 3 미러 구성. 양 진영이 같은 캐릭터 3명을 쓴다. 덱은 캐릭터의 전용기에서 나온다
 function makeRoster(side: Side): CombatantInit[] {
   const prefix = side === 'ally' ? 'a' : 'e';
   return (['helper', 'main', 'police'] as const).map((characterId, index) => ({
     id: `${prefix}${index + 1}`,
     characterId,
     side,
-    deck: [...DECK],
   }));
 }
 

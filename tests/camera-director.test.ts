@@ -11,16 +11,13 @@ import { catalog } from './helpers.js';
 import type { BattleEvent } from '../src/domain/types.js';
 import type { CombatantInit } from '../src/domain/combatant.js';
 
-const DECK = [1001, 1002, 1003, 1004, 1005, 1006, 1007, 1008, 1009];
-
-//양 진영 3명씩 미러 구성
+//양 진영 3명씩 미러 구성. 덱은 캐릭터의 전용기 3종이다
 function makeRoster(side: 'ally' | 'enemy'): CombatantInit[] {
   const prefix = side === 'ally' ? 'a' : 'e';
   return (['helper', 'main', 'police'] as const).map((characterId, index) => ({
     id: `${prefix}${index + 1}`,
     characterId,
     side,
-    deck: [...DECK],
   }));
 }
 
@@ -110,11 +107,11 @@ describe('교전에 붙는다', () => {
   it('합이든 일방 공격이든 똑같이 붙는다', () => {
     const director = new CameraDirector();
     const clash = director.consume([
-      { type: 'clashStart', attackerId: 'a1', defenderId: 'e1', attackerSkillId: 1001, defenderSkillId: 1004 },
+      { type: 'clashStart', attackerId: 'a1', defenderId: 'e1', attackerSkillId: 2011, defenderSkillId: 2012 },
     ]);
     expect(clash[0]).toMatchObject({ type: 'focus', subjectIds: ['a1', 'e1'] });
 
-    const oneSided = director.consume([{ type: 'oneSidedStart', attackerId: 'a2', targetId: 'e3', skillId: 1009 }]);
+    const oneSided = director.consume([{ type: 'oneSidedStart', attackerId: 'a2', targetId: 'e3', skillId: 2013 }]);
     expect(oneSided[0]).toMatchObject({ type: 'focus', subjectIds: ['a2', 'e3'] });
   });
 });
@@ -123,7 +120,7 @@ describe('피해는 보고 있는 대상을 바꾸지 않는다', () => {
   it('피해가 연달아 들어와도 붙은 상태가 풀리지 않는다', () => {
     const director = new CameraDirector();
     director.consume([
-      { type: 'clashStart', attackerId: 'a1', defenderId: 'e1', attackerSkillId: 1001, defenderSkillId: 1004 },
+      { type: 'clashStart', attackerId: 'a1', defenderId: 'e1', attackerSkillId: 2011, defenderSkillId: 2012 },
     ]);
     const before = director.currentShot;
 
@@ -166,9 +163,9 @@ describe('교전 사이에 원경이 끼지 않는다', () => {
   it('뒤에 교전이 남아 있으면 원경으로 돌아가지 않는다', () => {
     const director = new CameraDirector();
     const commands = director.consume([
-      { type: 'clashStart', attackerId: 'a1', defenderId: 'e1', attackerSkillId: 1001, defenderSkillId: 1004 },
+      { type: 'clashStart', attackerId: 'a1', defenderId: 'e1', attackerSkillId: 2011, defenderSkillId: 2012 },
       { type: 'clashEnd', attackerId: 'a1', defenderId: 'e1', winnerId: 'a1' },
-      { type: 'oneSidedStart', attackerId: 'a2', targetId: 'e2', skillId: 1009 },
+      { type: 'oneSidedStart', attackerId: 'a2', targetId: 'e2', skillId: 2013 },
       { type: 'oneSidedEnd', attackerId: 'a2', targetId: 'e2' },
     ]);
 
@@ -196,8 +193,8 @@ describe('교전 사이에 원경이 끼지 않는다', () => {
       type: 'clashStart',
       attackerId: 'a1',
       defenderId: 'e1',
-      attackerSkillId: 1001,
-      defenderSkillId: 1004,
+      attackerSkillId: 2011,
+      defenderSkillId: 2012,
     };
 
     expect(director.consume([start])).toHaveLength(1);

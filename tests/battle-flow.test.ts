@@ -4,14 +4,19 @@ import { describe, expect, it } from 'vitest';
 import { Battle, BattleFlowError } from '../src/domain/battle.js';
 import { RandomEnemyAi } from '../src/domain/ai.js';
 import { createSeededRng } from '../src/domain/rng.js';
-import { alwaysFailRng, catalog } from './helpers.js';
+import { alwaysFailRng, catalog, skillOf } from './helpers.js';
+
 import type { CombatantInit } from '../src/domain/combatant.js';
 
+const MAIN_S1 = skillOf('main', 'S1');
+const MAIN_S2 = skillOf('main', 'S2');
+const POLICE_S1 = skillOf('police', 'S1');
+
 const allies: CombatantInit[] = [
-  { id: 'a1', characterId: 'main', side: 'ally', deck: [1001, 1004, 1006] },
+  { id: 'a1', characterId: 'main', side: 'ally' },
 ];
 const enemies: CombatantInit[] = [
-  { id: 'e1', characterId: 'police', side: 'enemy', deck: [1007] },
+  { id: 'e1', characterId: 'police', side: 'enemy' },
 ];
 
 //기본 전투 하나를 만든다
@@ -51,9 +56,9 @@ describe('턴 진행', () => {
     const battle = makeBattle();
     battle.startTurn();
 
-    expect(() => battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: 1009 }])).toThrow(BattleFlowError);
-    expect(() => battle.submitOrders([{ actorId: 'a1', targetId: 'a1', skillId: 1001 }])).toThrow(BattleFlowError);
-    expect(() => battle.submitOrders([{ actorId: 'e1', targetId: 'a1', skillId: 1007 }])).toThrow(BattleFlowError);
+    expect(() => battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: POLICE_S1 }])).toThrow(BattleFlowError);
+    expect(() => battle.submitOrders([{ actorId: 'a1', targetId: 'a1', skillId: MAIN_S1 }])).toThrow(BattleFlowError);
+    expect(() => battle.submitOrders([{ actorId: 'e1', targetId: 'a1', skillId: POLICE_S1 }])).toThrow(BattleFlowError);
   });
 
   it('턴을 닫으면 정신력이 30 까지만 돌아온다', () => {
@@ -62,7 +67,7 @@ describe('턴 진행', () => {
     const enemy = battle.combatant('e1');
 
     battle.startTurn();
-    battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: 1001 }]);
+    battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: MAIN_S1 }]);
     battle.resolve();
 
     main.mentality = 10;
@@ -78,7 +83,7 @@ describe('턴 진행', () => {
     const main = battle.combatant('a1');
 
     battle.startTurn();
-    battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: 1001 }]);
+    battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: MAIN_S1 }]);
     battle.resolve();
 
     main.mentality = 28;
@@ -91,7 +96,7 @@ describe('턴 진행', () => {
     const enemy = battle.combatant('e1');
 
     battle.startTurn();
-    battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: 1001 }]);
+    battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: MAIN_S1 }]);
     battle.resolve();
 
     enemy.applyStatus('defenseDown', 1, false);
@@ -112,7 +117,7 @@ describe('전투 종료', () => {
 
     battle.startTurn();
     enemy.hp = 1;
-    battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: 1004 }]);
+    battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: MAIN_S2 }]);
     const events = battle.resolve();
 
     expect(enemy.isDefeated).toBe(true);
@@ -123,12 +128,14 @@ describe('전투 종료', () => {
 });
 
 describe('덱 검증', () => {
-  it('전투를 만들 때 카드 장수 제한을 확인한다', () => {
-    expect(
-      () =>
-        new Battle(catalog, [{ id: 'x', characterId: 'main', side: 'ally', deck: [1006, 1006] }], enemies, {
-          rng: alwaysFailRng,
-        }),
-    ).toThrow();
+  it('덱은 캐릭터의 전용기 3종에서 나온다', () => {
+    const battle = makeBattle();
+    expect(battle.combatant('a1').deck).toEqual(catalog.deckFor('main'));
+    expect(battle.combatant('e1').deck).toEqual(catalog.deckFor('police'));
+  });
+
+  it('같은 카드를 두 장 넣으면 막는다', () => {
+    expect(() => catalog.validateDeck([MAIN_S1, MAIN_S1])).toThrow();
+    expect(() => catalog.validateDeck(catalog.deckFor('main'))).not.toThrow();
   });
 });

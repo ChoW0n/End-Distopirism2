@@ -45,9 +45,10 @@ function bodyOfType<T extends SkillEffectBody['type']>(
 }
 
 //카드가 이 승패 상황에서 발동시키는 효과를 꺼낸다. always 는 승패와 무관하게 먼저 걸린다
+//v2.0 전용기는 효과가 없어서 대부분 undefined 가 나온다
 function effectBody(skill: SkillData, role: 'win' | 'lose'): SkillEffectBody | undefined {
-  if (skill.effect.always) return skill.effect.always;
-  return role === 'win' ? skill.effect.onWin : skill.effect.onLose;
+  if (skill.effect?.always) return skill.effect.always;
+  return role === 'win' ? skill.effect?.onWin : skill.effect?.onLose;
 }
 
 export class ClashResolver {
@@ -102,7 +103,7 @@ export class ClashResolver {
     successCount: number,
   ): { damage: number; levelBonus: number } {
     //화염 공격은 성공 코인 1개당 공격레벨을 올린다
-    const flame = bodyOfType(skill.effect.always, 'atkBonusPerCoin');
+    const flame = bodyOfType(skill.effect?.always, 'atkBonusPerCoin');
     const attackLevel = attacker.base.atkLevel + (flame ? successCount * flame.amount : 0);
     const levelBonus = this.levelDiffBonus(attackLevel, this.effectiveDefLevel(defender));
 
@@ -226,6 +227,8 @@ export class ClashResolver {
     if (outcome) {
       this.applyOutcome(outcome, events);
       this.applyClashEndEffects(outcome, events);
+      //겨뤄서 이긴 경우에만 속성이 오른다. 재대결을 몇 번 했든 합당 1회다 (v2.0 §2.1)
+      this.grantAttribute(outcome.winner, outcome.winnerSkill, events);
     }
 
     //피해를 다 넣고 나서 정신력이 바닥난 쪽에 혼란이 붙는다
@@ -333,7 +336,7 @@ export class ClashResolver {
     }
 
     //화염 공격 — 성공 코인 수만큼 피해가 더 붙는다
-    const flame = bodyOfType(winnerSkill.effect.always, 'atkBonusPerCoin');
+    const flame = bodyOfType(winnerSkill.effect?.always, 'atkBonusPerCoin');
     if (flame) damage += successCount * flame.bonusDamagePerCoin;
 
     //방어 태세 — 패배한 쪽이 냈으면 피해를 통째로 막는다
@@ -384,7 +387,7 @@ export class ClashResolver {
     role: 'win' | 'lose',
     events: BattleEvent[],
   ): void {
-    if (skill.effect.timing !== 'onClashEnd') return;
+    if (skill.effect?.timing !== 'onClashEnd') return;
     const body = effectBody(skill, role);
     if (!body) return;
 
@@ -400,6 +403,18 @@ export class ClashResolver {
         ally.nextTurnCoinModifier += body.amount;
       }
     }
+  }
+
+  //합 승리로 속성을 올린다. 궁극기처럼 올리는 속성이 없는 카드는 그냥 지나간다
+  private grantAttribute(winner: Combatant, skill: SkillData, events: BattleEvent[]): void {
+    if (!skill.attribute) return;
+    const value = winner.gainAttribute(skill.attribute);
+    events.push({
+      type: 'attributeGained',
+      combatantId: winner.id,
+      attribute: skill.attribute,
+      value,
+    });
   }
 
   //상태이상을 걸고 이벤트를 남긴다. 중첩 여부는 데이터가 정한다

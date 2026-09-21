@@ -20,14 +20,23 @@ export const alwaysFailRng: Rng = { next: () => 1 };
 //코인이 항상 성공하는 난수원
 export const alwaysSucceedRng: Rng = { next: () => 0 };
 
-//테스트용 참가자를 만든다
+//테스트용 참가자를 만든다. 덱을 안 주면 캐릭터의 전용기 3종을 그대로 쓴다
 export function makeCombatant(
   id: string,
   characterId: string,
   side: Side,
-  deck: number[] = [1001],
+  deck?: number[],
 ): Combatant {
-  return new Combatant(id, side, catalog.character(characterId), deck);
+  return new Combatant(id, side, catalog.character(characterId), deck ?? catalog.deckFor(characterId));
+}
+
+//캐릭터의 전용기 id 를 자리로 찾는다. 테스트에서 숫자를 외우지 않기 위한 것
+export function skillOf(characterId: string, slot: 'S1' | 'S2' | 'S3'): number {
+  const found = catalog
+    .deckFor(characterId)
+    .find((id) => catalog.skill(id).slot === slot);
+  if (found === undefined) throw new Error(`${characterId} 에 ${slot} 이 없다`);
+  return found;
 }
 
 //합 판정기를 만든다. 진영 조회는 넘긴 목록에서만 찾는다

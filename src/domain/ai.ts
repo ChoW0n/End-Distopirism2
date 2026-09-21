@@ -4,6 +4,7 @@
 import type { ClashResolver } from './clash.js';
 import type { Combatant } from './combatant.js';
 import type { BattleCatalog } from './data.js';
+
 import type { Rng } from './rng.js';
 import type { SkillData } from './types.js';
 
@@ -43,6 +44,14 @@ function requireDeck(enemy: Combatant): readonly number[] {
     throw new Error(`적 ${enemy.id} 의 덱이 비어 있다`);
   }
   return enemy.deck;
+}
+
+//수치가 아직 없는 카드는 고르지 않는다. 궁극기가 여기 해당한다 (v2.0 §3.2)
+//전부 미정이면 어쩔 수 없이 덱 전체를 후보로 되돌린다
+function selectableDeck(enemy: Combatant, catalog: BattleCatalog): readonly number[] {
+  const deck = requireDeck(enemy);
+  const usable = deck.filter((id) => !catalog.skill(id).tbd);
+  return usable.length > 0 ? usable : deck;
 }
 
 //후보가 비었을 때 던진다
@@ -98,7 +107,7 @@ export class WeightedEnemyAi implements EnemyAi {
 
   //카드를 고른다. 방어 태세만 위협도 단계 가중치를 따로 받는다 (§13.1)
   chooseSkill(enemy: Combatant, engagement: EnemyEngagement, context: EnemyAiContext): number {
-    const deck = requireDeck(enemy);
+    const deck = selectableDeck(enemy, context.catalog);
     const ai = context.catalog.enemyAi;
     const guardWeight = this.guardWeight(enemy, engagement, context);
     const inMentalityDanger =
@@ -160,7 +169,7 @@ export class WeightedEnemyAi implements EnemyAi {
 
   //승리 효과가 중첩 불가 상태이상 부여인데 상대가 이미 갖고 있는지 본다
   private isRedundantStatus(skill: SkillData, target: Combatant, context: EnemyAiContext): boolean {
-    const onWin = skill.effect.onWin;
+    const onWin = skill.effect?.onWin;
     if (onWin?.type !== 'applyStatus' || onWin.target !== 'opponent') return false;
     if (context.catalog.status(onWin.status).stackable) return false;
     return target.hasStatus(onWin.status);

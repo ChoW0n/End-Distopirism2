@@ -2,10 +2,12 @@
 //파일을 직접 읽지 않는다. 읽는 건 플랫폼(어댑터)의 일이고 여기는 파싱과 검증만 한다
 
 import type {
+  Attribute,
   BattleData,
   BattleRules,
   CharacterData,
   EnemyAiRules,
+  SkillSlot,
   SkillData,
   SkillEffect,
   SkillEffectBody,
@@ -90,6 +92,8 @@ function arr(source: Json, key: string, path: string): unknown[] {
 
 const STATUS_IDS = ['bleed', 'confusion', 'poison', 'defenseDown'] as const;
 const ARCHETYPES = ['안정', '표준', '도박', '유틸'] as const;
+const ATTRIBUTES = ['attack', 'defense', 'support'] as const;
+const SLOTS = ['S1', 'S2', 'S3', 'ULT'] as const;
 const TIMINGS = [
   'onDamage',
   'beforeDamage',
@@ -188,6 +192,8 @@ function parseRules(raw: unknown): BattleRules {
     deadlockLimit: num(source, 'deadlockLimit', 'rules'),
     oneSidedGivesMentality: bool(source, 'oneSidedGivesMentality', 'rules'),
     oneSidedConsumesCoin: bool(source, 'oneSidedConsumesCoin', 'rules'),
+    ultimateThreshold: num(source, 'ultimateThreshold', 'rules'),
+    ultimateSkillId: num(source, 'ultimateSkillId', 'rules'),
   };
 }
 
@@ -230,23 +236,30 @@ function parseCharacter(raw: unknown, index: number): CharacterData {
     maxCoin: num(source, 'maxCoin', path),
     mentality: num(source, 'mentality', path),
     role: str(source, 'role', path),
+    skills: numArray(source, 'skills', path),
   };
 }
 
-//카드 한 장을 읽는다
+//전용기 한 종을 읽는다
 function parseSkill(raw: unknown, index: number): SkillData {
   const path = `skills[${index}]`;
   const source = obj(raw, path);
-  return {
+  const skill: SkillData = {
     id: num(source, 'id', path),
     name: str(source, 'name', path),
+    character: source['character'] === null ? null : str(source, 'character', path),
+    slot: literal<SkillSlot>(source, 'slot', SLOTS, path),
+    attribute: source['attribute'] === null ? null : literal<Attribute>(source, 'attribute', ATTRIBUTES, path),
     baseDamage: num(source, 'baseDamage', path),
     coinPower: num(source, 'coinPower', path),
     archetype: literal<SkillArchetype>(source, 'archetype', ARCHETYPES, path),
     maxInDeck: num(source, 'maxInDeck', path),
-    effect: parseEffect(source['effect'], `${path}.effect`),
+    tbd: source['tbd'] === true,
     text: str(source, 'text', path),
   };
+  //v2.0 전용기는 효과가 없다. 있으면 v1.0 형식으로 읽어 둔다
+  if (source['effect'] !== undefined) skill.effect = parseEffect(source['effect'], `${path}.effect`);
+  return skill;
 }
 
 //상태이상 한 종을 읽는다
@@ -304,6 +317,21 @@ export function parseBattleData(raw: unknown): BattleData {
     characterIds.add(character.id);
   }
 
+  //전용기는 주인 캐릭터만 쓴다. 덱을 캐릭터에서 뽑아내므로 여기서 어긋나면 전투가 못 선다
+  const skillsById = new Map(data.skills.map((s) => [s.id, s]));
+  for (const character of data.characters) {
+    for (const id of character.skills) {
+      const skill = skillsById.get(id);
+      if (!skill) throw new BattleDataError(`${character.id} 의 전용기를 찾을 수 없다: ${id}`);
+      if (skill.character !== character.id) {
+        throw new BattleDataError(`전용기 ${id} 의 주인이 ${character.id} 가 아니다: ${skill.character}`);
+      }
+    }
+  }
+  if (!skillsById.has(data.rules.ultimateSkillId)) {
+    throw new BattleDataError(`궁극기 카드를 찾을 수 없다: ${data.rules.ultimateSkillId}`);
+  }
+
   return data;
 }
 
@@ -340,6 +368,16 @@ export class BattleCatalog {
     const found = this.skillsById.get(id);
     if (!found) throw new BattleDataError(`스킬을 찾을 수 없다: ${id}`);
     return found;
+  }
+
+  //궁극기 카드
+  get ultimate(): SkillData {
+    return this.skill(this.rules.ultimateSkillId);
+  }
+
+  //캐릭터의 시작 덱. 전용기 3종을 그대로 쓴다 (v2.0 §1)
+  deckFor(characterId: string): number[] {
+    return [...this.character(characterId).skills];
   }
 
   //상태이상 정의를 찾는다. 없으면 던진다
