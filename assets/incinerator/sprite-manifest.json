@@ -361,133 +361,18 @@
  ],
  "effects": [
   {
-   "id": "slash-diagonal",
-   "name": "기존 대각 베기",
-   "anchor": "bladeTip",
-   "size": [
-    575,
-    287
-   ],
-   "pivot": [
-    470,
-    246
-   ],
-   "blend": "source-over",
-   "loop": false,
-   "frames": [
-    {
-     "file": "effects/slash-diagonal/00-aligned.png",
-     "ms": 45
-    },
-    {
-     "file": "effects/slash-diagonal/01-aligned.png",
-     "ms": 70
-    },
-    {
-     "file": "effects/slash-diagonal/02-aligned.png",
-     "ms": 100
-    }
-   ]
-  },
-  {
-   "id": "impact",
-   "name": "명중 섬광",
-   "anchor": "hitPoint",
-   "size": [
-    548,
-    320
-   ],
-   "pivot": [
-    282,
-    150
-   ],
-   "blend": "source-over",
-   "loop": false,
-   "frames": [
-    {
-     "file": "effects/impact/00-aligned.png",
-     "ms": 35
-    },
-    {
-     "file": "effects/impact/01-aligned.png",
-     "ms": 55
-    },
-    {
-     "file": "effects/impact/02-aligned.png",
-     "ms": 85
-    }
-   ]
-  },
-  {
-   "id": "fire-upright",
-   "name": "수직 화염",
-   "anchor": "groundPoint",
-   "size": [
-    542,
-    350
-   ],
-   "pivot": [
-    264,
-    315
-   ],
-   "blend": "source-over",
-   "loop": false,
-   "frames": [
-    {
-     "file": "effects/fire-upright/00-aligned.png",
-     "ms": 70
-    },
-    {
-     "file": "effects/fire-upright/01-aligned.png",
-     "ms": 100
-    },
-    {
-     "file": "effects/fire-upright/02-aligned.png",
-     "ms": 150
-    }
-   ]
-  },
-  {
-   "id": "ash-mixed",
-   "name": "기존 연기·잔불",
-   "anchor": "emissionPoint",
-   "size": [
-    552,
-    275
-   ],
-   "pivot": [
-    269,
-    161
-   ],
-   "blend": "source-over",
-   "loop": false,
-   "frames": [
-    {
-     "file": "effects/ash-mixed/00-aligned.png",
-     "ms": 100
-    },
-    {
-     "file": "effects/ash-mixed/01-aligned.png",
-     "ms": 160
-    },
-    {
-     "file": "effects/ash-mixed/02-aligned.png",
-     "ms": 220
-    }
-   ]
-  },
-  {
    "id": "slash-horizontal",
    "name": "수평 베기",
    "anchor": "bladeTip",
    "size": [
-    479,
-    267
+    517,
+    454
    ],
    "pivot": [
-    408,
-    149
+    410,
+    247
    ],
+   "scale": 1.2,
    "blend": "source-over",
    "loop": false,
    "frames": [
@@ -510,13 +395,14 @@
    "name": "올려베기",
    "anchor": "bladeTip",
    "size": [
-    527,
-    318
+    495,
+    502
    ],
    "pivot": [
-    406,
-    50
+    398,
+    146
    ],
+   "scale": 1.1,
    "blend": "source-over",
    "loop": false,
    "frames": [
@@ -539,13 +425,14 @@
    "name": "내려찍기",
    "anchor": "bladeTip",
    "size": [
-    549,
-    562
+    543,
+    549
    ],
    "pivot": [
-    342,
-    487
+    328,
+    379
    ],
+   "scale": 1.2,
    "blend": "source-over",
    "loop": false,
    "frames": [
@@ -564,17 +451,78 @@
    ]
   },
   {
+   "id": "slash-diagonal",
+   "name": "기존 대각 베기",
+   "anchor": "bladeTip",
+   "size": [
+    498,
+    494
+   ],
+   "pivot": [
+    405,
+    375
+   ],
+   "scale": 1.1,
+   "blend": "source-over",
+   "loop": false,
+   "frames": [
+    {
+     "file": "effects/slash-diagonal/00-aligned.png",
+     "ms": 45
+    },
+    {
+     "file": "effects/slash-diagonal/01-aligned.png",
+     "ms": 70
+    },
+    {
+     "file": "effects/slash-diagonal/02-aligned.png",
+     "ms": 100
+    }
+   ]
+  },
+  {
+   "id": "impact",
+   "name": "명중 섬광",
+   "anchor": "hitPoint",
+   "size": [
+    507,
+    438
+   ],
+   "pivot": [
+    237,
+    239
+   ],
+   "scale": 0.45,
+   "blend": "source-over",
+   "loop": false,
+   "frames": [
+    {
+     "file": "effects/impact/00-aligned.png",
+     "ms": 35
+    },
+    {
+     "file": "effects/impact/01-aligned.png",
+     "ms": 55
+    },
+    {
+     "file": "effects/impact/02-aligned.png",
+     "ms": 85
+    }
+   ]
+  },
+  {
    "id": "ground-impact",
    "name": "지면 충격",
    "anchor": "groundPoint",
    "size": [
-    579,
-    526
+    482,
+    469
    ],
    "pivot": [
-    287,
-    315
+    228,
+    293
    ],
+   "scale": 0.6,
    "blend": "source-over",
    "loop": false,
    "frames": [
@@ -593,17 +541,48 @@
    ]
   },
   {
+   "id": "fire-upright",
+   "name": "수직 화염",
+   "anchor": "groundPoint",
+   "size": [
+    468,
+    474
+   ],
+   "pivot": [
+    233,
+    421
+   ],
+   "scale": 0.95,
+   "blend": "source-over",
+   "loop": false,
+   "frames": [
+    {
+     "file": "effects/fire-upright/00-aligned.png",
+     "ms": 70
+    },
+    {
+     "file": "effects/fire-upright/01-aligned.png",
+     "ms": 100
+    },
+    {
+     "file": "effects/fire-upright/02-aligned.png",
+     "ms": 150
+    }
+   ]
+  },
+  {
    "id": "fire-horizontal",
    "name": "수평 화염 분출",
    "anchor": "emissionPoint",
    "size": [
-    563,
-    262
+    520,
+    420
    ],
    "pivot": [
-    81,
-    124
+    57,
+    241
    ],
+   "scale": 0.9,
    "blend": "source-over",
    "loop": false,
    "frames": [
@@ -626,13 +605,14 @@
    "name": "대각 화염 분출",
    "anchor": "emissionPoint",
    "size": [
-    546,
-    310
+    508,
+    496
    ],
    "pivot": [
-    87,
-    270
+    132,
+    374
    ],
+   "scale": 0.9,
    "blend": "source-over",
    "loop": false,
    "frames": [
@@ -655,13 +635,14 @@
    "name": "분리 연기",
    "anchor": "emissionPoint",
    "size": [
-    507,
-    317
+    466,
+    468
    ],
    "pivot": [
-    49,
-    270
+    233,
+    430
    ],
+   "scale": 0.7,
    "blend": "source-over",
    "loop": false,
    "frames": [
@@ -684,13 +665,14 @@
    "name": "분리 잔불",
    "anchor": "emissionPoint",
    "size": [
-    493,
-    253
+    484,
+    464
    ],
    "pivot": [
-    34,
-    197
+    146,
+    368
    ],
+   "scale": 0.8,
    "blend": "source-over",
    "loop": false,
    "frames": [
@@ -704,6 +686,36 @@
     },
     {
      "file": "effects/embers/02-aligned.png",
+     "ms": 220
+    }
+   ]
+  },
+  {
+   "id": "ash-mixed",
+   "name": "기존 연기·잔불",
+   "anchor": "emissionPoint",
+   "size": [
+    473,
+    464
+   ],
+   "pivot": [
+    225,
+    352
+   ],
+   "scale": 0.7,
+   "blend": "source-over",
+   "loop": false,
+   "frames": [
+    {
+     "file": "effects/ash-mixed/00-aligned.png",
+     "ms": 100
+    },
+    {
+     "file": "effects/ash-mixed/01-aligned.png",
+     "ms": 160
+    },
+    {
+     "file": "effects/ash-mixed/02-aligned.png",
      "ms": 220
     }
    ]
@@ -924,5 +936,6 @@
     "motionDeg": 0
    }
   ]
- }
+ },
+ "effectsPack": "incinerator-effects-remake-v4"
 }

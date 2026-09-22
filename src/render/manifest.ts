@@ -40,6 +40,8 @@ export interface EffectData {
   size: { width: number; height: number };
   //비트맵 안에서 앵커에 맞출 점
   pivot: Point;
+  //캐릭터 키 대비 배율. 이펙트마다 다르다 (SPEC-002 §5.5)
+  scale: number;
   blend: string;
   loop: boolean;
   frames: EffectFrameData[];
@@ -191,6 +193,7 @@ function parseEffect(raw: unknown, index: number): EffectData {
     anchor: anchor as EffectAnchor,
     size: { width: size.x, height: size.y },
     pivot: point(source['pivot'], `${path}.pivot`),
+    scale: num(source, 'scale', path),
     blend: str(source, 'blend', path),
     loop: source['loop'] === true,
     frames: arr(source, 'frames', path).map((frame, i) => {

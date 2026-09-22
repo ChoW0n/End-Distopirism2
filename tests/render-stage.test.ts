@@ -184,6 +184,13 @@ describe('§5.1 이펙트 앵커 4종', () => {
 });
 
 describe('§6 합성과 반전', () => {
+  it('이펙트마다 배율이 따로 있다', () => {
+    //v4 팩 기준. 일괄 배율을 쓰면 베기가 명중 섬광만큼 작아진다 (SPEC-002 §5.5)
+    const scales = sprites.manifest.effects.map((e) => e.scale);
+    expect(scales.every((s) => s > 0)).toBe(true);
+    expect(new Set(scales).size).toBeGreaterThan(1);
+  });
+
   it('모든 이펙트가 일반 알파 합성이다', () => {
     for (const effect of sprites.manifest.effects) {
       expect(effect.blend).toBe('source-over');
