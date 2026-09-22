@@ -1,0 +1,60 @@
+{
+  "id": "end-distopirism-city-v3",
+  "coordinateSystem": "정규화 좌표 · 좌상단 원점 · x는 화면 너비, y는 화면 높이 기준",
+  "viewport": [
+    1600,
+    900
+  ],
+  "drawOrder": [
+    "far",
+    "mid",
+    "ground",
+    "actors",
+    "front"
+  ],
+  "groundBoundaryApprox": 0.445,
+  "characterHeightRatio": 0.3,
+  "footYRatio": 0.76,
+  "layers": [
+    {
+      "id": "far",
+      "file": "far.png",
+      "x": -0.02,
+      "y": -0.02,
+      "width": 1.04,
+      "height": 1.04,
+      "parallax": 0.2
+    },
+    {
+      "id": "mid",
+      "file": "mid.png",
+      "x": -0.02,
+      "y": -0.08,
+      "width": 1.04,
+      "height": 1.04,
+      "parallax": 0.5
+    },
+    {
+      "id": "ground",
+      "file": "ground.png",
+      "x": 0,
+      "y": -0.158,
+      "width": 1,
+      "height": 1.158,
+      "parallax": 0
+    },
+    {
+      "id": "front",
+      "file": "front.png",
+      "x": -0.02,
+      "y": 0,
+      "width": 1.04,
+      "height": 1,
+      "parallax": 1
+    }
+  ],
+  "sourceIntegrity": "PNG 원본 바이트 유지. 캔버스 표시 시에만 위 배치 적용. ground의 높이 배율은 바닥 뒤 경계를 맞추기 위한 투영 조정.",
+  "validation": "알파 및 Canvas 실행 검증. 실제 브라우저 조작·게임 엔진·확정 소각원 공격 검증 미실시.",
+  "alphaNote": "투명 영역에 일부 알파 1/255 잔여값이 있음. 알파 16 초과의 의도 밖 잔여 형상은 지정 빈 영역에서 0픽셀.",
+  "reference": "Alleyway Watchdog의 원경·중경·전투 바닥·전경 구성 원리 참조. 원작 메시·피벗·셰이더 복원이 아님."
+}
