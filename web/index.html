@@ -1,0 +1,32 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>End Distopirism · 전투 테스트</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="style.css">
+<body>
+<header>
+  <div class="turn">턴 <b id="turn">0</b></div>
+  <div class="ctl">
+    <label>시드 <input id="seed" type="number" value="1" min="0"></label>
+    <button id="restart">재시작</button>
+    <button id="auto">아군 자동</button>
+    <label>자동 <input id="runs" type="number" value="100" min="1" style="width:4.5em"></label>
+    <button id="batch">판 돌리기</button>
+  </div>
+</header>
+
+<main>
+  <section class="side" id="ally"></section>
+  <section class="mid">
+    <div id="banner" class="banner"></div>
+    <div id="orders" class="orders"></div>
+    <button id="resolve" disabled>합 진행</button>
+  </section>
+  <section class="side" id="enemy"></section>
+</main>
+
+<pre id="log"></pre>
+
+<script src="domain.js"></script>
+<script src="main.js"></script>
+</body>

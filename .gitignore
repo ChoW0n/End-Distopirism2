@@ -199,3 +199,8 @@ Desktop.ini
 /scratch/
 /tmp/
 *.log
+
+# web 빌드 산출물 (node web/build.mjs 로 다시 만든다)
+web/domain.js
+web/battle-data.json
+web/standalone.html
