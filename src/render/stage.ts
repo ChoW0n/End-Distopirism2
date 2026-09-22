@@ -142,15 +142,20 @@ export class Stage {
     const effect = catalog.effect(effectId);
     const anchorPoint = this.resolveAnchor(effect, context);
 
+    //이펙트마다 배율이 다르다. 긴 변이 캐릭터 키 × scale 이 되게 맞춘다 (SPEC-002 §5.5)
+    //피벗도 같이 늘려야 한다. 비트맵만 키우면 앵커가 어긋난다
+    const ratio =
+      (catalog.characterHeight * effect.scale) / Math.max(effect.size.width, effect.size.height);
+
     //반전 시 비트맵과 피벗을 함께 뒤집는다. 캐릭터 반전과 따로 판단한다 (SPEC-002 §6-5)
     const flipped = options.flipped ?? false;
     const pivotX = flipped ? effect.size.width - effect.pivot.x : effect.pivot.x;
 
     return {
       effectId,
-      origin: { x: anchorPoint.x - pivotX, y: anchorPoint.y - effect.pivot.y },
+      origin: { x: anchorPoint.x - pivotX * ratio, y: anchorPoint.y - effect.pivot.y * ratio },
       anchorPoint,
-      size: effect.size,
+      size: { width: effect.size.width * ratio, height: effect.size.height * ratio },
       flipped,
       blend: effect.blend,
       loop: effect.loop,

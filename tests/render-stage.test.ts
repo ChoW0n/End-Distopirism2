@@ -22,6 +22,12 @@ function at(combatantId: string, x: number, facing: 1 | -1 = 1, characterId = 'i
 
 const CAST = '06-skill1-cast';
 
+//이펙트가 실제로 놓일 때 먹는 배율. 긴 변이 캐릭터 키 × scale 이 된다 (SPEC-002 §5.5)
+function ratioOf(effectId: string): number {
+  const effect = sprites.effect(effectId);
+  return (sprites.characterHeight * effect.scale) / Math.max(effect.size.width, effect.size.height);
+}
+
 describe('매니페스트 파싱', () => {
   it('실제 매니페스트가 규격을 만족한다', () => {
     expect(sprites.manifest.canvas).toEqual({ width: 2400, height: 1500 });
@@ -107,11 +113,12 @@ describe('§5.1 이펙트 앵커 4종', () => {
     const tip = stage.framePoint(source, CAST, 'bladeTip');
 
     expect(placement.anchorPoint).toEqual(tip);
-    //피벗이 앵커에 오도록 좌상단이 뒤로 밀린다
+    //피벗이 앵커에 오도록 좌상단이 뒤로 밀린다. 피벗도 배율을 탄다 (SPEC-002 §5.5)
     const effect = sprites.effect('slash-diagonal');
+    const ratio = ratioOf('slash-diagonal');
     expect(placement.origin).toEqual({
-      x: tip.x - effect.pivot.x,
-      y: tip.y - effect.pivot.y,
+      x: tip.x - effect.pivot.x * ratio,
+      y: tip.y - effect.pivot.y * ratio,
     });
   });
 
@@ -191,6 +198,27 @@ describe('§6 합성과 반전', () => {
     expect(new Set(scales).size).toBeGreaterThan(1);
   });
 
+  it('배율이 비트맵과 피벗에 같이 먹는다', () => {
+    //긴 변이 캐릭터 키 × scale 이 된다 (SPEC-002 §5.5)
+    const H = sprites.characterHeight;
+    for (const effect of sprites.manifest.effects) {
+      if (effect.anchor !== 'bladeTip') continue;
+      const placement = stage.placeEffect(effect.id, { source: at('a1', 600), sourceFrameId: CAST });
+      expect(Math.max(placement.size.width, placement.size.height)).toBeCloseTo(H * effect.scale);
+
+      //피벗이 앵커에 그대로 얹힌다. 비트맵만 키우면 여기가 어긋난다
+      const ratio = placement.size.width / effect.size.width;
+      expect(placement.anchorPoint.x - placement.origin.x).toBeCloseTo(effect.pivot.x * ratio);
+      expect(placement.anchorPoint.y - placement.origin.y).toBeCloseTo(effect.pivot.y * ratio);
+    }
+  });
+
+  it('배율이 달라도 베기가 명중 섬광보다 크다', () => {
+    const slash = sprites.effect('slash-downward');
+    const impact = sprites.effect('impact');
+    expect(slash.scale).toBeGreaterThan(impact.scale);
+  });
+
   it('모든 이펙트가 일반 알파 합성이다', () => {
     for (const effect of sprites.manifest.effects) {
       expect(effect.blend).toBe('source-over');
@@ -210,7 +238,10 @@ describe('§6 합성과 반전', () => {
 
     //앵커가 가리키는 점은 그대로고 비트맵만 반대편으로 놓인다
     expect(flipped.anchorPoint).toEqual(normal.anchorPoint);
-    expect(flipped.origin.x).toBe(normal.anchorPoint.x - (effect.size.width - effect.pivot.x));
+    const ratio = ratioOf('slash-diagonal');
+    expect(flipped.origin.x).toBeCloseTo(
+      normal.anchorPoint.x - (effect.size.width - effect.pivot.x) * ratio,
+    );
     expect(flipped.flipped).toBe(true);
   });
 
