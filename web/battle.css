@@ -1,0 +1,46 @@
+/* 전투 화면. 캔버스 한 장이 전부고 나머지는 조작 줄뿐이다 */
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  background: #0b0b0d;
+  color: #e8e4dc;
+  font: 14px/1.5 system-ui, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+}
+header {
+  width: min(100%, 1600px);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 2px solid #7a2222;
+  padding-bottom: 8px;
+}
+.ctl { display: flex; gap: 8px; align-items: center; }
+input {
+  width: 5em;
+  background: #17171a;
+  color: inherit;
+  border: 1px solid #3a3a40;
+  border-radius: 3px;
+  padding: 3px 6px;
+}
+button {
+  background: #7a2222;
+  color: #f2ede4;
+  border: 0;
+  border-radius: 3px;
+  padding: 5px 12px;
+  cursor: pointer;
+}
+button:hover { background: #983030; }
+canvas {
+  width: min(100%, 1600px);
+  aspect-ratio: 16 / 9;
+  background: #000;
+  border: 1px solid #2a2a30;
+}

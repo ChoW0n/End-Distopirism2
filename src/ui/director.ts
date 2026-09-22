@@ -112,15 +112,17 @@ export class UiDirector {
         case 'clashStart':
           this.clearArrows(commands);
           this.clash = { attackerId: event.attackerId, defenderId: event.defenderId, deadlockCount: 0 };
-          this.pushDash(commands, [event.attackerId, event.defenderId]);
+          this.pushDash(commands, [event.attackerId, event.defenderId], [event.attackerId, event.defenderId]);
           break;
 
         case 'oneSidedStart':
           this.clearArrows(commands);
-          //일방 공격은 공격자만 달려간다. 맞는 쪽은 제자리다
+          //일방 공격은 공격자만 달려간다. 맞는 쪽은 제자리다.
+          //다만 중심은 둘의 중점이라야 한다. 공격자 혼자로 잡으면 제자리에서 안 움직인다
           this.pushDash(
             commands,
             this.data.dash.oneSided === 'both' ? [event.attackerId, event.targetId] : [event.attackerId],
+            [event.attackerId, event.targetId],
           );
           break;
 
@@ -194,8 +196,8 @@ export class UiDirector {
     }
   }
 
-  //달려갈 자리를 잡아 명령으로 낸다
-  private pushDash(commands: UiCommand[], combatantIds: string[]): void {
+  //달려갈 자리를 잡아 명령으로 낸다. participants 는 중심을 잡는 데만 쓴다
+  private pushDash(commands: UiCommand[], combatantIds: string[], participants: string[]): void {
     const movers = combatantIds
       .filter((id) => this.hasAssets(id))
       .map((id) => ({ combatantId: id, from: { ...this.context.actor(id).position } }));
@@ -203,7 +205,12 @@ export class UiDirector {
 
     const first = movers[0];
     if (!first) return;
-    for (const spot of this.dash.plan({ movers }, this.heightOf(first.combatantId))) {
+    const spots = participants.map((id) => this.context.actor(id).position);
+    const center = {
+      x: spots.reduce((acc, p) => acc + p.x, 0) / spots.length,
+      y: spots.reduce((acc, p) => acc + p.y, 0) / spots.length,
+    };
+    for (const spot of this.dash.plan({ movers, center }, this.heightOf(first.combatantId))) {
       commands.push({
         type: 'dashTo',
         combatantId: spot.combatantId,

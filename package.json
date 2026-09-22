@@ -5,7 +5,7 @@
   "type": "module",
   "description": "End-Distopirism 웹 포팅. 전투 도메인은 렌더러 비의존 순수 TypeScript",
   "scripts": {
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc -p tsconfig.renderer.json --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
     "sim": "tsx scripts/simulate.ts",

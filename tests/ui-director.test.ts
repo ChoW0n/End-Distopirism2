@@ -405,3 +405,30 @@ describe('전투 한 판을 통째로 돌려도 깨지지 않는다', () => {
     }
   });
 });
+
+describe('일방 공격도 상대 쪽으로 달려간다', () => {
+  it('혼자 달려가도 목적지가 제자리가 아니다', () => {
+    const planner = new DashPlanner(uiData.dash, createSeededRng(3));
+    const from = { x: 600, y: 1340 };
+    //중심을 안 주면 혼자뿐이라 자기 자리가 중심이 된다
+    const alone = planner.plan({ movers: [{ combatantId: 'a1', from }] }, H);
+    //맞는 쪽까지 넣은 중점을 주면 그쪽으로 붙는다
+    const toward = new DashPlanner(uiData.dash, createSeededRng(3)).plan(
+      { movers: [{ combatantId: 'a1', from }], center: { x: 1200, y: 1340 } },
+      H,
+    );
+    expect(toward[0]!.position.x).toBeGreaterThan(alone[0]!.position.x);
+  });
+
+  it('일방 공격 명령이 상대 쪽 중점을 쓴다', () => {
+    const director = makeDirector();
+    const commands = director.consume([
+      { type: 'oneSidedStart', attackerId: 'a1', targetId: 'e1', skillId: S2 },
+    ]);
+    const dashes = pick(commands, 'dashTo');
+    expect(dashes).toHaveLength(1);
+    expect(dashes[0]!.combatantId).toBe('a1');
+    //a1 은 600, e1 은 1800 이다. 중점 근처로 가야 한다
+    expect(dashes[0]!.position.x).toBeGreaterThan(600);
+  });
+});

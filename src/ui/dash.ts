@@ -18,6 +18,9 @@ export interface DashSpot {
 export interface DashRequest {
   //원래 서 있던 자리. 중점을 잡고 좌우를 가르는 데 쓴다
   movers: { combatantId: string; from: Point }[];
+  //교전의 중심. 일방 공격이면 달려가는 사람이 하나뿐이라 그 사람 자리가 중심이 되면 안 된다.
+  //맞는 쪽까지 넣은 중점을 밖에서 넣어 준다
+  center?: Point;
 }
 
 //격자를 넓히는 한도. 이만큼 넓혀도 자리가 없으면 구역 설정 자체가 잘못된 것이다
@@ -54,7 +57,7 @@ export class DashPlanner {
     if (movers.length === 0) return [];
 
     //중심은 교전 쌍의 중점이다. 무대 중앙에 고정하면 교전이 전부 한 자리에 겹친다
-    const center = this.midpoint(movers.map((m) => m.from));
+    const center = request.center ?? this.midpoint(movers.map((m) => m.from));
     //왼쪽에 있던 사람이 왼쪽에 선다. 달려가다 서로 지나치지 않게 한다
     const ordered = [...movers].sort((a, b) => a.from.x - b.from.x);
 
