@@ -56,8 +56,10 @@ export class DashPlanner {
     const movers = request.movers;
     if (movers.length === 0) return [];
 
-    //중심은 교전 쌍의 중점이다. 무대 중앙에 고정하면 교전이 전부 한 자리에 겹친다
-    const center = request.center ?? this.midpoint(movers.map((m) => m.from));
+    //중심은 교전 쌍의 중점이다. 무대 중앙에 고정하면 교전이 전부 한 자리에 겹친다.
+    //거기서 카메라 쪽으로 조금 당긴다. 원작도 전투 구역이 캐릭터 줄보다 앞에 있다
+    const base = request.center ?? this.midpoint(movers.map((m) => m.from));
+    const center = { x: base.x, y: base.y + this.data.forward * height };
     //왼쪽에 있던 사람이 왼쪽에 선다. 달려가다 서로 지나치지 않게 한다
     const ordered = [...movers].sort((a, b) => a.from.x - b.from.x);
 

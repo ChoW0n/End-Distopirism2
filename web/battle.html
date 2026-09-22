@@ -4,13 +4,26 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="battle.css">
 <body>
-<header>
-  <b id="status">…</b>
-  <span class="ctl">
+<!-- HUD 배치는 원작 Battle.unity 의 RectTransform 을 1920x1080 기준 비율로 옮긴 것이다 -->
+<div class="stage">
+  <canvas id="view" width="1600" height="900"></canvas>
+
+  <!-- 화면 테두리 (OutLine) -->
+  <div class="frame"></div>
+  <!-- 위·아래 띠 (Image (3) y=528 / Image y=-514, 1920x100) -->
+  <div class="band band-top"></div>
+  <div class="band band-bottom"></div>
+
+  <!-- 스테이지 표시 (StageText 좌상단 10,-10) -->
+  <div class="stage-name">지하 1구역</div>
+  <!-- 턴 표시 (TurnUI 상단 중앙 0,-20 · 150x150) -->
+  <div class="turn"><span id="turn">1</span><small>턴</small></div>
+  <!-- 진행 상태. 원작에는 없고 이쪽 확인용이다 -->
+  <div class="ctl">
     <label>시드 <input id="seed" type="number" value="1" min="0"></label>
     <button id="restart">재시작</button>
-  </span>
-</header>
-<canvas id="view" width="1600" height="900"></canvas>
+    <b id="status">…</b>
+  </div>
+</div>
 <script type="module" src="battle.js"></script>
 </body>

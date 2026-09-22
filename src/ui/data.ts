@@ -13,6 +13,8 @@ export interface DashData {
   //좌우로 흔드는 폭의 [최소, 최대]
   lateralJitter: [number, number];
   depthJitter: number;
+  //교전 중심을 카메라 쪽으로 당기는 양. 원작은 전투 구역이 캐릭터 줄보다 앞에 있다
+  forward: number;
   //이 거리보다 가까우면 자리를 다시 뽑는다
   safeDistance: number;
   retries: number;
@@ -135,6 +137,7 @@ export function parseUiData(raw: unknown): UiData {
       pairGap: num(dash, 'pairGap', 'dash'),
       lateralJitter: range(dash, 'lateralJitter', 'dash'),
       depthJitter: num(dash, 'depthJitter', 'dash'),
+      forward: num(dash, 'forward', 'dash'),
       safeDistance: num(dash, 'safeDistance', 'dash'),
       retries: num(dash, 'retries', 'dash'),
       speed: num(dash, 'speed', 'dash'),

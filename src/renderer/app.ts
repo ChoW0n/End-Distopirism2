@@ -22,12 +22,21 @@ import { Scene, type MapPlacement } from './scene.js';
 const ASSETS = '../assets';
 const DATA = '../docs/battle-data.json';
 
-//한 줄에 세울 때 옆 사람과 띄우는 거리. 캐릭터 키 배수다
-const LINE_GAP = 0.85;
-//양 진영 사이 거리
-const SIDE_GAP = 2.4;
-//뒷줄로 갈수록 뒤로 밀리는 깊이
-const ROW_DEPTH = 0.22;
+//배치는 원작 Battle.unity 에서 뽑았다 (2026-09-22). 전부 캐릭터 키 H 배수다.
+//
+//원작 값: 바닥 y=-577, 카메라 (0,-9,-306) 아래로 15°, FOV 60.
+//아군 x=0 / 적 x=833 이고, 같은 편끼리는 x 가 같고 z 로만 벌어진다 (697 ↔ 1176).
+//카메라 높이 568 월드가 우리 무대에서 1407 (= 1.05H) 로 떨어지므로 그 비로 환산했다.
+//
+//  진영 간 가로   833 / 568 = 1.47 카메라높이 → 1.54 H
+//  같은 편 깊이   473 / 568 = 0.83          → 0.87 H
+const SIDE_GAP = 1.54;
+//같은 편이 앞뒤로 벌어지는 전체 폭. 원작은 2명이 0.87 H 만큼 떨어져 있었다.
+//우리는 4명이라 같은 폭 안에 나눠 세운다 — 간격을 그대로 쓰면 앞줄이 화면을 덮는다
+const ROW_SPAN = 0.87;
+//쉴 때 서 있는 자리는 전투 구역보다 뒤다. 원작 BattleZone 이 캐릭터 줄보다
+//439 월드(0.77 카메라높이) 앞에 있는 것을 옮긴 값이다
+const REST_BACK = 0.81;
 
 interface Boot {
   catalog: BattleCatalog;
@@ -83,14 +92,14 @@ class Session {
       const facing: 1 | -1 = side === 'ally' ? 1 : -1;
       const sideSign = side === 'ally' ? -1 : 1;
       members.forEach((combatant, index) => {
-        const offset = (index - (members.length - 1) / 2) * LINE_GAP * height;
+        //같은 편은 가로로 벌리지 않는다. 원작도 x 가 같고 깊이로만 갈린다
+        const spread = members.length > 1 ? index / (members.length - 1) - 0.5 : 0;
         out.push({
           combatantId: combatant.id,
           characterId: combatant.base.id,
           position: {
-            //줄 안에서 뒤로 갈수록 살짝 뒤(작게)로 물린다
-            x: sideSign * (SIDE_GAP * height) * 0.5 + offset * 0.35,
-            y: groundY + offset * ROW_DEPTH,
+            x: sideSign * (SIDE_GAP * height) * 0.5,
+            y: groundY - REST_BACK * height + spread * ROW_SPAN * height,
           },
           facing,
         });
@@ -151,6 +160,7 @@ async function main(): Promise<void> {
   if (!ctx) throw new Error('2d 컨텍스트를 못 잡았다');
 
   const status = document.getElementById('status') as HTMLElement;
+  const turnLabel = document.getElementById('turn') as HTMLElement;
   const seedInput = document.getElementById('seed') as HTMLInputElement;
   status.textContent = '에셋 읽는 중…';
 
@@ -186,6 +196,7 @@ async function main(): Promise<void> {
     restSec = 0;
     finished = false;
     status.textContent = `시드 ${seed}`;
+    turnLabel.textContent = '1';
     openTurn();
   };
 
@@ -202,7 +213,7 @@ async function main(): Promise<void> {
     session.battle.submitOrders(session.autoOrders(targets));
     //한 턴 분을 통째로 넘긴다. 어느 명령을 얼마나 붙들지는 렌더러가 정한다
     feed(session.battle.resolve());
-    status.textContent = `턴 ${session.battle.turn}`;
+    turnLabel.textContent = String(session.battle.turn);
   };
 
   const end = (): void => {

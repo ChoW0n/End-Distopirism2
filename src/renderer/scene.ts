@@ -114,10 +114,19 @@ export interface CameraState {
   shake: Point;
 }
 
+//원작 Battle.unity 의 카메라 세로 화각. 우리가 새로 정한 값이 아니라 승계한 값이다
+export const FIELD_OF_VIEW_DEG = 60;
+
+//지평선에 너무 붙으면 나눗셈이 터진다. 이보다 가까이는 안 간다
+const MIN_DISTANCE = 1;
+
 export class Scene {
-  //무대 1px 당 화면 px. 캐릭터 키가 화면에서 차지할 비율로 정해진다
-  private readonly unit: number;
-  //지평선과 발 기준선. 원근 배율을 이 둘 사이 거리로 잰다
+  //초점 거리(화면 px). 원작 화각에서 나온다
+  private readonly focal: number;
+  //카메라에서 발 기준선까지 거리, 카메라가 바닥에서 뜬 높이. 둘 다 무대 단위다
+  private readonly refDistance: number;
+  private readonly cameraHeight: number;
+  //지평선과 발 기준선
   private readonly horizonY: number;
   private readonly baseFootY: number;
 
@@ -128,24 +137,40 @@ export class Scene {
     private readonly groundY: number,
   ) {
     const height = map.viewport.height;
-    this.unit = (map.characterHeightRatio * height) / characterHeight;
     this.horizonY = map.groundBoundary * height;
     this.baseFootY = map.footYRatio * height;
     if (this.baseFootY <= this.horizonY) {
       throw new SceneError('발 기준선이 지평선보다 위에 있다. placement.json 을 확인할 것');
     }
+
+    //발 기준선에서 무대 1px 이 화면에서 차지하는 px
+    const unit = (map.characterHeightRatio * height) / characterHeight;
+    this.focal = height / 2 / Math.tan((FIELD_OF_VIEW_DEG * Math.PI) / 360);
+    this.refDistance = this.focal / unit;
+    this.cameraHeight = (this.baseFootY - this.horizonY) / unit;
+  }
+
+  //카메라에서 이 지점까지의 거리. 무대 y 가 클수록 앞이라 가깝다
+  private distanceTo(point: Point): number {
+    return Math.max(MIN_DISTANCE, this.refDistance - (point.y - this.groundY));
   }
 
   get viewport(): { width: number; height: number } {
     return this.map.viewport;
   }
 
-  //줌을 뺀 화면 좌표. 무대 y 가 클수록(앞쪽일수록) 아래로 내려오고 커진다
+  //줌을 뺀 화면 좌표. 진짜 원근이다 — 화면 위치도 배율도 거리에 반비례한다.
+  //
+  //깊이를 화면 y 에 선형으로 깔면 좁은 띠에서는 비슷하지만 줄이 깊어지면 어긋난다.
+  //뒷줄이 실제보다 훨씬 작아져서 원작 대형을 그대로 옮기면 사람이 사라진다
   private flat(point: Point): Projected {
-    const y = this.baseFootY + (point.y - this.groundY) * this.unit;
-    //지평선에 가까울수록 작아진다. 2.5D 의 거리감이 여기서 나온다
-    const depth = Math.max(0.05, (y - this.horizonY) / (this.baseFootY - this.horizonY));
-    return { x: point.x * this.unit * depth, y, scale: this.unit * depth };
+    const distance = this.distanceTo(point);
+    const scale = this.focal / distance;
+    return {
+      x: point.x * scale,
+      y: this.horizonY + (this.focal * this.cameraHeight) / distance,
+      scale,
+    };
   }
 
   //무대 좌표를 화면 좌표로 옮긴다. 카메라가 보는 지점이 화면 가운데에 온다.
@@ -176,7 +201,7 @@ export class Scene {
   layerRect(layer: MapLayerData, camera: CameraState): { x: number; y: number; width: number; height: number } {
     const { width, height } = this.map.viewport;
     //카메라가 무대 가운데에서 얼마나 벗어났는지를 화면 픽셀로 잰다
-    const drift = camera.focus.x * this.unit * layer.parallax;
+    const drift = camera.focus.x * (this.focal / this.refDistance) * layer.parallax;
     return {
       x: layer.x * width - drift + camera.shake.x * layer.parallax,
       y: layer.y * height + camera.shake.y * layer.parallax,

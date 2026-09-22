@@ -6,6 +6,8 @@
     "pairGap": 0.55,
     "lateralJitter": [0.06, 0.16],
     "depthJitter": 0.12,
+    "_forward": "원작 BattleZone 이 캐릭터 줄보다 카메라 쪽으로 443 월드(0.78 카메라높이) 앞에 있다. 합을 걸면 앞으로 나와서 붙는다",
+    "forward": 0.82,
     "safeDistance": 0.45,
     "retries": 30,
     "speed": 2.4,
