@@ -72,6 +72,12 @@ interface Actor {
   pop: number | null;
   //휘두르는 동안 남기는 지난 장
   strikeGhosts: { position: Point; frameId: string; age: number }[];
+  //휘두르는 한 방이 진행 중인지. 한 방 명령에서 켜지고 다른 자세 명령에서 꺼진다
+  striking: boolean;
+  //밀려나고 따라 들어가는 이동. 튕겨 돌아오지 않고 그 자리에 머문다 (SPEC-005 §2.3.3)
+  slides: { dx: number; sec: number; t: number }[];
+  //대시가 끝난 뒤 밀려나거나 따라 들어간 누적 거리. 월드에 박히는 표시를 이만큼 옮긴다
+  drift: number;
 }
 
 //재생 중인 이펙트 하나. 마지막 키프레임에도 그림이 남으므로 끝나면 반드시 지운다
@@ -264,6 +270,9 @@ export class CanvasRenderer {
         blend: null,
         pop: null,
         strikeGhosts: [],
+        striking: false,
+        slides: [],
+        drift: 0,
       });
     }
     this.focus = this.restFocus();
@@ -283,7 +292,7 @@ export class CanvasRenderer {
   get idle(): boolean {
     if (this.cutscene || this.queue.length > 0 || this.gate > 0 || this.freeze > 0) return false;
     for (const actor of this.actors.values()) {
-      if (actor.target) return false;
+      if (actor.target || actor.slides.length > 0) return false;
     }
     return this.effects.length === 0;
   }
@@ -308,10 +317,17 @@ export class CanvasRenderer {
         actor.frames = [...command.frameIds];
         actor.frameIndex = 0;
         actor.elapsed = 0;
-        //바로 뒤에 붙은 궤적은 지금 당겨서 그 장을 기다리게 한다. 다 돈 뒤에 꺼내면 이미 지나간 장이다
-        while (this.queue[0]?.type === 'spawnEffect' && this.queue[0].frameId) {
-          const next = this.queue.shift() as Extract<RenderCommand, { type: 'spawnEffect' }>;
-          this.pendingOnFrame.push({ combatantId: next.sourceId, frameId: next.frameId as string, command: next });
+        actor.striking = command.wait === true;
+        //바로 뒤에 붙은 궤적·움찔은 지금 당겨서 그 장을 기다리게 한다. 다 돈 뒤에 꺼내면 이미 지나간 장이다
+        for (;;) {
+          const next = this.queue[0];
+          if (next?.type === 'spawnEffect' && next.frameId) {
+            this.queue.shift();
+            this.pendingOnFrame.push({ combatantId: next.sourceId, frameId: next.frameId, command: next });
+          } else if (next?.type === 'flinch') {
+            this.queue.shift();
+            this.pendingOnFrame.push({ combatantId: next.sourceId, frameId: next.frameId, command: next });
+          } else break;
         }
         this.releaseOnFrame(actor);
         if (!command.wait) return 0;
@@ -329,6 +345,14 @@ export class CanvasRenderer {
         for (let i = 0; i < command.frameIds.length - 1; i += 1) dwellMs += this.frameMs(actor, i);
         return dwellMs / 1000;
       }
+
+      case 'flinch':
+        this.pendingOnFrame.push({ combatantId: command.sourceId, frameId: command.frameId, command });
+        {
+          const source = this.actors.get(command.sourceId);
+          if (source) this.releaseOnFrame(source);
+        }
+        return 0;
 
       case 'spawnEffect': {
         if (command.frameId) {
@@ -370,6 +394,8 @@ export class CanvasRenderer {
         actor.target = { ...command.position };
         actor.speed = command.speed;
         actor.float = null;
+        actor.slides = [];
+        actor.drift = 0;
         actor.trail = { ...command.trail };
         actor.ghosts = [];
         //도착할 때까지 기다린다. 달려가는 중에 코인이 뒤집히면 안 된다
@@ -382,6 +408,9 @@ export class CanvasRenderer {
         actor.target = { ...actor.home };
         actor.coins = null;
         actor.power = null;
+        actor.slides = [];
+        actor.drift = 0;
+        actor.striking = false;
         //돌아가는 건 기다리지 않는다. 다음 교전이 겹쳐 시작해도 된다
         return 0;
       }
@@ -492,18 +521,21 @@ export class CanvasRenderer {
         return 0;
       }
 
-      case 'damageNumber':
+      case 'damageNumber': {
+        //UI 감독은 밀려난 거리를 모른다. 지금 밀려나 있는 만큼 옮겨 띄운다
+        const drift = this.actors.get(command.combatantId)?.drift ?? 0;
         this.numbers.push({
           owner: command.combatantId,
           damage: command.damage,
-          from: { ...command.from },
-          to: { ...command.to },
+          from: { x: command.from.x + drift, y: command.from.y },
+          to: { x: command.to.x + drift, y: command.to.y },
           size: command.size,
           sec: command.sec,
           heavy: command.heavy,
           t: 0,
         });
         return 0;
+      }
 
       case 'hitStop':
         this.freeze = Math.max(this.freeze, command.sec);
@@ -512,7 +544,8 @@ export class CanvasRenderer {
       case 'knockback': {
         const actor = this.actors.get(command.combatantId);
         if (actor) {
-          actor.pushes.push({ kind: 'recoil', dx: command.dx, sec: command.sec, t: 0, windupSec: 0 });
+          //밀린 자리에 머문다. 튕겨 돌아오면 공격자와 얼굴을 맞댄다 (SPEC-005 §2.3.3)
+          actor.slides.push({ dx: command.dx, sec: command.sec, t: 0 });
           actor.hurt = this.motion.hurtSec;
         }
         return 0;
@@ -570,12 +603,30 @@ export class CanvasRenderer {
     const rest: typeof this.pendingOnFrame = [];
     for (const waiting of this.pendingOnFrame) {
       if (waiting.combatantId === actor.placement.combatantId && waiting.frameId === current) {
-        this.spawn(waiting.command as Extract<RenderCommand, { type: 'spawnEffect' }>);
+        if (waiting.command.type === 'flinch') this.flinch(waiting.command);
+        else this.spawn(waiting.command as Extract<RenderCommand, { type: 'spawnEffect' }>);
         continue;
       }
       rest.push(waiting);
     }
     this.pendingOnFrame = rest;
+  }
+
+  //마지막이 아닌 휘두름에 맞은 쪽. 번쩍이고 한 발 밀리고 잠깐 맞는 자세를 보였다 돌아온다 (SPEC-005 §2.3.2)
+  private flinch(command: Extract<RenderCommand, { type: 'flinch' }>): void {
+    const target = this.actors.get(command.combatantId);
+    const source = this.actors.get(command.sourceId);
+    if (!target || !source) return;
+    target.hurt = this.motion.hurtSec;
+    const away = target.placement.position.x >= source.placement.position.x ? 1 : -1;
+    target.slides.push({ dx: away * this.motion.follow * this.heightOf(target), sec: this.motion.popMs / 1000 + 0.1, t: 0 });
+    const hit = this.catalogOf(target)?.frameEndingWith('hit')?.id;
+    const back = this.currentFrame(target);
+    if (hit && back && !target.striking) {
+      target.frames = [hit, back];
+      target.frameIndex = 0;
+      target.elapsed = 0;
+    }
   }
 
   //이펙트를 월드에 박는다. 좌표는 제자리 기준으로 풀려 왔으므로 지금 서 있는 자리로 옮긴다.
@@ -693,6 +744,15 @@ export class CanvasRenderer {
 
     for (const push of actor.pushes) push.t += dt;
     actor.pushes = actor.pushes.filter((p) => p.t < p.sec);
+    //밀려나고 따라 들어간 만큼 서 있는 자리 자체를 옮긴다
+    for (const slide of actor.slides) {
+      const before = easeOutCubic(slide.t / slide.sec);
+      slide.t = Math.min(slide.sec, slide.t + dt);
+      const step = slide.dx * (easeOutCubic(slide.t / slide.sec) - before);
+      actor.placement = { ...actor.placement, position: { x: actor.placement.position.x + step, y: actor.placement.position.y } };
+      actor.drift += step;
+    }
+    actor.slides = actor.slides.filter((s) => s.t < s.sec);
     actor.hurt = Math.max(0, actor.hurt - dt);
 
     //흰 칸은 빨간 칸을 뒤따라 줄어든다. 얼마나 깎였는지가 잠깐 보인다
@@ -740,6 +800,10 @@ export class CanvasRenderer {
     //앞 장을 잠깐 남긴다. 두 실루엣이 겹쳐 움직임 흐림처럼 읽힌다
     actor.blend = { frameId: before, t: 0 };
     if (!this.striking(actor)) return;
+    //휘두르는 장이면 한 발 따라 들어간다. 맞는 쪽도 같은 만큼 밀리므로 간격이 유지된다 (SPEC-005 §2.3.3)
+    if (this.swingHoldOf(actor, now) > 0) {
+      actor.slides.push({ dx: actor.placement.facing * this.motion.follow * this.heightOf(actor), sec: this.motion.popMs / 1000 + 0.1, t: 0 });
+    }
     //휘두르는 중이면 튕기고, 지난 장을 잔상으로 남기고, 카메라를 살짝 찬다
     actor.pop = 0;
     actor.strikeGhosts.unshift({ position: this.positionOf(actor), frameId: before, age: 0 });
@@ -749,9 +813,19 @@ export class CanvasRenderer {
     }
   }
 
-  //휘두르는 한 방이 진행 중인지. 내딛기가 걸려 있는 동안이다
+  //휘두르는 한 방이 진행 중인지
   private striking(actor: Actor): boolean {
-    return actor.pushes.some((p) => p.kind === 'lunge');
+    return actor.striking;
+  }
+
+  //이 장이 휘두르는 장이면 버틸 시간(ms), 아니면 0. 붙은 이펙트가 다 사라질 때까지 버틴다 (SPEC-005 §2.3.2)
+  private swingHoldOf(actor: Actor, frameId: string): number {
+    const catalog = this.catalogOf(actor);
+    if (!catalog) return 0;
+    const effectIds = catalog.effectsOnFrame(frameId);
+    if (effectIds.length === 0) return 0;
+    const longest = Math.max(...effectIds.map((id) => totalMs(catalog.effect(id).frames)));
+    return Math.max(this.motion.swingHoldMs, longest);
   }
 
   private tickWorld(dt: number): void {
@@ -806,10 +880,14 @@ export class CanvasRenderer {
     return 1 - (1 - this.motion.othersAlpha) * engaged;
   }
 
-  //여러 장짜리 동작의 한 장 길이. 첫 장은 예비 동작이라 길게, 나머지는 휘두름이라 짧게 끊는다
+  //여러 장짜리 동작의 한 장 길이. 첫 장은 준비라 버티고, 휘두르는 장은 이펙트가 끝날 때까지 버티고,
+  //나머지 중간 장은 짧게 넘긴다 (SPEC-005 §2.3.2)
   private frameMs(actor: Actor, index: number): number {
     if (actor.frames.length < 2) return FRAME_MS;
-    return index === 0 ? this.motion.windupMs : this.motion.snapMs;
+    if (index === 0) return this.motion.windupMs;
+    const frameId = actor.frames[index];
+    const hold = frameId ? this.swingHoldOf(actor, frameId) : 0;
+    return hold > 0 ? hold : this.motion.snapMs;
   }
 
   //캐릭터 키. 에셋이 없으면 빌려 온 키를 쓴다
@@ -1002,7 +1080,7 @@ export class CanvasRenderer {
     const frameId = this.currentFrame(actor);
     if (!frameId) return;
     //달리거나 휘두르는 중엔 숨쉬기를 멈춘다
-    const still = !actor.target && actor.pushes.every((p) => p.kind !== 'lunge');
+    const still = !actor.target && !actor.striking;
     const wave = Math.sin(((nowSec + actor.breathPhase * this.motion.breatheSec) / this.motion.breatheSec) * Math.PI * 2);
     const breath = still ? 1 + this.motion.breathe * wave : 1;
     const hurt = this.motion.hurtSec > 0 ? actor.hurt / this.motion.hurtSec : 0;

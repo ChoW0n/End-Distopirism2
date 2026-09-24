@@ -33,7 +33,10 @@ export type RenderCommand =
   //컷신 레이어는 cutscene 단계에만 들어 있다. 나머지 단계는 UI 표시용이다
   | { type: 'ultimate'; combatantId: string; phase: UltimatePhase; layers: LayerTransform[] | null }
   //에셋이 아직 안 들어온 캐릭터. 다른 캐릭터 그림을 대신 물리지 않는다 (SPEC-002 §10)
-  | { type: 'placeholder'; combatantId: string; characterId: string };
+  | { type: 'placeholder'; combatantId: string; characterId: string }
+  //마지막이 아닌 휘두름에 맞는 쪽이 움찔한다. 때리는 쪽의 그 장이 떠 있을 때 터진다 (SPEC-005 §2.3.2)
+  //피해는 없다. 피해 이벤트는 교전당 하나라 마지막 한 방에만 붙는다
+  | { type: 'flinch'; combatantId: string; sourceId: string; frameId: string };
 
 //교전에 참가한 한쪽. 피해가 들어왔을 때 어느 이펙트를 어디에 붙일지 여기서 읽는다
 interface EngagementSide {
@@ -229,7 +232,7 @@ export class BattlePresenter {
   //피해가 들어가는 한 방. 전용기 전체를 휘두르고, 장마다 묶인 무기 궤적을 붙인다.
   //무기 궤적은 휘두르는 동작 자체라 프레임과 같이 나가고,
   //섬광·지면 충격·화염은 §6-1 대로 이 뒤 onDamage 에서 낸다
-  private strike(commands: RenderCommand[], side: EngagementSide): void {
+  private strike(commands: RenderCommand[], side: EngagementSide, targetId: string): void {
     if (side.struck || side.sequence.length === 0) return;
     side.struck = true;
 
@@ -262,6 +265,36 @@ export class BattlePresenter {
           { flipped: placement.facing === -1 },
         ),
       });
+    }
+
+    //마지막이 아닌 휘두름. 맞는 쪽이 움찔하고 명중 섬광이 뜬다. 여러 번 휘두른 게 한 번처럼 겹치지 않게 한다
+    const last = side.sequence[side.sequence.length - 1];
+    const swings = [...new Set(trails.map((t) => t.frameId))].filter((frameId) => frameId !== last);
+    const target = this.context.actor(targetId);
+    const engagement = this.engagement;
+    const targetSide = engagement
+      ? [engagement.attacker, engagement.defender].find((s) => s.combatantId === targetId)
+      : undefined;
+    //맞는 쪽이 지금 잡고 있는 자세. 없으면 서 있는 자세로 명중점을 잡는다
+    const targetFrameId = this.stage.has(target.characterId)
+      ? (targetSide?.frameId ?? this.stage.catalogFor(target.characterId).frameEndingWith('idle')?.id)
+      : undefined;
+    for (const frameId of swings) {
+      commands.push({ type: 'flinch', combatantId: targetId, sourceId: side.combatantId, frameId });
+      if (!targetFrameId) continue;
+      for (const effect of catalog.effectsByAnchor('hitPoint')) {
+        commands.push({
+          type: 'spawnEffect',
+          sourceId: side.combatantId,
+          targetId,
+          frameId,
+          placement: this.stage.placeEffect(
+            effect.id,
+            { source: placement, sourceFrameId: frameId, target, targetFrameId },
+            { flipped: placement.facing === -1 },
+          ),
+        });
+      }
     }
   }
 
@@ -323,7 +356,7 @@ export class BattlePresenter {
     const hitter = side && side.combatantId !== damagedId ? side : null;
 
     //때린 쪽이 먼저 휘두른다. 맞는 자세는 그 한 방이 닿은 뒤다
-    if (hitter) this.strike(commands, hitter);
+    if (hitter) this.strike(commands, hitter, damagedId);
     this.pushNamedFrame(commands, damagedId, 'hit');
 
     if (!engagement || !hitter) return;

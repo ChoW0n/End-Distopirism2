@@ -134,6 +134,25 @@ describe('교전이 시작되면 전용기 동작이 나간다', () => {
     expect(framesFor(commands, 'e1')).toEqual([[sprites.frameSequence('S1').at(-1)]]);
   });
 
+  //두 번 휘두르는 전용기는 첫 휘두름에도 맞는 쪽이 움찔한다. 안 그러면 두 번 휘두른 게 한 번처럼 겹친다 (SPEC-005 §2.3.2)
+  it('마지막이 아닌 휘두름마다 맞는 쪽 움찔이 그 장에 묶여 나간다', () => {
+    const commands = makePresenter().consume(resolveTurn(makeBattle(S1), S3));
+    const s3 = sprites.frameSequence('S3');
+    const swings = s3.slice(0, -1).filter((id) => sprites.effectsOnFrame(id).length > 0);
+    expect(swings.length).toBeGreaterThan(0);
+
+    const flinches = commands.filter((c): c is Extract<RenderCommand, { type: 'flinch' }> => c.type === 'flinch');
+    expect(flinches.map((f) => f.frameId)).toEqual(swings);
+    for (const f of flinches) expect(f).toMatchObject({ combatantId: 'e1', sourceId: 'a1' });
+    //마지막 장(맞닿는 순간)은 움찔이 아니라 진짜 피해다
+    expect(flinches.some((f) => f.frameId === s3.at(-1))).toBe(false);
+  });
+
+  it('한 번만 휘두르는 전용기는 움찔이 없다', () => {
+    const commands = makePresenter().consume(resolveTurn(makeBattle(S1), S2));
+    expect(commands.some((c) => c.type === 'flinch')).toBe(false);
+  });
+
   it('왼쪽을 보는 캐릭터의 이펙트는 비트맵도 뒤집힌다', () => {
     //e1 이 이기도록 스킬을 바꿔 준다
     const commands = makePresenter().consume(resolveTurn(makeBattle(S2), S1));

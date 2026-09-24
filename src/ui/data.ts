@@ -135,6 +135,12 @@ export interface MotionData {
   breatheSec: number;
   //맞았을 때 몸이 번쩍이는 시간
   hurtSec: number;
+  //휘두른 장을 버티는 최소 시간. 붙은 이펙트가 더 길면 그만큼 (SPEC-005 §2.3.2)
+  swingHoldMs: number;
+  //휘두를 때마다 따라 들어가고 맞는 쪽이 밀리는 거리 (H 배수)
+  follow: number;
+  //마지막 한 방 뒤 쉬는 시간
+  afterHitSec: number;
   //장이 바뀌면 앞 장을 옅게 남기는 시간 (SPEC-005 §2.3)
   blendMs: number;
   //휘두르는 장이 바뀔 때 커졌다 돌아오는 크기·시간
@@ -322,7 +328,7 @@ export function parseUiData(raw: unknown): UiData {
     afterimage: numbers('afterimage', ['count', 'intervalSec', 'alpha'] as const),
     motion: numbers('motion', [
       'othersAlpha', 'windupMs', 'snapMs', 'lunge', 'lungeSec', 'breathe', 'breatheSec', 'hurtSec',
-      'blendMs', 'popScale', 'popMs', 'strikeGhosts', 'strikeGhostAlpha', 'poseKick', 'effectFadeMs',
+      'swingHoldMs', 'follow', 'afterHitSec', 'blendMs', 'popScale', 'popMs', 'strikeGhosts', 'strikeGhostAlpha', 'poseKick', 'effectFadeMs',
     ] as const),
     cutscene: {
       ...numbers('cutscene', [

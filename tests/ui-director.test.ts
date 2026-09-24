@@ -130,8 +130,8 @@ describe('§5 중앙 대시 배치', () => {
   });
 
   it('무작위가 전부 실패하면 격자 폴백이 돈다 — 겹친 자리를 쓰지 않는다', () => {
-    //구역을 아주 좁히고 겹침 방지 거리를 키우면 무작위로는 못 찾는다
-    const tight = { ...uiData.dash, zoneWidth: 0.2, zoneDepth: 0.05, safeDistance: 1.0, retries: 30 };
+    //구역을 아주 좁히고 겹침 방지 거리를 두 사람 간격(pairGap)보다 크게 잡으면 무작위로는 못 찾는다
+    const tight = { ...uiData.dash, zoneWidth: 0.2, zoneDepth: 0.05, safeDistance: 2.0, retries: 30 };
     const planner = new DashPlanner(tight, createSeededRng(5));
     const first = planner.plan(pair, H);
     const second = planner.plan(pair, H);

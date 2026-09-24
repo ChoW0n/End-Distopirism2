@@ -597,6 +597,8 @@ export class UiDirector {
     });
 
     if (heavy) commands.push({ type: 'flash', alpha: this.data.flash.alpha, sec: this.data.flash.sec });
+    //한 방 뒤에 쉰다. 이펙트가 다 사라지기 전에 제자리로 돌아가지 않는다 (SPEC-005 §2.3.2)
+    commands.push({ type: 'beat', sec: this.data.motion.afterHitSec });
   }
 
   //달려가 있는 만큼의 차이. 바는 제자리 기준이라 코인을 따라 붙일 때 쓴다
