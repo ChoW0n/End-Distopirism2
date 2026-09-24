@@ -190,10 +190,17 @@ export class BattlePresenter {
     //시작은 준비 자세 한 장만. 전용기 전체는 피해가 들어가는 한 방에 휘두른다 (SPEC-005 §2)
     const ready = side.sequence[0];
     if (ready) commands.push({ type: 'playFrames', combatantId, frameIds: [ready] });
-    //준비 자세를 잡으며 발치에서, 달려 나가며 출발점에서 사건 이펙트가 난다 (SPEC-002 §5.4.2)
+    //준비 자세를 잡으며 제자리에서, 달려 나가며 출발점에서 사건 이펙트가 난다.
+    //지면 이펙트는 발, 나머지는 몸 가운데다 (SPEC-002 §5.4.2)
     if (ready) {
-      this.pushEventEffects(commands, combatantId, ready, catalog.bindings.ready, placement.position);
-      this.pushEventEffects(commands, combatantId, ready, catalog.bindings.dash, placement.position);
+      const feet = placement.position;
+      const center = { x: feet.x, y: feet.y - catalog.characterHeight * 0.5 };
+      for (const effectIds of [catalog.bindings.ready, catalog.bindings.dash]) {
+        for (const effectId of effectIds) {
+          const at = catalog.effect(effectId).anchor === 'groundPoint' ? feet : center;
+          this.pushEventEffects(commands, combatantId, ready, [effectId], at);
+        }
+      }
     }
     return side;
   }

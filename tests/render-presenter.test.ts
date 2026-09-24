@@ -430,7 +430,7 @@ describe('§5.4 프레임에 묶인 이펙트', () => {
   });
 
   //준비 자세를 잡으면 발치에서, 달려 나가면 출발점에서 사건 이펙트가 난다 (SPEC-002 §5.4.2)
-  it('합 시작에 양쪽 다 준비·대시 사건 이펙트가 발치에 난다', () => {
+  it('합 시작에 양쪽 다 준비·대시 사건 이펙트가 제자리에 난다', () => {
     const commands = makePresenter().consume([
       { type: 'clashStart', attackerId: 'a1', defenderId: 'e1', attackerSkillId: S2, defenderSkillId: S1 },
     ]);
@@ -439,8 +439,13 @@ describe('§5.4 프레임에 묶인 이펙트', () => {
     for (const id of ['a1', 'e1']) {
       const mine = events.filter((e) => e.sourceId === id);
       expect(mine.map((e) => e.placement.effectId)).toEqual(expected);
-      //발치다. 날끝이 아니다
-      for (const e of mine) expect(e.placement.anchorPoint).toEqual(context.actor(id).position);
+      //지면 이펙트는 발, 나머지는 몸 가운데다. 날끝이 아니다
+      const feet = context.actor(id).position;
+      for (const e of mine) {
+        const ground = sprites.effect(e.placement.effectId).anchor === 'groundPoint';
+        expect(e.placement.anchorPoint.x).toBeCloseTo(feet.x);
+        expect(e.placement.anchorPoint.y).toBeCloseTo(ground ? feet.y : feet.y - sprites.characterHeight * 0.5);
+      }
     }
   });
 

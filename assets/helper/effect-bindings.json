@@ -1,0 +1,62 @@
+{
+  "_comment": "SPEC-002 §5.4 전용기-이펙트 매핑 · 조력자(범고래). 범고래 이펙트 v6 12종. 2026-09-24 제안값, v1.2 에서 12종을 다 쓰게 확장 (SPEC-002 §5.4.1)",
+  "_authored": "사람이 쓰는 파일이다. normalize_sprites.py 가 만드는 sprite-manifest.json 과 분리한다",
+  "version": 2,
+  "character": "helper",
+  "frames": {
+    "_comment": "S1 준비→찌름→깊은 찌르기, S2 머리 위로 들기→내려 베기, S3 세움→올려 베기→낮게 쓸기. 준비 프레임은 비운다",
+    "06-skill1-cast": [
+      "12_speed_wake"
+    ],
+    "06b-skill1-thrust": [
+      "08_pierce"
+    ],
+    "08-skill2-peak": [
+      "07_downward_cleave",
+      "10_ground_impact"
+    ],
+    "10-skill3-cast": [
+      "03_slash_trail"
+    ],
+    "11-skill3-finish": [
+      "06_horizontal_sweep",
+      "10_ground_impact"
+    ]
+  },
+  "_ultimateComment": "궁극기는 전용기 3 마무리 프레임을 공유한다",
+  "ultimate": [
+    "07_downward_cleave",
+    "10_ground_impact",
+    "01_flame_burst"
+  ],
+  "defeat": [
+    "04_smoke_ash"
+  ],
+  "_eventsComment": "사건 이펙트. 명중이 아니므로 명중 섬광(02)은 넣지 않는다 (SPEC-002 §5.4.2)",
+  "ready": [
+    "09_charge_ring"
+  ],
+  "dash": [
+    "12_speed_wake"
+  ],
+  "clash": [
+    "05_clash_spark"
+  ],
+  "recoil": [
+    "11_guard_shell"
+  ],
+  "_glowComment": "발광 겹을 얹을 이펙트. 연기·재는 뺀다 (SPEC-002 §6-7)",
+  "glow": [
+    "01_flame_burst",
+    "02_impact_flash",
+    "03_slash_trail",
+    "05_clash_spark",
+    "06_horizontal_sweep",
+    "07_downward_cleave",
+    "08_pierce",
+    "09_charge_ring",
+    "10_ground_impact",
+    "11_guard_shell",
+    "12_speed_wake"
+  ]
+}

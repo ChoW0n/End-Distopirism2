@@ -54,3 +54,31 @@ describe('조력자 매니페스트', () => {
     expect(ratio).toBeLessThan(1.25);
   });
 });
+
+describe('조력자 이펙트 (범고래 v6)', () => {
+  it('12종 × 6장이 들어와 있다', () => {
+    expect(helper.manifest.effects).toHaveLength(12);
+    for (const effect of helper.manifest.effects) expect(effect.frames, effect.id).toHaveLength(6);
+  });
+
+  //제공된 12종을 다 쓴다. 안 쓰는 게 있으면 사건을 찾아 붙인다 (SPEC-002 §5.4.1)
+  it('12종이 전부 바인딩 어딘가에 쓰인다', () => {
+    const b = helper.bindings;
+    const used = new Set([
+      ...Object.values(b.frames).flat(),
+      ...b.ultimate,
+      ...b.defeat,
+      ...b.ready,
+      ...b.dash,
+      ...b.clash,
+      ...b.recoil,
+      ...helper.effectsByAnchor('hitPoint').map((e) => e.id),
+    ]);
+    for (const effect of helper.manifest.effects) expect(used, effect.id).toContain(effect.id);
+  });
+
+  it('찌르기는 창끝에, 명중 섬광은 맞은 쪽에 붙는다', () => {
+    expect(helper.effect('08_pierce').anchor).toBe('bladeTip');
+    expect(helper.effectsByAnchor('hitPoint').map((e) => e.id)).toEqual(['02_impact_flash']);
+  });
+});
