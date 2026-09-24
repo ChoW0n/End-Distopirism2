@@ -29,7 +29,7 @@ describe('assets/ui/ui-data.json', () => {
   //키가 빠진 채 그려지면 어디가 틀렸는지 화면만 보고는 못 찾는다
   it.each([
     'dash', 'float', 'arrow', 'bar', 'badge',
-    'clash', 'hitStop', 'damageText', 'banner', 'knockback', 'flash', 'afterimage', 'camera',
+    'clash', 'hitStop', 'damageText', 'banner', 'knockback', 'flash', 'afterimage', 'motion', 'camera',
   ])('%s 절이 없으면 던진다', (section) => {
     const broken = { ...raw };
     delete broken[section];

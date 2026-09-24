@@ -57,6 +57,8 @@ interface ActiveEngagement {
 export class BattlePresenter {
   //교전 상태는 여기 하나만 둔다. 카메라와 같은 이유로 두 군데서 들지 않는다
   private engagement: ActiveEngagement | null = null;
+  //라운드가 끝나 준비 자세로 돌아가야 하는지
+  private needsReady = false;
   //궁극기 카드가 덱에 들어오길 기다리는 참가자. 도메인이 다음 턴 시작에 넣어준다
   private ultimatePending = new Set<string>();
   //컷신 감독은 캐릭터마다 하나씩 만들어 재사용한다
@@ -97,10 +99,17 @@ export class BattlePresenter {
           this.beginEngagement(commands, event.attackerId, event.skillId, event.targetId, null);
           break;
 
-        //합이 한 번 오갈 때마다 둘 다 휘둘렀다가 준비 자세로 돌아온다
+        //합이 한 번 오갈 때마다 이긴 쪽은 휘두르고 진 쪽은 밀려 물러난다. 교착이면 둘 다 휘두른다
         case 'clashRoundWin':
+          this.exchange(commands, event.winnerId);
+          break;
         case 'deadlock':
-          this.exchange(commands);
+          this.exchange(commands, null);
+          break;
+
+        //다음 라운드 코인이 굴러가면 둘 다 준비 자세로 돌아온다
+        case 'coinRolled':
+          this.backToReady(commands);
           break;
 
         //피해가 실제로 들어갔을 때만 명중 연출을 낸다 (SPEC-002 §6-1)
@@ -181,17 +190,40 @@ export class BattlePresenter {
     return side;
   }
 
-  //합 한 라운드의 맞부딪힘. 둘 다 맞닿는 자세를 한 장 보였다가 준비 자세로 돌아온다.
+  //합 한 라운드의 맞부딪힘. 이긴 쪽은 맞닿는 자세, 진 쪽은 물러나는 자세로 멈춘다.
+  //모두가 매번 휘두르면 공격·공격·공격만 반복돼서 누가 밀렸는지 안 보인다.
   //궤적은 여기서 안 낸다. 무기 궤적은 실제로 베는 한 방에만 붙인다
-  private exchange(commands: RenderCommand[]): void {
+  private exchange(commands: RenderCommand[], winnerId: string | null): void {
     const engagement = this.engagement;
     if (!engagement) return;
     for (const side of [engagement.attacker, engagement.defender]) {
-      const first = side.sequence[0];
       const last = side.sequence[side.sequence.length - 1];
-      if (!first || !last) continue;
-      commands.push({ type: 'playFrames', combatantId: side.combatantId, frameIds: [last, first] });
+      if (!last) continue;
+      const lost = winnerId !== null && side.combatantId !== winnerId;
+      const pose = lost ? this.recoilFrame(side.combatantId) ?? side.sequence[0] : last;
+      if (!pose) continue;
+      commands.push({ type: 'playFrames', combatantId: side.combatantId, frameIds: [pose] });
     }
+    this.needsReady = true;
+  }
+
+  //라운드 사이. 다음 코인이 굴러갈 때 둘 다 준비 자세로 돌아온다
+  private backToReady(commands: RenderCommand[]): void {
+    const engagement = this.engagement;
+    if (!engagement || !this.needsReady) return;
+    this.needsReady = false;
+    for (const side of [engagement.attacker, engagement.defender]) {
+      const ready = side.sequence[0];
+      if (ready) commands.push({ type: 'playFrames', combatantId: side.combatantId, frameIds: [ready] });
+    }
+  }
+
+  //합에서 밀렸을 때의 자세. 물러나는 장이 있으면 그걸, 없으면 막는 장을 쓴다. 이름으로 찾는다
+  private recoilFrame(combatantId: string): string | null {
+    const placement = this.context.actor(combatantId);
+    if (!this.stage.has(placement.characterId)) return null;
+    const catalog = this.stage.catalogFor(placement.characterId);
+    return (catalog.frameEndingWith('retreat') ?? catalog.frameEndingWith('guard'))?.id ?? null;
   }
 
   //피해가 들어가는 한 방. 전용기 전체를 휘두르고, 장마다 묶인 무기 궤적을 붙인다.
@@ -223,7 +255,12 @@ export class BattlePresenter {
         sourceId: side.combatantId,
         targetId: null,
         frameId,
-        placement: this.stage.placeEffect(effectId, { source: placement, sourceFrameId: frameId }),
+        //캐릭터가 뒤집혀 있으면 궤적도 뒤집는다. 안 뒤집으면 적의 궤적이 반대로 뻗는다
+        placement: this.stage.placeEffect(
+          effectId,
+          { source: placement, sourceFrameId: frameId },
+          { flipped: placement.facing === -1 },
+        ),
       });
     }
   }
@@ -309,7 +346,7 @@ export class BattlePresenter {
         sourceId: hitter.combatantId,
         targetId: damagedId,
         frameId: null,
-        placement: this.stage.placeEffect(effect.id, context),
+        placement: this.stage.placeEffect(effect.id, context, { flipped: source.facing === -1 }),
       });
     }
 
@@ -323,10 +360,11 @@ export class BattlePresenter {
         targetId: damagedId,
         frameId: null,
         //발생 좌표는 때린 순간의 날끝이다. 이후 무기를 따라가지 않는다
-        placement: this.stage.placeEffect(effectId, {
-          ...context,
-          emission: this.stage.framePoint(source, hitter.frameId, 'bladeTip'),
-        }),
+        placement: this.stage.placeEffect(
+          effectId,
+          { ...context, emission: this.stage.framePoint(source, hitter.frameId, 'bladeTip') },
+          { flipped: source.facing === -1 },
+        ),
       });
     }
   }
@@ -366,6 +404,7 @@ export class BattlePresenter {
   private endEngagement(commands: RenderCommand[], combatantIds: string[]): void {
     for (const id of combatantIds) this.pushNamedFrame(commands, id, 'idle');
     this.engagement = null;
+    this.needsReady = false;
   }
 
   //이름 끝으로 찾은 프레임 하나를 재생시킨다. 에셋이 없으면 플레이스홀더로 빠진다

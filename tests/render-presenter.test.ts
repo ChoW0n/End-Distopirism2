@@ -96,14 +96,53 @@ describe('교전이 시작되면 전용기 동작이 나간다', () => {
     expect(framesFor(commands, 'e1')[0]).toEqual([sprites.frameSequence('S1')[0]]);
   });
 
-  it('라운드마다 둘 다 맞닿는 자세를 한 장 보였다가 준비 자세로 돌아온다', () => {
+  //모두가 매번 휘두르면 공격만 반복돼서 누가 밀렸는지 안 보인다
+  it('라운드마다 이긴 쪽은 맞닿는 자세, 진 쪽은 물러나는 자세를 잡는다', () => {
     const presenter = makePresenter();
     const commands = presenter.consume(resolveTurn(makeBattle(S1), S2));
     const s2 = sprites.frameSequence('S2');
-    const s1 = sprites.frameSequence('S1');
+    const retreat = sprites.frameEndingWith('retreat')!.id;
 
-    expect(framesFor(commands, 'a1')).toContainEqual([s2.at(-1), s2[0]]);
-    expect(framesFor(commands, 'e1')).toContainEqual([s1.at(-1), s1[0]]);
+    //alwaysFail 코인이라 기본 피해가 큰 S2(a1) 가 이긴다
+    expect(framesFor(commands, 'a1')).toContainEqual([s2.at(-1)]);
+    expect(framesFor(commands, 'e1')).toContainEqual([retreat]);
+    expect(framesFor(commands, 'e1')).not.toContainEqual([sprites.frameSequence('S1').at(-1)]);
+  });
+
+  it('다음 라운드 코인이 굴러가면 둘 다 준비 자세로 돌아온다', () => {
+    const events = resolveTurn(makeBattle(S1), S2);
+    const presenter = makePresenter();
+    const firstResult = events.findIndex((e) => e.type === 'clashRoundWin' || e.type === 'deadlock');
+    const nextCoin = events.findIndex((e, i) => i > firstResult && e.type === 'coinRolled');
+    expect(nextCoin).toBeGreaterThan(firstResult);
+
+    presenter.consume(events.slice(0, nextCoin));
+    const commands = presenter.consume([events[nextCoin]!]);
+
+    expect(framesFor(commands, 'a1')).toEqual([[sprites.frameSequence('S2')[0]]]);
+    expect(framesFor(commands, 'e1')).toEqual([[sprites.frameSequence('S1')[0]]]);
+  });
+
+  it('교착이면 둘 다 맞닿는 자세를 잡는다', () => {
+    const events = resolveTurn(makeBattle(S1), S2);
+    const start = events.find((e) => e.type === 'clashStart')!;
+    const presenter = makePresenter();
+    presenter.consume([start]);
+    const commands = presenter.consume([{ type: 'deadlock', attackerId: 'a1', defenderId: 'e1', count: 1 }]);
+
+    expect(framesFor(commands, 'a1')).toEqual([[sprites.frameSequence('S2').at(-1)]]);
+    expect(framesFor(commands, 'e1')).toEqual([[sprites.frameSequence('S1').at(-1)]]);
+  });
+
+  it('왼쪽을 보는 캐릭터의 이펙트는 비트맵도 뒤집힌다', () => {
+    //e1 이 이기도록 스킬을 바꿔 준다
+    const commands = makePresenter().consume(resolveTurn(makeBattle(S2), S1));
+    const effects = commands.filter(
+      (c): c is Extract<RenderCommand, { type: 'spawnEffect' }> => c.type === 'spawnEffect',
+    );
+
+    expect(effects.length).toBeGreaterThan(0);
+    for (const e of effects) expect(e.placement.flipped).toBe(e.sourceId === 'e1');
   });
 
   it('이긴 쪽만 전용기 전체를 휘두르고, 맞닿는 순간까지 뒤를 붙든다', () => {

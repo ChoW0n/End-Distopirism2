@@ -196,13 +196,12 @@ export class UiDirector {
             powersSeen: 0,
           };
           this.pushBanner(commands, event.attackerId, event.skillId);
-          //일방 공격은 공격자만 달려간다. 맞는 쪽은 제자리다.
-          //다만 중심은 둘의 중점이라야 한다. 공격자 혼자로 잡으면 제자리에서 안 움직인다
-          this.pushDash(
-            commands,
-            this.data.dash.oneSided === 'both' ? [event.attackerId, event.targetId] : [event.attackerId],
-            [event.attackerId, event.targetId],
-          );
+          //일방 공격은 공격자만 맞는 쪽 옆으로 달려간다. 맞는 쪽은 제자리다
+          if (this.data.dash.oneSided === 'both') {
+            this.pushDash(commands, [event.attackerId, event.targetId], [event.attackerId, event.targetId]);
+          } else {
+            this.pushDashBeside(commands, event.attackerId, event.targetId);
+          }
           break;
 
         //코인은 양쪽이 다 굴린 뒤에 한 박자 쉰다
@@ -326,6 +325,21 @@ export class UiDirector {
         trail: { ...this.data.afterimage },
       });
     }
+  }
+
+  //맞는 쪽 바로 옆으로 달려간다. 맞는 쪽 몸이 없으면 자리를 몰라서 중점으로 간다
+  private pushDashBeside(commands: UiCommand[], attackerId: string, targetId: string): void {
+    if (!this.hasBody(attackerId)) return;
+    const from = { ...this.context.actor(attackerId).position };
+    const spot = this.dash.beside({ combatantId: attackerId, from }, this.whereIs(targetId), this.heightOf(attackerId));
+    this.standing.set(attackerId, { ...spot.position });
+    commands.push({
+      type: 'dashTo',
+      combatantId: attackerId,
+      position: spot.position,
+      speed: this.data.dash.speed * this.heightOf(attackerId),
+      trail: { ...this.data.afterimage },
+    });
   }
 
   //교전이 끝나면 제자리로 돌아가고 대기 동작을 다시 건다

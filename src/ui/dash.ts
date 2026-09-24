@@ -70,6 +70,15 @@ export class DashPlanner {
     return spots;
   }
 
+  //일방 공격. 맞는 쪽은 제자리이므로 공격자가 그 옆, 같은 깊이로 붙는다.
+  //둘의 중점으로 달리면 허공에 대고 휘두르고, 명중 이펙트는 멀리 선 맞는 쪽에 뜬다
+  beside(mover: { combatantId: string; from: Point }, target: Point, height: number): DashSpot {
+    const side = mover.from.x < target.x ? -1 : 1;
+    const position = { x: target.x + side * this.data.pairGap * height, y: target.y };
+    this.occupied.push(position);
+    return { combatantId: mover.combatantId, position };
+  }
+
   //무작위로 뽑아 본다. retries 번 안에 겹치지 않는 조합이 나오면 그걸 쓴다
   private tryRandom(
     movers: { combatantId: string; from: Point }[],

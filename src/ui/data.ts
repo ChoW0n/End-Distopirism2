@@ -120,6 +120,23 @@ export interface AfterimageData {
   alpha: number;
 }
 
+//12장뿐인 스프라이트를 몸짓으로 보강하는 수치. 렌더러가 받는다 (SPEC-005 §6)
+export interface MotionData {
+  //교전 중 싸우지 않는 사람의 불투명도. 0 이면 숨긴다
+  othersAlpha: number;
+  //여러 장짜리 동작에서 첫 장(예비 동작)과 나머지 장(휘두름)의 길이
+  windupMs: number;
+  snapMs: number;
+  //한 방을 휘두를 때 앞으로 내딛는 거리와 시간
+  lunge: number;
+  lungeSec: number;
+  //서 있을 때 숨쉬는 폭과 주기
+  breathe: number;
+  breatheSec: number;
+  //맞았을 때 몸이 번쩍이는 시간
+  hurtSec: number;
+}
+
 //카메라 수치. CameraDirector 가 받는다
 export interface CameraData {
   focusZoom: number;
@@ -144,6 +161,7 @@ export interface UiData {
   knockback: KnockbackData;
   flash: FlashData;
   afterimage: AfterimageData;
+  motion: MotionData;
   camera: CameraData;
 }
 
@@ -265,6 +283,9 @@ export function parseUiData(raw: unknown): UiData {
     knockback: numbers('knockback', ['distance', 'sec'] as const),
     flash: numbers('flash', ['alpha', 'sec'] as const),
     afterimage: numbers('afterimage', ['count', 'intervalSec', 'alpha'] as const),
+    motion: numbers('motion', [
+      'othersAlpha', 'windupMs', 'snapMs', 'lunge', 'lungeSec', 'breathe', 'breatheSec', 'hurtSec',
+    ] as const),
     camera: numbers('camera', [
       'focusZoom', 'punchZoom', 'punchSec', 'tiltDeg', 'slowmoScale', 'slowmoSec', 'shakeReferenceDamage',
     ] as const),

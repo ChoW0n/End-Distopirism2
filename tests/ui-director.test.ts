@@ -421,7 +421,7 @@ describe('일방 공격도 상대 쪽으로 달려간다', () => {
     expect(toward[0]!.position.x).toBeGreaterThan(alone[0]!.position.x);
   });
 
-  it('일방 공격 명령이 상대 쪽 중점을 쓴다', () => {
+  it('일방 공격은 맞는 쪽 바로 옆, 같은 깊이로 붙는다', () => {
     const director = makeDirector();
     const commands = director.consume([
       { type: 'oneSidedStart', attackerId: 'a1', targetId: 'e1', skillId: S2 },
@@ -429,8 +429,10 @@ describe('일방 공격도 상대 쪽으로 달려간다', () => {
     const dashes = pick(commands, 'dashTo');
     expect(dashes).toHaveLength(1);
     expect(dashes[0]!.combatantId).toBe('a1');
-    //a1 은 600, e1 은 1800 이다. 중점 근처로 가야 한다
-    expect(dashes[0]!.position.x).toBeGreaterThan(600);
+    //중점으로 가면 허공을 벤다. 맞는 쪽에서 pairGap 만큼 자기 쪽으로 떨어진 자리다
+    const target = placements.get('e1')!.position;
+    expect(dashes[0]!.position.x).toBeCloseTo(target.x - uiData.dash.pairGap * H);
+    expect(dashes[0]!.position.y).toBeCloseTo(target.y);
   });
 });
 

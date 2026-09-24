@@ -87,6 +87,17 @@
     "intervalSec": 0.028,
     "alpha": 0.32
   },
+  "_motion": "12장뿐인 스프라이트를 몸짓으로 보강한다 (SPEC-005 §6). 시간은 ms 가 붙은 것만 밀리초",
+  "motion": {
+    "othersAlpha": 0,
+    "windupMs": 190,
+    "snapMs": 70,
+    "lunge": 0.18,
+    "lungeSec": 0.3,
+    "breathe": 0.012,
+    "breatheSec": 2.4,
+    "hurtSec": 0.16
+  },
   "camera": {
     "focusZoom": 1.6,
     "punchZoom": 0.1,

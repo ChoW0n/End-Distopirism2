@@ -10,6 +10,7 @@ import type { Point, SpriteCatalog } from '../render/manifest.js';
 import type { RenderCommand } from '../render/presenter.js';
 import type { Stage, StagePlacement } from '../render/stage.js';
 import type { UiCommand } from '../ui/director.js';
+import type { MotionData } from '../ui/data.js';
 import { Scene, type CameraState } from './scene.js';
 
 //렌더러가 그림을 찾는 통로. 어느 파일이 어느 비트맵인지는 밖에서 정한다
@@ -23,11 +24,14 @@ export interface ImageSource {
 //대기열에 들어가는 것. 카메라 명령도 같은 줄에 선다 (SPEC-005 §3.1)
 type Queued = RenderCommand | UiCommand | { type: 'camera'; command: CameraCommand };
 
-//되돌아오는 밀림. 반동·넉백이 여기로 온다
+//되돌아오는 밀림. 반동·넉백은 튕겼다 돌아오고, 내딛기는 살짝 당겼다가 앞으로 나갔다 돌아온다
 interface Push {
+  kind: 'recoil' | 'lunge';
   dx: number;
   sec: number;
   t: number;
+  //내딛기에서 뒤로 당기는 예비 동작 시간. 이게 끝나야 앞으로 나간다
+  windupSec: number;
 }
 
 //무대에 선 캐릭터 하나의 현재 모습
@@ -55,13 +59,19 @@ interface Actor {
   coins: { rolls: boolean[]; at: Point; size: number; t: number; broken: number | null; brokenT: number } | null;
   power: { value: number; at: Point; size: number; t: number; result: 'win' | 'lose' | 'tie' | null; resultT: number } | null;
   banner: { text: string; at: Point; size: number; sec: number; t: number; facing: 1 | -1 } | null;
+  //맞고 몸이 번쩍이는 남은 시간
+  hurt: number;
+  //숨쉬기 박자를 사람마다 어긋나게 하는 값
+  breathPhase: number;
 }
 
 //재생 중인 이펙트 하나. 마지막 키프레임에도 그림이 남으므로 끝나면 반드시 지운다
 interface LiveEffect {
   characterId: string;
-  //생성 시점의 월드 좌표로 박는다. 이후 누구도 따라가지 않는다
+  //생성 시점의 월드 좌표. follow 가 없으면 여기 박힌다
   origin: Point;
+  //무기 궤적은 휘두르는 사람을 따라간다. 내딛는 동안 궤적만 제자리에 남으면 칼과 어긋난다
+  follow: { combatantId: string; rel: Point } | null;
   //배율을 재는 기준점. 생성 시점의 접지점이다
   groundRef: Point;
   size: { width: number; height: number };
@@ -184,6 +194,8 @@ export class CanvasRenderer {
     private readonly images: ImageSource,
     //에셋 없는 캐릭터를 얼마만 하게 그릴지. 에셋 있는 캐릭터의 키를 쓴다
     private readonly placeholderHeight: number,
+    //몸짓 수치 (ui-data.json motion)
+    private readonly motion: MotionData,
   ) {}
 
   //무대에 캐릭터를 세운다. 전투가 새로 시작될 때 부른다
@@ -229,6 +241,8 @@ export class CanvasRenderer {
         coins: null,
         power: null,
         banner: null,
+        hurt: 0,
+        breathPhase: phaseOf(placement.combatantId),
       });
     }
     this.focus = this.restFocus();
@@ -279,8 +293,20 @@ export class CanvasRenderer {
           this.pendingOnFrame.push({ combatantId: next.sourceId, frameId: next.frameId as string, command: next });
         }
         this.releaseOnFrame(actor);
-        //한 방이면 맞닿는 장이 뜰 때까지 붙든다. 나머지는 흘려보낸다
-        return command.wait ? ((command.frameIds.length - 1) * FRAME_MS) / 1000 : 0;
+        if (!command.wait) return 0;
+        //한 방이면 살짝 당겼다가 앞으로 내딛는다. 휘두르는 장만 바뀌면 제자리에서 팔만 흔드는 것처럼 보인다
+        const windupSec = command.frameIds.length > 1 ? this.motion.windupMs / 1000 : 0;
+        actor.pushes.push({
+          kind: 'lunge',
+          dx: actor.placement.facing * this.motion.lunge * this.heightOf(actor),
+          sec: windupSec + this.motion.lungeSec,
+          t: 0,
+          windupSec,
+        });
+        //맞닿는 장이 뜰 때까지 붙든다
+        let dwellMs = 0;
+        for (let i = 0; i < command.frameIds.length - 1; i += 1) dwellMs += this.frameMs(actor, i);
+        return dwellMs / 1000;
       }
 
       case 'spawnEffect': {
@@ -428,7 +454,7 @@ export class CanvasRenderer {
         for (const { combatantId, dx } of command.recoil) {
           const actor = this.actors.get(combatantId);
           if (!actor) continue;
-          actor.pushes.push({ dx, sec: command.recoilSec, t: 0 });
+          actor.pushes.push({ kind: 'recoil', dx, sec: command.recoilSec, t: 0, windupSec: 0 });
           if (actor.power) {
             actor.power.result = command.winnerId === null ? 'tie' : combatantId === command.winnerId ? 'win' : 'lose';
             actor.power.resultT = 0;
@@ -456,7 +482,10 @@ export class CanvasRenderer {
 
       case 'knockback': {
         const actor = this.actors.get(command.combatantId);
-        if (actor) actor.pushes.push({ dx: command.dx, sec: command.sec, t: 0 });
+        if (actor) {
+          actor.pushes.push({ kind: 'recoil', dx: command.dx, sec: command.sec, t: 0, windupSec: 0 });
+          actor.hurt = this.motion.hurtSec;
+        }
         return 0;
       }
 
@@ -535,6 +564,10 @@ export class CanvasRenderer {
     this.effects.push({
       characterId: source.placement.characterId,
       origin: { x: placement.origin.x + shift.x, y: placement.origin.y + shift.y },
+      //프레임에 묶인 무기 궤적만 따라간다. 연기·잔불·섬광은 터진 자리에 남는다
+      follow: command.frameId
+        ? { combatantId: owner.placement.combatantId, rel: { x: placement.origin.x - owner.home.x, y: placement.origin.y - owner.home.y } }
+        : null,
       groundRef: here,
       size: { ...placement.size },
       flipped: placement.flipped,
@@ -587,8 +620,8 @@ export class CanvasRenderer {
     if (actor.frames.length > 0 && dt > 0) {
       const before = actor.frameIndex;
       actor.elapsed += dt * 1000;
-      while (actor.elapsed >= FRAME_MS && actor.frameIndex < actor.frames.length - 1) {
-        actor.elapsed -= FRAME_MS;
+      while (actor.frameIndex < actor.frames.length - 1 && actor.elapsed >= this.frameMs(actor, actor.frameIndex)) {
+        actor.elapsed -= this.frameMs(actor, actor.frameIndex);
         actor.frameIndex += 1;
       }
       if (actor.frameIndex !== before) this.releaseOnFrame(actor);
@@ -600,7 +633,7 @@ export class CanvasRenderer {
         actor.ghostClock += dt;
         if (actor.ghostClock >= actor.trail.intervalSec) {
           actor.ghostClock = 0;
-          actor.ghosts.unshift({ position: { ...actor.placement.position }, frameId: actor.frames[actor.frameIndex] ?? null, age: 0 });
+          actor.ghosts.unshift({ position: { ...actor.placement.position }, frameId: this.currentFrame(actor), age: 0 });
           actor.ghosts.length = Math.min(actor.ghosts.length, actor.trail.count);
         }
       }
@@ -627,6 +660,7 @@ export class CanvasRenderer {
 
     for (const push of actor.pushes) push.t += dt;
     actor.pushes = actor.pushes.filter((p) => p.t < p.sec);
+    actor.hurt = Math.max(0, actor.hurt - dt);
 
     //흰 칸은 빨간 칸을 뒤따라 줄어든다. 얼마나 깎였는지가 잠깐 보인다
     for (const kind of ['hp', 'mentality'] as const) {
@@ -695,7 +729,18 @@ export class CanvasRenderer {
     if (!this.subjects || this.subjects.includes(actor.placement.combatantId)) return 1;
     //붙는 정도만큼 서서히 누른다
     const engaged = Math.max(0, Math.min(1, (this.zoom - 1) / Math.max(0.01, this.zoomGoal - 1)));
-    return 1 - 0.55 * engaged;
+    return 1 - (1 - this.motion.othersAlpha) * engaged;
+  }
+
+  //여러 장짜리 동작의 한 장 길이. 첫 장은 예비 동작이라 길게, 나머지는 휘두름이라 짧게 끊는다
+  private frameMs(actor: Actor, index: number): number {
+    if (actor.frames.length < 2) return FRAME_MS;
+    return index === 0 ? this.motion.windupMs : this.motion.snapMs;
+  }
+
+  //캐릭터 키. 에셋이 없으면 빌려 온 키를 쓴다
+  private heightOf(actor: Actor): number {
+    return this.catalogOf(actor)?.characterHeight ?? this.placeholderHeight;
   }
 
   //아무 교전도 없을 때 카메라가 보는 지점. 모두의 제자리 평균이다
@@ -726,8 +771,7 @@ export class CanvasRenderer {
     if (actor.float && !actor.target) {
       y += Math.sin((nowSec / actor.float.periodSec) * Math.PI * 2) * actor.float.amplitude;
     }
-    //밀림은 순간 튕겨 나갔다가 부드럽게 제자리로 돌아온다
-    for (const push of actor.pushes) x += push.dx * (1 - easeOutCubic(push.t / push.sec));
+    for (const push of actor.pushes) x += push.dx * pushShape(push);
     return { x, y };
   }
 
@@ -766,6 +810,7 @@ export class CanvasRenderer {
     //뒤에 있는 캐릭터부터 그린다. 앞 사람이 뒤 사람을 가린다
     const ordered = [...this.actors.values()].sort((a, b) => this.positionOf(a, nowSec).y - this.positionOf(b, nowSec).y);
     for (const actor of ordered) {
+      if (this.presence(actor) <= 0.01) continue;
       ctx.save();
       ctx.globalAlpha = this.presence(actor);
       if (this.stage.has(actor.placement.characterId)) {
@@ -784,6 +829,7 @@ export class CanvasRenderer {
     //정보 UI 는 원근을 타되 전경 위에 온다. 싸우는 둘 것이 맨 위에 오게 뒤에 그린다
     const byFocus = [...ordered].sort((a, b) => this.presence(a) - this.presence(b));
     for (const actor of byFocus) {
+      if (this.presence(actor) <= 0.01) continue;
       ctx.save();
       ctx.globalAlpha = this.presence(actor) ** 2;
       this.drawBars(actor, nowSec);
@@ -819,7 +865,7 @@ export class CanvasRenderer {
   }
 
   //스프라이트 한 장을 접지점 기준으로 놓는다. 배율은 발에서 잰다 (SPEC-003 §6.5.2)
-  private drawFrame(actor: Actor, frameId: string, position: Point, alpha: number): void {
+  private drawFrame(actor: Actor, frameId: string, position: Point, alpha: number, body = { breath: 1, hurt: 0 }): void {
     const catalog = this.catalogOf(actor);
     if (!catalog) return;
     const placement = { ...actor.placement, position };
@@ -833,27 +879,52 @@ export class CanvasRenderer {
     const height = canvas.height * foot.scale;
     const ctx = this.ctx;
     ctx.save();
-    ctx.globalAlpha = alpha;
+    ctx.globalAlpha *= alpha;
+    //숨쉬기. 발을 축으로 세로만 살짝 늘었다 줄었다 한다
+    if (body.breath !== 1) {
+      ctx.translate(foot.x, foot.y);
+      ctx.scale(1, body.breath);
+      ctx.translate(-foot.x, -foot.y);
+    }
     if (placement.facing === -1) {
       //좌우 반전. 비트맵만 뒤집고 놓이는 자리는 그대로다
       ctx.translate(origin.x + width, origin.y);
       ctx.scale(-1, 1);
       ctx.drawImage(image, 0, 0, width, height);
     } else {
-      ctx.drawImage(image, origin.x, origin.y, width, height);
+      ctx.translate(origin.x, origin.y);
+      ctx.drawImage(image, 0, 0, width, height);
+    }
+    //맞은 순간 몸이 번쩍인다. 같은 그림을 더하기로 한 번 더 얹는다 (필터 없는 브라우저도 된다)
+    if (body.hurt > 0) {
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha *= body.hurt;
+      ctx.drawImage(image, 0, 0, width, height);
     }
     ctx.restore();
   }
 
+  //지금 보일 장. 달리는 동안은 보는 쪽으로 가면 전진, 등 뒤로 가면 후퇴 장을 쓴다
   private currentFrame(actor: Actor): string | null {
     const catalog = this.catalogOf(actor);
     if (!catalog) return null;
+    if (actor.target) {
+      const toward = (actor.target.x - actor.placement.position.x) * actor.placement.facing;
+      const moving = catalog.frameEndingWith(toward >= 0 ? 'advance' : 'retreat');
+      if (moving) return moving.id;
+    }
     return actor.frames[actor.frameIndex] ?? catalog.frameEndingWith('idle')?.id ?? null;
   }
 
   private drawActor(actor: Actor, nowSec: number): void {
     const frameId = this.currentFrame(actor);
-    if (frameId) this.drawFrame(actor, frameId, this.positionOf(actor, nowSec), 1);
+    if (!frameId) return;
+    //달리거나 휘두르는 중엔 숨쉬기를 멈춘다
+    const still = !actor.target && actor.pushes.every((p) => p.kind !== 'lunge');
+    const wave = Math.sin(((nowSec + actor.breathPhase * this.motion.breatheSec) / this.motion.breatheSec) * Math.PI * 2);
+    const breath = still ? 1 + this.motion.breathe * wave : 1;
+    const hurt = this.motion.hurtSec > 0 ? actor.hurt / this.motion.hurtSec : 0;
+    this.drawFrame(actor, frameId, this.positionOf(actor, nowSec), 1, { breath, hurt });
   }
 
   //대시 잔상. 오래된 것일수록 옅다
@@ -897,9 +968,13 @@ export class CanvasRenderer {
     const image = this.images.character(effect.characterId, frame.file);
     if (!image) return;
 
-    //배율은 생성 시점의 접지점에서 잰다. 캐릭터와 같은 배율이라야 크기가 안 어긋난다
-    const foot = this.scene.project(effect.groundRef, this.view);
-    const origin = this.scene.offsetFrom(foot, effect.groundRef, effect.origin);
+    //따라가는 궤적은 휘두르는 사람의 지금 자리에서 다시 잰다
+    const owner = effect.follow ? this.actors.get(effect.follow.combatantId) : undefined;
+    const ground = owner ? this.positionOf(owner) : effect.groundRef;
+    const at = owner && effect.follow ? { x: ground.x + effect.follow.rel.x, y: ground.y + effect.follow.rel.y } : effect.origin;
+    //배율은 접지점에서 잰다. 캐릭터와 같은 배율이라야 크기가 안 어긋난다
+    const foot = this.scene.project(ground, this.view);
+    const origin = this.scene.offsetFrom(foot, ground, at);
     const width = effect.size.width * foot.scale;
     const height = effect.size.height * foot.scale;
     const ctx = this.ctx;
@@ -1271,6 +1346,24 @@ function keep<T>(list: T[], alive: (item: T) => boolean): void {
 function easeOutCubic(t: number): number {
   const k = Math.max(0, Math.min(1, t));
   return 1 - (1 - k) ** 3;
+}
+
+//밀림이 지금 몇 할 나가 있는지. dx 에 곱한다
+function pushShape(push: Push): number {
+  //반동·넉백은 순간 튕겨 나갔다가 부드럽게 제자리로 돌아온다
+  if (push.kind === 'recoil') return 1 - easeOutCubic(push.t / push.sec);
+  //내딛기. 예비 동작 동안 조금 당겼다가, 휘두를 때 확 나가고, 천천히 돌아온다
+  if (push.t < push.windupSec) return -0.2 * easeOutCubic(push.t / push.windupSec);
+  const k = (push.t - push.windupSec) / Math.max(0.01, push.sec - push.windupSec);
+  if (k < 0.25) return -0.2 + 1.2 * easeOutCubic(k / 0.25);
+  return 1 - easeOutCubic((k - 0.25) / 0.75);
+}
+
+//이름으로 0~1 사이 값을 만든다. 같은 사람은 늘 같은 값이다
+function phaseOf(id: string): number {
+  let h = 0;
+  for (let i = 0; i < id.length; i += 1) h = (h * 31 + id.charCodeAt(i)) % 997;
+  return h / 997;
 }
 
 function totalMs(frames: readonly { ms: number }[]): number {
