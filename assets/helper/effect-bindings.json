@@ -4,7 +4,7 @@
   "version": 2,
   "character": "helper",
   "frames": {
-    "_comment": "S1 준비→찌름→깊은 찌르기, S2 머리 위로 들기→내려 베기, S3 세움→올려 베기→낮게 쓸기. 준비 프레임은 비운다",
+    "_comment": "S1 준비→찌름→깊은 찌르기, S2 머리 위로 들기→앞 바닥을 내려 베기(지면 충격), S3 세움→올려 베기→뒤로 휘둘러 넘김. 마무리 자세는 창이 등 뒤라 지면 충격을 붙이면 뒤에서 터진다(2026-09-24 실측). 준비 프레임은 비운다",
     "06-skill1-cast": [
       "12_speed_wake"
     ],
@@ -19,8 +19,7 @@
       "03_slash_trail"
     ],
     "11-skill3-finish": [
-      "06_horizontal_sweep",
-      "10_ground_impact"
+      "06_horizontal_sweep"
     ]
   },
   "_ultimateComment": "궁극기는 전용기 3 마무리 프레임을 공유한다",
