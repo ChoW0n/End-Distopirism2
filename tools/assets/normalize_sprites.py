@@ -321,8 +321,8 @@ def read_frame_effects(pack_dir, out_dir, config):
             "name": e.get("name_ko", e["id"]),
             "anchor": spec["anchor"],
             "size": [width, height],
-            #피벗은 팩의 제안값을 그대로 쓴다 (좌상단 기준 픽셀)
-            "pivot": e["pivot_px"],
+            #피벗은 팩의 제안값을 쓴다 (좌상단 기준 픽셀). 설정에 있으면 설정값이 이긴다
+            "pivot": spec.get("pivot", e["pivot_px"]),
             "scale": spec["scale"],
             "blend": spec.get("blend", "source-over"),
             "loop": False,

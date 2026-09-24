@@ -199,7 +199,7 @@ v1.0 은 까만 화면에 레이어를 멈춘 채 한 장 띄웠다. 컷신 레�
 | | `resultSec` | 맞부딪힘 박자 |
 | | `recoilWinner` / `recoilLoser` | 반동 거리 |
 | | `recoilSec` | 반동 후 돌아오는 시간 |
-| | `sparkSize` | 접점 불꽃 크기 |
+| | `sparkSize` | 접점 불꽃 크기. 합 그림(`clash` 바인딩)이 없는 캐릭터만 그려서 쓴다 — 흰 심지·붉은 쐐기 파편·납작한 충격 고리. 이펙트 팩 톤에 맞춘다 (노란 별빛은 배경에서 튀었다) |
 | | `coinSize` | 머리 위 코인 지름 |
 | | `powerSize` · `powerOffsetX` · `powerOffsetY` | 위력 숫자 크기·자리. **등 뒤** 가슴 높이 (x 는 상대 쪽이 +) |
 | | `contactHeight` | 맞부딪히는 높이 (발에서부터) |

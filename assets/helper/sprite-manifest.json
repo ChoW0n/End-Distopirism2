@@ -531,7 +531,7 @@
     288,
     290
    ],
-   "scale": 0.5,
+   "scale": 0.9,
    "blend": "source-over",
    "loop": false,
    "frames": [
@@ -570,8 +570,8 @@
     576
    ],
    "pivot": [
-    288,
-    322
+    40,
+    337
    ],
    "scale": 1.4,
    "blend": "source-over",

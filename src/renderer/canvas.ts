@@ -164,7 +164,7 @@ const CAMERA_FOLLOW = 7;
 const COIN_FLIP_SEC = 0.2;
 const COIN_STAGGER_SEC = 0.045;
 const POP_SEC = 0.12;
-const SPARK_SEC = 0.26;
+const SPARK_SEC = 0.32;
 const BANNER_FADE_SEC = 0.3;
 
 const BADGE_COLOR: Record<LiveBadge['result'], string> = {
@@ -1234,37 +1234,58 @@ export class CanvasRenderer {
     ctx.restore();
   }
 
-  //합이 맞부딪히는 접점의 불꽃. 그림 없이 선과 고리로 그린다
+  //합이 맞부딪히는 접점의 불꽃. 그림 없이 쐐기 파편과 고리로 그린다.
+  //이펙트 팩 톤(흰 심지·붉은 테·검붉은 파편)에 맞춘다. 노란 별빛은 배경 톤에서 튀었다
   private drawSpark(spark: LiveSpark): void {
     const k = spark.t / SPARK_SEC;
     const foot = this.scene.project(spark.groundRef, this.view);
     const at = this.scene.offsetFrom(foot, spark.groundRef, spark.contact);
-    const radius = spark.size * foot.scale * (0.35 + 0.85 * easeOutCubic(k));
+    const size = spark.size * foot.scale;
+    const radius = size * (0.35 + 0.85 * easeOutCubic(k));
+    const fade = 1 - k;
+    const hot = spark.tie ? '235,235,235' : '255,244,236';
+    const rim = spark.tie ? '150,150,150' : '226,36,44';
     const ctx = this.ctx;
     ctx.save();
     ctx.globalCompositeOperation = 'lighter';
-    ctx.globalAlpha = 1 - k;
-    //번쩍이는 중심
-    const glow = ctx.createRadialGradient(at.x, at.y, 0, at.x, at.y, radius);
-    glow.addColorStop(0, spark.tie ? 'rgba(230,230,230,0.95)' : 'rgba(255,240,200,0.95)');
-    glow.addColorStop(0.35, spark.tie ? 'rgba(160,160,160,0.5)' : 'rgba(255,150,60,0.55)');
+
+    //번쩍이는 심지. 처음 몇 장만 크게 터지고 빨리 줄어든다
+    const core = size * (0.55 - 0.35 * k);
+    const glow = ctx.createRadialGradient(at.x, at.y, 0, at.x, at.y, core * 1.8);
+    glow.addColorStop(0, `rgba(${hot},${0.95 * fade})`);
+    glow.addColorStop(0.3, `rgba(${rim},${0.6 * fade})`);
     glow.addColorStop(1, 'rgba(0,0,0,0)');
     ctx.fillStyle = glow;
     ctx.beginPath();
-    ctx.arc(at.x, at.y, radius, 0, Math.PI * 2);
+    ctx.arc(at.x, at.y, core * 1.8, 0, Math.PI * 2);
     ctx.fill();
-    //튀는 줄기. 각도는 접점 좌표로 정해서 같은 합은 같은 모양이 나온다
-    ctx.strokeStyle = spark.tie ? '#dcdcdc' : '#ffd08a';
-    ctx.lineWidth = Math.max(1.5, radius * 0.06);
-    const rays = 10;
-    for (let i = 0; i < rays; i += 1) {
-      const angle = (i / rays) * Math.PI * 2 + (spark.contact.x % 7) * 0.3;
-      const inner = radius * 0.3;
-      const outer = radius * (1.1 + 0.5 * ((i * 37) % 5) / 5);
+
+    //퍼지는 충격 고리. 원근 바닥 위라 납작하게 눕힌다
+    ctx.globalCompositeOperation = 'source-over';
+    ctx.strokeStyle = `rgba(${rim},${0.8 * fade})`;
+    ctx.lineWidth = Math.max(1, size * 0.04 * fade);
+    ctx.beginPath();
+    ctx.ellipse(at.x, at.y, radius * 1.25, radius * 0.5, 0, 0, Math.PI * 2);
+    ctx.stroke();
+
+    //튀는 쐐기 파편. 가운데가 굵고 끝이 뾰족하다. 각도는 접점 좌표로 정해서 같은 합은 같은 모양이 나온다
+    const shards = 9;
+    for (let i = 0; i < shards; i += 1) {
+      const angle = (i / shards) * Math.PI * 2 + (spark.contact.x % 7) * 0.3;
+      const reach = radius * (0.9 + 0.7 * (((i * 37) % 5) / 5));
+      const inner = radius * 0.25 + reach * 0.35 * k;
+      const width = size * 0.06 * (1 - 0.5 * k);
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      const mid = (inner + reach) / 2;
+      ctx.fillStyle = i % 3 === 0 ? `rgba(${hot},${fade})` : `rgba(${rim},${fade})`;
       ctx.beginPath();
-      ctx.moveTo(at.x + Math.cos(angle) * inner, at.y + Math.sin(angle) * inner);
-      ctx.lineTo(at.x + Math.cos(angle) * outer, at.y + Math.sin(angle) * outer);
-      ctx.stroke();
+      ctx.moveTo(at.x + cos * inner, at.y + sin * inner);
+      ctx.lineTo(at.x + cos * mid - sin * width, at.y + sin * mid + cos * width);
+      ctx.lineTo(at.x + cos * reach, at.y + sin * reach);
+      ctx.lineTo(at.x + cos * mid + sin * width, at.y + sin * mid - cos * width);
+      ctx.closePath();
+      ctx.fill();
     }
     ctx.restore();
   }

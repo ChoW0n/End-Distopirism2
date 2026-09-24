@@ -48,7 +48,12 @@
     },
     "06_horizontal_sweep": {
       "anchor": "bladeTip",
-      "scale": 1.4
+      "scale": 1.4,
+      "_pivot": "몸을 감는 타원이다. 쓸기 마무리는 창끝이 등 뒤라 팩 피벗(가운데)이면 등 뒤에서 터진다. 타원 뒤끝을 창끝에 붙여 몸을 감싸 앞으로 뻗게 한다. 2026-09-24 캡처로 확정",
+      "pivot": [
+        40,
+        337
+      ]
     },
     "03_slash_trail": {
       "anchor": "bladeTip",
@@ -72,7 +77,8 @@
     },
     "05_clash_spark": {
       "anchor": "emissionPoint",
-      "scale": 0.5
+      "scale": 0.9,
+      "_scale": "합 접점 불꽃. 0.5 는 두 캐릭터 사이에서 점처럼 보였다"
     },
     "09_charge_ring": {
       "anchor": "groundPoint",
