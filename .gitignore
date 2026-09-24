@@ -205,6 +205,7 @@ web/domain.js
 web/battle.js
 web/battle-data.json
 web/standalone.html
+web/share/
 
 # 에셋 이미지는 커밋하지 않는다 (SPEC-002 §9). 좌표·수치만 리포에 들어간다
 assets/**/*.png

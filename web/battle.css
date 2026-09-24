@@ -5,10 +5,14 @@ body {
   margin: 0;
   background: #08080a;
   color: #e8e4dc;
+  color-scheme: dark;
   font: 14px/1.5 system-ui, sans-serif;
   display: flex;
-  justify-content: center;
-  padding: 10px;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding-block: 12px;
+  padding-inline: 16px;
 }
 
 /* 캔버스와 HUD 를 같은 상자에 넣어 함께 늘어나게 한다 */
@@ -76,17 +80,31 @@ canvas {
 }
 .turn small { font-size: 0.45em; font-weight: 400; color: #a89f92; }
 
-/* 확인용 조작 줄. 원작에 없는 것이라 오른쪽 아래에 작게 둔다 */
-.ctl {
-  position: absolute;
-  right: 1.2%;
-  top: 1.6%;
+/* 보는 사람용 조작 줄. 원작 HUD 가 아니라 화면 아래 따로 둔다 */
+.panel {
+  width: min(100%, 1600px);
   display: flex;
-  gap: 8px;
+  flex-wrap: wrap;
+  gap: 10px 16px;
   align-items: center;
-  font-size: 12px;
+  font-size: 13px;
   color: #b8b0a4;
 }
+.panel label { display: inline-flex; gap: 6px; align-items: center; }
+.status { color: #efe6d8; min-width: 6em; font-variant-numeric: tabular-nums; }
+.speed { display: inline-flex; gap: 2px; }
+.speed button { background: #1f1c1b; color: #b8b0a4; padding: 4px 9px; }
+.speed button[aria-pressed="true"] { background: #7a2222; color: #f2ede4; }
+.panel .primary { margin-left: auto; }
+select {
+  background: rgba(0,0,0,0.55);
+  color: inherit;
+  border: 1px solid #45454c;
+  border-radius: 3px;
+  padding: 3px 5px;
+  max-width: 100%;
+}
+button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid #d9a441; outline-offset: 2px; }
 input {
   width: 4.5em;
   background: rgba(0,0,0,0.55);

@@ -1,6 +1,6 @@
 <!doctype html>
 <meta charset="utf-8">
-<title>End Distopirism · 전투 화면</title>
+<title>End-Distopirism 전투</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="battle.css">
 <body>
@@ -18,12 +18,25 @@
   <div class="stage-name">지하 1구역</div>
   <!-- 턴 표시 (TurnUI 상단 중앙 0,-20 · 150x150) -->
   <div class="turn"><span id="turn">1</span><small>턴</small></div>
-  <!-- 진행 상태. 원작에는 없고 이쪽 확인용이다 -->
-  <div class="ctl">
-    <label>시드 <input id="seed" type="number" value="1" min="0"></label>
-    <button id="restart">재시작</button>
-    <b id="status">…</b>
-  </div>
+</div>
+
+<!-- 보는 사람용 조작. 원작 HUD 가 아니라 화면 밖에 둔다 -->
+<div class="panel">
+  <b id="status" class="status">…</b>
+  <label>대진
+    <select id="roster">
+      <option value="mirror">소각원 2 대 2</option>
+      <option value="all">전체 4 대 4 (그림 없는 캐릭터는 점선)</option>
+    </select>
+  </label>
+  <span class="speed" role="group" aria-label="배속">
+    <button data-speed="1" aria-pressed="true">×1</button>
+    <button data-speed="2" aria-pressed="false">×2</button>
+    <button data-speed="3" aria-pressed="false">×3</button>
+  </span>
+  <label>시드 <input id="seed" type="number" value="1" min="0"></label>
+  <label class="check"><input id="autonext" type="checkbox" checked> 끝나면 다음 판</label>
+  <button id="restart" class="primary">재시작</button>
 </div>
 <script type="module" src="battle.js"></script>
 </body>

@@ -19,8 +19,12 @@ import { ImageBank, loadCharacter, loadMap, loadUi } from './assets.js';
 import { CanvasRenderer } from './canvas.js';
 import { Scene, type MapPlacement } from './scene.js';
 
-const ASSETS = '../assets';
-const DATA = '../docs/battle-data.json';
+//데이터 위치는 캔버스의 data-assets · data-battle 로 바꿀 수 있다. 리포 안 web/ 에서 열면 기본값이다
+const view = document.getElementById('view') as HTMLCanvasElement | null;
+const ASSETS = view?.dataset['assets'] ?? '../assets';
+const DATA = view?.dataset['battle'] ?? '../docs/battle-data.json';
+//한 편에 세울 인원. 미러 대결에서 쓴다
+const MIRROR_SIZE = 2;
 
 //배치는 원작 Battle.unity 에서 뽑았다 (2026-09-22). 전부 캐릭터 키 H 배수다.
 //
@@ -56,11 +60,12 @@ class Session {
   private readonly ai = new WeightedEnemyAi();
   private readonly aiContext: EnemyAiContext;
 
-  constructor(boot: Boot, stage: Stage, rng: Rng, groundY: number, height: number) {
+  //characterIds 는 한 편의 구성이다. 양 진영이 같은 구성으로 선다
+  constructor(boot: Boot, stage: Stage, rng: Rng, groundY: number, height: number, characterIds: readonly string[]) {
     const roster = (side: Side) =>
-      boot.catalog.data.characters.map((c, i) => ({
+      characterIds.map((characterId, i) => ({
         id: `${side === 'ally' ? 'a' : 'e'}${i + 1}`,
-        characterId: c.id,
+        characterId,
         side,
       }));
 
@@ -163,6 +168,10 @@ async function main(): Promise<void> {
   const status = document.getElementById('status') as HTMLElement;
   const turnLabel = document.getElementById('turn') as HTMLElement;
   const seedInput = document.getElementById('seed') as HTMLInputElement;
+  const rosterSelect = document.getElementById('roster') as HTMLSelectElement | null;
+  const autoNext = document.getElementById('autonext') as HTMLInputElement | null;
+  //보는 사람용 배속. 렌더러 시계만 빨라진다. 전투 결과는 같다
+  let speed = 1;
   status.textContent = '에셋 읽는 중…';
 
   const loaded = await boot();
@@ -197,9 +206,16 @@ async function main(): Promise<void> {
     });
   };
 
+  //한 편 구성. 미러면 그림이 있는 캐릭터만 채우고, 전체면 데이터의 캐릭터 전원이다
+  const roster = (): string[] => {
+    if (rosterSelect?.value === 'all') return loaded.catalog.data.characters.map((c) => c.id);
+    const drawn = [...loaded.sprites.keys()];
+    return Array.from({ length: MIRROR_SIZE }, (_, i) => drawn[i % drawn.length] as string);
+  };
+
   const restart = (): void => {
     const seed = Number(seedInput.value) || 1;
-    session = new Session(loaded, stage, createSeededRng(seed), groundY, height);
+    session = new Session(loaded, stage, createSeededRng(seed), groundY, height, roster());
     renderer.reset(session.placements);
     restSec = 0;
     finished = false;
@@ -229,13 +245,30 @@ async function main(): Promise<void> {
     finished = true;
     const winner = session.battle.winner;
     status.textContent = winner === 'ally' ? '아군 승' : winner === 'enemy' ? '적 승' : '무승부';
+    //끝나면 잠깐 보여 주고 다음 시드로 넘어간다
+    if (autoNext?.checked) {
+      window.setTimeout(() => {
+        if (!finished || !autoNext.checked) return;
+        seedInput.value = String((Number(seedInput.value) || 1) + 1);
+        restart();
+      }, 3500);
+    }
   };
 
   document.getElementById('restart')?.addEventListener('click', restart);
+  rosterSelect?.addEventListener('change', restart);
+  for (const button of document.querySelectorAll<HTMLButtonElement>('[data-speed]')) {
+    button.addEventListener('click', () => {
+      speed = Number(button.dataset['speed']) || 1;
+      for (const other of document.querySelectorAll<HTMLButtonElement>('[data-speed]')) {
+        other.setAttribute('aria-pressed', String(other === button));
+      }
+    });
+  }
 
   let last = performance.now();
   const loop = (now: number): void => {
-    const deltaSec = Math.min(0.05, (now - last) / 1000);
+    const deltaSec = Math.min(0.05, (now - last) / 1000) * speed;
     last = now;
 
     renderer.tick(deltaSec);

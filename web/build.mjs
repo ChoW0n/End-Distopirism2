@@ -1,6 +1,6 @@
 //도메인을 브라우저용 한 덩어리로 묶는다. 전투 규칙을 웹에서 다시 짜지 않고 그대로 쓴다
 import { build } from 'esbuild';
-import { copyFileSync, readFileSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 
 await build({
   entryPoints: ['src/domain/index.ts'],
@@ -31,4 +31,17 @@ const html = read('web/index.html')
   .replace('<script src="main.js"></script>',
     `<script>\nwindow.__BATTLE_DATA__ = ${read('web/battle-data.json')};\n${read('web/main.js')}\n</script>`);
 writeFileSync('web/standalone.html', html);
-console.log('web/domain.js, web/battle.js, web/battle-data.json, web/standalone.html');
+
+//공유용 한 장. CSS·스크립트를 안에 넣고 데이터는 같은 폴더의 assets/ · data/ 에서 읽는다.
+//그림은 리포에 없으므로(SPEC-002 §9) 올릴 때 파일을 따로 붙인다
+const page = read('web/battle.html')
+  .replace('<!doctype html>\n', '')
+  .replace('<link rel="stylesheet" href="battle.css">', `<style>\n${read('web/battle.css')}\n</style>`)
+  .replace('<canvas id="view" width="1600" height="900">',
+    '<canvas id="view" width="1600" height="900" data-assets="assets" data-battle="data/battle-data.json">')
+  .replace('<script type="module" src="battle.js"></script>', `<script type="module">\n${read('web/battle.js')}\n</script>`)
+  .replace('<body>\n', '')
+  .replace('\n</body>', '');
+mkdirSync('web/share', { recursive: true });
+writeFileSync('web/share/index.html', page);
+console.log('web/domain.js, web/battle.js, web/battle-data.json, web/standalone.html, web/share/index.html');
