@@ -1550,8 +1550,8 @@ export class CanvasRenderer {
     if (!tex) return;
     tex.clearRect(0, 0, data.size.width, data.size.height);
     tex.drawImage(foreground, 0, 0, data.size.width, data.size.height);
-    this.patch(tex, image(data.eye.file), data.eye.patch, within(cut.blinkAt) ? 1 : 0);
-    this.patch(tex, image(data.mouth.file), data.mouth.patch, within(cut.mouthAt) ? 0 : 1);
+    this.patch(tex, image(data.eye.file), data.eye.patch, within(cut.blinkAt) ? 1 : 0, data.size);
+    this.patch(tex, image(data.mouth.file), data.mouth.patch, within(cut.mouthAt) ? 0 : 1, data.size);
 
     const ctx = this.ctx;
     const scale = Math.max(width / data.size.width, bandHeight / data.size.height) * (1 + cut.pushZoom * progress);
@@ -1576,8 +1576,14 @@ export class CanvasRenderer {
     ctx.restore();
   }
 
-  //다각형 모양으로 잘라 조각을 덮는다
-  private patch(tex: CanvasRenderingContext2D, source: CanvasImageSource | null, polygon: readonly Point[], alpha: number): void {
+  //다각형 모양으로 잘라 조각을 덮는다. 조각 원화는 컷신 캔버스와 같은 크기로 그린다
+  private patch(
+    tex: CanvasRenderingContext2D,
+    source: CanvasImageSource | null,
+    polygon: readonly Point[],
+    alpha: number,
+    size: { width: number; height: number },
+  ): void {
     if (!source || alpha <= 0 || polygon.length < 3) return;
     tex.save();
     tex.beginPath();
@@ -1585,7 +1591,7 @@ export class CanvasRenderer {
     tex.closePath();
     tex.clip();
     tex.globalAlpha = alpha;
-    tex.drawImage(source, 0, 0, (source as HTMLCanvasElement).width, (source as HTMLCanvasElement).height);
+    tex.drawImage(source, 0, 0, size.width, size.height);
     tex.restore();
   }
 
