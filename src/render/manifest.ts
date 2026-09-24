@@ -64,6 +64,37 @@ export interface CutsceneData {
   layers: CutsceneLayerData[];
 }
 
+//메시 컷신의 변형 하나. 가중치 모양 × 세기 × sin(위상) 만큼 점을 민다 (SPEC-002 §7.1)
+//가중치는 있는 항목끼리 곱한다. 가우시안 봉우리, x·y 로 서서히 켜지거나 꺼지는 구간
+export interface MeshDeformerData {
+  id: string;
+  gaussian: { center: Point; radius: Point } | null;
+  xRise: [number, number] | null;
+  yRise: [number, number] | null;
+  yFall: [number, number] | null;
+  amp: Point;
+  phase: number;
+}
+
+//한 장짜리 캐릭터를 격자로 휘는 컷신 (SPEC-002 §7.1). 범고래 컷신 1
+export interface MeshCutsceneData {
+  size: { width: number; height: number };
+  foreground: string;
+  background: string;
+  //눈 감은 원화·입 다문 원화와 덮을 다각형
+  eye: { file: string; patch: Point[] };
+  mouth: { file: string; patch: Point[] };
+  //격자 칸 수와 추가로 넣을 가로 경계선
+  grid: { columns: number; rows: number; extraRows: number[] };
+  //이 y 구간에서 변형이 0 으로 줄어든다. 그 아래(손·창)는 같이 움직이기만 한다
+  rigid: [number, number];
+  deformers: MeshDeformerData[];
+  //몸 전체가 같이 흔들리는 양
+  sway: Point;
+  //가장자리 노출을 가리는 확대
+  zoom: number;
+}
+
 export interface SpriteManifest {
   version: number;
   character: string;
@@ -73,6 +104,8 @@ export interface SpriteManifest {
   frames: FrameData[];
   effects: EffectData[];
   cutscene: CutsceneData | null;
+  //메시 방식 컷신. 레이어 컷신과 둘 중 하나만 있다
+  meshCutscene: MeshCutsceneData | null;
 }
 
 //어느 프레임에서 어느 이펙트가 터지는지 (SPEC-002 §5.4)
@@ -227,6 +260,59 @@ function parseCutscene(raw: unknown): CutsceneData {
   };
 }
 
+//숫자 두 개짜리 구간. 없으면 null
+function optionalRange(value: unknown, path: string): [number, number] | null {
+  if (value === undefined || value === null) return null;
+  const p = point(value, path);
+  return [p.x, p.y];
+}
+
+//메시 컷신을 읽는다. 수치는 팩 renderer.js 에서 옮긴 값이다 (SPEC-002 §7.1)
+function parseMeshCutscene(source: Record<string, unknown>): MeshCutsceneData {
+  const size = point(source['size'], 'cutscene.size');
+  const patch = (key: 'eye' | 'mouth') => {
+    const part = obj(source[key], `cutscene.${key}`);
+    return {
+      file: str(part, 'file', `cutscene.${key}`),
+      patch: arr(part, 'patch', `cutscene.${key}`).map((p, i) => point(p, `cutscene.${key}.patch[${i}]`)),
+    };
+  };
+  const grid = obj(source['grid'], 'cutscene.grid');
+  const rigid = point(source['rigid'], 'cutscene.rigid');
+  return {
+    size: { width: size.x, height: size.y },
+    foreground: str(source, 'foreground', 'cutscene'),
+    background: str(source, 'background', 'cutscene'),
+    eye: patch('eye'),
+    mouth: patch('mouth'),
+    grid: {
+      columns: num(grid, 'columns', 'cutscene.grid'),
+      rows: num(grid, 'rows', 'cutscene.grid'),
+      extraRows: arr(grid, 'extraRows', 'cutscene.grid').map((v, i) => {
+        if (typeof v !== 'number') throw new SpriteManifestError(`cutscene.grid.extraRows[${i}] 가 숫자가 아니다`);
+        return v;
+      }),
+    },
+    rigid: [rigid.x, rigid.y],
+    deformers: arr(source, 'deformers', 'cutscene').map((raw, i) => {
+      const path = `cutscene.deformers[${i}]`;
+      const d = obj(raw, path);
+      const g = d['gaussian'] === undefined ? null : obj(d['gaussian'], `${path}.gaussian`);
+      return {
+        id: str(d, 'id', path),
+        gaussian: g ? { center: point(g['center'], `${path}.gaussian.center`), radius: point(g['radius'], `${path}.gaussian.radius`) } : null,
+        xRise: optionalRange(d['xRise'], `${path}.xRise`),
+        yRise: optionalRange(d['yRise'], `${path}.yRise`),
+        yFall: optionalRange(d['yFall'], `${path}.yFall`),
+        amp: point(d['amp'], `${path}.amp`),
+        phase: num(d, 'phase', path),
+      };
+    }),
+    sway: point(source['sway'], 'cutscene.sway'),
+    zoom: num(source, 'zoom', 'cutscene'),
+  };
+}
+
 //JSON.parse 결과를 받아 검증된 매니페스트로 바꾼다
 export function parseSpriteManifest(raw: unknown): SpriteManifest {
   const source = obj(raw, 'root');
@@ -239,8 +325,15 @@ export function parseSpriteManifest(raw: unknown): SpriteManifest {
     ground: point(source['ground'], 'ground'),
     frames: arr(source, 'frames', 'root').map(parseFrame),
     effects: source['effects'] === undefined ? [] : arr(source, 'effects', 'root').map(parseEffect),
-    cutscene: source['cutscene'] === undefined ? null : parseCutscene(source['cutscene']),
+    cutscene: null,
+    meshCutscene: null,
   };
+  //컷신은 kind 로 가른다. 없으면 레이어 방식이다 (SPEC-002 §7.1)
+  if (source['cutscene'] !== undefined) {
+    const cutscene = obj(source['cutscene'], 'cutscene');
+    if (cutscene['kind'] === 'mesh') manifest.meshCutscene = parseMeshCutscene(cutscene);
+    else manifest.cutscene = parseCutscene(cutscene);
+  }
 
   if (manifest.frames.length === 0) throw new SpriteManifestError('프레임이 하나도 없다');
 

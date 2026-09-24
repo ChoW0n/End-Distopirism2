@@ -331,6 +331,35 @@ def read_frame_effects(pack_dir, out_dir, config):
     return effects
 
 
+def read_mesh_cutscene(cut_dir, out_dir, config):
+    #메시 컷신(범고래 컷신 1 v1)을 읽는다. 좌표는 rig.json, 변형 수치는 캐릭터 설정에서 온다 (SPEC-002 §7.1)
+    import shutil
+    cut_dir, out_dir = Path(cut_dir), Path(out_dir)
+    rig = json.load(open(cut_dir / "rig.json", encoding="utf-8"))
+    layers = {layer["id"]: layer for layer in rig["layers"]}
+    (out_dir / "cutscene").mkdir(parents=True, exist_ok=True)
+
+    def take(layer_id):
+        src = cut_dir / layers[layer_id]["file"]
+        shutil.copyfile(src, out_dir / "cutscene" / src.name)
+        return f"cutscene/{src.name}"
+
+    mesh = config["meshCutscene"]
+    return {
+        "kind": "mesh",
+        "size": rig["canvas"],
+        "foreground": take("foreground_mesh"),
+        "background": take("background"),
+        "eye": {"file": take("eye_patch"), "patch": rig["eyePatch"]},
+        "mouth": {"file": take("mouth_patch"), "patch": rig["mouthPatch"]},
+        "grid": mesh["grid"],
+        "rigid": mesh["rigid"],
+        "deformers": mesh["deformers"],
+        "sway": mesh["sway"],
+        "zoom": mesh["zoom"],
+    }
+
+
 def read_cutscene(cut_dir):
     #컷신 v3의 확정 좌표를 읽는다. 추정하지 않는다
     import csv
@@ -377,6 +406,7 @@ def main():
     ap.add_argument("--effects", help="이펙트 팩 폴더 (manifest.json 포함)")
     ap.add_argument("--cutscene", help="컷신 v3 폴더 (REGISTRATION.csv 포함)")
     ap.add_argument("--frame-effects", help="프레임 애니메이션 이펙트 팩 폴더 (effects.json 포함)")
+    ap.add_argument("--mesh-cutscene", help="메시 컷신 폴더 (rig.json 포함)")
     ap.add_argument("--character", default="incinerator")
     ap.add_argument("--config", help="캐릭터 설정 JSON (무기·별칭·날끝 지정)")
     args = ap.parse_args()
@@ -396,6 +426,8 @@ def main():
         manifest["effects"] = read_frame_effects(args.frame_effects, args.out, config)
     if args.cutscene:
         manifest["cutscene"] = read_cutscene(args.cutscene)
+    if args.mesh_cutscene:
+        manifest["cutscene"] = read_mesh_cutscene(args.mesh_cutscene, args.out, config)
 
     verify(manifest)
     out = Path(args.out) / "sprite-manifest.json"

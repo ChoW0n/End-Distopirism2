@@ -70,6 +70,9 @@ export class ImageBank implements ImageSource {
       for (const frame of effect.frames) files.add(frame.file);
     }
     for (const layer of catalog.manifest.cutscene?.layers ?? []) files.add(layer.file);
+    //메시 컷신은 전경·배경·눈·입 네 장이다
+    const mesh = catalog.manifest.meshCutscene;
+    if (mesh) for (const file of [mesh.foreground, mesh.background, mesh.eye.file, mesh.mouth.file]) files.add(file);
 
     await Promise.all([...files].map((file) => this.take(`${characterId}/${file}`)));
   }

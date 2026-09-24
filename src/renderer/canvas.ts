@@ -6,6 +6,7 @@
 
 import type { CameraCommand } from '../camera/director.js';
 import { CutsceneDirector, type CutscenePose, type LayerTransform } from '../render/cutscene.js';
+import { MeshCutscene } from '../render/cutscene-mesh.js';
 import type { Point, SpriteCatalog } from '../render/manifest.js';
 import type { RenderCommand } from '../render/presenter.js';
 import type { Stage, StagePlacement } from '../render/stage.js';
@@ -137,6 +138,8 @@ interface LiveCutscene {
   characterId: string;
   //흔들 수 있으면 매 장면 자세를 새로 계산한다. 없으면 받은 레이어를 그대로 그린다
   director: CutsceneDirector | null;
+  //메시 방식이면 이쪽이다 (SPEC-002 §7.1). 눈·입을 덮은 텍스처를 한 장 들고 매 장면 다시 칠한다
+  mesh: { rig: MeshCutscene; texture: HTMLCanvasElement } | null;
   layers: LayerTransform[];
   elapsed: number;
   durationSec: number;
@@ -340,13 +343,18 @@ export class CanvasRenderer {
 
       case 'ultimate': {
         //컷신은 타임라인 장벽이다. 도는 동안 뒤 명령이 흐르지 않는다 (SPEC-003 §5.3)
-        if (command.phase !== 'cutscene' || !command.layers) return PHASE_SEC;
+        if (command.phase !== 'cutscene') return PHASE_SEC;
         const characterId = this.actors.get(command.combatantId)?.placement.characterId ?? '';
-        const data = this.stage.has(characterId) ? this.stage.catalogFor(characterId).manifest.cutscene : null;
+        const manifest = this.stage.has(characterId) ? this.stage.catalogFor(characterId).manifest : null;
+        const data = manifest?.cutscene ?? null;
+        const meshData = manifest?.meshCutscene ?? null;
+        //레이어도 메시도 없으면 컷신 없이 넘어간다
+        if (!command.layers && !meshData) return PHASE_SEC;
         this.cutscene = {
           characterId,
           director: data ? new CutsceneDirector(data) : null,
-          layers: command.layers,
+          mesh: meshData ? { rig: new MeshCutscene(meshData), texture: this.meshTexture(meshData.size) } : null,
+          layers: command.layers ?? [],
           elapsed: 0,
           durationSec: this.cut.sec,
         };
@@ -1481,6 +1489,10 @@ export class CanvasRenderer {
     const { width } = this.scene.viewport;
     const cut = this.cut;
     const ctx = this.ctx;
+    if (cutscene.mesh) {
+      this.drawMeshCutscene(cutscene, cutscene.mesh, progress, enter, top, bandHeight);
+      return;
+    }
     const catalog = this.stage.has(cutscene.characterId) ? this.stage.catalogFor(cutscene.characterId) : null;
     const size = catalog?.manifest.cutscene?.size ?? { width, height: bandHeight };
 
@@ -1506,6 +1518,108 @@ export class CanvasRenderer {
       );
       ctx.restore();
     }
+  }
+
+  //메시 컷신 텍스처로 쓸 빈 캔버스
+  private meshTexture(size: { width: number; height: number }): HTMLCanvasElement {
+    const canvas = document.createElement('canvas');
+    canvas.width = size.width;
+    canvas.height = size.height;
+    return canvas;
+  }
+
+  //메시 컷신. 전경에 눈·입 조각을 덮은 텍스처를 격자 삼각형으로 휘어 붙인다 (SPEC-002 §7.1)
+  private drawMeshCutscene(
+    cutscene: LiveCutscene,
+    mesh: { rig: MeshCutscene; texture: HTMLCanvasElement },
+    progress: number,
+    enter: number,
+    top: number,
+    bandHeight: number,
+  ): void {
+    const { width } = this.scene.viewport;
+    const cut = this.cut;
+    const data = mesh.rig.data;
+    const image = (file: string) => this.images.character(cutscene.characterId, file);
+    const foreground = image(data.foreground);
+    if (!foreground) return;
+
+    //텍스처: 전경 위에 눈 감은 조각·입 다문 조각을 덮는다. 범고래 원화는 입이 열려 있다
+    const within = ([from, to]: [number, number]): boolean => progress >= from && progress <= to;
+    const tex = mesh.texture.getContext('2d');
+    if (!tex) return;
+    tex.clearRect(0, 0, data.size.width, data.size.height);
+    tex.drawImage(foreground, 0, 0, data.size.width, data.size.height);
+    this.patch(tex, image(data.eye.file), data.eye.patch, within(cut.blinkAt) ? 1 : 0);
+    this.patch(tex, image(data.mouth.file), data.mouth.patch, within(cut.mouthAt) ? 0 : 1);
+
+    const ctx = this.ctx;
+    const scale = Math.max(width / data.size.width, bandHeight / data.size.height) * (1 + cut.pushZoom * progress);
+    const offsetX = (width - data.size.width * scale) / 2 + (1 - enter) * cut.slideFrom * width;
+    ctx.save();
+    ctx.translate(offsetX, top);
+    ctx.scale(scale, scale);
+    const phase = (cutscene.elapsed / cut.swaySec) * Math.PI * 2;
+
+    //배경은 몸보다 덜 흔들린다
+    const background = image(data.background);
+    if (background) {
+      const shift = Math.sin(phase) * 4;
+      ctx.drawImage(background, -16 + shift, -10, data.size.width + 32, data.size.height + 20);
+    }
+
+    //가장자리가 비지 않게 가운데를 축으로 살짝 키운다
+    ctx.translate(data.size.width / 2, data.size.height / 2);
+    ctx.scale(data.zoom, data.zoom);
+    ctx.translate(-data.size.width / 2, -data.size.height / 2);
+    for (const tri of mesh.rig.triangles(phase)) this.drawTriangle(mesh.texture, tri.source, tri.target);
+    ctx.restore();
+  }
+
+  //다각형 모양으로 잘라 조각을 덮는다
+  private patch(tex: CanvasRenderingContext2D, source: CanvasImageSource | null, polygon: readonly Point[], alpha: number): void {
+    if (!source || alpha <= 0 || polygon.length < 3) return;
+    tex.save();
+    tex.beginPath();
+    polygon.forEach((p, i) => (i === 0 ? tex.moveTo(p.x, p.y) : tex.lineTo(p.x, p.y)));
+    tex.closePath();
+    tex.clip();
+    tex.globalAlpha = alpha;
+    tex.drawImage(source, 0, 0, (source as HTMLCanvasElement).width, (source as HTMLCanvasElement).height);
+    tex.restore();
+  }
+
+  //원래 삼각형을 휜 삼각형으로 옮겨 그린다. 이웃 칸과 틈이 안 보이게 2.5px 넓혀 자른다
+  private drawTriangle(texture: CanvasImageSource, source: readonly Point[], target: readonly Point[]): void {
+    const [a, b, c] = source as [Point, Point, Point];
+    const [d, e, f] = target as [Point, Point, Point];
+    const det = (b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y);
+    if (det === 0) return;
+    const A = ((e.x - d.x) * (c.y - a.y) - (f.x - d.x) * (b.y - a.y)) / det;
+    const C = ((f.x - d.x) * (b.x - a.x) - (e.x - d.x) * (c.x - a.x)) / det;
+    const B = ((e.y - d.y) * (c.y - a.y) - (f.y - d.y) * (b.y - a.y)) / det;
+    const D = ((f.y - d.y) * (b.x - a.x) - (e.y - d.y) * (c.x - a.x)) / det;
+    const E = d.x - A * a.x - C * a.y;
+    const F = d.y - B * a.x - D * a.y;
+    const cx = (d.x + e.x + f.x) / 3;
+    const cy = (d.y + e.y + f.y) / 3;
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.beginPath();
+    target.forEach((q, i) => {
+      const vx = q.x - cx;
+      const vy = q.y - cy;
+      const l = Math.hypot(vx, vy) || 1;
+      const x = q.x + (vx / l) * 2.5;
+      const y = q.y + (vy / l) * 2.5;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    });
+    ctx.closePath();
+    ctx.clip();
+    ctx.transform(A, B, C, D, E, F);
+    ctx.drawImage(texture, 0, 0);
+    ctx.restore();
   }
 
   //지금 시각의 컷신 자세. 회전은 한도(motionDeg)까지만, 눈·입은 파츠 이름으로 고른다
