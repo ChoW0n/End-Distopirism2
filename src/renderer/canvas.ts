@@ -5,12 +5,12 @@
 //히트스톱·슬로모도 여기 시계에만 걸린다. 도메인 결과에는 아무 영향이 없다 (SPEC-005 §5)
 
 import type { CameraCommand } from '../camera/director.js';
-import type { LayerTransform } from '../render/cutscene.js';
+import { CutsceneDirector, type CutscenePose, type LayerTransform } from '../render/cutscene.js';
 import type { Point, SpriteCatalog } from '../render/manifest.js';
 import type { RenderCommand } from '../render/presenter.js';
 import type { Stage, StagePlacement } from '../render/stage.js';
 import type { UiCommand } from '../ui/director.js';
-import type { MotionData } from '../ui/data.js';
+import type { CutsceneFxData, MotionData } from '../ui/data.js';
 import { Scene, type CameraState } from './scene.js';
 
 //렌더러가 그림을 찾는 통로. 어느 파일이 어느 비트맵인지는 밖에서 정한다
@@ -63,6 +63,14 @@ interface Actor {
   hurt: number;
   //숨쉬기 박자를 사람마다 어긋나게 하는 값
   breathPhase: number;
+  //지난 tick 에 보이던 장. 바뀌는 순간을 잡는다
+  shown: string | null;
+  //장 겹치기. 앞 장을 잠깐 옅게 남긴다 (SPEC-005 §2.3)
+  blend: { frameId: string; t: number } | null;
+  //자세 튕김이 시작된 뒤 지난 시간(초). null 이면 튕기지 않는다
+  pop: number | null;
+  //휘두르는 동안 남기는 지난 장
+  strikeGhosts: { position: Point; frameId: string; age: number }[];
 }
 
 //재생 중인 이펙트 하나. 마지막 키프레임에도 그림이 남으므로 끝나면 반드시 지운다
@@ -127,6 +135,8 @@ interface LiveArrow {
 //진행 중인 컷신. 이게 살아 있는 동안 뒤 명령을 흘리지 않는다
 interface LiveCutscene {
   characterId: string;
+  //흔들 수 있으면 매 장면 자세를 새로 계산한다. 없으면 받은 레이어를 그대로 그린다
+  director: CutsceneDirector | null;
   layers: LayerTransform[];
   elapsed: number;
   durationSec: number;
@@ -136,7 +146,6 @@ interface LiveCutscene {
 const FRAME_MS = 130;
 //궁극기의 ready·cardAdded·used 단계를 알아볼 시간
 const PHASE_SEC = 0.25;
-const CUTSCENE_SEC = 1.6;
 const SHAKE_SEC = 0.25;
 const SHAKE_PX = 16;
 //카메라가 목표를 따라가는 빠르기. 클수록 빨리 붙는다
@@ -180,6 +189,8 @@ export class CanvasRenderer {
   private zoomGoal = 1;
   private tiltGoal = 0;
   private punch: { amount: number; sec: number; t: number } | null = null;
+  //휘두르는 장이 바뀔 때의 작은 순간 확대. 카메라 감독 명령이 아니라 렌더러 안에서 건다
+  private kick: { amount: number; sec: number; t: number } | null = null;
   private shakeLeft = 0;
   private shakeStrength = 0;
   private shake: Point = { x: 0, y: 0 };
@@ -196,6 +207,8 @@ export class CanvasRenderer {
     private readonly placeholderHeight: number,
     //몸짓 수치 (ui-data.json motion)
     private readonly motion: MotionData,
+    //궁극기 컷인 수치 (ui-data.json cutscene)
+    private readonly cut: CutsceneFxData,
   ) {}
 
   //무대에 캐릭터를 세운다. 전투가 새로 시작될 때 부른다
@@ -217,6 +230,7 @@ export class CanvasRenderer {
     this.zoom = this.zoomGoal = 1;
     this.tilt = this.tiltGoal = 0;
     this.punch = null;
+    this.kick = null;
     this.shakeLeft = 0;
 
     for (const placement of placements) {
@@ -243,6 +257,10 @@ export class CanvasRenderer {
         banner: null,
         hurt: 0,
         breathPhase: phaseOf(placement.combatantId),
+        shown: null,
+        blend: null,
+        pop: null,
+        strikeGhosts: [],
       });
     }
     this.focus = this.restFocus();
@@ -323,13 +341,16 @@ export class CanvasRenderer {
       case 'ultimate': {
         //컷신은 타임라인 장벽이다. 도는 동안 뒤 명령이 흐르지 않는다 (SPEC-003 §5.3)
         if (command.phase !== 'cutscene' || !command.layers) return PHASE_SEC;
+        const characterId = this.actors.get(command.combatantId)?.placement.characterId ?? '';
+        const data = this.stage.has(characterId) ? this.stage.catalogFor(characterId).manifest.cutscene : null;
         this.cutscene = {
-          characterId: this.actors.get(command.combatantId)?.placement.characterId ?? '',
+          characterId,
+          director: data ? new CutsceneDirector(data) : null,
           layers: command.layers,
           elapsed: 0,
-          durationSec: CUTSCENE_SEC,
+          durationSec: this.cut.sec,
         };
-        return CUTSCENE_SEC;
+        return this.cut.sec;
       }
 
       case 'placeholder':
@@ -593,7 +614,11 @@ export class CanvasRenderer {
 
     if (this.cutscene) {
       this.cutscene.elapsed += realSec;
-      if (this.cutscene.elapsed >= this.cutscene.durationSec) this.cutscene = null;
+      if (this.cutscene.elapsed >= this.cutscene.durationSec) {
+        this.cutscene = null;
+        //컷인이 빠지는 순간 전투 화면이 번쩍이며 돌아온다
+        this.flash = { alpha: this.cut.flashAlpha, sec: this.cut.outSec, t: 0 };
+      }
     }
 
     //시간이 되면 다음 명령을 꺼낸다. 컷신이 도는 동안에는 한 개도 안 꺼낸다
@@ -682,6 +707,43 @@ export class CanvasRenderer {
       actor.banner.t += dt;
       if (actor.banner.t > actor.banner.sec + BANNER_FADE_SEC) actor.banner = null;
     }
+    this.tickPose(actor, dt);
+  }
+
+  //장이 바뀌는 순간을 잡아 끊김을 가린다 (SPEC-005 §2.3)
+  private tickPose(actor: Actor, dt: number): void {
+    if (actor.blend) {
+      actor.blend.t += dt * 1000;
+      if (actor.blend.t >= this.motion.blendMs) actor.blend = null;
+    }
+    if (actor.pop !== null) {
+      actor.pop += dt;
+      if (actor.pop * 1000 >= this.motion.popMs) actor.pop = null;
+    }
+    const ghostLife = (this.motion.blendMs * 3) / 1000;
+    for (const ghost of actor.strikeGhosts) ghost.age += dt;
+    actor.strikeGhosts = actor.strikeGhosts.filter((g) => g.age < ghostLife);
+
+    const now = this.currentFrame(actor);
+    const before = actor.shown;
+    actor.shown = now;
+    if (!before || !now || before === now) return;
+
+    //앞 장을 잠깐 남긴다. 두 실루엣이 겹쳐 움직임 흐림처럼 읽힌다
+    actor.blend = { frameId: before, t: 0 };
+    if (!this.striking(actor)) return;
+    //휘두르는 중이면 튕기고, 지난 장을 잔상으로 남기고, 카메라를 살짝 찬다
+    actor.pop = 0;
+    actor.strikeGhosts.unshift({ position: this.positionOf(actor), frameId: before, age: 0 });
+    actor.strikeGhosts.length = Math.min(actor.strikeGhosts.length, this.motion.strikeGhosts);
+    if (this.subjects?.includes(actor.placement.combatantId)) {
+      this.kick = { amount: this.motion.poseKick, sec: this.motion.popMs / 1000, t: 0 };
+    }
+  }
+
+  //휘두르는 한 방이 진행 중인지. 내딛기가 걸려 있는 동안이다
+  private striking(actor: Actor): boolean {
+    return actor.pushes.some((p) => p.kind === 'lunge');
   }
 
   private tickWorld(dt: number): void {
@@ -712,6 +774,10 @@ export class CanvasRenderer {
     if (this.punch) {
       this.punch.t += realSec;
       if (this.punch.t >= this.punch.sec) this.punch = null;
+    }
+    if (this.kick) {
+      this.kick.t += dt;
+      if (this.kick.t >= this.kick.sec) this.kick = null;
     }
 
     if (this.shakeLeft > 0) {
@@ -794,7 +860,8 @@ export class CanvasRenderer {
     //카메라 변환은 여기 하나다. 배경과 캐릭터가 같이 당겨지고 같이 기운다
     const pivot = this.scene.pivot;
     const punch = this.punch ? this.punch.amount * Math.sin(Math.PI * (this.punch.t / this.punch.sec)) : 0;
-    const zoom = this.zoom * (1 + punch);
+    const kick = this.kick ? this.kick.amount * (1 - easeOutCubic(this.kick.t / this.kick.sec)) : 0;
+    const zoom = this.zoom * (1 + punch + kick);
     //기울여도 모서리가 비지 않을 만큼만 기운다
     const maxTilt = Math.max(0, ((zoom - 1) / (width / height)) * (180 / Math.PI));
     const tilt = Math.max(-maxTilt, Math.min(maxTilt, this.tilt));
@@ -865,7 +932,13 @@ export class CanvasRenderer {
   }
 
   //스프라이트 한 장을 접지점 기준으로 놓는다. 배율은 발에서 잰다 (SPEC-003 §6.5.2)
-  private drawFrame(actor: Actor, frameId: string, position: Point, alpha: number, body = { breath: 1, hurt: 0 }): void {
+  private drawFrame(
+    actor: Actor,
+    frameId: string,
+    position: Point,
+    alpha: number,
+    body: { breath: number; hurt: number; pop?: number } = { breath: 1, hurt: 0 },
+  ): void {
     const catalog = this.catalogOf(actor);
     if (!catalog) return;
     const placement = { ...actor.placement, position };
@@ -880,10 +953,11 @@ export class CanvasRenderer {
     const ctx = this.ctx;
     ctx.save();
     ctx.globalAlpha *= alpha;
-    //숨쉬기. 발을 축으로 세로만 살짝 늘었다 줄었다 한다
-    if (body.breath !== 1) {
+    //숨쉬기는 세로만, 자세 튕김은 가로세로 같이. 둘 다 발을 축으로 한다
+    const pop = body.pop ?? 1;
+    if (body.breath !== 1 || pop !== 1) {
       ctx.translate(foot.x, foot.y);
-      ctx.scale(1, body.breath);
+      ctx.scale(pop, body.breath * pop);
       ctx.translate(-foot.x, -foot.y);
     }
     if (placement.facing === -1) {
@@ -924,7 +998,22 @@ export class CanvasRenderer {
     const wave = Math.sin(((nowSec + actor.breathPhase * this.motion.breatheSec) / this.motion.breatheSec) * Math.PI * 2);
     const breath = still ? 1 + this.motion.breathe * wave : 1;
     const hurt = this.motion.hurtSec > 0 ? actor.hurt / this.motion.hurtSec : 0;
-    this.drawFrame(actor, frameId, this.positionOf(actor, nowSec), 1, { breath, hurt });
+    const position = this.positionOf(actor, nowSec);
+    //휘두름 잔상. 오래된 것일수록 옅다
+    const ghostLife = (this.motion.blendMs * 3) / 1000;
+    for (let i = actor.strikeGhosts.length - 1; i >= 0; i -= 1) {
+      const ghost = actor.strikeGhosts[i];
+      if (!ghost) continue;
+      const fade = this.motion.strikeGhostAlpha * (1 - ghost.age / ghostLife) * (1 - i / (actor.strikeGhosts.length + 1));
+      if (fade > 0.01) this.drawFrame(actor, ghost.frameId, ghost.position, fade);
+    }
+    //앞 장을 아래에 옅게 깔고 새 장을 위에 그린다. 새 장이 못 덮은 곳만 번져 보인다
+    if (actor.blend) {
+      const fade = 0.8 * (1 - actor.blend.t / this.motion.blendMs);
+      if (fade > 0.01) this.drawFrame(actor, actor.blend.frameId, position, fade, { breath, hurt: 0 });
+    }
+    const pop = actor.pop === null ? 1 : 1 + this.motion.popScale * (1 - easeOutCubic((actor.pop * 1000) / this.motion.popMs));
+    this.drawFrame(actor, frameId, position, 1, { breath, hurt, pop });
   }
 
   //대시 잔상. 오래된 것일수록 옅다
@@ -962,10 +1051,24 @@ export class CanvasRenderer {
     ctx.restore();
   }
 
+  //이펙트 한 개. 키프레임 사이를 겹쳐 넘기고 마지막 장은 사라지며 끝난다 (SPEC-005 §2.3)
   private drawEffect(effect: LiveEffect): void {
-    const frame = frameAt(effect.frames, effect.elapsed);
-    if (!frame) return;
-    const image = this.images.character(effect.characterId, frame.file);
+    const step = keyframeAt(effect.frames, effect.elapsed);
+    if (!step) return;
+    const fadeMs = this.motion.effectFadeMs;
+    const next = effect.frames[step.index + 1];
+    //다음 장이 있으면 끝 무렵에 다음 장을 위에 겹친다. 키프레임이 짧으니 장 길이의 반을 넘기지 않는다
+    const overlapMs = next ? Math.min(fadeMs, step.frame.ms * 0.5) : 0;
+    const incoming = next && step.left < overlapMs ? 1 - step.left / overlapMs : 0;
+    //마지막 장은 끝나기 전 fadeMs 동안 옅어진다. 끝나면 지운다
+    const outgoing = next ? 1 : Math.min(1, step.left / Math.max(1, Math.min(fadeMs, step.frame.ms)));
+    this.drawEffectImage(effect, step.frame.file, outgoing);
+    if (next && incoming > 0) this.drawEffectImage(effect, next.file, incoming);
+  }
+
+  private drawEffectImage(effect: LiveEffect, file: string, alpha: number): void {
+    if (alpha <= 0.01) return;
+    const image = this.images.character(effect.characterId, file);
     if (!image) return;
 
     //따라가는 궤적은 휘두르는 사람의 지금 자리에서 다시 잰다
@@ -979,6 +1082,7 @@ export class CanvasRenderer {
     const height = effect.size.height * foot.scale;
     const ctx = this.ctx;
     ctx.save();
+    ctx.globalAlpha *= alpha;
     ctx.globalCompositeOperation = effect.blend as GlobalCompositeOperation;
     if (effect.flipped) {
       ctx.translate(origin.x + width, origin.y);
@@ -1293,26 +1397,101 @@ export class CanvasRenderer {
   }
 
   //컷신은 화면을 덮는다. 13레이어를 z 순서대로 피벗에서 돌려 놓는다
+  //궁극기 컷인. 기운 띠가 밀려 들어오고 그 안에서 캐릭터가 숨쉰다 (SPEC-005 §2.4)
   private drawCutscene(cutscene: LiveCutscene): void {
     const { width, height } = this.scene.viewport;
+    const cut = this.cut;
     const ctx = this.ctx;
-    const t = cutscene.elapsed / cutscene.durationSec;
-    //들어오고 나갈 때만 어둡게. 가운데는 꽉 찬다
-    const fade = Math.min(1, Math.min(t, 1 - t) * 6);
+    const t = cutscene.elapsed;
+    const progress = t / cutscene.durationSec;
+    //들어옴·나감 진행도. 0 이면 화면 밖, 1 이면 제자리
+    const enter = easeOutCubic(t / cut.inSec);
+    const leave = easeOutCubic((cutscene.durationSec - t) / cut.outSec);
+    const shown = Math.min(enter, leave);
 
     ctx.save();
-    ctx.globalAlpha = fade;
+    //뒤 전투 화면을 누른다. 까맣게 지우지 않는다
+    ctx.globalAlpha = cut.dim * shown;
     ctx.fillStyle = '#000';
     ctx.fillRect(0, 0, width, height);
+    ctx.globalAlpha = 1;
 
+    //띠. 들어올 땐 오른쪽에서, 나갈 땐 왼쪽으로 빠진다
+    const bandHeight = height * cut.bandHeight;
+    const skew = Math.tan((cut.bandSkewDeg * Math.PI) / 180) * width;
+    const slide = (1 - enter) * width - (1 - leave) * width;
+    const top = (height - bandHeight) / 2;
+    const band = new Path2D();
+    band.moveTo(slide - skew, top + skew * 0.5);
+    band.lineTo(slide + width + skew, top - skew * 0.5);
+    band.lineTo(slide + width + skew, top + bandHeight - skew * 0.5);
+    band.lineTo(slide - skew, top + bandHeight + skew * 0.5);
+    band.closePath();
+
+    const fill = ctx.createLinearGradient(0, top, 0, top + bandHeight);
+    fill.addColorStop(0, '#2a1d17');
+    fill.addColorStop(0.5, '#15100d');
+    fill.addColorStop(1, '#2a1d17');
+    ctx.fillStyle = fill;
+    ctx.fill(band);
+
+    ctx.save();
+    ctx.clip(band);
+    this.drawSpeedLines(t, top, bandHeight, slide);
+    this.drawCutsceneLayers(cutscene, progress, enter, top, bandHeight);
+    ctx.restore();
+
+    //띠 가장자리의 불씨 선
+    ctx.strokeStyle = 'rgba(214,92,40,0.85)';
+    ctx.lineWidth = Math.max(2, height * 0.004);
+    ctx.beginPath();
+    ctx.moveTo(slide - skew, top + skew * 0.5);
+    ctx.lineTo(slide + width + skew, top - skew * 0.5);
+    ctx.moveTo(slide + width + skew, top + bandHeight - skew * 0.5);
+    ctx.lineTo(slide - skew, top + bandHeight + skew * 0.5);
+    ctx.stroke();
+    ctx.restore();
+  }
+
+  //띠 안을 가로지르는 속도선. 같은 시각이면 같은 모양이 나오게 번호로 자리를 정한다
+  private drawSpeedLines(t: number, top: number, bandHeight: number, slide: number): void {
+    const { width, height } = this.scene.viewport;
+    const ctx = this.ctx;
+    const lines = 26;
+    ctx.save();
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < lines; i += 1) {
+      const lane = ((i * 37) % lines) / lines;
+      const speed = 1.4 + ((i * 13) % 7) * 0.25;
+      const length = width * (0.12 + ((i * 29) % 5) * 0.04);
+      const x = width - (((t * speed * width + i * 211) % (width + length)) as number) + slide;
+      const y = top + lane * bandHeight;
+      ctx.strokeStyle = `rgba(232,200,170,${0.05 + ((i * 7) % 5) * 0.025})`;
+      ctx.lineWidth = Math.max(1, height * (0.0015 + ((i * 3) % 4) * 0.0008));
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + length, y);
+      ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  //컷신 레이어. 흔들림 한도 안에서 레이어마다 어긋나게 흔들고, 정해진 구간에 눈·입을 바꾼다
+  private drawCutsceneLayers(cutscene: LiveCutscene, progress: number, enter: number, top: number, bandHeight: number): void {
+    const { width } = this.scene.viewport;
+    const cut = this.cut;
+    const ctx = this.ctx;
     const catalog = this.stage.has(cutscene.characterId) ? this.stage.catalogFor(cutscene.characterId) : null;
-    const size = catalog?.manifest.cutscene?.size ?? { width, height };
-    //천천히 다가간다
-    const scale = Math.min(width / size.width, height / size.height) * (1 + 0.05 * t);
-    const offsetX = (width - size.width * scale) / 2;
-    const offsetY = (height - size.height * scale) / 2;
+    const size = catalog?.manifest.cutscene?.size ?? { width, height: bandHeight };
 
-    for (const layer of cutscene.layers) {
+    const layers = cutscene.director ? cutscene.director.layers(this.cutscenePose(cutscene.director, cutscene.elapsed, progress)) : cutscene.layers;
+    //띠를 꽉 채우고 천천히 다가간다. 옆에서 미끄러져 들어온다
+    const scale = Math.max(width / size.width, bandHeight / size.height) * (1 + cut.pushZoom * progress);
+    const offsetX = (width - size.width * scale) / 2 + (1 - enter) * cut.slideFrom * width;
+    //위를 맞춘다. 가운데로 맞추면 후드가 띠 밖으로 잘린다. 넘치는 건 다리 쪽이다
+    const offsetY = top;
+
+    for (const layer of layers) {
       const image = this.images.character(cutscene.characterId, layer.file);
       if (!image) continue;
       ctx.save();
@@ -1327,7 +1506,23 @@ export class CanvasRenderer {
       );
       ctx.restore();
     }
-    ctx.restore();
+  }
+
+  //지금 시각의 컷신 자세. 회전은 한도(motionDeg)까지만, 눈·입은 파츠 이름으로 고른다
+  private cutscenePose(director: CutsceneDirector, sec: number, progress: number): CutscenePose {
+    const rotations: Record<string, number> = {};
+    for (const layer of director.cutscene.layers) {
+      if (layer.motionDeg === 0) continue;
+      const phase = phaseOf(layer.id) * Math.PI * 2;
+      rotations[layer.id] = layer.motionDeg * Math.sin((sec / this.cut.swaySec) * Math.PI * 2 + phase);
+    }
+    const within = ([from, to]: [number, number]): boolean => progress >= from && progress <= to;
+    const face: Record<string, 'open' | 'closed'> = {};
+    for (const group of director.faceGroups) {
+      if (group.includes('eye')) face[group] = within(this.cut.blinkAt) ? 'closed' : 'open';
+      if (group.includes('mouth')) face[group] = within(this.cut.mouthAt) ? 'open' : 'closed';
+    }
+    return { rotations, face };
   }
 
   private catalogOf(actor: Actor): SpriteCatalog | null {
@@ -1370,12 +1565,18 @@ function totalMs(frames: readonly { ms: number }[]): number {
   return frames.reduce((acc, f) => acc + f.ms, 0);
 }
 
-//경과 시간에 해당하는 키프레임
-function frameAt(frames: readonly { file: string; ms: number }[], elapsed: number): { file: string } | null {
+//경과 시간에 해당하는 키프레임과 그 장의 남은 시간
+function keyframeAt(
+  frames: readonly { file: string; ms: number }[],
+  elapsed: number,
+): { frame: { file: string; ms: number }; index: number; left: number } | null {
   let left = elapsed;
-  for (const frame of frames) {
-    if (left < frame.ms) return frame;
+  for (let index = 0; index < frames.length; index += 1) {
+    const frame = frames[index];
+    if (!frame) continue;
+    if (left < frame.ms) return { frame, index, left: frame.ms - left };
     left -= frame.ms;
   }
   return null;
 }
+

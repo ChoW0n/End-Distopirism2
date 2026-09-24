@@ -135,6 +135,41 @@ export interface MotionData {
   breatheSec: number;
   //맞았을 때 몸이 번쩍이는 시간
   hurtSec: number;
+  //장이 바뀌면 앞 장을 옅게 남기는 시간 (SPEC-005 §2.3)
+  blendMs: number;
+  //휘두르는 장이 바뀔 때 커졌다 돌아오는 크기·시간
+  popScale: number;
+  popMs: number;
+  //휘두르는 동안 남기는 지난 장 수·불투명도
+  strikeGhosts: number;
+  strikeGhostAlpha: number;
+  //휘두르는 장이 바뀔 때 카메라 순간 확대
+  poseKick: number;
+  //이펙트 키프레임 겹치기·마지막 장이 사라지는 시간
+  effectFadeMs: number;
+}
+
+//궁극기 컷인 수치. 렌더러가 받는다 (SPEC-005 §2.4)
+export interface CutsceneFxData {
+  //전체 길이·들어옴·나감
+  sec: number;
+  inSec: number;
+  outSec: number;
+  //뒤 전투 화면을 누르는 정도
+  dim: number;
+  //띠 기울기(도)·높이(화면 높이 비율)
+  bandSkewDeg: number;
+  bandHeight: number;
+  //옆에서 들어오는 거리(화면 너비 비율)·천천히 다가가는 정도
+  slideFrom: number;
+  pushZoom: number;
+  //레이어 흔들림 주기
+  swaySec: number;
+  //눈 감는 구간·입 여는 구간. 전체 길이 비율 [시작, 끝]
+  blinkAt: [number, number];
+  mouthAt: [number, number];
+  //나갈 때 번쩍임 세기
+  flashAlpha: number;
 }
 
 //카메라 수치. CameraDirector 가 받는다
@@ -162,6 +197,7 @@ export interface UiData {
   flash: FlashData;
   afterimage: AfterimageData;
   motion: MotionData;
+  cutscene: CutsceneFxData;
   camera: CameraData;
 }
 
@@ -227,6 +263,7 @@ export function parseUiData(raw: unknown): UiData {
   const arrow = obj(source['arrow'], 'arrow');
   const bar = obj(source['bar'], 'bar');
   const badge = obj(source['badge'], 'badge');
+  const cutscene = obj(source['cutscene'], 'cutscene');
   //숫자만 들어 있는 절은 키 목록으로 한 번에 읽는다
   const numbers = <K extends string>(name: string, keys: readonly K[]): Record<K, number> => {
     const section = obj(source[name], name);
@@ -285,7 +322,15 @@ export function parseUiData(raw: unknown): UiData {
     afterimage: numbers('afterimage', ['count', 'intervalSec', 'alpha'] as const),
     motion: numbers('motion', [
       'othersAlpha', 'windupMs', 'snapMs', 'lunge', 'lungeSec', 'breathe', 'breatheSec', 'hurtSec',
+      'blendMs', 'popScale', 'popMs', 'strikeGhosts', 'strikeGhostAlpha', 'poseKick', 'effectFadeMs',
     ] as const),
+    cutscene: {
+      ...numbers('cutscene', [
+        'sec', 'inSec', 'outSec', 'dim', 'bandSkewDeg', 'bandHeight', 'slideFrom', 'pushZoom', 'swaySec', 'flashAlpha',
+      ] as const),
+      blinkAt: range(cutscene, 'blinkAt', 'cutscene'),
+      mouthAt: range(cutscene, 'mouthAt', 'cutscene'),
+    },
     camera: numbers('camera', [
       'focusZoom', 'punchZoom', 'punchSec', 'tiltDeg', 'slowmoScale', 'slowmoSec', 'shakeReferenceDamage',
     ] as const),

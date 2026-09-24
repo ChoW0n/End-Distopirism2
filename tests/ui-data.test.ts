@@ -29,7 +29,7 @@ describe('assets/ui/ui-data.json', () => {
   //키가 빠진 채 그려지면 어디가 틀렸는지 화면만 보고는 못 찾는다
   it.each([
     'dash', 'float', 'arrow', 'bar', 'badge',
-    'clash', 'hitStop', 'damageText', 'banner', 'knockback', 'flash', 'afterimage', 'motion', 'camera',
+    'clash', 'hitStop', 'damageText', 'banner', 'knockback', 'flash', 'afterimage', 'motion', 'cutscene', 'camera',
   ])('%s 절이 없으면 던진다', (section) => {
     const broken = { ...raw };
     delete broken[section];
@@ -56,5 +56,12 @@ describe('assets/ui/ui-data.json', () => {
     const broken = JSON.parse(JSON.stringify(raw)) as typeof raw;
     delete (broken['camera'] as Record<string, unknown>)['punchZoom'];
     expect(() => parseUiData(broken)).toThrow(/punchZoom/);
+  });
+
+  //컷신 눈·입 구간은 [시작, 끝] 이다. 뒤집히면 한 번도 안 켜진다
+  it('컷신 구간이 뒤집혀 있으면 던진다', () => {
+    const broken = JSON.parse(JSON.stringify(raw)) as typeof raw;
+    (broken['cutscene'] as Record<string, unknown>)['blinkAt'] = [0.6, 0.5];
+    expect(() => parseUiData(broken)).toThrow(/blinkAt/);
   });
 });

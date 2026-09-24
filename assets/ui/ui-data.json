@@ -96,7 +96,30 @@
     "lungeSec": 0.3,
     "breathe": 0.012,
     "breatheSec": 2.4,
-    "hurtSec": 0.16
+    "hurtSec": 0.16,
+    "_blendMs": "장이 바뀌면 앞 장을 이 시간 동안 옅게 남긴다. 실루엣이 튀는 걸 가린다 (SPEC-005 §2.3)",
+    "blendMs": 80,
+    "popScale": 0.035,
+    "popMs": 120,
+    "strikeGhosts": 2,
+    "strikeGhostAlpha": 0.3,
+    "poseKick": 0.025,
+    "effectFadeMs": 90
+  },
+  "cutscene": {
+    "_sec": "궁극기 컷인 전체 길이. 들어옴·나감 포함 (SPEC-005 §2.4)",
+    "sec": 1.9,
+    "inSec": 0.24,
+    "outSec": 0.2,
+    "dim": 0.78,
+    "bandSkewDeg": 7,
+    "bandHeight": 0.78,
+    "slideFrom": 0.28,
+    "pushZoom": 0.07,
+    "swaySec": 1.3,
+    "blinkAt": [0.52, 0.6],
+    "mouthAt": [0.66, 0.92],
+    "flashAlpha": 0.55
   },
   "camera": {
     "focusZoom": 1.6,
