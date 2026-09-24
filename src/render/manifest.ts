@@ -118,10 +118,31 @@ export interface EffectBindings {
   ultimate: string[];
   //격파 직후에 남는 잔류 이펙트
   defeat: string[];
+  //사건 이펙트. 명중이 아니다 (SPEC-002 §5.4.2)
+  //준비 자세를 잡을 때 발치
+  ready: string[];
+  //달려 나갈 때 출발점
+  dash: string[];
+  //합 라운드에서 이겼을 때 접점
+  clash: string[];
+  //합 라운드에서 졌을 때 몸 가운데
+  recoil: string[];
+  //원본 위에 흐린 더하기 겹을 한 번 더 얹는 이펙트 (SPEC-002 §6-7)
+  glow: string[];
 }
 
 //바인딩이 없는 캐릭터를 위한 빈 값. 에셋이 아직 없으면 이펙트 없이 돌아간다
-export const EMPTY_BINDINGS: EffectBindings = { character: '', frames: {}, ultimate: [], defeat: [] };
+export const EMPTY_BINDINGS: EffectBindings = {
+  character: '',
+  frames: {},
+  ultimate: [],
+  defeat: [],
+  ready: [],
+  dash: [],
+  clash: [],
+  recoil: [],
+  glow: [],
+};
 
 //매니페스트가 규격과 다를 때 던진다
 export class SpriteManifestError extends Error {
@@ -373,6 +394,11 @@ export function parseEffectBindings(raw: unknown): EffectBindings {
     frames,
     ultimate: idList(source['ultimate'], 'bindings.ultimate'),
     defeat: idList(source['defeat'], 'bindings.defeat'),
+    ready: idList(source['ready'], 'bindings.ready'),
+    dash: idList(source['dash'], 'bindings.dash'),
+    clash: idList(source['clash'], 'bindings.clash'),
+    recoil: idList(source['recoil'], 'bindings.recoil'),
+    glow: idList(source['glow'], 'bindings.glow'),
   };
 }
 
@@ -403,7 +429,13 @@ export class SpriteCatalog {
       this.frame(frameId);
       for (const id of effectIds) this.effect(id);
     }
-    for (const id of [...bindings.ultimate, ...bindings.defeat]) this.effect(id);
+    for (const id of [...bindings.ultimate, ...bindings.defeat, ...bindings.glow]) this.effect(id);
+    //사건 이펙트에 명중 섬광을 쓰면 맞지도 않았는데 섬광이 뜬다 (SPEC-002 §5.4.2 · §6-1)
+    for (const id of [...bindings.ready, ...bindings.dash, ...bindings.clash, ...bindings.recoil]) {
+      if (this.effect(id).anchor === 'hitPoint') {
+        throw new SpriteManifestError(`사건 이펙트에 명중 섬광을 쓸 수 없다: ${id}`);
+      }
+    }
   }
 
   //캐릭터 키 H. UI 가 바·배지를 놓을 때 쓰는 기준 길이다 (SPEC-002 §5.1, SPEC-004 U-2)

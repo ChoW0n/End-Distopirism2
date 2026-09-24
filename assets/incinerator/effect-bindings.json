@@ -2,15 +2,15 @@
   "_comment": "SPEC-002 §5.4 전용기-이펙트 매핑. 캐릭터마다 프레임 포즈가 달라서 캐릭터별로 둔다",
   "_authored": "사람이 쓰는 파일이다. normalize_sprites.py 가 만드는 sprite-manifest.json 과 분리해 둔 이유는 매니페스트를 다시 생성해도 이 값이 날아가지 않게 하려는 것이다",
   "_howToAdd": "새 캐릭터는 assets/<캐릭터>/effect-bindings.json 을 같은 형식으로 넣기만 하면 된다. 코드는 고치지 않는다",
-  "version": 1,
+  "version": 2,
   "character": "incinerator",
 
   "frames": {
-    "_comment": "프레임 id -> 그 프레임에서 터지는 이펙트. 준비 프레임(05/07/09)은 아직 때린 게 아니라 비운다",
-    "06-skill1-cast": ["slash-diagonal"],
-    "08-skill2-peak": ["slash-horizontal"],
-    "10-skill3-cast": ["slash-rising"],
-    "11-skill3-finish": ["slash-downward", "ground-impact"]
+    "_comment": "프레임 id -> 그 프레임에서 터지는 이펙트. 준비 프레임(05/07/09)은 아직 때린 게 아니라 비운다. v1.2 에서 분출·불티·재 추가 (SPEC-002 §5.4.1)",
+    "06-skill1-cast": ["slash-diagonal", "embers"],
+    "08-skill2-peak": ["slash-horizontal", "fire-horizontal"],
+    "10-skill3-cast": ["slash-rising", "fire-rising"],
+    "11-skill3-finish": ["slash-downward", "ground-impact", "ash-mixed"]
   },
 
   "_ultimateComment": "궁극기는 전용기 3과 마무리 프레임을 공유해서 frames 키로는 안 갈린다. 그래서 따로 둔다",
@@ -18,8 +18,12 @@
 
   "defeat": ["smoke", "embers"],
 
-  "_unused": {
-    "_comment": "화염을 뿜는 기술이 생기기 전까지 호출하지 않는다. 자리를 채우려고 아무 데나 붙이지 않는다 (SPEC-002 §5.4)",
-    "effects": ["fire-horizontal", "fire-rising", "ash-mixed"]
-  }
+  "_eventsComment": "사건 이펙트. 명중이 아니므로 명중 섬광(impact)은 넣지 않는다 (SPEC-002 §5.4.2). 합 불꽃은 그림이 없어서 렌더러 도형을 쓴다",
+  "ready": ["embers"],
+  "dash": ["smoke"],
+  "clash": [],
+  "recoil": [],
+
+  "_glowComment": "발광 겹을 얹을 이펙트. 먹색 연기·재는 뺀다 (SPEC-002 §6-7)",
+  "glow": ["slash-horizontal", "slash-rising", "slash-downward", "slash-diagonal", "impact", "ground-impact", "fire-upright", "fire-horizontal", "fire-rising", "embers"]
 }

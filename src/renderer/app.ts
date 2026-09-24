@@ -185,7 +185,7 @@ async function main(): Promise<void> {
   canvas.width = loaded.map.viewport.width;
   canvas.height = loaded.map.viewport.height;
   const scene = new Scene(loaded.map, height, groundY);
-  const renderer = new CanvasRenderer(ctx, scene, stage, loaded.images, height, loaded.ui.motion, loaded.ui.cutscene);
+  const renderer = new CanvasRenderer(ctx, scene, stage, loaded.images, height, loaded.ui.motion, loaded.ui.cutscene, loaded.ui.effects);
 
   let session: Session | null = null;
   //턴 사이에 한 박자 쉰다. 그 외의 완급은 렌더러가 명령마다 알아서 준다

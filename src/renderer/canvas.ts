@@ -11,7 +11,7 @@ import type { Point, SpriteCatalog } from '../render/manifest.js';
 import type { RenderCommand } from '../render/presenter.js';
 import type { Stage, StagePlacement } from '../render/stage.js';
 import type { UiCommand } from '../ui/director.js';
-import type { CutsceneFxData, MotionData } from '../ui/data.js';
+import type { CutsceneFxData, EffectFxData, MotionData } from '../ui/data.js';
 import { Scene, type CameraState } from './scene.js';
 
 //렌더러가 그림을 찾는 통로. 어느 파일이 어느 비트맵인지는 밖에서 정한다
@@ -94,6 +94,8 @@ interface LiveEffect {
   blend: string;
   frames: { file: string; ms: number }[];
   elapsed: number;
+  //흐린 더하기 겹을 한 번 더 얹을지 (SPEC-002 §6-7)
+  glow: boolean;
 }
 
 interface LiveSpark {
@@ -218,6 +220,8 @@ export class CanvasRenderer {
     private readonly motion: MotionData,
     //궁극기 컷인 수치 (ui-data.json cutscene)
     private readonly cut: CutsceneFxData,
+    //이펙트 재생 수치 (ui-data.json effects)
+    private readonly fx: EffectFxData,
   ) {}
 
   //무대에 캐릭터를 세운다. 전투가 새로 시작될 때 부른다
@@ -502,13 +506,18 @@ export class CanvasRenderer {
         const groundY = involved.length
           ? involved.reduce((acc, a) => acc + a.placement.position.y, 0) / involved.length
           : command.contact.y;
-        this.sparks.push({
-          contact: { ...command.contact },
-          groundRef: { x: command.contact.x, y: groundY },
-          size: command.sparkSize,
-          t: 0,
-          tie: command.winnerId === null,
-        });
+        //이긴 쪽(교착이면 공격자)의 합 불꽃 그림이 있으면 그걸, 없으면 도형 불꽃을 그린다 (SPEC-002 §5.4.2)
+        const owner = (command.winnerId ? this.actors.get(command.winnerId) : undefined) ?? involved[0];
+        const drawn = owner ? this.spawnClashEffects(owner, command.contact, groundY) : false;
+        if (!drawn) {
+          this.sparks.push({
+            contact: { ...command.contact },
+            groundRef: { x: command.contact.x, y: groundY },
+            size: command.sparkSize,
+            t: 0,
+            tie: command.winnerId === null,
+          });
+        }
         for (const { combatantId, dx } of command.recoil) {
           const actor = this.actors.get(combatantId);
           if (!actor) continue;
@@ -644,17 +653,53 @@ export class CanvasRenderer {
     this.effects.push({
       characterId: source.placement.characterId,
       origin: { x: placement.origin.x + shift.x, y: placement.origin.y + shift.y },
-      //프레임에 묶인 무기 궤적만 따라간다. 연기·잔불·섬광은 터진 자리에 남는다
-      follow: command.frameId
-        ? { combatantId: owner.placement.combatantId, rel: { x: placement.origin.x - owner.home.x, y: placement.origin.y - owner.home.y } }
-        : null,
+      //날끝 궤적만 휘두르는 사람을 따라간다. 분출·연기·불티·섬광은 터진 자리에 남는다 (SPEC-002 §6-8)
+      follow:
+        command.frameId && anchor === 'bladeTip'
+          ? { combatantId: owner.placement.combatantId, rel: { x: placement.origin.x - owner.home.x, y: placement.origin.y - owner.home.y } }
+          : null,
       groundRef: here,
       size: { ...placement.size },
       flipped: placement.flipped,
       blend: placement.blend,
-      frames: placement.frames.map((f) => ({ ...f })),
+      frames: this.stretch(placement.frames),
       elapsed: 0,
+      glow: catalog?.bindings.glow.includes(placement.effectId) ?? false,
     });
+  }
+
+  //짧은 이펙트는 장마다 같은 비율로 늘린다. 발생·최대·소멸 비율은 그대로다 (SPEC-002 §6-6)
+  private stretch(frames: readonly { file: string; ms: number }[]): { file: string; ms: number }[] {
+    const total = totalMs(frames);
+    const k = total > 0 && total < this.fx.minMs ? this.fx.minMs / total : 1;
+    return frames.map((f) => ({ file: f.file, ms: f.ms * k }));
+  }
+
+  //합 접점에 이긴 쪽의 합 불꽃 그림을 띄운다. 좌표는 UI 감독이 준 지금 접점이라 옮기지 않는다
+  private spawnClashEffects(owner: Actor, contact: Point, groundY: number): boolean {
+    const catalog = this.catalogOf(owner);
+    const frameId = this.currentFrame(owner);
+    if (!catalog || !frameId || catalog.bindings.clash.length === 0) return false;
+    for (const effectId of catalog.bindings.clash) {
+      const placement = this.stage.placeEffect(
+        effectId,
+        { source: owner.placement, sourceFrameId: frameId },
+        { flipped: owner.placement.facing === -1, at: contact },
+      );
+      this.effects.push({
+        characterId: owner.placement.characterId,
+        origin: { ...placement.origin },
+        follow: null,
+        groundRef: { x: contact.x, y: groundY },
+        size: { ...placement.size },
+        flipped: placement.flipped,
+        blend: placement.blend,
+        frames: this.stretch(placement.frames),
+        elapsed: 0,
+        glow: catalog.bindings.glow.includes(effectId),
+      });
+    }
+    return true;
   }
 
   //── 시간 ──
@@ -824,7 +869,8 @@ export class CanvasRenderer {
     if (!catalog) return 0;
     const effectIds = catalog.effectsOnFrame(frameId);
     if (effectIds.length === 0) return 0;
-    const longest = Math.max(...effectIds.map((id) => totalMs(catalog.effect(id).frames)));
+    //늘려 트는 길이 기준이다. 원래 길이로 재면 이펙트 도중에 다음 장이 나간다
+    const longest = Math.max(...effectIds.map((id) => totalMs(this.stretch(catalog.effect(id).frames))));
     return Math.max(this.motion.swingHoldMs, longest);
   }
 
@@ -1173,9 +1219,17 @@ export class CanvasRenderer {
     if (effect.flipped) {
       ctx.translate(origin.x + width, origin.y);
       ctx.scale(-1, 1);
-      ctx.drawImage(image, 0, 0, width, height);
     } else {
-      ctx.drawImage(image, origin.x, origin.y, width, height);
+      ctx.translate(origin.x, origin.y);
+    }
+    ctx.drawImage(image, 0, 0, width, height);
+    //발광 겹. 원본은 일반 합성 그대로 두고 흐린 복사본을 더하기로 한 번 더 얹는다 (SPEC-002 §6-7)
+    if (effect.glow && this.fx.glowAlpha > 0 && 'filter' in ctx) {
+      ctx.globalCompositeOperation = 'lighter';
+      ctx.globalAlpha *= this.fx.glowAlpha;
+      ctx.filter = `blur(${Math.max(1, Math.max(width, height) * this.fx.glowBlur)}px)`;
+      ctx.drawImage(image, 0, 0, width, height);
+      ctx.filter = 'none';
     }
     ctx.restore();
   }

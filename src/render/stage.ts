@@ -143,11 +143,12 @@ export class Stage {
   placeEffect(
     effectId: string,
     context: EffectContext,
-    options: { flipped?: boolean } = {},
+    options: { flipped?: boolean; at?: Point } = {},
   ): EffectPlacement {
     const catalog = this.catalogFor(context.source.characterId);
     const effect = catalog.effect(effectId);
-    const anchorPoint = this.resolveAnchor(effect, context);
+    //사건 이펙트는 앵커 종류와 상관없이 정해진 자리(발·몸 가운데)에 놓는다 (SPEC-002 §5.4.2)
+    const anchorPoint = options.at ? { ...options.at } : this.resolveAnchor(effect, context);
 
     //이펙트마다 배율이 다르다. 긴 변이 캐릭터 키 × scale 이 되게 맞춘다 (SPEC-002 §5.5)
     //피벗도 같이 늘려야 한다. 비트맵만 키우면 앵커가 어긋난다

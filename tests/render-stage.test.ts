@@ -279,3 +279,33 @@ function rawFrame(frame: {
     bbox: frame.bbox,
   };
 }
+
+describe('§5.4.2 사건 이펙트', () => {
+  //맞지도 않았는데 섬광이 뜨면 §6-1 을 어긴다
+  it('사건 이펙트에 명중 섬광을 넣으면 카탈로그가 거부한다', () => {
+    const bindings = { ...sprites.bindings, clash: ['impact'] };
+    expect(() => new SpriteCatalog(sprites.manifest, bindings)).toThrow(SpriteManifestError);
+  });
+
+  it('없는 이펙트를 발광 목록에 넣으면 거부한다', () => {
+    const bindings = { ...sprites.bindings, glow: ['없는-이펙트'] };
+    expect(() => new SpriteCatalog(sprites.manifest, bindings)).toThrow();
+  });
+
+  //소각원 12종이 전부 어딘가에 붙어 있다. 안 쓰는 이펙트가 없어야 한다 (사용자 지적 2026-09-24)
+  it('소각원 이펙트 12종이 전부 바인딩 어딘가에 쓰인다', () => {
+    const b = sprites.bindings;
+    const used = new Set([
+      ...Object.values(b.frames).flat(),
+      ...b.ultimate,
+      ...b.defeat,
+      ...b.ready,
+      ...b.dash,
+      ...b.clash,
+      ...b.recoil,
+      //명중 섬광은 바인딩이 아니라 앵커로 붙는다
+      ...sprites.effectsByAnchor('hitPoint').map((e) => e.id),
+    ]);
+    for (const effect of sprites.manifest.effects) expect(used, effect.id).toContain(effect.id);
+  });
+});

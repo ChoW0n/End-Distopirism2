@@ -190,7 +190,36 @@ export class BattlePresenter {
     //시작은 준비 자세 한 장만. 전용기 전체는 피해가 들어가는 한 방에 휘두른다 (SPEC-005 §2)
     const ready = side.sequence[0];
     if (ready) commands.push({ type: 'playFrames', combatantId, frameIds: [ready] });
+    //준비 자세를 잡으며 발치에서, 달려 나가며 출발점에서 사건 이펙트가 난다 (SPEC-002 §5.4.2)
+    if (ready) {
+      this.pushEventEffects(commands, combatantId, ready, catalog.bindings.ready, placement.position);
+      this.pushEventEffects(commands, combatantId, ready, catalog.bindings.dash, placement.position);
+    }
     return side;
+  }
+
+  //사건 이펙트를 정해진 자리에 낸다. 명중이 아니라 피해와 상관없이 나간다
+  private pushEventEffects(
+    commands: RenderCommand[],
+    combatantId: string,
+    frameId: string,
+    effectIds: readonly string[],
+    at: Point,
+  ): void {
+    const placement = this.context.actor(combatantId);
+    for (const effectId of effectIds) {
+      commands.push({
+        type: 'spawnEffect',
+        sourceId: combatantId,
+        targetId: null,
+        frameId: null,
+        placement: this.stage.placeEffect(
+          effectId,
+          { source: placement, sourceFrameId: frameId },
+          { flipped: placement.facing === -1, at },
+        ),
+      });
+    }
   }
 
   //합 한 라운드의 맞부딪힘. 이긴 쪽은 맞닿는 자세, 진 쪽은 물러나는 자세로 멈춘다.
@@ -206,6 +235,13 @@ export class BattlePresenter {
       const pose = lost ? this.recoilFrame(side.combatantId) ?? side.sequence[0] : last;
       if (!pose) continue;
       commands.push({ type: 'playFrames', combatantId: side.combatantId, frameIds: [pose] });
+      //진 쪽은 몸 가운데에서 막아낸 충격이 난다
+      if (lost) {
+        const placement = this.context.actor(side.combatantId);
+        const catalog = this.stage.catalogFor(placement.characterId);
+        const center = { x: placement.position.x, y: placement.position.y - catalog.characterHeight * 0.5 };
+        this.pushEventEffects(commands, side.combatantId, pose, catalog.bindings.recoil, center);
+      }
     }
     this.needsReady = true;
   }
@@ -251,17 +287,22 @@ export class BattlePresenter {
         for (const effectId of catalog.effectsOnFrame(frameId)) trails.push({ frameId, effectId });
       }
     }
+    const lastFrame = side.sequence[side.sequence.length - 1];
     for (const { frameId, effectId } of trails) {
-      if (catalog.effect(effectId).anchor !== 'bladeTip') continue;
+      const anchor = catalog.effect(effectId).anchor;
+      //명중 섬광은 따로 낸다. 마지막 장의 지면·분출은 피해가 들어갈 때 onDamage 가 낸다
+      if (anchor === 'hitPoint') continue;
+      if (anchor !== 'bladeTip' && frameId === lastFrame) continue;
       commands.push({
         type: 'spawnEffect',
         sourceId: side.combatantId,
         targetId: null,
         frameId,
-        //캐릭터가 뒤집혀 있으면 궤적도 뒤집는다. 안 뒤집으면 적의 궤적이 반대로 뻗는다
+        //캐릭터가 뒤집혀 있으면 궤적도 뒤집는다. 안 뒤집으면 적의 궤적이 반대로 뻗는다.
+        //중간 장의 분출은 그 장의 날끝에서 난다 (SPEC-002 §5.4.2)
         placement: this.stage.placeEffect(
           effectId,
-          { source: placement, sourceFrameId: frameId },
+          { source: placement, sourceFrameId: frameId, emission: this.stage.framePoint(placement, frameId, 'bladeTip') },
           { flipped: placement.facing === -1 },
         ),
       });

@@ -155,6 +155,15 @@ export interface MotionData {
   effectFadeMs: number;
 }
 
+//이펙트 재생 수치. 렌더러가 받는다 (SPEC-002 §6-6 · §6-7)
+export interface EffectFxData {
+  //이보다 짧은 이펙트는 장마다 같은 비율로 늘린다
+  minMs: number;
+  //발광 겹 세기와 흐림 반경(이펙트 긴 변 비율)
+  glowAlpha: number;
+  glowBlur: number;
+}
+
 //궁극기 컷인 수치. 렌더러가 받는다 (SPEC-005 §2.4)
 export interface CutsceneFxData {
   //전체 길이·들어옴·나감
@@ -203,6 +212,7 @@ export interface UiData {
   flash: FlashData;
   afterimage: AfterimageData;
   motion: MotionData;
+  effects: EffectFxData;
   cutscene: CutsceneFxData;
   camera: CameraData;
 }
@@ -330,6 +340,7 @@ export function parseUiData(raw: unknown): UiData {
       'othersAlpha', 'windupMs', 'snapMs', 'lunge', 'lungeSec', 'breathe', 'breatheSec', 'hurtSec',
       'swingHoldMs', 'follow', 'afterHitSec', 'blendMs', 'popScale', 'popMs', 'strikeGhosts', 'strikeGhostAlpha', 'poseKick', 'effectFadeMs',
     ] as const),
+    effects: numbers('effects', ['minMs', 'glowAlpha', 'glowBlur'] as const),
     cutscene: {
       ...numbers('cutscene', [
         'sec', 'inSec', 'outSec', 'dim', 'bandSkewDeg', 'bandHeight', 'slideFrom', 'pushZoom', 'swaySec', 'flashAlpha',

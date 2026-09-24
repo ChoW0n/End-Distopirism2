@@ -71,11 +71,20 @@ function resolveTurn(battle: Battle, allySkillId: number): BattleEvent[] {
   return battle.resolve();
 }
 
-//피해가 확정된 순간에 나오는 연출만 골라낸다. 프레임에 묶인 무기 궤적은 제외된다
+//피해가 확정된 순간에 나오는 연출만 골라낸다. 프레임에 묶인 무기 궤적은 제외된다.
+//준비·대시·밀림 같은 사건 이펙트는 맞는 대상이 없으니 빠진다 (SPEC-002 §5.4.2)
 function impactEffects(commands: RenderCommand[]) {
   return commands.filter(
     (c): c is Extract<RenderCommand, { type: 'spawnEffect' }> =>
-      c.type === 'spawnEffect' && c.frameId === null,
+      c.type === 'spawnEffect' && c.frameId === null && c.targetId !== null,
+  );
+}
+
+//사건 이펙트만 골라낸다. 맞는 대상도 묶인 장도 없다
+function eventEffects(commands: RenderCommand[]) {
+  return commands.filter(
+    (c): c is Extract<RenderCommand, { type: 'spawnEffect' }> =>
+      c.type === 'spawnEffect' && c.frameId === null && c.targetId === null,
   );
 }
 
@@ -232,7 +241,8 @@ describe('§6-1 명중했을 때만 이펙트가 난다', () => {
     const presenter = makePresenter();
     const commands = presenter.consume(resolveTurn(makeBattle(S1), S2));
 
-    const spawns = impactEffects(commands);
+    //명중 섬광만 센다. v1.2 부터 같은 순간에 분출·불티도 터진다 (SPEC-002 §5.4.1)
+    const spawns = impactEffects(commands).filter((c) => sprites.effect(c.placement.effectId).anchor === 'hitPoint');
     expect(spawns).toHaveLength(1);
     expect(spawns[0]).toMatchObject({ sourceId: 'a1', targetId: 'e1' });
 
@@ -415,7 +425,28 @@ describe('§5.4 프레임에 묶인 이펙트', () => {
       { type: 'clashRoundWin', winnerId: 'a1', loserId: 'e1', winnerDamage: 12, loserDamage: 8 },
       { type: 'deadlock', attackerId: 'a1', defenderId: 'e1', count: 1 },
     ]);
-    expect(commands.some((c) => c.type === 'spawnEffect')).toBe(false);
+    //준비·대시 사건 이펙트는 나오지만 무기 궤적·명중은 없다
+    expect(commands.some((c) => c.type === 'spawnEffect' && (c.frameId !== null || c.targetId !== null))).toBe(false);
+  });
+
+  //준비 자세를 잡으면 발치에서, 달려 나가면 출발점에서 사건 이펙트가 난다 (SPEC-002 §5.4.2)
+  it('합 시작에 양쪽 다 준비·대시 사건 이펙트가 발치에 난다', () => {
+    const commands = makePresenter().consume([
+      { type: 'clashStart', attackerId: 'a1', defenderId: 'e1', attackerSkillId: S2, defenderSkillId: S1 },
+    ]);
+    const events = eventEffects(commands);
+    const expected = [...sprites.bindings.ready, ...sprites.bindings.dash];
+    for (const id of ['a1', 'e1']) {
+      const mine = events.filter((e) => e.sourceId === id);
+      expect(mine.map((e) => e.placement.effectId)).toEqual(expected);
+      //발치다. 날끝이 아니다
+      for (const e of mine) expect(e.placement.anchorPoint).toEqual(context.actor(id).position);
+    }
+  });
+
+  it('사건 이펙트에는 명중 섬광이 없다', () => {
+    const commands = makePresenter().consume(resolveTurn(makeBattle(S1), S2));
+    for (const e of eventEffects(commands)) expect(sprites.effect(e.placement.effectId).anchor).not.toBe('hitPoint');
   });
 
   it('궤적은 휘두르기 바로 뒤에 붙는다 — 렌더러가 그 장이 뜰 때 터뜨린다', () => {
@@ -449,17 +480,16 @@ describe('§5.4 프레임에 묶인 이펙트', () => {
     }
   });
 
-  it('바인딩에 없는 이펙트는 호출되지 않는다', () => {
-    //화염 3종은 쓰는 기술이 생기기 전까지 안 나온다 (§5.4)
+  //v1.2 — 12종을 다 쓰되 포즈에 맞는 전용기에서만 나온다 (SPEC-002 §5.4.1)
+  it('S2 는 수평 분출이 나오고 S3 전용 재·상승 분출은 안 나온다', () => {
     const presenter = makePresenter();
     const commands = presenter.consume(resolveTurn(makeBattle(S1), S2));
     const ids = commands
-      .filter((c): c is Extract<RenderCommand, { type: 'spawnEffect' }> => c.type === 'spawnEffect')
+      .filter((c): c is Extract<RenderCommand, { type: 'spawnEffect' }> => c.type === 'spawnEffect' && c.sourceId === 'a1')
       .map((c) => c.placement.effectId);
 
-    for (const unused of ['fire-horizontal', 'fire-rising', 'ash-mixed']) {
-      expect(ids).not.toContain(unused);
-    }
+    expect(ids).toContain('fire-horizontal');
+    for (const other of ['fire-rising', 'ash-mixed']) expect(ids).not.toContain(other);
   });
 });
 
