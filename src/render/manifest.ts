@@ -116,6 +116,9 @@ export interface EffectBindings {
   frames: Record<string, string[]>;
   //궁극기 전용 조합. 궁극기는 전용기 3과 마무리 프레임을 공유해서 프레임으로는 안 갈린다
   ultimate: string[];
+  //궁극기 이펙트를 붙일 전용기 3의 장. 없으면 마지막 장이다.
+  //마무리 자세에서 무기가 등 뒤로 가 있는 캐릭터는 앞을 치는 장을 고른다 (SPEC-002 §5.4)
+  ultimateFrame: string | null;
   //격파 직후에 남는 잔류 이펙트
   defeat: string[];
   //사건 이펙트. 명중이 아니다 (SPEC-002 §5.4.2)
@@ -136,6 +139,7 @@ export const EMPTY_BINDINGS: EffectBindings = {
   character: '',
   frames: {},
   ultimate: [],
+  ultimateFrame: null,
   defeat: [],
   ready: [],
   dash: [],
@@ -393,6 +397,7 @@ export function parseEffectBindings(raw: unknown): EffectBindings {
     character: str(source, 'character', 'bindings'),
     frames,
     ultimate: idList(source['ultimate'], 'bindings.ultimate'),
+    ultimateFrame: optionalId(source['ultimateFrame'], 'bindings.ultimateFrame'),
     defeat: idList(source['defeat'], 'bindings.defeat'),
     ready: idList(source['ready'], 'bindings.ready'),
     dash: idList(source['dash'], 'bindings.dash'),
@@ -409,6 +414,13 @@ function idList(value: unknown, path: string): string[] {
     throw new SpriteManifestError(`${path} 가 문자열 배열이 아니다`);
   }
   return value as string[];
+}
+
+//id 하나를 검증한다. 없으면 null 로 둔다
+function optionalId(value: unknown, path: string): string | null {
+  if (value === undefined || value === null) return null;
+  if (typeof value !== 'string') throw new SpriteManifestError(`${path} 가 문자열이 아니다`);
+  return value;
 }
 
 //id 로 빠르게 찾기 위한 조회표
@@ -430,6 +442,7 @@ export class SpriteCatalog {
       for (const id of effectIds) this.effect(id);
     }
     for (const id of [...bindings.ultimate, ...bindings.defeat, ...bindings.glow]) this.effect(id);
+    if (bindings.ultimateFrame) this.frame(bindings.ultimateFrame);
     //사건 이펙트에 명중 섬광을 쓰면 맞지도 않았는데 섬광이 뜬다 (SPEC-002 §5.4.2 · §6-1)
     for (const id of [...bindings.ready, ...bindings.dash, ...bindings.clash, ...bindings.recoil]) {
       if (this.effect(id).anchor === 'hitPoint') {

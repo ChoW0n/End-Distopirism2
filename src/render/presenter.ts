@@ -297,9 +297,9 @@ export class BattlePresenter {
     const lastFrame = side.sequence[side.sequence.length - 1];
     for (const { frameId, effectId } of trails) {
       const anchor = catalog.effect(effectId).anchor;
-      //명중 섬광은 따로 낸다. 마지막 장의 지면·분출은 피해가 들어갈 때 onDamage 가 낸다
+      //명중 섬광은 따로 낸다. 때리는 장(보통 마지막 장)의 지면·분출은 피해가 들어갈 때 onDamage 가 낸다
       if (anchor === 'hitPoint') continue;
-      if (anchor !== 'bladeTip' && frameId === lastFrame) continue;
+      if (anchor !== 'bladeTip' && frameId === (side.frameId ?? lastFrame)) continue;
       commands.push({
         type: 'spawnEffect',
         sourceId: side.combatantId,
@@ -364,7 +364,7 @@ export class BattlePresenter {
     return { combatantId, frameId, effectIds: catalog.effectsOnFrame(frameId), sequence: frameIds, struck: false };
   }
 
-  //궁극기는 프레임 대신 컷신으로 나간다. 이펙트는 전용기 3의 마무리 자세에 붙는다 (SPEC-002 §5.4)
+  //궁극기는 프레임 대신 컷신으로 나간다. 이펙트는 전용기 3의 장에 붙는다. 기본은 마무리 장이다 (SPEC-002 §5.4)
   private beginUltimate(
     commands: RenderCommand[],
     combatantId: string,
@@ -374,9 +374,12 @@ export class BattlePresenter {
     this.pushUltimate(commands, combatantId, 'cutscene', director ? director.layers(director.peakPose()) : null);
 
     const finish = catalog.frameSequence('S3');
+    //이펙트가 붙는 장. 바인딩이 고른 장이 전용기 3 안에 있을 때만 쓴다
+    const chosen = catalog.bindings.ultimateFrame;
+    const strikeFrame = chosen && finish.includes(chosen) ? chosen : finish[finish.length - 1];
     return {
       combatantId,
-      frameId: finish[finish.length - 1] ?? this.idleOrNull(combatantId),
+      frameId: strikeFrame ?? this.idleOrNull(combatantId),
       effectIds: catalog.bindings.ultimate,
       sequence: finish,
       struck: false,

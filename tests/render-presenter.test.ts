@@ -8,6 +8,7 @@ import { Battle } from '../src/domain/battle.js';
 import type { EnemyAi } from '../src/domain/ai.js';
 import { loadCharacterAssets } from '../src/platform/node-manifest.js';
 import { Stage, type StagePlacement } from '../src/render/stage.js';
+import { SpriteCatalog } from '../src/render/manifest.js';
 import { BattlePresenter, type RenderCommand } from '../src/render/presenter.js';
 import { alwaysFailRng, catalog, skillOf } from './helpers.js';
 import type { BattleEvent } from '../src/domain/types.js';
@@ -650,5 +651,32 @@ describe('궁극기가 렌더 명령까지 이어진다', () => {
       .filter((c) => c.sourceId === 'a1')
       .map((c) => c.placement.effectId);
     for (const id of ['ground-impact', 'fire-upright', 'embers']) expect(impacts).toContain(id);
+  });
+
+  it('ultimateFrame 을 주면 궁극기 이펙트가 그 장의 날끝에 붙는다', () => {
+    //마무리 자세에서 무기가 등 뒤로 가는 캐릭터용. 올려 베기 장을 고른 소각원으로 흉내 낸다
+    const chosen = '10-skill3-cast';
+    const picked = new SpriteCatalog(sprites.manifest, { ...sprites.bindings, ultimateFrame: chosen });
+    const presenter = new BattlePresenter(catalog, new Stage(new Map([['incinerator', picked]])), context);
+    const { battle } = armUltimate(presenter);
+
+    battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: ULT }]);
+    const commands = presenter.consume(battle.resolve());
+    const mine = commands.filter(
+      (c): c is Extract<RenderCommand, { type: 'spawnEffect' }> => c.type === 'spawnEffect' && c.sourceId === 'a1',
+    );
+
+    //궤적은 고른 장에 묶이고, 지면 충격은 한 번만 고른 장의 날끝 x 에서 난다
+    expect(mine.filter((c) => c.frameId !== null && c.targetId === null).map((c) => [c.frameId, c.placement.effectId])).toEqual([
+      [chosen, 'slash-downward'],
+    ]);
+    const tip = stage.framePoint(placements.get('a1')!, chosen, 'bladeTip');
+    const ground = mine.filter((c) => c.placement.effectId === 'ground-impact');
+    expect(ground).toHaveLength(1);
+    expect(ground[0]!.placement.anchorPoint.x).toBeCloseTo(tip.x);
+  });
+
+  it('ultimateFrame 이 없는 프레임을 가리키면 바인딩 검증에서 던진다', () => {
+    expect(() => new SpriteCatalog(sprites.manifest, { ...sprites.bindings, ultimateFrame: '99-none' })).toThrow();
   });
 });

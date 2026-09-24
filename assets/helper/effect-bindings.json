@@ -22,7 +22,8 @@
       "06_horizontal_sweep"
     ]
   },
-  "_ultimateComment": "궁극기는 전용기 3 마무리 프레임을 공유한다",
+  "_ultimateComment": "궁극기는 전용기 3 프레임을 공유한다. 마무리 장은 창이 등 뒤라 이펙트를 올려 베기 장(창끝이 앞 위)에 붙인다",
+  "ultimateFrame": "10-skill3-cast",
   "ultimate": [
     "07_downward_cleave",
     "10_ground_impact",
