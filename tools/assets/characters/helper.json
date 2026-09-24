@@ -1,0 +1,90 @@
+{
+  "_comment": "조력자(범고래) 정규화 설정. 원작 00.KillWhale 대응 (SPEC-002 §10). 사람이 쓰는 파일이다",
+  "character": "helper",
+  "weapon": "spear",
+  "_scaleBy": "배율 기준. 흰 재킷이 은발보다 커서 머리카락 템플릿이 재킷을 잡는다. 검은 후드 면적 비로 잡는다",
+  "scaleBy": "hood",
+  "_baseScale": "원본이 크다. 서 있는 키(창 포함 1604px)를 1300px 쯤으로 줄여 소각원(1340)과 맞춘다",
+  "baseScale": 0.81,
+  "_canvas": "찌르기(06b)는 창이 몸 앞으로 1.5 키 가까이, 07 은 머리 위로 뻗는다. 소각원 캔버스(2400×1500)로는 창끝이 잘린다",
+  "canvas": [
+    3400,
+    1800
+  ],
+  "ground": [
+    1700,
+    1640
+  ],
+  "_aliases": "원본 팩 이름을 렌더러가 찾는 이름 끝으로 맞춘다. 01_forward 는 전진 장이다",
+  "aliases": {
+    "forward": "advance"
+  },
+  "_tipEnd": "창의 두 끝 중 창날 쪽. 0 = 왼쪽 끝(x 가 작은 쪽), 1 = 오른쪽 끝. 2026-09-24 눈으로 확정",
+  "tipEnd": {
+    "00-idle": 0,
+    "01-advance": 0,
+    "02-retreat": 1,
+    "03-guard": 1,
+    "04-hit": 0,
+    "05-skill1-ready": 0,
+    "06-skill1-cast": 1,
+    "06b-skill1-thrust": 1,
+    "07-skill2-ready": 0,
+    "08-skill2-peak": 1,
+    "09-skill3-anticipation": 0,
+    "10-skill3-cast": 1,
+    "11-skill3-finish": 0
+  },
+  "bladeOverride": {},
+  "_effects": "범고래 이펙트 v6 팩(12종 × 6장)의 기준점·배율. 팩에 없는 값이라 여기서 정한다. scale 은 캐릭터 키 H 대비 긴 변(576) 비율 (SPEC-002 §5.5). hitPoint 는 맞을 때마다 전부 터지므로 명중 섬광 하나만 둔다. 2026-09-24 제안값",
+  "effects": {
+    "08_pierce": {
+      "anchor": "bladeTip",
+      "scale": 1.3
+    },
+    "07_downward_cleave": {
+      "anchor": "bladeTip",
+      "scale": 1.3
+    },
+    "06_horizontal_sweep": {
+      "anchor": "bladeTip",
+      "scale": 1.4
+    },
+    "03_slash_trail": {
+      "anchor": "bladeTip",
+      "scale": 1.2
+    },
+    "02_impact_flash": {
+      "anchor": "hitPoint",
+      "scale": 0.55
+    },
+    "10_ground_impact": {
+      "anchor": "groundPoint",
+      "scale": 0.85
+    },
+    "01_flame_burst": {
+      "anchor": "groundPoint",
+      "scale": 1.0
+    },
+    "04_smoke_ash": {
+      "anchor": "emissionPoint",
+      "scale": 0.9
+    },
+    "05_clash_spark": {
+      "anchor": "emissionPoint",
+      "scale": 0.5
+    },
+    "09_charge_ring": {
+      "anchor": "groundPoint",
+      "scale": 1.1
+    },
+    "11_guard_shell": {
+      "anchor": "emissionPoint",
+      "scale": 0.9
+    },
+    "12_speed_wake": {
+      "anchor": "emissionPoint",
+      "scale": 0.9
+    }
+  }
+}

@@ -1,8 +1,11 @@
 """전투 스프라이트를 정규화하고 렌더러가 읽을 좌표 매니페스트를 만든다.
 
 SPEC-002 §3~§5 구현. 오프라인 도구라서 게임 빌드에는 들어가지 않는다.
-실행: python3 tools/assets/normalize_sprites.py --raw <원본폴더> --out <출력폴더>
+실행: python3 tools/assets/normalize_sprites.py --raw <원본폴더> --out <출력폴더> [--config <캐릭터설정.json>]
 필요 패키지: opencv-python, numpy
+
+캐릭터마다 다른 것(무기 종류, 파일 이름 바꾸기, 수동 확정 날끝)은 --config 로 준다.
+설정이 없으면 소각원(도끼) 기본값이다. 예: tools/assets/characters/helper.json
 """
 
 import argparse
@@ -12,10 +15,18 @@ from pathlib import Path
 import cv2
 import numpy as np
 
-#정규화 캔버스와 기준선. 모든 프레임이 이 좌표계를 공유한다
+#정규화 캔버스와 기준선. 한 캐릭터의 모든 프레임이 이 좌표계를 공유한다.
+#캐릭터 설정의 canvas·ground 로 바꿀 수 있다 (창처럼 긴 무기는 캔버스가 더 넓어야 한다)
 CANVAS = (2400, 1500)
 GROUND_Y = 1340
 CENTER_X = 1200
+
+
+def layout(config):
+    #이 캐릭터의 캔버스 크기와 접지점
+    canvas = tuple(config.get("canvas", CANVAS))
+    center_x, ground_y = config.get("ground", [canvas[0] // 2, GROUND_Y])
+    return canvas, center_x, ground_y
 
 #자동 검출이 틀리는 프레임의 날끝 확정 좌표 (정규화 좌표계). SPEC-002 §5.2
 BLADE_OVERRIDE = {
@@ -109,14 +120,93 @@ def blade_tip(bgr, alpha):
     return head, (int(xs[k]), int(ys[k]))
 
 
-def normalize(raw_dir, out_dir):
+def hood_box(bgr, alpha):
+    #검은 후드 덩어리를 찾는다. 창날·자루처럼 길쭉한 검은 덩어리는 뺀다.
+    #위쪽에 있을수록, 클수록 후드다. 흰 재킷이 은발보다 커서 머리카락으로는 머리를 못 찾는 캐릭터용
+    hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
+    ys, _ = np.where(alpha > 200)
+    top, height = int(ys.min()), int(ys.max() - ys.min())
+    dark = ((alpha > 200) & (hsv[:, :, 2] < 70)).astype(np.uint8)
+    dark = cv2.morphologyEx(dark, cv2.MORPH_OPEN, np.ones((5, 5), np.uint8))
+    n, lab, st, ce = cv2.connectedComponentsWithStats(dark, 8)
+    best = None
+    for j in range(1, n):
+        if st[j, 4] < 2000:
+            continue
+        pts = np.stack(np.where(lab == j)[::-1], 1).astype(np.float32)
+        ev = np.linalg.eigvalsh(np.cov((pts - pts.mean(0)).T))
+        if np.sqrt(ev[1] / max(ev[0], 1)) > 3.0:
+            continue
+        score = st[j, 4] * (1.5 - (ce[j][1] - top) / height)
+        if best is None or score > best[0]:
+            best = (score, [int(v) for v in st[j, :5]])
+    return best[1] if best else None
+
+
+def spear_ends(bgr, alpha):
+    #창의 양 끝. 붉은 자루로 축을 잡고 축을 따라 불투명 픽셀이 이어지는 데까지 양쪽으로 걷는다.
+    #어느 끝이 창날인지는 그림만으로 안정적으로 갈리지 않아서 설정의 tipEnd 로 정한다
+    hsv = cv2.cvtColor(bgr, cv2.COLOR_BGR2HSV)
+    solid = alpha > 120
+    red = (solid & (((hsv[:, :, 0] < 10) | (hsv[:, :, 0] > 168)) &
+                    (hsv[:, :, 1] > 140) & (hsv[:, :, 2] > 90))).astype(np.uint8)
+    n, lab, st, _ = cv2.connectedComponentsWithStats(red, 8)
+    best = None
+    for j in range(1, n):
+        if st[j, 4] < 300:
+            continue
+        ys, xs = np.where(lab == j)
+        pts = np.stack([xs, ys], 1).astype(np.float32)
+        mean = pts.mean(0)
+        w, v = np.linalg.eigh(np.cov((pts - mean).T))
+        #옷의 붉은 패치는 뭉툭하고 자루는 길쭉하다. 길쭉함 × 길이로 고른다
+        score = np.sqrt(w[1] / max(w[0], 1e-3)) * np.sqrt(w[1])
+        if best is None or score > best[0]:
+            best = (score, mean, v[:, 1])
+    if best is None:
+        return None
+    _, center, axis = best
+    perp = np.array([-axis[1], axis[0]])
+    h, w = alpha.shape
+
+    def filled(t):
+        p = center + axis * t
+        for o in (-8, -4, 0, 4, 8):
+            x, y = int(round(p[0] + perp[0] * o)), int(round(p[1] + perp[1] * o))
+            if 0 <= x < w and 0 <= y < h and alpha[y, x] > 60:
+                return True
+        return False
+
+    ends = []
+    for sign in (-1, 1):
+        t, gap, last = 0, 0, 0
+        while abs(t) < 4000:
+            t += sign * 2
+            if filled(t):
+                last, gap = t, 0
+            else:
+                gap += 2
+                if gap > 30:
+                    break
+        ends.append(center + axis * last)
+    #축 방향이 프레임마다 뒤집히지 않게 x 가 작은 끝을 앞에 둔다. 같으면 y 가 작은 쪽
+    ends.sort(key=lambda e: (round(e[0]), round(e[1])))
+    return [(int(round(e[0])), int(round(e[1]))) for e in ends]
+
+
+def normalize(raw_dir, out_dir, config):
     #프레임을 하나씩 읽어 배율을 맞추고 접지선·몸통축에 정렬해 저장한다
     files = sorted(Path(raw_dir).glob("*.png"))
     if not files:
         raise SystemExit(f"원본 프레임이 없다: {raw_dir}")
     base = load_rgba(files[0])
-    template, tpl_mask = make_head_template(base[:, :, :3], base[:, :, 3])
+    by_hood = config.get("scaleBy") == "hood"
+    if by_hood:
+        base_hood = hood_box(base[:, :, :3], base[:, :, 3])
+    else:
+        template, tpl_mask = make_head_template(base[:, :, :3], base[:, :, 3])
 
+    canvas, center_x, ground_y = layout(config)
     out_dir = Path(out_dir)
     (out_dir / "frames").mkdir(parents=True, exist_ok=True)
     frames = []
@@ -125,39 +215,70 @@ def normalize(raw_dir, out_dir):
         bgr, alpha = im[:, :, :3], im[:, :, 3]
         ys, xs = np.where(alpha > 200)
         feet = int(ys.max())
-        _, head_center = head_blob(bgr, alpha)
-        if head_center is None:
-            head_center = (float(xs.mean()), float(ys.mean()))
-        score, est = estimate_scale(bgr, template, tpl_mask)
-        s = 1.0 / est
+        if by_hood:
+            #후드 면적 비로 배율을 잡는다. 일치도는 후드 가로세로 비가 기준 프레임과 얼마나 닮았는지다
+            hx, hy, hw, hh, area = hood_box(bgr, alpha)
+            s = float(np.sqrt(base_hood[4] / area))
+            ratio, base_ratio = hw / hh, base_hood[2] / base_hood[3]
+            score = min(ratio / base_ratio, base_ratio / ratio)
+            #얼굴은 후드 아래쪽 가운데다
+            head_center = (hx + hw / 2, hy + hh * 0.62)
+        else:
+            _, head_center = head_blob(bgr, alpha)
+            if head_center is None:
+                head_center = (float(xs.mean()), float(ys.mean()))
+            score, est = estimate_scale(bgr, template, tpl_mask)
+            s = 1.0 / est
+
+        #기준 배율. 원본 해상도가 캐릭터마다 달라서 서 있는 키를 소각원과 비슷하게 맞춘다
+        s *= config.get("baseScale", 1.0)
 
         #발바닥 띠 중앙과 머리 중앙의 중간을 몸통 축으로 본다. 발만 쓰면 돌진 자세가 밀린다
         band = ys > feet - 40
         axis_x = 0.5 * (float(np.median(xs[band])) + head_center[0])
-        mat = np.array([[s, 0, CENTER_X - axis_x * s], [0, s, GROUND_Y - feet * s]], np.float32)
-        warped = cv2.warpAffine(im, mat, CANVAS, flags=cv2.INTER_LANCZOS4,
+        mat = np.array([[s, 0, center_x - axis_x * s], [0, s, ground_y - feet * s]], np.float32)
+        warped = cv2.warpAffine(im, mat, canvas, flags=cv2.INTER_LANCZOS4,
                                 borderMode=cv2.BORDER_CONSTANT, borderValue=(0, 0, 0, 0))
-        cv2.imwrite(str(out_dir / "frames" / f.name), warped)
+        fid = frame_id(f.stem, config)
+        name = f"{fid}.png"
+        cv2.imwrite(str(out_dir / "frames" / name), warped)
 
-        fid = f.stem
-        axe, tip = blade_tip(warped[:, :, :3], warped[:, :, 3])
-        override = BLADE_OVERRIDE.get(fid)
+        if config.get("weapon", "axe") == "spear":
+            #창은 머리가 따로 없다. 창날 끝을 날끝으로 쓴다
+            axe = None
+            ends = spear_ends(warped[:, :, :3], warped[:, :, 3])
+            side = config.get("tipEnd", {}).get(fid)
+            tip = ends[side] if ends and side is not None else None
+        else:
+            axe, tip = blade_tip(warped[:, :, :3], warped[:, :, 3])
+        override = config.get("bladeOverride", BLADE_OVERRIDE).get(fid)
         ys2, xs2 = np.where(warped[:, :, 3] > 200)
         frames.append({
             "id": fid,
-            "file": f"frames/{f.name}",
+            "file": f"frames/{name}",
             "scale": round(s, 4),
             "scaleMatch": round(score, 3),
-            "anchor": [CENTER_X, GROUND_Y],
+            "anchor": [center_x, ground_y],
             "headCenter": [round(head_center[0] * s + float(mat[0, 2]), 1),
                            round(head_center[1] * s + float(mat[1, 2]), 1)],
             "axeHead": [round(axe[0]), round(axe[1])] if axe else None,
             "bladeTip": override or (list(tip) if tip else None),
-            "tipSource": "수동 확정" if override else ("자동 검출" if tip else "미검출"),
+            "tipSource": "수동 확정" if override else (
+                ("자동 검출·끝 수동 지정" if config.get("weapon") == "spear" else "자동 검출") if tip else "미검출"),
             "bbox": [int(xs2.min()), int(ys2.min()), int(xs2.max()), int(ys2.max())],
         })
         print(f'{fid:26s} 배율 ×{s:.2f} (일치 {score:.3f}) 날끝 {frames[-1]["bladeTip"]}')
     return frames
+
+
+def frame_id(stem, config):
+    #원본 파일 이름을 프레임 id 로 바꾼다. 밑줄은 하이픈으로, 설정의 별칭은 그 이름으로 바꾼다.
+    #렌더러가 이름 끝(idle·advance·retreat…)으로 프레임을 찾기 때문에 이름을 맞춰야 한다
+    fid = stem.replace("_", "-")
+    for old, new in config.get("aliases", {}).items():
+        if fid.endswith(old):
+            fid = fid[: -len(old)] + new
+    return fid
 
 
 def read_effects(pack_dir):
@@ -173,6 +294,41 @@ def read_effects(pack_dir):
         "loop": e["loop"],
         "frames": [{"file": fr["aligned_file"], "ms": fr["duration_ms"]} for fr in e["frames"]],
     } for e in man["effects"]]
+
+
+def read_frame_effects(pack_dir, out_dir, config):
+    #프레임 애니메이션 이펙트 팩(effects.json, 12종 × 6장)을 읽는다. 범고래 v6 형식이다.
+    #팩에는 기준점·배율이 없어서 캐릭터 설정의 effects 에서 받는다. 설정에 없는 이펙트는 싣지 않는다
+    import shutil
+    pack_dir, out_dir = Path(pack_dir), Path(out_dir)
+    pack = json.load(open(pack_dir / "effects.json", encoding="utf-8"))
+    width, height = pack["canvas"]
+    wanted = config.get("effects", {})
+    effects = []
+    for e in pack["effects"]:
+        spec = wanted.get(e["id"])
+        if spec is None or e["id"].startswith("_"):
+            continue
+        frames = []
+        for fr in e["frames"]:
+            src = pack_dir / fr["path"]
+            dst = out_dir / "effects" / e["id"] / Path(fr["path"]).name
+            dst.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(src, dst)
+            frames.append({"file": f"effects/{e['id']}/{dst.name}", "ms": fr["duration_ms"]})
+        effects.append({
+            "id": e["id"],
+            "name": e.get("name_ko", e["id"]),
+            "anchor": spec["anchor"],
+            "size": [width, height],
+            #피벗은 팩의 제안값을 그대로 쓴다 (좌상단 기준 픽셀)
+            "pivot": e["pivot_px"],
+            "scale": spec["scale"],
+            "blend": spec.get("blend", "source-over"),
+            "loop": False,
+            "frames": frames,
+        })
+    return effects
 
 
 def read_cutscene(cut_dir):
@@ -196,16 +352,19 @@ def read_cutscene(cut_dir):
 
 
 def verify(manifest):
+    canvas = manifest["canvas"]
     #산출물 자가검사. 하나라도 깨지면 매니페스트를 쓰지 않는다
     f = manifest["frames"]
     assert len(f) >= 1, "프레임이 비었다"
     scales = [x["scale"] for x in f]
     assert 0.5 < min(scales) and max(scales) < 2.0, f"배율 보정값이 비정상이다: {min(scales)}~{max(scales)}"
-    assert all(x["scaleMatch"] > 0.85 for x in f), "머리 템플릿 일치율이 낮은 프레임이 있다"
+    #후드 면적은 자세에 따라 가로세로 비가 크게 바뀌어서 기준을 낮춘다
+    floor = 0.6 if manifest.get("scaleBy") == "hood" else 0.85
+    assert all(x["scaleMatch"] > floor for x in f), "배율 추정 일치율이 낮은 프레임이 있다"
     for x in f:
         if x["bladeTip"]:
             tx, ty = x["bladeTip"]
-            assert 0 <= tx < CANVAS[0] and 0 <= ty < CANVAS[1], f'{x["id"]} 날끝이 캔버스 밖이다'
+            assert 0 <= tx < canvas[0] - 1 and 0 < ty < canvas[1], f'{x["id"]} 날끝이 캔버스 밖이다'
     attack = [x for x in f if "skill" in x["id"]]
     assert all(x["bladeTip"] for x in attack), "공격 프레임에 날끝이 없다"
     print(f"자가검사 통과 — 프레임 {len(f)}장, 배율 {min(scales):.2f}~{max(scales):.2f}")
@@ -217,18 +376,24 @@ def main():
     ap.add_argument("--out", required=True, help="정규화 결과와 매니페스트를 쓸 폴더")
     ap.add_argument("--effects", help="이펙트 팩 폴더 (manifest.json 포함)")
     ap.add_argument("--cutscene", help="컷신 v3 폴더 (REGISTRATION.csv 포함)")
+    ap.add_argument("--frame-effects", help="프레임 애니메이션 이펙트 팩 폴더 (effects.json 포함)")
     ap.add_argument("--character", default="incinerator")
+    ap.add_argument("--config", help="캐릭터 설정 JSON (무기·별칭·날끝 지정)")
     args = ap.parse_args()
+    config = json.load(open(args.config, encoding="utf-8")) if args.config else {}
 
     manifest = {
         "version": 1,
+        "scaleBy": config.get("scaleBy", "headTemplate"),
         "character": args.character,
-        "canvas": list(CANVAS),
-        "ground": [CENTER_X, GROUND_Y],
-        "frames": normalize(args.raw, args.out),
+        "canvas": list(layout(config)[0]),
+        "ground": list(layout(config)[1:]),
+        "frames": normalize(args.raw, args.out, config),
     }
     if args.effects:
         manifest["effects"] = read_effects(args.effects)
+    if args.frame_effects:
+        manifest["effects"] = read_frame_effects(args.frame_effects, args.out, config)
     if args.cutscene:
         manifest["cutscene"] = read_cutscene(args.cutscene)
 

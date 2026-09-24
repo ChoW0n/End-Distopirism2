@@ -1,0 +1,353 @@
+{
+ "version": 1,
+ "scaleBy": "hood",
+ "character": "helper",
+ "canvas": [
+  3400,
+  1800
+ ],
+ "ground": [
+  1700,
+  1640
+ ],
+ "frames": [
+  {
+   "id": "00-idle",
+   "file": "frames/00-idle.png",
+   "scale": 0.81,
+   "scaleMatch": 1.0,
+   "anchor": [
+    1700,
+    1640
+   ],
+   "headCenter": [
+    1719.2,
+    642.1
+   ],
+   "axeHead": null,
+   "bladeTip": [
+    1319,
+    1509
+   ],
+   "tipSource": "자동 검출·끝 수동 지정",
+   "bbox": [
+    1283,
+    350,
+    1994,
+    1640
+   ]
+  },
+  {
+   "id": "01-advance",
+   "file": "frames/01-advance.png",
+   "scale": 1.045,
+   "scaleMatch": 0.886,
+   "anchor": [
+    1700,
+    1640
+   ],
+   "headCenter": [
+    1805.3,
+    892.9
+   ],
+   "axeHead": null,
+   "bladeTip": [
+    826,
+    1459
+   ],
+   "tipSource": "자동 검출·끝 수동 지정",
+   "bbox": [
+    801,
+    609,
+    2108,
+    1640
+   ]
+  },
+  {
+   "id": "02-retreat",
+   "file": "frames/02-retreat.png",
+   "scale": 0.8833,
+   "scaleMatch": 0.937,
+   "anchor": [
+    1700,
+    1640
+   ],
+   "headCenter": [
+    1588.9,
+    695.6
+   ],
+   "axeHead": null,
+   "bladeTip": [
+    1811,
+    1646
+   ],
+   "tipSource": "자동 검출·끝 수동 지정",
+   "bbox": [
+    1160,
+    518,
+    1888,
+    1640
+   ]
+  },
+  {
+   "id": "03-guard",
+   "file": "frames/03-guard.png",
+   "scale": 0.8875,
+   "scaleMatch": 0.894,
+   "anchor": [
+    1700,
+    1640
+   ],
+   "headCenter": [
+    1844.9,
+    829.3
+   ],
+   "axeHead": null,
+   "bladeTip": [
+    2382,
+    1525
+   ],
+   "tipSource": "자동 검출·끝 수동 지정",
+   "bbox": [
+    1374,
+    629,
+    2405,
+    1640
+   ]
+  },
+  {
+   "id": "04-hit",
+   "file": "frames/04-hit.png",
+   "scale": 0.9784,
+   "scaleMatch": 0.921,
+   "anchor": [
+    1700,
+    1640
+   ],
+   "headCenter": [
+    1600.7,
+    567.0
+   ],
+   "axeHead": null,
+   "bladeTip": [
+    1125,
+    1184
+   ],
+   "tipSource": "자동 검출·끝 수동 지정",
+   "bbox": [
+    1066,
+    209,
+    1981,
+    1640
+   ]
+  },
+  {
+   "id": "05-skill1-ready",
+   "file": "frames/05-skill1-ready.png",
+   "scale": 0.9561,
+   "scaleMatch": 0.834,
+   "anchor": [
+    1700,
+    1640
+   ],
+   "headCenter": [
+    1867.3,
+    885.7
+   ],
+   "axeHead": null,
+   "bladeTip": [
+    919,
+    1403
+   ],
+   "tipSource": "자동 검출·끝 수동 지정",
+   "bbox": [
+    925,
+    697,
+    2300,
+    1640
+   ]
+  },
+  {
+   "id": "06-skill1-cast",
+   "file": "frames/06-skill1-cast.png",
+   "scale": 0.9374,
+   "scaleMatch": 0.858,
+   "anchor": [
+    1700,
+    1640
+   ],
+   "headCenter": [
+    1925.2,
+    959.2
+   ],
+   "axeHead": null,
+   "bladeTip": [
+    2631,
+    1340
+   ],
+   "tipSource": "자동 검출·끝 수동 지정",
+   "bbox": [
+    1258,
+    794,
+    2633,
+    1640
+   ]
+  },
+  {
+   "id": "06b-skill1-thrust",
+   "file": "frames/06b-skill1-thrust.png",
+   "scale": 1.1027,
+   "scaleMatch": 0.791,
+   "anchor": [
+    1700,
+    1640
+   ],
+   "headCenter": [
+    1939.6,
+    936.7
+   ],
+   "axeHead": null,
+   "bladeTip": [
+    3212,
+    1064
+   ],
+   "tipSource": "자동 검출·끝 수동 지정",
+   "bbox": [
+    1373,
+    787,
+    3216,
+    1640
+   ]
+  },
+  {
+   "id": "07-skill2-ready",
+   "file": "frames/07-skill2-ready.png",
+   "scale": 1.1157,
+   "scaleMatch": 0.926,
+   "anchor": [
+    1700,
+    1640
+   ],
+   "headCenter": [
+    1888.3,
+    582.0
+   ],
+   "axeHead": null,
+   "bladeTip": [
+    1308,
+    82
+   ],
+   "tipSource": "자동 검출·끝 수동 지정",
+   "bbox": [
+    1230,
+    73,
+    2352,
+    1640
+   ]
+  },
+  {
+   "id": "08-skill2-peak",
+   "file": "frames/08-skill2-peak.png",
+   "scale": 0.9838,
+   "scaleMatch": 0.906,
+   "anchor": [
+    1700,
+    1640
+   ],
+   "headCenter": [
+    1410.5,
+    1031.2
+   ],
+   "axeHead": null,
+   "bladeTip": [
+    1997,
+    1628
+   ],
+   "tipSource": "자동 검출·끝 수동 지정",
+   "bbox": [
+    693,
+    863,
+    2070,
+    1640
+   ]
+  },
+  {
+   "id": "09-skill3-anticipation",
+   "file": "frames/09-skill3-anticipation.png",
+   "scale": 0.9307,
+   "scaleMatch": 0.949,
+   "anchor": [
+    1700,
+    1640
+   ],
+   "headCenter": [
+    1590.4,
+    611.2
+   ],
+   "axeHead": null,
+   "bladeTip": [
+    1240,
+    1334
+   ],
+   "tipSource": "자동 검출·끝 수동 지정",
+   "bbox": [
+    1211,
+    284,
+    1923,
+    1640
+   ]
+  },
+  {
+   "id": "10-skill3-cast",
+   "file": "frames/10-skill3-cast.png",
+   "scale": 0.9877,
+   "scaleMatch": 0.944,
+   "anchor": [
+    1700,
+    1640
+   ],
+   "headCenter": [
+    1555.1,
+    647.5
+   ],
+   "axeHead": null,
+   "bladeTip": [
+    2108,
+    400
+   ],
+   "tipSource": "자동 검출·끝 수동 지정",
+   "bbox": [
+    1243,
+    206,
+    2179,
+    1640
+   ]
+  },
+  {
+   "id": "11-skill3-finish",
+   "file": "frames/11-skill3-finish.png",
+   "scale": 0.8913,
+   "scaleMatch": 0.967,
+   "anchor": [
+    1700,
+    1640
+   ],
+   "headCenter": [
+    1812.3,
+    878.7
+   ],
+   "axeHead": null,
+   "bladeTip": [
+    1226,
+    1553
+   ],
+   "tipSource": "자동 검출·끝 수동 지정",
+   "bbox": [
+    1201,
+    551,
+    2201,
+    1640
+   ]
+  }
+ ]
+}
