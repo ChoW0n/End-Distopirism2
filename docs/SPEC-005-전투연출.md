@@ -226,6 +226,8 @@ v1.0 은 까만 화면에 레이어를 멈춘 채 한 장 띄웠다. 컷신 레�
 | | `strikeGhosts` · `strikeGhostAlpha` | 휘두름 잔상 장 수·불투명도 |
 | | `poseKick` | 장이 바뀔 때 카메라 순간 확대 |
 | | `effectFadeMs` | 이펙트 키프레임 겹치기·마지막 장 사라지는 시간 |
+| `effects` | `minMs` | 이보다 짧은 이펙트는 장마다 같은 비율로 늘린다 (SPEC-002 §6-6) |
+| | `glowAlpha` · `glowBlur` | 발광 겹 세기·흐림 반경(이펙트 긴 변 비율) (SPEC-002 §6-7) |
 | `cutscene` | `sec` · `inSec` · `outSec` | 컷신 길이·들어옴·나감 (§2.4) |
 | | `dim` | 뒤 전투 화면을 누르는 정도 |
 | | `bandSkewDeg` · `bandHeight` | 띠 기울기·높이(화면 높이 비율) |
