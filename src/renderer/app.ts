@@ -51,7 +51,7 @@ class Session {
   readonly battle: Battle;
   readonly presenter: BattlePresenter;
   readonly ui: UiDirector;
-  readonly camera = new CameraDirector();
+  readonly camera: CameraDirector;
   readonly placements: StagePlacement[];
   private readonly ai = new WeightedEnemyAi();
   private readonly aiContext: EnemyAiContext;
@@ -80,6 +80,7 @@ class Session {
     };
 
     this.presenter = new BattlePresenter(boot.catalog, stage, context);
+    this.camera = new CameraDirector(boot.ui.camera);
     this.ui = new UiDirector(boot.catalog, stage, context, boot.ui, rng);
   }
 
@@ -182,11 +183,18 @@ async function main(): Promise<void> {
   let restSec = 0;
   let finished = false;
 
+  //이벤트 하나마다 세 어댑터의 명령을 모아 순서대로 흘린다 (SPEC-005 §3.1).
+  //어댑터별로 한 턴 분을 통째로 넣으면 프리젠터 명령이 전부 앞에 서서 박자가 안 맞는다.
+  //한 이벤트 안에서는 동작 → 카메라 → UI 순이다. 휘두른 뒤에 흔들리고, 흔들린 뒤에 숫자가 뜬다
   const feed = (events: readonly BattleEvent[]): void => {
     if (!session) return;
-    renderer.push(session.presenter.consume(events));
-    renderer.push(session.ui.consume(events));
-    renderer.pushCamera(session.camera.consume(events));
+    events.forEach((event, i) => {
+      if (!session) return;
+      renderer.push(session.presenter.consume([event]));
+      //원경을 끼울지 판단하려면 이 턴에 남은 이벤트를 같이 봐야 한다
+      renderer.pushCamera(session.camera.consume([event], events.slice(i + 1)));
+      renderer.push(session.ui.consume([event]));
+    });
   };
 
   const restart = (): void => {

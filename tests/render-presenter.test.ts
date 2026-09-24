@@ -87,13 +87,35 @@ function framesFor(commands: RenderCommand[], combatantId: string): string[][] {
 }
 
 describe('교전이 시작되면 전용기 동작이 나간다', () => {
-  it('합이면 양쪽 다 자기 전용기 프레임을 낸다', () => {
+  //시작은 준비 자세 한 장. 전용기 전체는 피해가 들어가는 한 방에 휘두른다 (SPEC-005 §2)
+  it('합이 시작되면 양쪽 다 자기 전용기의 준비 자세를 잡는다', () => {
     const presenter = makePresenter();
     const commands = presenter.consume(resolveTurn(makeBattle(S1), S2));
 
-    //S2 는 2장, S1 도 2장이다
-    expect(framesFor(commands, 'a1')[0]).toEqual(sprites.frameSequence('S2'));
-    expect(framesFor(commands, 'e1')[0]).toEqual(sprites.frameSequence('S1'));
+    expect(framesFor(commands, 'a1')[0]).toEqual([sprites.frameSequence('S2')[0]]);
+    expect(framesFor(commands, 'e1')[0]).toEqual([sprites.frameSequence('S1')[0]]);
+  });
+
+  it('라운드마다 둘 다 맞닿는 자세를 한 장 보였다가 준비 자세로 돌아온다', () => {
+    const presenter = makePresenter();
+    const commands = presenter.consume(resolveTurn(makeBattle(S1), S2));
+    const s2 = sprites.frameSequence('S2');
+    const s1 = sprites.frameSequence('S1');
+
+    expect(framesFor(commands, 'a1')).toContainEqual([s2.at(-1), s2[0]]);
+    expect(framesFor(commands, 'e1')).toContainEqual([s1.at(-1), s1[0]]);
+  });
+
+  it('이긴 쪽만 전용기 전체를 휘두르고, 맞닿는 순간까지 뒤를 붙든다', () => {
+    const presenter = makePresenter();
+    const commands = presenter.consume(resolveTurn(makeBattle(S1), S2));
+    const strikes = commands.filter(
+      (c): c is Extract<RenderCommand, { type: 'playFrames' }> => c.type === 'playFrames' && c.wait === true,
+    );
+
+    //alwaysFail 코인이라 기본 피해가 큰 S2 가 이긴다
+    expect(strikes).toHaveLength(1);
+    expect(strikes[0]).toMatchObject({ combatantId: 'a1', frameIds: sprites.frameSequence('S2') });
   });
 
   it('궁극기는 프레임이 아니라 컷신으로 빠진다', () => {
@@ -235,7 +257,9 @@ describe('교전이 끝나면 기본 자세로 돌아간다', () => {
       { type: 'oneSidedEnd', attackerId: 'a1', targetId: 'e1' },
     ]);
 
-    expect(framesFor(commands, 'a1')[0]).toEqual(sprites.frameSequence('S2'));
+    //준비 자세로 달려가서 한 방에 전용기 전체를 휘두른다
+    expect(framesFor(commands, 'a1')[0]).toEqual([sprites.frameSequence('S2')[0]]);
+    expect(framesFor(commands, 'a1')[1]).toEqual(sprites.frameSequence('S2'));
     //맞는 쪽은 피격과 idle 만 나온다
     const hit = sprites.frameEndingWith('hit')!.id;
     const idle = sprites.frameEndingWith('idle')!.id;
@@ -266,8 +290,9 @@ describe('에셋이 캐릭터마다 따로 들어온다', () => {
     );
     expect(placeholders.length).toBeGreaterThan(0);
     expect(placeholders.every((c) => c.combatantId === 'e1' && c.characterId === 'helper')).toBe(true);
-    //에셋 있는 쪽은 정상으로 나온다
-    expect(framesFor(commands, 'a1')[0]).toEqual(sprites.frameSequence('S2'));
+    //에셋 있는 쪽은 정상으로 나온다. 에셋 없는 상대를 때려도 휘두르기는 나온다
+    expect(framesFor(commands, 'a1')[0]).toEqual([sprites.frameSequence('S2')[0]]);
+    expect(framesFor(commands, 'a1')).toContainEqual(sprites.frameSequence('S2'));
   });
 
   it('에셋 없는 캐릭터의 프레임이나 이펙트를 만들지 않는다', () => {
@@ -312,17 +337,44 @@ describe('§5.4 프레임에 묶인 이펙트', () => {
     const presenter = makePresenter();
     const commands = presenter.consume([
       { type: 'clashStart', attackerId: 'a1', defenderId: 'e1', attackerSkillId: S2, defenderSkillId: S1 },
+      { type: 'damageApplied', combatantId: 'e1', damage: 15, hp: 300 },
     ]);
 
     const trails = commands.filter(
       (c): c is Extract<RenderCommand, { type: 'spawnEffect' }> =>
         c.type === 'spawnEffect' && c.frameId !== null,
     );
-    //S2 는 08-skill2-peak 에서 수평 베기, S1 은 06-skill1-cast 에서 대각 베기
-    expect(trails.map((c) => [c.frameId, c.placement.effectId])).toEqual([
-      ['08-skill2-peak', 'slash-horizontal'],
-      ['06-skill1-cast', 'slash-diagonal'],
+    //S2 는 08-skill2-peak 에서 수평 베기. 진 쪽(S1)은 휘두르지 않아서 궤적이 없다
+    expect(trails.map((c) => [c.sourceId, c.frameId, c.placement.effectId])).toEqual([
+      ['a1', '08-skill2-peak', 'slash-horizontal'],
     ]);
+  });
+
+  it('합 시작과 라운드 맞부딪힘에는 궤적이 없다', () => {
+    const presenter = makePresenter();
+    const commands = presenter.consume([
+      { type: 'clashStart', attackerId: 'a1', defenderId: 'e1', attackerSkillId: S2, defenderSkillId: S1 },
+      { type: 'clashRoundWin', winnerId: 'a1', loserId: 'e1', winnerDamage: 12, loserDamage: 8 },
+      { type: 'deadlock', attackerId: 'a1', defenderId: 'e1', count: 1 },
+    ]);
+    expect(commands.some((c) => c.type === 'spawnEffect')).toBe(false);
+  });
+
+  it('궤적은 휘두르기 바로 뒤에 붙는다 — 렌더러가 그 장이 뜰 때 터뜨린다', () => {
+    const presenter = makePresenter();
+    const commands = presenter.consume([
+      { type: 'clashStart', attackerId: 'a1', defenderId: 'e1', attackerSkillId: S3, defenderSkillId: S1 },
+      { type: 'damageApplied', combatantId: 'e1', damage: 15, hp: 300 },
+    ]);
+    const strikeAt = commands.findIndex((c) => c.type === 'playFrames' && c.wait === true);
+    const firstTrail = commands.findIndex((c) => c.type === 'spawnEffect' && c.frameId !== null);
+    const hitAt = commands.findIndex(
+      (c) => c.type === 'playFrames' && c.combatantId === 'e1' && c.frameIds[0] === sprites.frameEndingWith('hit')!.id,
+    );
+    expect(strikeAt).toBeGreaterThanOrEqual(0);
+    expect(firstTrail).toBeGreaterThan(strikeAt);
+    //맞는 자세는 한 방 뒤다
+    expect(hitAt).toBeGreaterThan(strikeAt);
   });
 
   it('준비 프레임에는 이펙트를 걸지 않는다', () => {

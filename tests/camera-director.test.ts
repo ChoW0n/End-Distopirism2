@@ -7,9 +7,13 @@ import { WeightedEnemyAi } from '../src/domain/ai.js';
 import { ClashResolver } from '../src/domain/clash.js';
 import { createSeededRng } from '../src/domain/rng.js';
 import { CameraDirector, type CameraCommand } from '../src/camera/director.js';
+import { loadUiData } from '../src/platform/node-ui.js';
 import { catalog } from './helpers.js';
 import type { BattleEvent } from '../src/domain/types.js';
 import type { CombatantInit } from '../src/domain/combatant.js';
+
+//카메라 수치는 데이터에서 온다 (SPEC-005 §4)
+const tuning = loadUiData(new URL('../assets/ui/ui-data.json', import.meta.url).pathname).camera;
 
 //양 진영 3명씩 미러 구성. 덱은 캐릭터의 전용기 3종이다
 function makeRoster(side: 'ally' | 'enemy'): CombatantInit[] {
@@ -68,7 +72,7 @@ function runBattle(seed: number): BattleEvent[][] {
 
 //전투 한 판의 이벤트를 전부 감독에게 먹이고 명령 시퀀스를 받는다
 function directBattle(seed: number): { director: CameraDirector; commands: CameraCommand[] } {
-  const director = new CameraDirector();
+  const director = new CameraDirector(tuning);
   const commands: CameraCommand[] = [];
   for (const batch of runBattle(seed)) {
     commands.push(...director.consume(batch));
@@ -78,11 +82,11 @@ function directBattle(seed: number): { director: CameraDirector; commands: Camer
 
 describe('교전에 붙는다', () => {
   it('시작 상태는 원경이다', () => {
-    expect(new CameraDirector().currentShot).toEqual({ kind: 'idle' });
+    expect(new CameraDirector(tuning).currentShot).toEqual({ kind: 'idle' });
   });
 
   it('첫 교전이 시작되면 두 사람에게 붙는다', () => {
-    const director = new CameraDirector();
+    const director = new CameraDirector(tuning);
     const batches = runBattle(1);
 
     //턴 시작 묶음만으로는 아직 붙지 않는다
@@ -105,7 +109,7 @@ describe('교전에 붙는다', () => {
   });
 
   it('합이든 일방 공격이든 똑같이 붙는다', () => {
-    const director = new CameraDirector();
+    const director = new CameraDirector(tuning);
     const clash = director.consume([
       { type: 'clashStart', attackerId: 'a1', defenderId: 'e1', attackerSkillId: 2011, defenderSkillId: 2012 },
     ]);
@@ -118,7 +122,7 @@ describe('교전에 붙는다', () => {
 
 describe('피해는 보고 있는 대상을 바꾸지 않는다', () => {
   it('피해가 연달아 들어와도 붙은 상태가 풀리지 않는다', () => {
-    const director = new CameraDirector();
+    const director = new CameraDirector(tuning);
     director.consume([
       { type: 'clashStart', attackerId: 'a1', defenderId: 'e1', attackerSkillId: 2011, defenderSkillId: 2012 },
     ]);
@@ -136,7 +140,7 @@ describe('피해는 보고 있는 대상을 바꾸지 않는다', () => {
   });
 
   it('피해량이 클수록 세게 흔들리고 1을 넘지 않는다', () => {
-    const director = new CameraDirector();
+    const director = new CameraDirector(tuning);
     const commands = director.consume([
       { type: 'damageApplied', combatantId: 'e1', damage: 15, hp: 300 },
       { type: 'damageApplied', combatantId: 'e1', damage: 120, hp: 180 },
@@ -147,12 +151,12 @@ describe('피해는 보고 있는 대상을 바꾸지 않는다', () => {
   });
 
   it('피해 0은 흔들지 않는다', () => {
-    const director = new CameraDirector();
+    const director = new CameraDirector(tuning);
     expect(director.consume([{ type: 'damageApplied', combatantId: 'e1', damage: 0, hp: 300 }])).toEqual([]);
   });
 
   it('처형은 최대로 흔든다', () => {
-    const director = new CameraDirector();
+    const director = new CameraDirector(tuning);
     expect(director.consume([{ type: 'executed', combatantId: 'e1' }])).toEqual([
       { type: 'shake', intensity: 1 },
     ]);
@@ -161,7 +165,7 @@ describe('피해는 보고 있는 대상을 바꾸지 않는다', () => {
 
 describe('교전 사이에 원경이 끼지 않는다', () => {
   it('뒤에 교전이 남아 있으면 원경으로 돌아가지 않는다', () => {
-    const director = new CameraDirector();
+    const director = new CameraDirector(tuning);
     const commands = director.consume([
       { type: 'clashStart', attackerId: 'a1', defenderId: 'e1', attackerSkillId: 2011, defenderSkillId: 2012 },
       { type: 'clashEnd', attackerId: 'a1', defenderId: 'e1', winnerId: 'a1' },
@@ -176,7 +180,7 @@ describe('교전 사이에 원경이 끼지 않는다', () => {
 
   it('실제 전투 한 턴 안에서도 교전 사이에 원경이 없다', () => {
     const batches = runBattle(1);
-    const director = new CameraDirector();
+    const director = new CameraDirector(tuning);
     director.consume(batches[0] ?? []);
     const commands = director.consume(batches[1] ?? []);
 
@@ -188,7 +192,7 @@ describe('교전 사이에 원경이 끼지 않는다', () => {
   });
 
   it('같은 대상에 다시 붙으라는 지시는 중복으로 내지 않는다', () => {
-    const director = new CameraDirector();
+    const director = new CameraDirector(tuning);
     const start: BattleEvent = {
       type: 'clashStart',
       attackerId: 'a1',
@@ -220,7 +224,7 @@ describe('전투 전체', () => {
   it('여러 시드에서도 focus 없이 shake 만 나오는 일이 없다', () => {
     //흔들림은 항상 누군가에게 붙어 있는 동안 나와야 한다
     for (const seed of [1, 2, 3, 7, 42]) {
-      const director = new CameraDirector();
+      const director = new CameraDirector(tuning);
       let focused = false;
       for (const batch of runBattle(seed)) {
         for (const command of director.consume(batch)) {
@@ -230,5 +234,43 @@ describe('전투 전체', () => {
         }
       }
     }
+  });
+});
+
+describe('SPEC-005 카메라 연출', () => {
+  const clash = { type: 'clashStart', attackerId: 'a1', defenderId: 'e1', attackerSkillId: 2001, defenderSkillId: 2011 } as const;
+
+  it('합이면 기울이고 일방 공격이면 똑바로 본다', () => {
+    const tilted = new CameraDirector(tuning).consume([clash]);
+    expect(tilted[0]).toMatchObject({ type: 'focus', tiltDeg: tuning.tiltDeg });
+    const straight = new CameraDirector(tuning).consume([
+      { type: 'oneSidedStart', attackerId: 'a1', targetId: 'e1', skillId: 2001 },
+    ]);
+    expect(straight[0]).toMatchObject({ type: 'focus', tiltDeg: 0 });
+  });
+
+  it('라운드마다 순간적으로 당긴다 — 교착도 마찬가지다', () => {
+    const commands = new CameraDirector(tuning).consume([
+      clash,
+      { type: 'clashRoundWin', winnerId: 'a1', loserId: 'e1', winnerDamage: 10, loserDamage: 5 },
+      { type: 'deadlock', attackerId: 'a1', defenderId: 'e1', count: 1 },
+    ]);
+    expect(commands.filter((c) => c.type === 'punch')).toHaveLength(2);
+  });
+
+  it('쓰러지면 슬로모를 건다', () => {
+    const commands = new CameraDirector(tuning).consume([clash, { type: 'defeated', combatantId: 'e1' }]);
+    expect(commands).toContainEqual({ type: 'slowmo', scale: tuning.slowmoScale, sec: tuning.slowmoSec });
+  });
+
+  it('이벤트를 하나씩 줘도 남은 이벤트를 같이 주면 교전 사이에 원경을 안 끼운다', () => {
+    const events = [
+      clash,
+      { type: 'clashEnd', attackerId: 'a1', defenderId: 'e1', winnerId: 'a1' },
+      { type: 'oneSidedStart', attackerId: 'a2', targetId: 'e2', skillId: 2001 },
+    ] as const;
+    const director = new CameraDirector(tuning);
+    const commands = events.flatMap((event, i) => director.consume([event], events.slice(i + 1)));
+    expect(commands.some((c) => c.type === 'idle')).toBe(false);
   });
 });

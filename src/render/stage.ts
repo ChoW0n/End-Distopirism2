@@ -58,6 +58,13 @@ export class Stage {
     return this.catalogs.has(characterId);
   }
 
+  //비율을 빌려 쓸 기준 캐릭터. 에셋 없는 캐릭터도 코인·숫자는 뜨게 하려고 쓴다 (SPEC-005 §5).
+  //그림을 빌리는 게 아니라 키·머리 높이 같은 비율만 빌린다. 에셋이 하나도 없으면 null 이다
+  reference(): SpriteCatalog | null {
+    for (const catalog of this.catalogs.values()) return catalog;
+    return null;
+  }
+
   //이 참가자의 스프라이트 조회표를 찾는다
   catalogFor(characterId: string): SpriteCatalog {
     const found = this.catalogs.get(characterId);

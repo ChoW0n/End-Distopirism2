@@ -13,12 +13,14 @@ import { ClashResolver } from '../src/domain/clash.js';
 import { CameraDirector, type CameraCommand } from '../src/camera/director.js';
 import { createSeededRng } from '../src/domain/rng.js';
 import { loadBattleCatalog } from '../src/platform/node-data.js';
+import { loadUiData } from '../src/platform/node-ui.js';
 import type { BattleCatalog } from '../src/domain/data.js';
 import type { CombatantInit } from '../src/domain/combatant.js';
 import type { BattleEvent, Side } from '../src/domain/types.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const DATA_PATH = resolve(here, '../docs/battle-data.json');
+const UI_PATH = resolve(here, '../assets/ui/ui-data.json');
 
 //서로 물고 늘어져 끝나지 않는 판을 잘라내는 상한. 도메인 규칙이 아니라 러너의 안전장치다
 const MAX_TURNS = 100;
@@ -264,7 +266,7 @@ function runBattle(
   const labels = makeLabels(battle);
   const logger = verbose ? new BattleLogger(catalog, battle, labels) : null;
   //카메라 감독은 전투당 하나. 도메인이 낸 이벤트를 로거와 같이 나눠 본다
-  const director = verbose ? new CameraDirector() : null;
+  const director = verbose ? new CameraDirector(loadUiData(UI_PATH).camera) : null;
 
   let turns = 0;
   while (!battle.isFinished && turns < MAX_TURNS) {
@@ -313,16 +315,27 @@ function printCameraCommands(
   const name = (id: string): string => labels.get(id) ?? id;
 
   for (const command of commands) {
-    if (command.type === 'focus') {
-      const [first, second] = command.subjectIds;
-      console.log(`[턴${turn}] [카메라] focus → ${name(first)} vs ${name(second)} (zoom ${command.zoom})`);
-      continue;
+    //종류마다 한 줄. 모르는 종류를 idle 로 떨어뜨리지 않는다
+    switch (command.type) {
+      case 'focus': {
+        const [first, second] = command.subjectIds;
+        const tilt = command.tiltDeg ? `, 기울기 ${command.tiltDeg}°` : '';
+        console.log(`[턴${turn}] [카메라] focus → ${name(first)} vs ${name(second)} (zoom ${command.zoom}${tilt})`);
+        break;
+      }
+      case 'shake':
+        console.log(`[턴${turn}] [카메라] shake (강도 ${command.intensity.toFixed(2)})`);
+        break;
+      case 'punch':
+        console.log(`[턴${turn}] [카메라] punch (+${command.zoom})`);
+        break;
+      case 'slowmo':
+        console.log(`[턴${turn}] [카메라] slowmo (×${command.scale}, ${command.sec}초)`);
+        break;
+      case 'idle':
+        console.log(`[턴${turn}] [카메라] idle`);
+        break;
     }
-    if (command.type === 'shake') {
-      console.log(`[턴${turn}] [카메라] shake (강도 ${command.intensity.toFixed(2)})`);
-      continue;
-    }
-    console.log(`[턴${turn}] [카메라] idle`);
   }
 }
 

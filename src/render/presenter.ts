@@ -20,7 +20,8 @@ export type UltimatePhase = 'ready' | 'cardAdded' | 'cutscene' | 'used';
 
 //렌더러가 받아 해석할 명령
 export type RenderCommand =
-  | { type: 'playFrames'; combatantId: string; frameIds: string[] }
+  //wait 이면 마지막 장(= 맞닿는 순간)이 뜰 때까지 뒤 명령을 붙든다. 한 방의 박자가 여기서 맞는다
+  | { type: 'playFrames'; combatantId: string; frameIds: string[]; wait?: boolean }
   //frameId 가 있으면 그 프레임이 재생될 때, null 이면 바로 터뜨린다
   | {
       type: 'spawnEffect';
@@ -41,6 +42,10 @@ interface EngagementSide {
   frameId: string | null;
   //이 교전에서 쓸 이펙트 목록. 전용기면 프레임 바인딩, 궁극기면 궁극기 바인딩이다
   effectIds: string[];
+  //전용기 프레임 전체. 첫 장이 준비 자세, 마지막 장이 맞닿는 순간이다 (SPEC-005 §3)
+  sequence: string[];
+  //피해가 들어가는 한 방을 이미 휘둘렀는지. 한 교전에 한 번만 휘두른다
+  struck: boolean;
 }
 
 //지금 진행 중인 교전. 피해가 들어왔을 때 누가 때린 건지 알아야 한다
@@ -90,6 +95,12 @@ export class BattlePresenter {
 
         case 'oneSidedStart':
           this.beginEngagement(commands, event.attackerId, event.skillId, event.targetId, null);
+          break;
+
+        //합이 한 번 오갈 때마다 둘 다 휘둘렀다가 준비 자세로 돌아온다
+        case 'clashRoundWin':
+        case 'deadlock':
+          this.exchange(commands);
           break;
 
         //피해가 실제로 들어갔을 때만 명중 연출을 낸다 (SPEC-002 §6-1)
@@ -145,7 +156,7 @@ export class BattlePresenter {
       attacker: this.beginSide(commands, attackerId, attackerSkillId),
       defender:
         defenderSkillId === null
-          ? { combatantId: defenderId, frameId: this.idleOrNull(defenderId), effectIds: [] }
+          ? { combatantId: defenderId, frameId: this.idleOrNull(defenderId), effectIds: [], sequence: [], struck: false }
           : this.beginSide(commands, defenderId, defenderSkillId),
     };
   }
@@ -155,7 +166,7 @@ export class BattlePresenter {
     const placement = this.context.actor(combatantId);
     if (!this.stage.has(placement.characterId)) {
       commands.push({ type: 'placeholder', combatantId, characterId: placement.characterId });
-      return { combatantId, frameId: null, effectIds: [] };
+      return { combatantId, frameId: null, effectIds: [], sequence: [], struck: false };
     }
 
     const catalog = this.stage.catalogFor(placement.characterId);
@@ -164,26 +175,62 @@ export class BattlePresenter {
       ? this.beginUltimate(commands, combatantId, catalog)
       : this.beginSkill(commands, combatantId, catalog, skillId);
 
-    //무기 궤적은 휘두르는 동작 자체라 빗나가도 보인다. 그래서 프레임과 같이 낸다.
-    //섬광·지면 충격·화염은 §6-1 대로 피해가 들어간 뒤에만 낸다
-    if (side.frameId) {
-      for (const effectId of side.effectIds) {
-        if (catalog.effect(effectId).anchor !== 'bladeTip') continue;
-        commands.push({
-          type: 'spawnEffect',
-          sourceId: combatantId,
-          targetId: null,
-          frameId: side.frameId,
-          placement: this.stage.placeEffect(effectId, { source: placement, sourceFrameId: side.frameId }),
-        });
+    //시작은 준비 자세 한 장만. 전용기 전체는 피해가 들어가는 한 방에 휘두른다 (SPEC-005 §2)
+    const ready = side.sequence[0];
+    if (ready) commands.push({ type: 'playFrames', combatantId, frameIds: [ready] });
+    return side;
+  }
+
+  //합 한 라운드의 맞부딪힘. 둘 다 맞닿는 자세를 한 장 보였다가 준비 자세로 돌아온다.
+  //궤적은 여기서 안 낸다. 무기 궤적은 실제로 베는 한 방에만 붙인다
+  private exchange(commands: RenderCommand[]): void {
+    const engagement = this.engagement;
+    if (!engagement) return;
+    for (const side of [engagement.attacker, engagement.defender]) {
+      const first = side.sequence[0];
+      const last = side.sequence[side.sequence.length - 1];
+      if (!first || !last) continue;
+      commands.push({ type: 'playFrames', combatantId: side.combatantId, frameIds: [last, first] });
+    }
+  }
+
+  //피해가 들어가는 한 방. 전용기 전체를 휘두르고, 장마다 묶인 무기 궤적을 붙인다.
+  //무기 궤적은 휘두르는 동작 자체라 프레임과 같이 나가고,
+  //섬광·지면 충격·화염은 §6-1 대로 이 뒤 onDamage 에서 낸다
+  private strike(commands: RenderCommand[], side: EngagementSide): void {
+    if (side.struck || side.sequence.length === 0) return;
+    side.struck = true;
+
+    const placement = this.context.actor(side.combatantId);
+    if (!this.stage.has(placement.characterId)) return;
+    const catalog = this.stage.catalogFor(placement.characterId);
+
+    commands.push({ type: 'playFrames', combatantId: side.combatantId, frameIds: [...side.sequence], wait: true });
+
+    //전용기는 장마다 바인딩을, 궁극기는 궁극기 바인딩을 마지막 장에 붙인다
+    const trails: { frameId: string; effectId: string }[] = [];
+    if (side.effectIds === catalog.bindings.ultimate && side.frameId) {
+      for (const effectId of side.effectIds) trails.push({ frameId: side.frameId, effectId });
+    } else {
+      for (const frameId of side.sequence) {
+        for (const effectId of catalog.effectsOnFrame(frameId)) trails.push({ frameId, effectId });
       }
     }
-    return side;
+    for (const { frameId, effectId } of trails) {
+      if (catalog.effect(effectId).anchor !== 'bladeTip') continue;
+      commands.push({
+        type: 'spawnEffect',
+        sourceId: side.combatantId,
+        targetId: null,
+        frameId,
+        placement: this.stage.placeEffect(effectId, { source: placement, sourceFrameId: frameId }),
+      });
+    }
   }
 
   //전용기 하나의 프레임 순서를 낸다. 이펙트는 마지막 장(실제로 휘두르는 순간)에 붙는다
   private beginSkill(
-    commands: RenderCommand[],
+    _commands: RenderCommand[],
     combatantId: string,
     catalog: SpriteCatalog,
     skillId: number,
@@ -191,13 +238,12 @@ export class BattlePresenter {
     const slot = this.battle.skill(skillId).slot;
     const frameIds = catalog.frameSequence(slot === 'ULT' ? 'S3' : slot);
     if (frameIds.length === 0) {
-      return { combatantId, frameId: this.idleOrNull(combatantId), effectIds: [] };
+      return { combatantId, frameId: this.idleOrNull(combatantId), effectIds: [], sequence: [], struck: false };
     }
 
-    commands.push({ type: 'playFrames', combatantId, frameIds });
     //어느 프레임에서 무엇이 터지는지는 캐릭터별 바인딩 파일이 정한다 (SPEC-002 §5.4)
     const frameId = frameIds[frameIds.length - 1] as string;
-    return { combatantId, frameId, effectIds: catalog.effectsOnFrame(frameId) };
+    return { combatantId, frameId, effectIds: catalog.effectsOnFrame(frameId), sequence: frameIds, struck: false };
   }
 
   //궁극기는 프레임 대신 컷신으로 나간다. 이펙트는 전용기 3의 마무리 자세에 붙는다 (SPEC-002 §5.4)
@@ -214,6 +260,8 @@ export class BattlePresenter {
       combatantId,
       frameId: finish[finish.length - 1] ?? this.idleOrNull(combatantId),
       effectIds: catalog.bindings.ultimate,
+      sequence: finish,
+      struck: false,
     };
   }
 
@@ -230,32 +278,35 @@ export class BattlePresenter {
 
   //피해를 받은 쪽이 피격 자세를 잡고, 그 몸에 명중 섬광이 붙는다
   private onDamage(commands: RenderCommand[], damagedId: string): void {
-    this.pushNamedFrame(commands, damagedId, 'hit');
-
     const engagement = this.engagement;
-    if (!engagement) return;
-    if (!this.stage.has(this.context.actor(damagedId).characterId)) return;
 
     //때린 쪽은 교전의 반대편이다. 자기 체력을 지불한 경우엔 명중이 아니라 넘어간다
-    const attacked = damagedId === engagement.defender.combatantId;
-    const side = attacked ? engagement.attacker : engagement.defender;
-    if (side.combatantId === damagedId) return;
+    const attacked = engagement ? damagedId === engagement.defender.combatantId : false;
+    const side = engagement ? (attacked ? engagement.attacker : engagement.defender) : null;
+    const hitter = side && side.combatantId !== damagedId ? side : null;
 
-    const source = this.context.actor(side.combatantId);
+    //때린 쪽이 먼저 휘두른다. 맞는 자세는 그 한 방이 닿은 뒤다
+    if (hitter) this.strike(commands, hitter);
+    this.pushNamedFrame(commands, damagedId, 'hit');
+
+    if (!engagement || !hitter) return;
+    if (!this.stage.has(this.context.actor(damagedId).characterId)) return;
+
+    const source = this.context.actor(hitter.combatantId);
     const target = this.context.actor(damagedId);
     if (!this.stage.has(source.characterId)) return;
-    if (!side.frameId) return;
+    if (!hitter.frameId) return;
 
     const catalog = this.stage.catalogFor(source.characterId);
     const targetFrameId = (attacked ? engagement.defender : engagement.attacker).frameId ?? undefined;
-    const context = { source, sourceFrameId: side.frameId, target, targetFrameId };
+    const context = { source, sourceFrameId: hitter.frameId, target, targetFrameId };
 
     //명중 자리에 붙는 이펙트를 데이터에서 찾는다. id 를 코드에 박지 않는다
     for (const effect of catalog.effectsByAnchor('hitPoint')) {
       //피해가 확정된 순간이라 프레임을 기다리지 않는다
       commands.push({
         type: 'spawnEffect',
-        sourceId: side.combatantId,
+        sourceId: hitter.combatantId,
         targetId: damagedId,
         frameId: null,
         placement: this.stage.placeEffect(effect.id, context),
@@ -263,18 +314,18 @@ export class BattlePresenter {
     }
 
     //이 교전에 묶인 지면 충격·화염도 여기서 낸다. 맞았을 때만 나와야 하기 때문이다
-    for (const effectId of side.effectIds) {
+    for (const effectId of hitter.effectIds) {
       const anchor = catalog.effect(effectId).anchor;
       if (anchor === 'bladeTip' || anchor === 'hitPoint') continue;
       commands.push({
         type: 'spawnEffect',
-        sourceId: side.combatantId,
+        sourceId: hitter.combatantId,
         targetId: damagedId,
         frameId: null,
         //발생 좌표는 때린 순간의 날끝이다. 이후 무기를 따라가지 않는다
         placement: this.stage.placeEffect(effectId, {
           ...context,
-          emission: this.stage.framePoint(source, side.frameId, 'bladeTip'),
+          emission: this.stage.framePoint(source, hitter.frameId, 'bladeTip'),
         }),
       });
     }

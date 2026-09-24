@@ -59,12 +59,92 @@ export interface BadgeData {
   deadlockMax: number;
 }
 
+//합 한 번의 박자와 모양 (SPEC-005 §2)
+export interface ClashFxData {
+  coinSec: number;
+  powerSec: number;
+  resultSec: number;
+  recoilWinner: number;
+  recoilLoser: number;
+  recoilSec: number;
+  sparkSize: number;
+  //머리 위 코인 한 개 지름
+  coinSize: number;
+  //위력 숫자 글자 크기와 자리 (캐릭터 앞쪽 가슴 높이)
+  powerSize: number;
+  powerOffsetX: number;
+  powerOffsetY: number;
+  //맞부딪히는 높이 (발에서부터)
+  contactHeight: number;
+}
+
+//맞는 순간 멈추는 시간
+export interface HitStopData {
+  clashSec: number;
+  baseSec: number;
+  perDamageSec: number;
+  maxSec: number;
+}
+
+export interface DamageTextData {
+  rise: number;
+  sec: number;
+  //이 이상이면 큰 한 방이다
+  heavyDamage: number;
+  //뜨기 시작하는 높이 (발에서부터)와 글자 크기
+  height: number;
+  size: number;
+}
+
+export interface BannerData {
+  sec: number;
+  //머리 위 높이, 상대 쪽으로 비키는 거리, 글자 크기
+  height: number;
+  offsetX: number;
+  size: number;
+}
+
+export interface KnockbackData {
+  distance: number;
+  sec: number;
+}
+
+export interface FlashData {
+  alpha: number;
+  sec: number;
+}
+
+export interface AfterimageData {
+  count: number;
+  intervalSec: number;
+  alpha: number;
+}
+
+//카메라 수치. CameraDirector 가 받는다
+export interface CameraData {
+  focusZoom: number;
+  punchZoom: number;
+  punchSec: number;
+  tiltDeg: number;
+  slowmoScale: number;
+  slowmoSec: number;
+  shakeReferenceDamage: number;
+}
+
 export interface UiData {
   dash: DashData;
   float: FloatData;
   arrow: ArrowData;
   bar: BarData;
   badge: BadgeData;
+  clash: ClashFxData;
+  hitStop: HitStopData;
+  damageText: DamageTextData;
+  banner: BannerData;
+  knockback: KnockbackData;
+  flash: FlashData;
+  afterimage: AfterimageData;
+  camera: CameraData;
 }
 
 //수치 파일이 규격과 다를 때 던진다
@@ -129,6 +209,11 @@ export function parseUiData(raw: unknown): UiData {
   const arrow = obj(source['arrow'], 'arrow');
   const bar = obj(source['bar'], 'bar');
   const badge = obj(source['badge'], 'badge');
+  //숫자만 들어 있는 절은 키 목록으로 한 번에 읽는다
+  const numbers = <K extends string>(name: string, keys: readonly K[]): Record<K, number> => {
+    const section = obj(source[name], name);
+    return Object.fromEntries(keys.map((key) => [key, num(section, key, name)])) as Record<K, number>;
+  };
 
   return {
     dash: {
@@ -170,5 +255,18 @@ export function parseUiData(raw: unknown): UiData {
       riseSec: num(badge, 'riseSec', 'badge'),
       deadlockMax: num(badge, 'deadlockMax', 'badge'),
     },
+    clash: numbers('clash', [
+      'coinSec', 'powerSec', 'resultSec', 'recoilWinner', 'recoilLoser', 'recoilSec', 'sparkSize',
+      'coinSize', 'powerSize', 'powerOffsetX', 'powerOffsetY', 'contactHeight',
+    ] as const),
+    hitStop: numbers('hitStop', ['clashSec', 'baseSec', 'perDamageSec', 'maxSec'] as const),
+    damageText: numbers('damageText', ['rise', 'sec', 'heavyDamage', 'height', 'size'] as const),
+    banner: numbers('banner', ['sec', 'height', 'offsetX', 'size'] as const),
+    knockback: numbers('knockback', ['distance', 'sec'] as const),
+    flash: numbers('flash', ['alpha', 'sec'] as const),
+    afterimage: numbers('afterimage', ['count', 'intervalSec', 'alpha'] as const),
+    camera: numbers('camera', [
+      'focusZoom', 'punchZoom', 'punchSec', 'tiltDeg', 'slowmoScale', 'slowmoSec', 'shakeReferenceDamage',
+    ] as const),
   };
 }

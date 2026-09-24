@@ -189,6 +189,11 @@ export class Scene {
     };
   }
 
+  //카메라가 보는 지점이 화면에 떨어지는 자리. 줌·기울기는 이 점을 중심으로 건다
+  get pivot(): Point {
+    return { x: this.map.viewport.width / 2, y: this.baseFootY };
+  }
+
   //기준점의 배율로 다른 점을 떨어뜨려 놓는다. 한 덩어리가 통째로 같은 배율을 쓴다
   offsetFrom(reference: Projected, from: Point, to: Point): Point {
     return {

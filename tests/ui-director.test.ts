@@ -14,6 +14,7 @@ import { DashPlanner } from '../src/ui/dash.js';
 import { UiDirector, type UiCommand } from '../src/ui/director.js';
 import { alwaysFailRng, catalog, skillOf } from './helpers.js';
 import type { CombatantInit } from '../src/domain/combatant.js';
+import type { BattleEvent } from '../src/domain/types.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const sprites = loadCharacterAssets(resolve(here, '../assets'), 'incinerator')!;
@@ -430,5 +431,161 @@ describe('일방 공격도 상대 쪽으로 달려간다', () => {
     expect(dashes[0]!.combatantId).toBe('a1');
     //a1 은 600, e1 은 1800 이다. 중점 근처로 가야 한다
     expect(dashes[0]!.position.x).toBeGreaterThan(600);
+  });
+});
+
+describe('SPEC-005 합 한 번의 연출', () => {
+  //합 한 라운드를 손으로 짠다. 도메인 실측 순서 그대로다 (SPEC-005 §2)
+  const round: BattleEvent[] = [
+    { type: 'coinRolled', combatantId: 'a1', rolls: [true, false, true], successCount: 2, probability: 0.6 },
+    { type: 'coinRolled', combatantId: 'e1', rolls: [false, false], successCount: 0, probability: 0.6 },
+    { type: 'damageCalculated', combatantId: 'a1', damage: 15, successCount: 2, levelBonus: 0 },
+    { type: 'damageCalculated', combatantId: 'e1', damage: 9, successCount: 0, levelBonus: 0 },
+    { type: 'clashRoundWin', winnerId: 'a1', loserId: 'e1', winnerDamage: 15, loserDamage: 9 },
+    { type: 'coinLost', combatantId: 'e1', coin: 1 },
+  ];
+  const start = { type: 'clashStart', attackerId: 'a1', defenderId: 'e1', attackerSkillId: S2, defenderSkillId: S1 } as const;
+
+  it('양쪽 코인이 다 뒤집힌 뒤에 한 박자 쉰다', () => {
+    const commands = makeDirector().consume([start, ...round]);
+    const types = commands.map((c) => c.type);
+    const tosses = types.flatMap((t, i) => (t === 'coinToss' ? [i] : []));
+    expect(tosses).toHaveLength(2);
+    //두 번째 코인 바로 뒤에 코인 박자가 온다. 첫 번째 뒤에는 없다
+    expect(commands[tosses[1]! + 1]).toEqual({ type: 'beat', sec: uiData.clash.coinSec });
+    expect(commands[tosses[0]! + 1]!.type).toBe('coinToss');
+  });
+
+  it('일방 공격은 코인이 한 번만 굴러도 박자가 온다', () => {
+    const commands = makeDirector().consume([
+      { type: 'oneSidedStart', attackerId: 'a1', targetId: 'e1', skillId: S2 },
+      { type: 'coinRolled', combatantId: 'a1', rolls: [true], successCount: 1, probability: 0.6 },
+    ]);
+    expect(commands.at(-1)).toEqual({ type: 'beat', sec: uiData.clash.coinSec });
+  });
+
+  it('위력 숫자는 각자 등 뒤에 뜬다 — 가운데서 겹치지 않는다', () => {
+    const director = makeDirector();
+    const commands = director.consume([start, ...round]);
+    const powers = pick(commands, 'clashPower');
+    const a = powers.find((p) => p.combatantId === 'a1')!;
+    const e = powers.find((p) => p.combatantId === 'e1')!;
+    const dashes = pick(commands, 'dashTo');
+    const aAt = dashes.find((d) => d.combatantId === 'a1')!.position;
+    const eAt = dashes.find((d) => d.combatantId === 'e1')!.position;
+    //a1 이 왼쪽에 서므로 a1 숫자는 더 왼쪽, e1 숫자는 더 오른쪽이다
+    expect(aAt.x).toBeLessThan(eAt.x);
+    expect(a.at.x).toBeLessThan(aAt.x);
+    expect(e.at.x).toBeGreaterThan(eAt.x);
+    expect(a.value).toBe(15);
+  });
+
+  it('진 쪽이 더 크게, 접점에서 멀어지는 쪽으로 밀린다', () => {
+    const result = pick(makeDirector().consume([start, ...round]), 'clashResult')[0]!;
+    const winner = result.recoil.find((r) => r.combatantId === 'a1')!;
+    const loser = result.recoil.find((r) => r.combatantId === 'e1')!;
+    expect(Math.abs(loser.dx)).toBeGreaterThan(Math.abs(winner.dx));
+    //a1 은 왼쪽이라 왼쪽(-)으로, e1 은 오른쪽(+)으로
+    expect(winner.dx).toBeLessThan(0);
+    expect(loser.dx).toBeGreaterThan(0);
+    expect(result.winnerId).toBe('a1');
+  });
+
+  it('맞부딪히면 잠깐 멈추고 결과 박자를 준다', () => {
+    const commands = makeDirector().consume([start, ...round]);
+    const at = commands.findIndex((c) => c.type === 'clashResult');
+    expect(commands[at + 1]).toEqual({ type: 'hitStop', sec: uiData.hitStop.clashSec });
+    expect(commands[at + 2]).toEqual({ type: 'beat', sec: uiData.clash.resultSec });
+  });
+
+  it('교착이면 불꽃은 튀고 양쪽이 똑같이 밀린다', () => {
+    const commands = makeDirector().consume([
+      start,
+      { type: 'deadlock', attackerId: 'a1', defenderId: 'e1', count: 1 },
+    ]);
+    const result = pick(commands, 'clashResult')[0]!;
+    expect(result.winnerId).toBeNull();
+    const [first, second] = result.recoil;
+    expect(Math.abs(first!.dx)).toBeCloseTo(Math.abs(second!.dx));
+  });
+
+  it('진 쪽 코인이 깨진다', () => {
+    const breaks = pick(makeDirector().consume([start, ...round]), 'coinBreak');
+    expect(breaks).toEqual([{ type: 'coinBreak', combatantId: 'e1', coinsLeft: 1 }]);
+  });
+
+  it('스킬 이름 띠는 데이터의 스킬 이름을 쓰고 양쪽에 뜬다', () => {
+    const banners = pick(makeDirector().consume([start]), 'skillBanner');
+    expect(banners.map((b) => b.combatantId).sort()).toEqual(['a1', 'e1']);
+    expect(banners.find((b) => b.combatantId === 'a1')!.text).toBe(catalog.skill(S2).name);
+  });
+});
+
+describe('SPEC-005 피해 한 방', () => {
+  const hit = (damage: number) =>
+    makeDirector().consume([
+      { type: 'clashStart', attackerId: 'a1', defenderId: 'e1', attackerSkillId: S2, defenderSkillId: S1 },
+      { type: 'damageApplied', combatantId: 'e1', damage, hp: 360 - damage },
+    ]);
+
+  it('멈춤 → 피해 숫자 → 넉백 순으로 나온다', () => {
+    const types = hit(12).map((c) => c.type);
+    const stop = types.indexOf('hitStop');
+    expect(stop).toBeGreaterThanOrEqual(0);
+    expect(types.indexOf('damageNumber')).toBeGreaterThan(stop);
+    expect(types.indexOf('knockback')).toBeGreaterThan(types.indexOf('damageNumber'));
+  });
+
+  it('멈춤 시간은 피해에 비례하고 상한을 넘지 않는다', () => {
+    const stop = uiData.hitStop;
+    expect(pick(hit(10), 'hitStop')[0]!.sec).toBeCloseTo(stop.baseSec + 10 * stop.perDamageSec);
+    expect(pick(hit(999), 'hitStop')[0]!.sec).toBe(stop.maxSec);
+  });
+
+  it('큰 한 방만 번쩍인다', () => {
+    const heavy = uiData.damageText.heavyDamage;
+    expect(pick(hit(heavy - 1), 'flash')).toHaveLength(0);
+    expect(pick(hit(heavy), 'flash')).toHaveLength(1);
+    expect(pick(hit(heavy), 'damageNumber')[0]!.heavy).toBe(true);
+  });
+
+  it('맞은 쪽은 때린 쪽 반대로 밀린다', () => {
+    const push = pick(hit(12), 'knockback')[0]!;
+    expect(push.combatantId).toBe('e1');
+    //e1 이 오른쪽에 있으니 오른쪽(+)으로
+    expect(push.dx).toBeGreaterThan(0);
+  });
+
+  it('피해 숫자는 떠오른다', () => {
+    const number = pick(hit(12), 'damageNumber')[0]!;
+    expect(number.to.y).toBeLessThan(number.from.y);
+    expect(number.damage).toBe(12);
+  });
+});
+
+describe('SPEC-005 §5 에셋 없는 캐릭터도 정보는 뜬다', () => {
+  //e1 은 에셋이 없는 조력자다. 그림 대신 비율만 빌린다
+  const mixed = new Map<string, StagePlacement>([
+    ['a1', placements.get('a1')!],
+    ['e1', { ...placements.get('e1')!, characterId: 'helper' }],
+  ]);
+  const mixedContext = {
+    actor: (id: string) => mixed.get(id)!,
+    combatants: () => [...mixed.keys()],
+  };
+
+  it('코인·위력·바가 나온다', () => {
+    const director = new UiDirector(catalog, stage, mixedContext, uiData, createSeededRng(1));
+    const commands = [
+      ...director.consume([{ type: 'turnStart', turn: 1 }]),
+      ...director.consume([
+        { type: 'clashStart', attackerId: 'a1', defenderId: 'e1', attackerSkillId: S2, defenderSkillId: S1 },
+        { type: 'coinRolled', combatantId: 'e1', rolls: [true], successCount: 1, probability: 0.6 },
+        { type: 'damageCalculated', combatantId: 'e1', damage: 9, successCount: 1, levelBonus: 0 },
+      ]),
+    ];
+    expect(pick(commands, 'coinToss').some((c) => c.combatantId === 'e1')).toBe(true);
+    expect(pick(commands, 'clashPower').some((c) => c.combatantId === 'e1')).toBe(true);
+    expect(pick(commands, 'bar').some((c) => c.combatantId === 'e1')).toBe(true);
   });
 });

@@ -27,7 +27,10 @@ describe('assets/ui/ui-data.json', () => {
   });
 
   //키가 빠진 채 그려지면 어디가 틀렸는지 화면만 보고는 못 찾는다
-  it.each(['dash', 'float', 'arrow', 'bar', 'badge'])('%s 절이 없으면 던진다', (section) => {
+  it.each([
+    'dash', 'float', 'arrow', 'bar', 'badge',
+    'clash', 'hitStop', 'damageText', 'banner', 'knockback', 'flash', 'afterimage', 'camera',
+  ])('%s 절이 없으면 던진다', (section) => {
     const broken = { ...raw };
     delete broken[section];
     expect(() => parseUiData(broken)).toThrow(UiDataError);
@@ -47,5 +50,11 @@ describe('assets/ui/ui-data.json', () => {
 
   it('기본값으로 때우지 않는다 — 빈 객체면 바로 던진다', () => {
     expect(() => parseUiData({})).toThrow(UiDataError);
+  });
+
+  it('연출 절의 키 하나가 빠져도 던진다', () => {
+    const broken = JSON.parse(JSON.stringify(raw)) as typeof raw;
+    delete (broken['camera'] as Record<string, unknown>)['punchZoom'];
+    expect(() => parseUiData(broken)).toThrow(/punchZoom/);
   });
 });

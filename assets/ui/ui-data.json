@@ -39,5 +39,61 @@
     "rise": 0.35,
     "riseSec": 1.0,
     "deadlockMax": 3
+  },
+  "_연출": "SPEC-005 전투 연출. 길이는 H 배수, 시간은 초. 측정 전 시작값이다. offsetX 는 상대 쪽이 +, 등 뒤가 - 다",
+  "clash": {
+    "coinSec": 0.34,
+    "powerSec": 0.26,
+    "resultSec": 0.3,
+    "recoilWinner": 0.05,
+    "recoilLoser": 0.16,
+    "recoilSec": 0.22,
+    "sparkSize": 0.32,
+    "coinSize": 0.055,
+    "powerSize": 0.15,
+    "powerOffsetX": -0.4,
+    "powerOffsetY": 0.62,
+    "contactHeight": 0.52
+  },
+  "hitStop": {
+    "clashSec": 0.06,
+    "baseSec": 0.07,
+    "perDamageSec": 0.004,
+    "maxSec": 0.18
+  },
+  "damageText": {
+    "rise": 0.28,
+    "sec": 0.95,
+    "heavyDamage": 25,
+    "height": 0.86,
+    "size": 0.12
+  },
+  "banner": {
+    "sec": 0.5,
+    "height": 0.3,
+    "offsetX": -0.24,
+    "size": 0.075
+  },
+  "knockback": {
+    "distance": 0.14,
+    "sec": 0.24
+  },
+  "flash": {
+    "alpha": 0.32,
+    "sec": 0.14
+  },
+  "afterimage": {
+    "count": 5,
+    "intervalSec": 0.028,
+    "alpha": 0.32
+  },
+  "camera": {
+    "focusZoom": 1.6,
+    "punchZoom": 0.1,
+    "punchSec": 0.14,
+    "tiltDeg": 2.2,
+    "slowmoScale": 0.3,
+    "slowmoSec": 0.7,
+    "shakeReferenceDamage": 30
   }
 }
