@@ -52,6 +52,13 @@ describe('assets/ui/ui-data.json', () => {
     expect(() => parseUiData({})).toThrow(UiDataError);
   });
 
+  //몸 간격·실루엣 색이 빠지면 겹침·훼손이 조용히 돌아온다 (SPEC-005 §2.3.4 · §2.3.5)
+  it.each(['bodyGap', 'bodyGapSec', 'ghostColor', 'hurtColor', 'hurtAlpha', 'othersFadeSec'])('motion.%s 가 빠지면 던진다', (key) => {
+    const broken = JSON.parse(JSON.stringify(raw)) as typeof raw;
+    delete (broken['motion'] as Record<string, unknown>)[key];
+    expect(() => parseUiData(broken)).toThrow(new RegExp(key));
+  });
+
   it('연출 절의 키 하나가 빠져도 던진다', () => {
     const broken = JSON.parse(JSON.stringify(raw)) as typeof raw;
     delete (broken['camera'] as Record<string, unknown>)['punchZoom'];

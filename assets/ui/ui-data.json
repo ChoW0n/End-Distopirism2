@@ -90,6 +90,8 @@
   "_motion": "12장뿐인 스프라이트를 몸짓으로 보강한다 (SPEC-005 §6). 시간은 ms 가 붙은 것만 밀리초",
   "motion": {
     "othersAlpha": 0,
+    "_othersFadeSec": "숨기는 데 걸리는 시간. 카메라 줌 진행률에 묶었더니 당기는 동안 반투명한 사람이 싸우는 둘과 겹쳐 보였다 (SPEC-005 §4.2)",
+    "othersFadeSec": 0.06,
     "windupMs": 300,
     "snapMs": 90,
     "_swingHoldMs": "휘두른 장을 버티는 최소 시간. 붙은 이펙트가 더 길면 그 길이만큼 버틴다 (SPEC-005 §2.3.2)",
@@ -109,13 +111,21 @@
     "strikeGhosts": 2,
     "strikeGhostAlpha": 0.3,
     "poseKick": 0,
-    "effectFadeMs": 90
+    "effectFadeMs": 90,
+    "_bodyGap": "교전 중 두 몸 중심(headCenter x) 최소 간격, H 배수. 모자라면 맞는 쪽이 밀린다. 찌르기·쓸기 장은 몸이 발보다 0.2H 앞으로 나와 발 간격만으로는 몸이 겹쳤다 (SPEC-005 §2.3.4)",
+    "bodyGap": 0.62,
+    "bodyGapSec": 0.12,
+    "_ghostColor": "잔상 실루엣 색. 원색 잔상은 캐릭터가 둘로 보였다 (SPEC-005 §2.3.5)",
+    "ghostColor": "#5a1216",
+    "_hurtColor": "맞은 번쩍임. 더하기로 겹치면 흰 옷이 통째로 날아갔다. 그림 모양대로 색만 덮는다",
+    "hurtColor": "#ff6a50",
+    "hurtAlpha": 0.25
   },
   "effects": {
     "_minMs": "이보다 짧은 이펙트는 장마다 같은 비율로 늘려 튼다. 베기 215ms 는 최대 장면이 70ms 라 안 보였다 (SPEC-002 §6-6)",
     "minMs": 560,
     "_glow": "발광 겹. 원본 위에 흐린 복사본을 더하기로 얹는다. blur 는 이펙트 긴 변 비율 (SPEC-002 §6-7)",
-    "glowAlpha": 0.55,
+    "glowAlpha": 0.35,
     "glowBlur": 0.03
   },
   "cutscene": {

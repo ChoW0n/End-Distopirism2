@@ -124,6 +124,8 @@ export interface AfterimageData {
 export interface MotionData {
   //교전 중 싸우지 않는 사람의 불투명도. 0 이면 숨긴다
   othersAlpha: number;
+  //그 불투명도까지 옮겨 가는 시간 (SPEC-005 §4.2)
+  othersFadeSec: number;
   //여러 장짜리 동작에서 첫 장(예비 동작)과 나머지 장(휘두름)의 길이
   windupMs: number;
   snapMs: number;
@@ -153,6 +155,14 @@ export interface MotionData {
   poseKick: number;
   //이펙트 키프레임 겹치기·마지막 장이 사라지는 시간
   effectFadeMs: number;
+  //교전 중 두 몸 중심의 최소 간격(H 배수)과 벌리는 시간 (SPEC-005 §2.3.4)
+  bodyGap: number;
+  bodyGapSec: number;
+  //대시·휘두름 잔상 실루엣 색 (SPEC-005 §2.3.5)
+  ghostColor: string;
+  //맞은 번쩍임 색·세기
+  hurtColor: string;
+  hurtAlpha: number;
 }
 
 //이펙트 재생 수치. 렌더러가 받는다 (SPEC-002 §6-6 · §6-7)
@@ -280,6 +290,7 @@ export function parseUiData(raw: unknown): UiData {
   const bar = obj(source['bar'], 'bar');
   const badge = obj(source['badge'], 'badge');
   const cutscene = obj(source['cutscene'], 'cutscene');
+  const motion = obj(source['motion'], 'motion');
   //숫자만 들어 있는 절은 키 목록으로 한 번에 읽는다
   const numbers = <K extends string>(name: string, keys: readonly K[]): Record<K, number> => {
     const section = obj(source[name], name);
@@ -336,10 +347,15 @@ export function parseUiData(raw: unknown): UiData {
     knockback: numbers('knockback', ['distance', 'sec'] as const),
     flash: numbers('flash', ['alpha', 'sec'] as const),
     afterimage: numbers('afterimage', ['count', 'intervalSec', 'alpha'] as const),
-    motion: numbers('motion', [
-      'othersAlpha', 'windupMs', 'snapMs', 'lunge', 'lungeSec', 'breathe', 'breatheSec', 'hurtSec',
-      'swingHoldMs', 'follow', 'afterHitSec', 'blendMs', 'popScale', 'popMs', 'strikeGhosts', 'strikeGhostAlpha', 'poseKick', 'effectFadeMs',
-    ] as const),
+    motion: {
+      ...numbers('motion', [
+        'othersAlpha', 'windupMs', 'snapMs', 'lunge', 'lungeSec', 'breathe', 'breatheSec', 'hurtSec',
+        'swingHoldMs', 'follow', 'afterHitSec', 'blendMs', 'popScale', 'popMs', 'strikeGhosts', 'strikeGhostAlpha', 'poseKick', 'effectFadeMs',
+        'bodyGap', 'bodyGapSec', 'hurtAlpha', 'othersFadeSec',
+      ] as const),
+      ghostColor: str(motion, 'ghostColor', 'motion'),
+      hurtColor: str(motion, 'hurtColor', 'motion'),
+    },
     effects: numbers('effects', ['minMs', 'glowAlpha', 'glowBlur'] as const),
     cutscene: {
       ...numbers('cutscene', [

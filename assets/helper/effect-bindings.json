@@ -45,18 +45,15 @@
   "recoil": [
     "11_guard_shell"
   ],
-  "_glowComment": "발광 겹을 얹을 이펙트. 연기·재는 뺀다 (SPEC-002 §6-7)",
+  "_glowComment": "발광 겹을 얹을 이펙트. 연기·재는 뺀다 (SPEC-002 §6-7). 가로 쓸기·이동 잔상·충전 고리는 뺀다 — 몸 위를 넓게 덮어서 회색 연기에 더하기 겹이 얹히면 캐릭터가 뿌옇게 씻겨 보였다 (2026-09-25)",
   "glow": [
     "01_flame_burst",
     "02_impact_flash",
     "03_slash_trail",
     "05_clash_spark",
-    "06_horizontal_sweep",
     "07_downward_cleave",
     "08_pierce",
-    "09_charge_ring",
     "10_ground_impact",
-    "11_guard_shell",
-    "12_speed_wake"
+    "11_guard_shell"
   ]
 }

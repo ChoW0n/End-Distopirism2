@@ -29,6 +29,8 @@ export type RenderCommand =
       targetId: string | null;
       frameId: string | null;
       placement: EffectPlacement;
+      //true 면 달려가는 중일 때 도착한 자리에서 낸다. 준비 이펙트가 빈 제자리에 남지 않게 한다 (SPEC-002 §5.4.2)
+      onArrive?: boolean;
     }
   //컷신 레이어는 cutscene 단계에만 들어 있다. 나머지 단계는 UI 표시용이다
   | { type: 'ultimate'; combatantId: string; phase: UltimatePhase; layers: LayerTransform[] | null }
@@ -190,15 +192,18 @@ export class BattlePresenter {
     //시작은 준비 자세 한 장만. 전용기 전체는 피해가 들어가는 한 방에 휘두른다 (SPEC-005 §2)
     const ready = side.sequence[0];
     if (ready) commands.push({ type: 'playFrames', combatantId, frameIds: [ready] });
-    //준비 자세를 잡으며 제자리에서, 달려 나가며 출발점에서 사건 이펙트가 난다.
+    //달려 나가며 출발점에서, 준비 자세를 잡으며 도착한 자리에서 사건 이펙트가 난다.
     //지면 이펙트는 발, 나머지는 몸 가운데다 (SPEC-002 §5.4.2)
     if (ready) {
       const feet = placement.position;
       const center = { x: feet.x, y: feet.y - catalog.characterHeight * 0.5 };
-      for (const effectIds of [catalog.bindings.ready, catalog.bindings.dash]) {
+      for (const [effectIds, onArrive] of [
+        [catalog.bindings.ready, true],
+        [catalog.bindings.dash, false],
+      ] as const) {
         for (const effectId of effectIds) {
           const at = catalog.effect(effectId).anchor === 'groundPoint' ? feet : center;
-          this.pushEventEffects(commands, combatantId, ready, [effectId], at);
+          this.pushEventEffects(commands, combatantId, ready, [effectId], at, onArrive);
         }
       }
     }
@@ -212,6 +217,7 @@ export class BattlePresenter {
     frameId: string,
     effectIds: readonly string[],
     at: Point,
+    onArrive = false,
   ): void {
     const placement = this.context.actor(combatantId);
     for (const effectId of effectIds) {
@@ -225,6 +231,7 @@ export class BattlePresenter {
           { source: placement, sourceFrameId: frameId },
           { flipped: placement.facing === -1, at },
         ),
+        ...(onArrive ? { onArrive: true } : {}),
       });
     }
   }

@@ -78,6 +78,8 @@ interface Actor {
   slides: { dx: number; sec: number; t: number }[];
   //대시가 끝난 뒤 밀려나거나 따라 들어간 누적 거리. 월드에 박히는 표시를 이만큼 옮긴다
   drift: number;
+  //보이는 정도. 교전에 안 낀 사람은 othersAlpha 쪽으로 othersFadeSec 동안 옮겨 간다
+  presence: number;
 }
 
 //재생 중인 이펙트 하나. 마지막 키프레임에도 그림이 남으므로 끝나면 반드시 지운다
@@ -177,6 +179,10 @@ export class CanvasRenderer {
   private readonly actors = new Map<string, Actor>();
   private readonly effects: LiveEffect[] = [];
   private readonly sparks: LiveSpark[] = [];
+  //달려가는 중이라 도착을 기다리는 이펙트 (SPEC-002 §5.4.2)
+  private arrivals: Extract<RenderCommand, { type: 'spawnEffect' }>[] = [];
+  //잔상·번쩍임 실루엣을 만드는 작업 캔버스. 하나를 돌려 쓴다
+  private readonly scratch = document.createElement('canvas');
   private readonly numbers: LiveNumber[] = [];
   private readonly badges: LiveBadge[] = [];
   private arrows: LiveArrow[] = [];
@@ -239,6 +245,7 @@ export class CanvasRenderer {
     this.slowmo = null;
     this.flash = null;
     this.pendingOnFrame = [];
+    this.arrivals = [];
     this.subjects = null;
     this.zoom = this.zoomGoal = 1;
     this.tilt = this.tiltGoal = 0;
@@ -277,6 +284,7 @@ export class CanvasRenderer {
         striking: false,
         slides: [],
         drift: 0,
+        presence: 1,
       });
     }
     this.focus = this.restFocus();
@@ -294,7 +302,7 @@ export class CanvasRenderer {
 
   //대기열도 비었고 아무도 움직이지 않는 상태. 다음 턴을 열어도 되는지 판단하는 데 쓴다
   get idle(): boolean {
-    if (this.cutscene || this.queue.length > 0 || this.gate > 0 || this.freeze > 0) return false;
+    if (this.cutscene || this.queue.length > 0 || this.gate > 0 || this.freeze > 0 || this.arrivals.length > 0) return false;
     for (const actor of this.actors.values()) {
       if (actor.target || actor.slides.length > 0) return false;
     }
@@ -359,6 +367,11 @@ export class CanvasRenderer {
         return 0;
 
       case 'spawnEffect': {
+        //도착하면 낼 이펙트. 뒤따라 오는 대시 명령이 먼저 걸리게 이번 장면 끝에 판단한다
+        if (command.onArrive) {
+          this.arrivals.push(command);
+          return 0;
+        }
         if (command.frameId) {
           this.pendingOnFrame.push({ combatantId: command.sourceId, frameId: command.frameId, command });
           const actor = this.actors.get(command.sourceId);
@@ -605,6 +618,18 @@ export class CanvasRenderer {
     return Math.hypot(actor.target.x - here.x, actor.target.y - here.y) / actor.speed;
   }
 
+  //멈춰 선 사람의 도착 이펙트를 지금 선 자리에 낸다
+  private releaseArrivals(): void {
+    if (this.arrivals.length === 0) return;
+    const rest: typeof this.arrivals = [];
+    for (const command of this.arrivals) {
+      const actor = this.actors.get(command.sourceId);
+      if (actor?.target) rest.push(command);
+      else this.spawn(command);
+    }
+    this.arrivals = rest;
+  }
+
   //지금 떠 있는 장에 묶여 있던 이펙트를 터뜨린다
   private releaseOnFrame(actor: Actor): void {
     const current = actor.frames[actor.frameIndex];
@@ -740,7 +765,12 @@ export class CanvasRenderer {
       this.gate += dwell;
     }
 
-    for (const actor of this.actors.values()) this.tickActor(actor, dt);
+    for (const actor of this.actors.values()) {
+      this.tickActor(actor, dt);
+      this.tickPresence(actor, realSec);
+    }
+    this.keepApart(dt);
+    this.releaseArrivals();
     this.tickWorld(dt);
     this.tickCamera(realSec, dt);
   }
@@ -842,8 +872,10 @@ export class CanvasRenderer {
     actor.shown = now;
     if (!before || !now || before === now) return;
 
-    //앞 장을 잠깐 남긴다. 두 실루엣이 겹쳐 움직임 흐림처럼 읽힌다
-    actor.blend = { frameId: before, t: 0 };
+    //앞 장을 잠깐 남긴다. 대기·준비 같은 작은 전환에만 쓴다.
+    //휘두르는 한 방과 맞는 순간은 자세가 크게 바뀌어 두 몸으로 보였다 (SPEC-005 §2.3.5)
+    const calm = !this.striking(actor) && actor.hurt <= 0 && !isSkillFrame(before) && !isSkillFrame(now);
+    actor.blend = calm ? { frameId: before, t: 0 } : null;
     if (!this.striking(actor)) return;
     //휘두르는 장이면 한 발 따라 들어간다. 맞는 쪽도 같은 만큼 밀리므로 간격이 유지된다 (SPEC-005 §2.3.3)
     if (this.swingHoldOf(actor, now) > 0) {
@@ -856,6 +888,46 @@ export class CanvasRenderer {
     if (this.subjects?.includes(actor.placement.combatantId)) {
       this.kick = { amount: this.motion.poseKick, sec: this.motion.popMs / 1000, t: 0 };
     }
+  }
+
+  //교전 중인 둘의 몸이 겹치지 않게 벌린다. 휘두르는 쪽이 있으면 맞는 쪽이 밀린다 (SPEC-005 §2.3.4)
+  //발 간격만 지키면 찌르기·쓸기 장에서 몸이 상대 안으로 들어갔다
+  private keepApart(dt: number): void {
+    if (!this.subjects || this.subjects.length !== 2 || dt <= 0) return;
+    const a = this.actors.get(this.subjects[0] ?? '');
+    const b = this.actors.get(this.subjects[1] ?? '');
+    if (!a || !b || a.target || b.target) return;
+    //a 가 보는 쪽에 b 가 있어야 한다. 서로 마주 보지 않으면 재지 않는다
+    const toward = a.placement.facing;
+    if (b.placement.facing === toward) return;
+    const ax = this.bodyX(a);
+    const bx = this.bodyX(b);
+    if (ax === null || bx === null) return;
+    const need = this.motion.bodyGap * Math.max(this.heightOf(a), this.heightOf(b));
+    const gap = (bx - ax) * toward;
+    if (gap >= need) return;
+    //한 번에 튀지 않게 bodyGapSec 에 걸쳐 벌린다
+    const k = this.motion.bodyGapSec > 0 ? 1 - Math.exp((-3 * dt) / this.motion.bodyGapSec) : 1;
+    const step = (need - gap) * k;
+    const aShare = b.striking && !a.striking ? 1 : a.striking && !b.striking ? 0 : 0.5;
+    this.shove(a, -toward * step * aShare);
+    this.shove(b, toward * step * (1 - aShare));
+  }
+
+  //지금 장의 몸 중심 x. 머리 중심을 몸통 기준으로 쓴다
+  private bodyX(actor: Actor): number | null {
+    const frameId = this.currentFrame(actor);
+    if (!frameId || !this.catalogOf(actor)) return null;
+    const placement = { ...actor.placement, position: this.positionOf(actor) };
+    return this.stage.framePoint(placement, frameId, 'headCenter').x;
+  }
+
+  //밀려난 자리에 머물게 옮긴다. 피해 숫자도 같이 따라간다 (SPEC-005 §2.3.3)
+  private shove(actor: Actor, dx: number): void {
+    if (dx === 0) return;
+    const at = actor.placement.position;
+    actor.placement = { ...actor.placement, position: { x: at.x + dx, y: at.y } };
+    actor.drift += dx;
   }
 
   //휘두르는 한 방이 진행 중인지
@@ -920,11 +992,17 @@ export class CanvasRenderer {
 
   //카메라가 두 사람에게 붙어 있으면 나머지는 누른다. 누가 싸우는지 한눈에 읽히게 한다 (SPEC-005 §4.2)
   private presence(actor: Actor): number {
-    if (!this.subjects || this.subjects.includes(actor.placement.combatantId)) return 1;
-    //붙는 정도만큼 서서히 누른다
-    const engaged = Math.max(0, Math.min(1, (this.zoom - 1) / Math.max(0.01, this.zoomGoal - 1)));
-    return 1 - (1 - this.motion.othersAlpha) * engaged;
+    return actor.presence;
   }
+
+  //숨김 정도를 목표 쪽으로 옮긴다. 줌 진행률에 묶으면 당기는 내내 반투명한 사람이 겹쳐 보였다 (SPEC-005 §4.2)
+  private tickPresence(actor: Actor, realSec: number): void {
+    const hidden = this.subjects !== null && !this.subjects.includes(actor.placement.combatantId);
+    const goal = hidden ? this.motion.othersAlpha : 1;
+    const step = this.motion.othersFadeSec > 0 ? realSec / this.motion.othersFadeSec : 1;
+    actor.presence = actor.presence < goal ? Math.min(goal, actor.presence + step) : Math.max(goal, actor.presence - step);
+  }
+
 
   //여러 장짜리 동작의 한 장 길이. 첫 장은 준비라 버티고, 휘두르는 장은 이펙트가 끝날 때까지 버티고,
   //나머지 중간 장은 짧게 넘긴다 (SPEC-005 §2.3.2)
@@ -1069,7 +1147,7 @@ export class CanvasRenderer {
     frameId: string,
     position: Point,
     alpha: number,
-    body: { breath: number; hurt: number; pop?: number } = { breath: 1, hurt: 0 },
+    body: { breath: number; hurt: number; pop?: number; tint?: string } = { breath: 1, hurt: 0 },
   ): void {
     const catalog = this.catalogOf(actor);
     if (!catalog) return;
@@ -1096,18 +1174,41 @@ export class CanvasRenderer {
       //좌우 반전. 비트맵만 뒤집고 놓이는 자리는 그대로다
       ctx.translate(origin.x + width, origin.y);
       ctx.scale(-1, 1);
-      ctx.drawImage(image, 0, 0, width, height);
     } else {
       ctx.translate(origin.x, origin.y);
-      ctx.drawImage(image, 0, 0, width, height);
     }
-    //맞은 순간 몸이 번쩍인다. 같은 그림을 더하기로 한 번 더 얹는다 (필터 없는 브라우저도 된다)
-    if (body.hurt > 0) {
-      ctx.globalCompositeOperation = 'lighter';
-      ctx.globalAlpha *= body.hurt;
-      ctx.drawImage(image, 0, 0, width, height);
+    //잔상은 한 색으로 채운 실루엣이다. 원색이면 캐릭터가 둘로 보였다 (SPEC-005 §2.3.5)
+    if (body.tint) {
+      this.drawTinted(image, width, height, body.tint);
+      ctx.restore();
+      return;
+    }
+    ctx.drawImage(image, 0, 0, width, height);
+    //맞은 순간 몸이 번쩍인다. 그림 모양대로 색만 덮는다. 더하기로 겹치면 흰 옷이 통째로 날아갔다
+    if (body.hurt > 0 && this.motion.hurtAlpha > 0) {
+      ctx.globalAlpha *= body.hurt * body.hurt * this.motion.hurtAlpha;
+      this.drawTinted(image, width, height, this.motion.hurtColor);
     }
     ctx.restore();
+  }
+
+  //그림의 불투명한 곳만 한 색으로 채워 지금 변환 위에 그린다. 작업 캔버스는 하나를 돌려 쓴다
+  private drawTinted(image: CanvasImageSource, width: number, height: number, color: string): void {
+    const w = Math.max(1, Math.ceil(width));
+    const h = Math.max(1, Math.ceil(height));
+    const scratch = this.scratch;
+    if (scratch.width < w) scratch.width = w;
+    if (scratch.height < h) scratch.height = h;
+    const g = scratch.getContext('2d');
+    if (!g) return;
+    g.globalCompositeOperation = 'source-over';
+    g.clearRect(0, 0, w, h);
+    g.drawImage(image, 0, 0, w, h);
+    g.globalCompositeOperation = 'source-in';
+    g.fillStyle = color;
+    g.fillRect(0, 0, w, h);
+    g.globalCompositeOperation = 'source-over';
+    this.ctx.drawImage(scratch, 0, 0, w, h, 0, 0, width, height);
   }
 
   //지금 보일 장. 달리는 동안은 보는 쪽으로 가면 전진, 등 뒤로 가면 후퇴 장을 쓴다
@@ -1137,7 +1238,7 @@ export class CanvasRenderer {
       const ghost = actor.strikeGhosts[i];
       if (!ghost) continue;
       const fade = this.motion.strikeGhostAlpha * (1 - ghost.age / ghostLife) * (1 - i / (actor.strikeGhosts.length + 1));
-      if (fade > 0.01) this.drawFrame(actor, ghost.frameId, ghost.position, fade);
+      if (fade > 0.01) this.drawFrame(actor, ghost.frameId, ghost.position, fade, { breath: 1, hurt: 0, tint: this.motion.ghostColor });
     }
     //앞 장을 아래에 옅게 깔고 새 장을 위에 그린다. 새 장이 못 덮은 곳만 번져 보인다
     if (actor.blend) {
@@ -1158,7 +1259,7 @@ export class CanvasRenderer {
       const frameId = ghost.frameId ?? this.currentFrame(actor);
       if (!frameId) continue;
       const alpha = actor.trail.alpha * (1 - ghost.age / life) * (1 - i / (actor.ghosts.length + 1));
-      if (alpha > 0.01) this.drawFrame(actor, frameId, ghost.position, alpha);
+      if (alpha > 0.01) this.drawFrame(actor, frameId, ghost.position, alpha, { breath: 1, hurt: 0, tint: this.motion.ghostColor });
     }
   }
 
@@ -1805,6 +1906,11 @@ export class CanvasRenderer {
 }
 
 //조건에 맞는 것만 남긴다. 제자리에서 줄인다
+//전용기 장인지. 장 이름의 skillN 표기로 가린다 (SpriteCatalog.frameSequence 와 같은 규칙)
+function isSkillFrame(frameId: string): boolean {
+  return /skill\d/.test(frameId);
+}
+
 function keep<T>(list: T[], alive: (item: T) => boolean): void {
   let n = 0;
   for (const item of list) if (alive(item)) list[n++] = item;

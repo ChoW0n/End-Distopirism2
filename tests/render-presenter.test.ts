@@ -450,6 +450,19 @@ describe('§5.4 프레임에 묶인 이펙트', () => {
     }
   });
 
+  //준비 이펙트가 달려가기 전 빈 제자리에 남던 문제. 대시 이펙트는 출발점이 맞다 (SPEC-002 §5.4.2)
+  it('준비 이펙트만 도착한 자리에서 나게 표시한다', () => {
+    const commands = makePresenter().consume([
+      { type: 'clashStart', attackerId: 'a1', defenderId: 'e1', attackerSkillId: S2, defenderSkillId: S1 },
+    ]);
+    const mine = eventEffects(commands).filter((e) => e.sourceId === 'a1');
+    for (const e of mine) {
+      const isReady = sprites.bindings.ready.includes(e.placement.effectId);
+      expect(e.onArrive === true).toBe(isReady);
+    }
+    expect(mine.some((e) => e.onArrive === true)).toBe(sprites.bindings.ready.length > 0);
+  });
+
   it('사건 이펙트에는 명중 섬광이 없다', () => {
     const commands = makePresenter().consume(resolveTurn(makeBattle(S1), S2));
     for (const e of eventEffects(commands)) expect(sprites.effect(e.placement.effectId).anchor).not.toBe('hitPoint');
