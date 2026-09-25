@@ -38,7 +38,9 @@ export type RenderCommand =
   | { type: 'placeholder'; combatantId: string; characterId: string }
   //마지막이 아닌 휘두름에 맞는 쪽이 움찔한다. 때리는 쪽의 그 장이 떠 있을 때 터진다 (SPEC-005 §2.3.2)
   //피해는 없다. 피해 이벤트는 교전당 하나라 마지막 한 방에만 붙는다
-  | { type: 'flinch'; combatantId: string; sourceId: string; frameId: string };
+  | { type: 'flinch'; combatantId: string; sourceId: string; frameId: string }
+  //쓰러졌다. 맞은 자세로 굳어 사라지고, 이후 이동·자세 명령을 받지 않는다 (SPEC-005 §7.2)
+  | { type: 'down'; combatantId: string };
 
 //교전에 참가한 한쪽. 피해가 들어왔을 때 어느 이펙트를 어디에 붙일지 여기서 읽는다
 interface EngagementSide {
@@ -57,6 +59,8 @@ interface EngagementSide {
 interface ActiveEngagement {
   attacker: EngagementSide;
   defender: EngagementSide;
+  //지금까지 이긴 쪽. 일방 공격은 공격자다. 이 사람의 피해는 상대에게 맞은 게 아니라 자기 대가다 (SPEC-005 §7.3)
+  winnerId: string | null;
 }
 
 export class BattlePresenter {
@@ -106,6 +110,7 @@ export class BattlePresenter {
 
         //합이 한 번 오갈 때마다 이긴 쪽은 휘두르고 진 쪽은 밀려 물러난다. 교착이면 둘 다 휘두른다
         case 'clashRoundWin':
+          if (this.engagement) this.engagement.winnerId = event.winnerId;
           this.exchange(commands, event.winnerId);
           break;
         case 'deadlock':
@@ -118,18 +123,20 @@ export class BattlePresenter {
           break;
 
         //피해가 실제로 들어갔을 때만 명중 연출을 낸다 (SPEC-002 §6-1)
+        //이긴 쪽의 피해는 체력 대가라 휘두름·맞는 자세가 없다 (SPEC-005 §7.3)
         case 'damageApplied':
-          if (event.damage > 0) this.onDamage(commands, event.combatantId);
+          if (event.damage > 0 && !this.isSelfCost(event.combatantId)) this.onDamage(commands, event.combatantId);
           break;
 
-        //막힌 경우엔 섬광·화염·지면 충격을 띄우지 않는다
+        //막힌 경우에도 때리는 쪽은 휘두른다. 섬광·화염·지면 충격만 띄우지 않는다 (SPEC-005 §7.1)
         case 'damageNullified':
-          this.pushNamedFrame(commands, event.combatantId, 'guard');
+          this.onNullified(commands, event.combatantId);
           break;
 
         //쓰러진 자리에 연기·잔불이 남는다. 발생 좌표를 박아 무기 추적을 끊는다
         case 'defeated':
           this.onDefeated(commands, event.combatantId);
+          commands.push({ type: 'down', combatantId: event.combatantId });
           break;
 
         case 'clashEnd':
@@ -172,6 +179,7 @@ export class BattlePresenter {
         defenderSkillId === null
           ? { combatantId: defenderId, frameId: this.idleOrNull(defenderId), effectIds: [], sequence: [], struck: false }
           : this.beginSide(commands, defenderId, defenderSkillId),
+      winnerId: defenderSkillId === null ? attackerId : null,
     };
   }
 
@@ -458,6 +466,21 @@ export class BattlePresenter {
         ),
       });
     }
+  }
+
+  //교전 중 이긴 쪽이 깎였는지. 우리 규칙에서 이긴 쪽은 상대에게 맞지 않으니 자기 대가다
+  private isSelfCost(combatantId: string): boolean {
+    return this.engagement !== null && this.engagement.winnerId === combatantId;
+  }
+
+  //피해가 무효가 됐다. 때리는 쪽은 한 방을 휘두르고 막은 쪽은 막는 자세를 잡는다
+  private onNullified(commands: RenderCommand[], guardId: string): void {
+    const engagement = this.engagement;
+    const hitter = engagement
+      ? [engagement.attacker, engagement.defender].find((side) => side.combatantId !== guardId)
+      : undefined;
+    if (hitter) this.strike(commands, hitter, guardId);
+    this.pushNamedFrame(commands, guardId, 'guard');
   }
 
   //격파 잔류 이펙트. 쓰러진 자리의 월드 좌표를 그대로 박는다 (SPEC-002 §6)

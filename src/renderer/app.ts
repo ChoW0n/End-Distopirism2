@@ -16,6 +16,7 @@ import { Stage, type StagePlacement } from '../render/stage.js';
 import { UiDirector } from '../ui/director.js';
 import type { UiData } from '../ui/data.js';
 import { ImageBank, loadCharacter, loadMap, loadUi } from './assets.js';
+import { SynthSound } from './sound.js';
 import { CanvasRenderer } from './canvas.js';
 import { Scene, type MapPlacement } from './scene.js';
 
@@ -185,7 +186,28 @@ async function main(): Promise<void> {
   canvas.width = loaded.map.viewport.width;
   canvas.height = loaded.map.viewport.height;
   const scene = new Scene(loaded.map, height, groundY);
-  const renderer = new CanvasRenderer(ctx, scene, stage, loaded.images, height, loaded.ui.motion, loaded.ui.cutscene, loaded.ui.effects);
+  //소리는 첫 클릭·키 입력에 켜진다. 브라우저가 그 전에는 못 내게 막는다 (SPEC-005 §7.5)
+  const sound = new SynthSound(loaded.ui.sound);
+  const soundToggle = document.getElementById('sound') as HTMLInputElement | null;
+  const unlock = (): void => {
+    sound.unlock();
+    sound.setMuted(soundToggle ? !soundToggle.checked : false);
+  };
+  window.addEventListener('pointerdown', unlock);
+  window.addEventListener('keydown', unlock);
+  soundToggle?.addEventListener('change', unlock);
+  const renderer = new CanvasRenderer(
+    ctx,
+    scene,
+    stage,
+    loaded.images,
+    height,
+    loaded.ui.motion,
+    loaded.ui.cutscene,
+    loaded.ui.effects,
+    loaded.ui.down,
+    sound,
+  );
 
   let session: Session | null = null;
   //턴 사이에 한 박자 쉰다. 그 외의 완급은 렌더러가 명령마다 알아서 준다

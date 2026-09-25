@@ -8,11 +8,11 @@
 
 import type { BattleCatalog } from '../domain/data.js';
 import type { Rng } from '../domain/rng.js';
-import type { BattleEvent } from '../domain/types.js';
+import type { BattleEvent, StatusId } from '../domain/types.js';
 import type { Point } from '../render/manifest.js';
 import type { Stage, StagePlacement } from '../render/stage.js';
 import { DashPlanner } from './dash.js';
-import type { UiData } from './data.js';
+import type { FloatTextKind, UiData } from './data.js';
 
 //참가자 id 로 무대 배치를 찾는 통로. 프리젠터와 같은 모양이다
 export interface UiContext {
@@ -104,7 +104,24 @@ export type UiCommand =
   | { type: 'knockback'; combatantId: string; dx: number; sec: number }
   | { type: 'flash'; alpha: number; sec: number }
   //다음 명령까지 쉬는 박자. 합 라운드가 읽히게 한다
-  | { type: 'beat'; sec: number };
+  | { type: 'beat'; sec: number }
+  //── 아래는 SPEC-005 §7 조사 대조 ──
+  //피해 숫자 말고 뜨는 글자. 무효·처형·상태 이름·자기 피해·상태 피해를 색으로 가른다
+  | {
+      type: 'floatText';
+      combatantId: string;
+      kind: FloatTextKind;
+      text: string;
+      color: string;
+      from: Point;
+      to: Point;
+      size: number;
+      sec: number;
+    }
+  //걸려 있는 상태 이름. 체력 바 아래에 작게 붙는다. 빈 목록이면 지운다
+  | { type: 'statusChips'; combatantId: string; labels: string[]; size: number; gap: number; color: string }
+  //전투 결과 띠. 대기열 맨 뒤에서 뜬다 (§7.4)
+  | { type: 'battleResult'; outcome: 'win' | 'lose' | 'draw'; text: string; inSec: number; bandHeight: number; size: number };
 
 //진행 중인 합 하나. 배지를 끝에 한 번만 내기 위해 모아 둔다
 interface ActiveClash {
@@ -121,6 +138,8 @@ interface ActiveEngagement {
   targetId: string;
   coinsSeen: number;
   powersSeen: number;
+  //지금까지 이긴 쪽. 일방 공격은 공격자. 이 사람의 피해는 자기 대가다 (SPEC-005 §7.3)
+  winnerId: string | null;
 }
 
 //캐릭터 한 명의 몸 비율. 에셋이 없으면 기준 캐릭터에서 빌린다
@@ -142,6 +161,8 @@ export class UiDirector {
   private engagement: ActiveEngagement | null = null;
   //대시로 잡아 둔 자리. 접점·피해 숫자 위치를 여기서 잰다. 제자리로 가면 지운다
   private readonly standing = new Map<string, Point>();
+  //걸려 있는 상태. 이름표를 그리려고 따라 센다. 같은 상태가 중첩되면 개수를 붙인다
+  private readonly statuses = new Map<string, StatusId[]>();
   //화살표가 그려져 있는지. 교전이 시작되면 한 번 지운다
   private arrowsDrawn = false;
 
@@ -180,6 +201,7 @@ export class UiDirector {
             targetId: event.defenderId,
             coinsSeen: 0,
             powersSeen: 0,
+            winnerId: null,
           };
           this.pushBanner(commands, event.attackerId, event.attackerSkillId);
           this.pushBanner(commands, event.defenderId, event.defenderSkillId);
@@ -194,6 +216,7 @@ export class UiDirector {
             targetId: event.targetId,
             coinsSeen: 0,
             powersSeen: 0,
+            winnerId: event.attackerId,
           };
           this.pushBanner(commands, event.attackerId, event.skillId);
           //일방 공격은 공격자만 맞는 쪽 옆으로 달려간다. 맞는 쪽은 제자리다
@@ -220,6 +243,7 @@ export class UiDirector {
           break;
 
         case 'clashRoundWin':
+          if (this.engagement) this.engagement.winnerId = event.winnerId;
           this.pushClashResult(commands, event.winnerId);
           break;
 
@@ -236,16 +260,62 @@ export class UiDirector {
           if (this.clash) this.clash.deadlockCount = this.data.badge.deadlockMax;
           break;
 
+        //이긴 쪽의 피해는 체력 대가다. 멈춤·넉백 없이 작은 숫자만 (SPEC-005 §7.3)
         case 'damageApplied':
           this.hp.set(event.combatantId, event.hp);
-          if (event.damage > 0) this.pushImpact(commands, event.combatantId, event.damage);
+          if (event.damage > 0) {
+            if (this.engagement?.winnerId === event.combatantId) {
+              this.pushFloatText(commands, event.combatantId, 'self', `-${event.damage}`);
+            } else {
+              this.pushImpact(commands, event.combatantId, event.damage);
+            }
+          }
           this.pushBar(commands, event.combatantId, 'hp');
           break;
 
+        //무효. 막는 자세는 발표자가 잡고 여기선 글자만 띄운다
+        case 'damageNullified':
+          this.pushFloatText(commands, event.combatantId, 'nullify', '무효');
+          break;
+
+        //처형은 피해 이벤트 없이 체력이 0 이 된다. 바를 비우고 글자와 번쩍임을 낸다
+        case 'executed':
+          this.hp.set(event.combatantId, 0);
+          this.pushBar(commands, event.combatantId, 'hp');
+          this.pushFloatText(commands, event.combatantId, 'execute', '처형');
+          commands.push({ type: 'flash', alpha: this.data.flash.alpha, sec: this.data.flash.sec });
+          break;
+
+        case 'statusApplied':
+          this.addStatus(event.combatantId, event.status);
+          this.pushFloatText(commands, event.combatantId, 'status', this.battle.status(event.status).name);
+          this.pushChips(commands, event.combatantId);
+          break;
+
+        case 'statusExpired':
+          this.removeStatus(event.combatantId, event.status);
+          this.pushChips(commands, event.combatantId);
+          break;
+
+        //쓰러지면 이름표를 걷는다. 바·코인은 렌더러가 쓰러진 사람에겐 안 그린다
+        case 'defeated':
+          this.statuses.delete(event.combatantId);
+          this.pushChips(commands, event.combatantId);
+          break;
+
+        //마지막 한 방·격파 연출이 다 나간 뒤 결과 띠가 뜬다. 명령 순서가 그걸 보장한다 (§7.4)
+        case 'battleEnd':
+          this.pushResult(commands, event.winner);
+          break;
+
         //출혈 등은 남은 체력을 안 주므로 깎인 만큼만 빼 둔다
+        //상태 피해. 공격 모션·넉백 없이 숫자와 상태 이름만 (§7.3)
         case 'statusTicked':
           this.hp.set(event.combatantId, this.hpOf(event.combatantId) - event.damage);
           this.pushBar(commands, event.combatantId, 'hp');
+          if (event.damage > 0) {
+            this.pushFloatText(commands, event.combatantId, 'tick', `-${event.damage} ${this.battle.status(event.status).name}`);
+          }
           break;
 
         case 'mentalityChanged':
@@ -599,6 +669,70 @@ export class UiDirector {
     if (heavy) commands.push({ type: 'flash', alpha: this.data.flash.alpha, sec: this.data.flash.sec });
     //한 방 뒤에 쉰다. 이펙트가 다 사라지기 전에 제자리로 돌아가지 않는다 (SPEC-005 §2.3.2)
     commands.push({ type: 'beat', sec: this.data.motion.afterHitSec });
+  }
+
+  //머리 위에 글자 하나를 띄운다. 피해 숫자보다 조금 위에서 떠오른다
+  private pushFloatText(commands: UiCommand[], combatantId: string, kind: FloatTextKind, text: string): void {
+    if (!this.hasBody(combatantId)) return;
+    const data = this.data.floatText;
+    const height = this.heightOf(combatantId);
+    const here = this.whereIs(combatantId);
+    const from = { x: here.x, y: here.y - data.height * height };
+    commands.push({
+      type: 'floatText',
+      combatantId,
+      kind,
+      text,
+      color: data.colors[kind],
+      from,
+      to: { x: from.x, y: from.y - data.rise * height },
+      size: data.size * height,
+      sec: data.sec,
+    });
+  }
+
+  private addStatus(combatantId: string, status: StatusId): void {
+    const list = this.statuses.get(combatantId) ?? [];
+    list.push(status);
+    this.statuses.set(combatantId, list);
+  }
+
+  //만료는 한 번에 하나씩 온다. 중첩이면 하나만 뺀다
+  private removeStatus(combatantId: string, status: StatusId): void {
+    const list = this.statuses.get(combatantId);
+    if (!list) return;
+    const index = list.indexOf(status);
+    if (index >= 0) list.splice(index, 1);
+  }
+
+  //체력 바 아래 이름표. 중첩된 상태는 "출혈 2" 처럼 개수를 붙인다
+  private pushChips(commands: UiCommand[], combatantId: string): void {
+    if (!this.hasBody(combatantId)) return;
+    const list = this.statuses.get(combatantId) ?? [];
+    const labels: string[] = [];
+    for (const status of new Set(list)) {
+      const count = list.filter((s) => s === status).length;
+      const name = this.battle.status(status).name;
+      labels.push(count > 1 ? `${name} ${count}` : name);
+    }
+    const height = this.heightOf(combatantId);
+    const data = this.data.floatText;
+    commands.push({
+      type: 'statusChips',
+      combatantId,
+      labels,
+      size: data.chipSize * height,
+      gap: data.chipGap * height,
+      color: data.colors.status,
+    });
+  }
+
+  //아군 기준 결과 글자
+  private pushResult(commands: UiCommand[], winner: 'ally' | 'enemy' | null): void {
+    const outcome = winner === 'ally' ? 'win' : winner === 'enemy' ? 'lose' : 'draw';
+    const text = outcome === 'win' ? '승리' : outcome === 'lose' ? '패배' : '무승부';
+    const result = this.data.result;
+    commands.push({ type: 'battleResult', outcome, text, inSec: result.inSec, bandHeight: result.bandHeight, size: result.size });
   }
 
   //달려가 있는 만큼의 차이. 바는 제자리 기준이라 코인을 따라 붙일 때 쓴다

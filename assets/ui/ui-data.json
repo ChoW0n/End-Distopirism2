@@ -151,5 +151,50 @@
     "slowmoScale": 0.3,
     "slowmoSec": 0.7,
     "shakeReferenceDamage": 30
+  },
+  "_down": "쓰러진 사람은 맞은 자세로 굳어 어두워지며 사라진다. 시체 장이 없어서 새로 그리지 않는다 (SPEC-005 §7.2)",
+  "down": {
+    "sec": 0.9,
+    "dim": 0.75
+  },
+  "_floatText": "피해 숫자 말고 뜨는 글자. 크기·높이는 H 배수 (SPEC-005 §7.3)",
+  "floatText": {
+    "size": 0.075,
+    "rise": 0.2,
+    "sec": 1.0,
+    "height": 0.95,
+    "colors": {
+      "self": "#b98a86",
+      "tick": "#c46bd6",
+      "execute": "#ff2f22",
+      "nullify": "#9fc4e8",
+      "status": "#e8d6a0"
+    },
+    "chipSize": 0.032,
+    "chipGap": 0.012
+  },
+  "_result": "전투 결과 띠. 대기열 맨 뒤에서 뜬다 (SPEC-005 §7.4)",
+  "result": {
+    "inSec": 0.35,
+    "bandHeight": 0.2,
+    "size": 0.075
+  },
+  "_sound": "웹 오디오 합성 자리표시 소리 세기. 0 이면 그 소리를 끈다 (SPEC-005 §7.5)",
+  "sound": {
+    "master": 0.5,
+    "gains": {
+      "dash": 0.35,
+      "coin": 0.25,
+      "clash": 0.8,
+      "clashTie": 0.6,
+      "coinBreak": 0.5,
+      "swing": 0.45,
+      "hit": 0.8,
+      "hitHeavy": 1.0,
+      "guard": 0.6,
+      "down": 0.8,
+      "ultimate": 0.7,
+      "result": 0.6
+    }
   }
 }

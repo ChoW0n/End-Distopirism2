@@ -30,6 +30,7 @@ describe('assets/ui/ui-data.json', () => {
   it.each([
     'dash', 'float', 'arrow', 'bar', 'badge',
     'clash', 'hitStop', 'damageText', 'banner', 'knockback', 'flash', 'afterimage', 'motion', 'effects', 'cutscene', 'camera',
+    'down', 'floatText', 'result', 'sound',
   ])('%s 절이 없으면 던진다', (section) => {
     const broken = { ...raw };
     delete broken[section];
@@ -57,6 +58,19 @@ describe('assets/ui/ui-data.json', () => {
     const broken = JSON.parse(JSON.stringify(raw)) as typeof raw;
     delete (broken['motion'] as Record<string, unknown>)[key];
     expect(() => parseUiData(broken)).toThrow(new RegExp(key));
+  });
+
+  //소리 이름 하나라도 세기가 빠지면 그 소리가 조용히 사라진다 (SPEC-005 §7.5)
+  it('소리 세기 하나가 빠져도 던진다', () => {
+    const broken = JSON.parse(JSON.stringify(raw)) as typeof raw;
+    delete ((broken['sound'] as Record<string, unknown>)['gains'] as Record<string, unknown>)['hitHeavy'];
+    expect(() => parseUiData(broken)).toThrow(/hitHeavy/);
+  });
+
+  it('글자 색 하나가 빠져도 던진다', () => {
+    const broken = JSON.parse(JSON.stringify(raw)) as typeof raw;
+    delete ((broken['floatText'] as Record<string, unknown>)['colors'] as Record<string, unknown>)['execute'];
+    expect(() => parseUiData(broken)).toThrow(/execute/);
   });
 
   it('연출 절의 키 하나가 빠져도 던진다', () => {

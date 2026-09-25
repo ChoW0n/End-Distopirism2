@@ -208,6 +208,42 @@ export interface CameraData {
   shakeReferenceDamage: number;
 }
 
+//쓰러진 사람이 사라지는 시간·어두워지는 정도 (SPEC-005 §7.2)
+export interface DownData {
+  sec: number;
+  dim: number;
+}
+
+//피해 숫자 말고 뜨는 글자. 무효·처형·상태 이름·자기 피해·상태 피해 (SPEC-005 §7.3)
+export type FloatTextKind = 'self' | 'tick' | 'execute' | 'nullify' | 'status';
+export interface FloatTextData {
+  size: number;
+  rise: number;
+  sec: number;
+  height: number;
+  colors: Record<FloatTextKind, string>;
+  //체력 바 아래 상태 이름표
+  chipSize: number;
+  chipGap: number;
+}
+
+//전투 결과 띠 (SPEC-005 §7.4)
+export interface ResultData {
+  inSec: number;
+  bandHeight: number;
+  size: number;
+}
+
+//합성 소리 이름. 렌더러가 명령을 실행하는 순간 낸다 (SPEC-005 §7.5)
+export const SOUND_CUES = [
+  'dash', 'coin', 'clash', 'clashTie', 'coinBreak', 'swing', 'hit', 'hitHeavy', 'guard', 'down', 'ultimate', 'result',
+] as const;
+export type SoundCue = (typeof SOUND_CUES)[number];
+export interface SoundData {
+  master: number;
+  gains: Record<SoundCue, number>;
+}
+
 export interface UiData {
   dash: DashData;
   float: FloatData;
@@ -225,6 +261,10 @@ export interface UiData {
   effects: EffectFxData;
   cutscene: CutsceneFxData;
   camera: CameraData;
+  down: DownData;
+  floatText: FloatTextData;
+  result: ResultData;
+  sound: SoundData;
 }
 
 //수치 파일이 규격과 다를 때 던진다
@@ -291,6 +331,9 @@ export function parseUiData(raw: unknown): UiData {
   const badge = obj(source['badge'], 'badge');
   const cutscene = obj(source['cutscene'], 'cutscene');
   const motion = obj(source['motion'], 'motion');
+  const floatColors = obj(obj(source['floatText'], 'floatText')['colors'], 'floatText.colors');
+  const sound = obj(source['sound'], 'sound');
+  const soundGains = obj(sound['gains'], 'sound.gains');
   //숫자만 들어 있는 절은 키 목록으로 한 번에 읽는다
   const numbers = <K extends string>(name: string, keys: readonly K[]): Record<K, number> => {
     const section = obj(source[name], name);
@@ -367,5 +410,21 @@ export function parseUiData(raw: unknown): UiData {
     camera: numbers('camera', [
       'focusZoom', 'punchZoom', 'punchSec', 'tiltDeg', 'slowmoScale', 'slowmoSec', 'shakeReferenceDamage',
     ] as const),
+    down: numbers('down', ['sec', 'dim'] as const),
+    floatText: {
+      ...numbers('floatText', ['size', 'rise', 'sec', 'height', 'chipSize', 'chipGap'] as const),
+      colors: {
+        self: str(floatColors, 'self', 'floatText.colors'),
+        tick: str(floatColors, 'tick', 'floatText.colors'),
+        execute: str(floatColors, 'execute', 'floatText.colors'),
+        nullify: str(floatColors, 'nullify', 'floatText.colors'),
+        status: str(floatColors, 'status', 'floatText.colors'),
+      },
+    },
+    result: numbers('result', ['inSec', 'bandHeight', 'size'] as const),
+    sound: {
+      master: num(sound, 'master', 'sound'),
+      gains: Object.fromEntries(SOUND_CUES.map((cue) => [cue, num(soundGains, cue, 'sound.gains')])) as Record<SoundCue, number>,
+    },
   };
 }

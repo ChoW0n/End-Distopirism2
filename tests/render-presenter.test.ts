@@ -693,3 +693,39 @@ describe('궁극기가 렌더 명령까지 이어진다', () => {
     expect(() => new SpriteCatalog(sprites.manifest, { ...sprites.bindings, ultimateFrame: '99-none' })).toThrow();
   });
 });
+
+//조사 대조 — 자기 대가·무효·쓰러짐 (SPEC-005 §7.2 · §7.3)
+describe('피해 출처에 따른 동작', () => {
+  const start: BattleEvent[] = [
+    { type: 'clashStart', attackerId: 'a1', defenderId: 'e1', attackerSkillId: S1, defenderSkillId: S1 },
+    { type: 'clashRoundWin', winnerId: 'a1', loserId: 'e1', winnerDamage: 10, loserDamage: 5 },
+  ];
+  const strikes = (commands: RenderCommand[]) =>
+    commands.filter((c): c is Extract<RenderCommand, { type: 'playFrames' }> => c.type === 'playFrames' && c.wait === true);
+
+  it('이긴 쪽이 깎이면 아무도 휘두르지 않고 맞는 자세도 없다', () => {
+    const presenter = makePresenter();
+    presenter.consume(start);
+    const commands = presenter.consume([{ type: 'damageApplied', combatantId: 'a1', damage: 5, hp: 95 }]);
+    expect(strikes(commands)).toHaveLength(0);
+    expect(commands.some((c) => c.type === 'playFrames' && c.combatantId === 'a1')).toBe(false);
+    //그 뒤 진 쪽이 맞으면 이긴 쪽이 휘두른다
+    const hit = presenter.consume([{ type: 'damageApplied', combatantId: 'e1', damage: 12, hp: 88 }]);
+    expect(strikes(hit).map((c) => c.combatantId)).toEqual(['a1']);
+  });
+
+  it('무효여도 이긴 쪽은 휘두르고, 막은 쪽은 막는 자세다. 명중 섬광은 없다', () => {
+    const presenter = makePresenter();
+    presenter.consume(start);
+    const commands = presenter.consume([{ type: 'damageNullified', combatantId: 'e1', skillId: S1 }]);
+    expect(strikes(commands).map((c) => c.combatantId)).toEqual(['a1']);
+    const guard = sprites.frameEndingWith('guard')!.id;
+    expect(commands.some((c) => c.type === 'playFrames' && c.combatantId === 'e1' && c.frameIds[0] === guard)).toBe(true);
+    expect(impactEffects(commands)).toHaveLength(0);
+  });
+
+  it('쓰러지면 down 명령이 나간다', () => {
+    const commands = makePresenter().consume([{ type: 'defeated', combatantId: 'e1' }]);
+    expect(commands.some((c) => c.type === 'down' && c.combatantId === 'e1')).toBe(true);
+  });
+});

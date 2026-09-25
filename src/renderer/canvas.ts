@@ -9,9 +9,10 @@ import { CutsceneDirector, type CutscenePose, type LayerTransform } from '../ren
 import { MeshCutscene } from '../render/cutscene-mesh.js';
 import type { Point, SpriteCatalog } from '../render/manifest.js';
 import type { RenderCommand } from '../render/presenter.js';
+import { SILENT, type SoundPlayer } from './sound.js';
 import type { Stage, StagePlacement } from '../render/stage.js';
 import type { UiCommand } from '../ui/director.js';
-import type { CutsceneFxData, EffectFxData, MotionData } from '../ui/data.js';
+import type { CutsceneFxData, DownData, EffectFxData, MotionData } from '../ui/data.js';
 import { Scene, type CameraState } from './scene.js';
 
 //렌더러가 그림을 찾는 통로. 어느 파일이 어느 비트맵인지는 밖에서 정한다
@@ -80,6 +81,10 @@ interface Actor {
   drift: number;
   //보이는 정도. 교전에 안 낀 사람은 othersAlpha 쪽으로 othersFadeSec 동안 옮겨 간다
   presence: number;
+  //쓰러졌으면 지난 시간. 쓰러진 사람은 굳어 사라지고 명령을 받지 않는다 (SPEC-005 §7.2)
+  down: number | null;
+  //체력 바 아래 상태 이름표
+  chips: { labels: string[]; size: number; gap: number; color: string } | null;
 }
 
 //재생 중인 이펙트 하나. 마지막 키프레임에도 그림이 남으므로 끝나면 반드시 지운다
@@ -112,6 +117,9 @@ interface LiveSpark {
 interface LiveNumber {
   owner: string;
   damage: number;
+  //피해 숫자가 아닌 글자(무효·처형·상태 이름). 있으면 damage 대신 이 글자를 이 색으로 그린다 (SPEC-005 §7.3)
+  text?: string;
+  color?: string;
   from: Point;
   to: Point;
   size: number;
@@ -184,6 +192,10 @@ export class CanvasRenderer {
   //잔상·번쩍임 실루엣을 만드는 작업 캔버스. 하나를 돌려 쓴다
   private readonly scratch = document.createElement('canvas');
   private readonly numbers: LiveNumber[] = [];
+  //전투 결과 띠. 새 판이 시작되면 지운다 (SPEC-005 §7.4)
+  private result: { text: string; outcome: 'win' | 'lose' | 'draw'; t: number; inSec: number; bandHeight: number; size: number } | null = null;
+  //휘두름 소리를 같은 순간 여러 번 내지 않게 마지막으로 낸 시각
+  private lastSwingSec = -1;
   private readonly badges: LiveBadge[] = [];
   private arrows: LiveArrow[] = [];
   private cutscene: LiveCutscene | null = null;
@@ -228,6 +240,10 @@ export class CanvasRenderer {
     private readonly cut: CutsceneFxData,
     //이펙트 재생 수치 (ui-data.json effects)
     private readonly fx: EffectFxData,
+    //쓰러짐 수치 (ui-data.json down)
+    private readonly downFx: DownData,
+    //소리. 명령을 실제로 실행하는 순간 이름만 부른다 (SPEC-005 §7.5)
+    private readonly sound: SoundPlayer = SILENT,
   ) {}
 
   //무대에 캐릭터를 세운다. 전투가 새로 시작될 때 부른다
@@ -236,6 +252,7 @@ export class CanvasRenderer {
     this.effects.length = 0;
     this.sparks.length = 0;
     this.numbers.length = 0;
+    this.result = null;
     this.badges.length = 0;
     this.arrows = [];
     this.cutscene = null;
@@ -285,6 +302,8 @@ export class CanvasRenderer {
         slides: [],
         drift: 0,
         presence: 1,
+        down: null,
+        chips: null,
       });
     }
     this.focus = this.restFocus();
@@ -325,7 +344,7 @@ export class CanvasRenderer {
 
       case 'playFrames': {
         const actor = this.actors.get(command.combatantId);
-        if (!actor) return 0;
+        if (!actor || actor.down !== null) return 0;
         actor.frames = [...command.frameIds];
         actor.frameIndex = 0;
         actor.elapsed = 0;
@@ -399,6 +418,7 @@ export class CanvasRenderer {
           elapsed: 0,
           durationSec: this.cut.sec,
         };
+        this.sound.play('ultimate');
         return this.cut.sec;
       }
 
@@ -407,7 +427,8 @@ export class CanvasRenderer {
 
       case 'dashTo': {
         const actor = this.actors.get(command.combatantId);
-        if (!actor) return 0;
+        if (!actor || actor.down !== null) return 0;
+        this.sound.play('dash');
         actor.target = { ...command.position };
         actor.speed = command.speed;
         actor.float = null;
@@ -421,7 +442,7 @@ export class CanvasRenderer {
 
       case 'dashBack': {
         const actor = this.actors.get(command.combatantId);
-        if (!actor) return 0;
+        if (!actor || actor.down !== null) return 0;
         actor.target = { ...actor.home };
         actor.coins = null;
         actor.power = null;
@@ -434,7 +455,7 @@ export class CanvasRenderer {
 
       case 'float': {
         const actor = this.actors.get(command.combatantId);
-        if (actor) actor.float = { base: { ...command.base }, amplitude: command.amplitude, periodSec: command.periodSec };
+        if (actor && actor.down === null) actor.float = { base: { ...command.base }, amplitude: command.amplitude, periodSec: command.periodSec };
         return 0;
       }
 
@@ -495,6 +516,7 @@ export class CanvasRenderer {
         if (actor) {
           actor.coins = { rolls: [...command.rolls], at: { ...command.at }, size: command.size, t: 0, broken: null, brokenT: 0 };
           if (actor.power) actor.power = null;
+          this.sound.play('coin');
         }
         return 0;
       }
@@ -504,6 +526,7 @@ export class CanvasRenderer {
         if (actor?.coins) {
           actor.coins.broken = command.coinsLeft;
           actor.coins.brokenT = 0;
+          this.sound.play('coinBreak');
         }
         return 0;
       }
@@ -522,6 +545,7 @@ export class CanvasRenderer {
         //이긴 쪽(교착이면 공격자)의 합 불꽃 그림이 있으면 그걸, 없으면 도형 불꽃을 그린다 (SPEC-002 §5.4.2)
         const owner = (command.winnerId ? this.actors.get(command.winnerId) : undefined) ?? involved[0];
         const drawn = owner ? this.spawnClashEffects(owner, command.contact, groundY) : false;
+        this.sound.play(command.winnerId === null ? 'clashTie' : 'clash');
         if (!drawn) {
           this.sparks.push({
             contact: { ...command.contact },
@@ -556,8 +580,74 @@ export class CanvasRenderer {
           heavy: command.heavy,
           t: 0,
         });
+        this.sound.play(command.heavy ? 'hitHeavy' : 'hit');
         return 0;
       }
+
+      //피해 숫자 말고 뜨는 글자 (SPEC-005 §7.3)
+      case 'floatText': {
+        const actor = this.actors.get(command.combatantId);
+        const drift = actor?.drift ?? 0;
+        this.numbers.push({
+          owner: command.combatantId,
+          damage: 0,
+          text: command.text,
+          color: command.color,
+          from: { x: command.from.x + drift, y: command.from.y },
+          to: { x: command.to.x + drift, y: command.to.y },
+          size: command.size,
+          sec: command.sec,
+          heavy: false,
+          t: 0,
+        });
+        if (command.kind === 'nullify') this.sound.play('guard');
+        return 0;
+      }
+
+      case 'statusChips': {
+        const actor = this.actors.get(command.combatantId);
+        if (actor) {
+          actor.chips = command.labels.length > 0
+            ? { labels: [...command.labels], size: command.size, gap: command.gap, color: command.color }
+            : null;
+        }
+        return 0;
+      }
+
+      //쓰러졌다. 맞은 자세로 굳히고 움직임을 멈춘다. 그 뒤 명령은 받지 않는다 (SPEC-005 §7.2)
+      case 'down': {
+        const actor = this.actors.get(command.combatantId);
+        if (!actor || actor.down !== null) return 0;
+        const hit = this.catalogOf(actor)?.frameEndingWith('hit')?.id;
+        if (hit) {
+          actor.frames = [hit];
+          actor.frameIndex = 0;
+        }
+        actor.down = 0;
+        actor.striking = false;
+        actor.target = null;
+        actor.float = null;
+        actor.trail = null;
+        actor.coins = null;
+        actor.power = null;
+        actor.banner = null;
+        actor.chips = null;
+        this.sound.play('down');
+        return 0;
+      }
+
+      //결과 띠. 대기열 맨 뒤라 마지막 연출이 다 나간 뒤다 (SPEC-005 §7.4)
+      case 'battleResult':
+        this.result = {
+          text: command.text,
+          outcome: command.outcome,
+          t: 0,
+          inSec: command.inSec,
+          bandHeight: command.bandHeight,
+          size: command.size,
+        };
+        this.sound.play('result');
+        return 0;
 
       case 'hitStop':
         this.freeze = Math.max(this.freeze, command.sec);
@@ -565,7 +655,7 @@ export class CanvasRenderer {
 
       case 'knockback': {
         const actor = this.actors.get(command.combatantId);
-        if (actor) {
+        if (actor && actor.down === null) {
           //밀린 자리에 머문다. 튕겨 돌아오면 공격자와 얼굴을 맞댄다 (SPEC-005 §2.3.3)
           actor.slides.push({ dx: command.dx, sec: command.sec, t: 0 });
           actor.hurt = this.motion.hurtSec;
@@ -650,7 +740,7 @@ export class CanvasRenderer {
   private flinch(command: Extract<RenderCommand, { type: 'flinch' }>): void {
     const target = this.actors.get(command.combatantId);
     const source = this.actors.get(command.sourceId);
-    if (!target || !source) return;
+    if (!target || !source || target.down !== null) return;
     target.hurt = this.motion.hurtSec;
     const away = target.placement.position.x >= source.placement.position.x ? 1 : -1;
     target.slides.push({ dx: away * this.motion.follow * this.heightOf(target), sec: this.motion.popMs / 1000 + 0.1, t: 0 });
@@ -691,6 +781,12 @@ export class CanvasRenderer {
       elapsed: 0,
       glow: catalog?.bindings.glow.includes(placement.effectId) ?? false,
     });
+    //휘두르는 장의 궤적이 터지는 순간이 바람 소리다. 한 장에 궤적이 여럿이어도 한 번만 낸다
+    if (command.frameId && anchor === 'bladeTip') {
+      const now = performance.now() / 1000;
+      if (now - this.lastSwingSec > 0.05) this.sound.play('swing');
+      this.lastSwingSec = now;
+    }
   }
 
   //짧은 이펙트는 장마다 같은 비율로 늘린다. 발생·최대·소멸 비율은 그대로다 (SPEC-002 §6-6)
@@ -896,7 +992,7 @@ export class CanvasRenderer {
     if (!this.subjects || this.subjects.length !== 2 || dt <= 0) return;
     const a = this.actors.get(this.subjects[0] ?? '');
     const b = this.actors.get(this.subjects[1] ?? '');
-    if (!a || !b || a.target || b.target) return;
+    if (!a || !b || a.target || b.target || a.down !== null || b.down !== null) return;
     //a 가 보는 쪽에 b 가 있어야 한다. 서로 마주 보지 않으면 재지 않는다
     const toward = a.placement.facing;
     if (b.placement.facing === toward) return;
@@ -953,6 +1049,8 @@ export class CanvasRenderer {
     for (const spark of this.sparks) spark.t += dt;
     keep(this.sparks, (s) => s.t < SPARK_SEC);
     for (const number of this.numbers) number.t += dt;
+    for (const actor of this.actors.values()) if (actor.down !== null) actor.down += dt;
+    if (this.result) this.result.t += dt;
     keep(this.numbers, (n) => n.t < n.sec);
     for (const badge of this.badges) badge.elapsed += dt;
     keep(this.badges, (b) => b.elapsed < b.durationSec);
@@ -1087,9 +1185,9 @@ export class CanvasRenderer {
     //뒤에 있는 캐릭터부터 그린다. 앞 사람이 뒤 사람을 가린다
     const ordered = [...this.actors.values()].sort((a, b) => this.positionOf(a, nowSec).y - this.positionOf(b, nowSec).y);
     for (const actor of ordered) {
-      if (this.presence(actor) <= 0.01) continue;
+      if (this.presence(actor) <= 0.01 || this.downFade(actor) <= 0.01) continue;
       ctx.save();
-      ctx.globalAlpha = this.presence(actor);
+      ctx.globalAlpha = this.presence(actor) * this.downFade(actor);
       if (this.stage.has(actor.placement.characterId)) {
         this.drawGhosts(actor);
         this.drawActor(actor, nowSec);
@@ -1106,10 +1204,12 @@ export class CanvasRenderer {
     //정보 UI 는 원근을 타되 전경 위에 온다. 싸우는 둘 것이 맨 위에 오게 뒤에 그린다
     const byFocus = [...ordered].sort((a, b) => this.presence(a) - this.presence(b));
     for (const actor of byFocus) {
-      if (this.presence(actor) <= 0.01) continue;
+      //쓰러진 사람은 바·코인·위력·이름표를 그리지 않는다 (SPEC-005 §7.2)
+      if (this.presence(actor) <= 0.01 || actor.down !== null) continue;
       ctx.save();
       ctx.globalAlpha = this.presence(actor) ** 2;
       this.drawBars(actor, nowSec);
+      this.drawChips(actor, nowSec);
       this.drawCoins(actor, nowSec);
       this.drawPower(actor, nowSec);
       this.drawBanner(actor, nowSec);
@@ -1130,6 +1230,71 @@ export class CanvasRenderer {
       ctx.restore();
     }
     if (this.cutscene) this.drawCutscene(this.cutscene);
+    if (this.result) this.drawResult(this.result);
+  }
+
+  //쓰러진 사람이 얼마나 남아 있는지. 서 있으면 1
+  private downFade(actor: Actor): number {
+    if (actor.down === null) return 1;
+    return Math.max(0, 1 - actor.down / Math.max(0.01, this.downFx.sec));
+  }
+
+  //체력·정신력 바 아래 상태 이름표. 걸려 있는 동안 계속 보인다 (SPEC-005 §7.3)
+  private drawChips(actor: Actor, nowSec: number): void {
+    const chips = actor.chips;
+    const box = actor.barBox.mentality ?? actor.barBox.hp;
+    if (!chips || !box) return;
+    const lowest = [actor.barBox.hp, actor.barBox.mentality].reduce(
+      (acc, b) => (b && b.rel.y + b.height > acc ? b.rel.y + b.height : acc),
+      box.rel.y + box.height,
+    );
+    const { at, scale } = this.overHead(actor, { x: actor.home.x + box.rel.x, y: actor.home.y + lowest + chips.gap }, nowSec, true);
+    const size = Math.max(9, chips.size * scale);
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.font = `700 ${size}px system-ui, sans-serif`;
+    ctx.textBaseline = 'top';
+    let x = at.x;
+    for (const label of chips.labels) {
+      const w = ctx.measureText(label).width + size * 0.6;
+      ctx.fillStyle = 'rgba(16,12,11,0.8)';
+      ctx.fillRect(x, at.y, w, size * 1.35);
+      ctx.fillStyle = chips.color;
+      ctx.fillText(label, x + size * 0.3, at.y + size * 0.18);
+      x += w + size * 0.3;
+    }
+    ctx.restore();
+  }
+
+  //전투 결과 띠. 컷신 띠와 같은 기울기로 가운데를 가로지른다 (SPEC-005 §7.4)
+  private drawResult(result: NonNullable<typeof this.result>): void {
+    const { width, height } = this.scene.viewport;
+    const ctx = this.ctx;
+    const enter = easeOutCubic(result.t / Math.max(0.01, result.inSec));
+    const band = height * result.bandHeight;
+    const top = height * 0.5 - band / 2;
+    const skew = Math.tan((this.cut.bandSkewDeg * Math.PI) / 180) * width * 0.5;
+    const slide = (1 - enter) * width;
+    ctx.save();
+    ctx.globalAlpha = 0.5 * enter;
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, width, height);
+    ctx.globalAlpha = 1;
+    const path = new Path2D();
+    path.moveTo(slide - skew, top + skew * 0.25);
+    path.lineTo(slide + width + skew, top - skew * 0.25);
+    path.lineTo(slide + width + skew, top + band - skew * 0.25);
+    path.lineTo(slide - skew, top + band + skew * 0.25);
+    path.closePath();
+    ctx.fillStyle = '#15100d';
+    ctx.fill(path);
+    ctx.strokeStyle = result.outcome === 'win' ? 'rgba(214,92,40,0.9)' : 'rgba(140,140,150,0.8)';
+    ctx.lineWidth = Math.max(2, height * 0.004);
+    ctx.stroke(path);
+    const size = height * result.size;
+    const fill = result.outcome === 'win' ? '#f0d9a8' : result.outcome === 'lose' ? '#9aa3ad' : '#cfcfcf';
+    this.drawOutlinedText(result.text, width / 2 + slide, height / 2, size, fill, enter, '#000');
+    ctx.restore();
   }
 
   private drawMap(id: string): void {
@@ -1227,7 +1392,7 @@ export class CanvasRenderer {
     const frameId = this.currentFrame(actor);
     if (!frameId) return;
     //달리거나 휘두르는 중엔 숨쉬기를 멈춘다
-    const still = !actor.target && !actor.striking;
+    const still = !actor.target && !actor.striking && actor.down === null;
     const wave = Math.sin(((nowSec + actor.breathPhase * this.motion.breatheSec) / this.motion.breatheSec) * Math.PI * 2);
     const breath = still ? 1 + this.motion.breathe * wave : 1;
     const hurt = this.motion.hurtSec > 0 ? actor.hurt / this.motion.hurtSec : 0;
@@ -1247,6 +1412,11 @@ export class CanvasRenderer {
     }
     const pop = actor.pop === null ? 1 : 1 + this.motion.popScale * (1 - easeOutCubic((actor.pop * 1000) / this.motion.popMs));
     this.drawFrame(actor, frameId, position, 1, { breath, hurt, pop });
+    //쓰러지면 점점 어두워진다. 사라지는 건 그리는 쪽 불투명도가 맡는다 (SPEC-005 §7.2)
+    if (actor.down !== null && this.downFx.dim > 0) {
+      const k = Math.min(1, actor.down / Math.max(0.01, this.downFx.sec));
+      this.drawFrame(actor, frameId, position, this.downFx.dim * k, { breath: 1, hurt: 0, tint: '#000' });
+    }
   }
 
   //대시 잔상. 오래된 것일수록 옅다
@@ -1571,6 +1741,10 @@ export class CanvasRenderer {
     const { at, scale } = this.overHead(owner, here, performance.now() / 1000, false);
     const pop = number.t < POP_SEC ? 1 + 0.8 * (1 - number.t / POP_SEC) : 1;
     const alpha = k < 0.7 ? 1 : 1 - (k - 0.7) / 0.3;
+    if (number.text !== undefined) {
+      this.drawOutlinedText(number.text, at.x, at.y, Math.max(12, number.size * scale * pop), number.color ?? '#f5ede0', alpha, '#140f0c');
+      return;
+    }
     this.drawOutlinedText(
       String(number.damage),
       at.x,

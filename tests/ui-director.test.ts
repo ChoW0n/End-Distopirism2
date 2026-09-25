@@ -591,3 +591,83 @@ describe('SPEC-005 §5 에셋 없는 캐릭터도 정보는 뜬다', () => {
     expect(pick(commands, 'bar').some((c) => c.combatantId === 'e1')).toBe(true);
   });
 });
+
+//조사 대조 — 피해 출처·상태 표시·결과 (SPEC-005 §7.3 · §7.4)
+describe('피해 출처와 상태 표시', () => {
+  const clash: BattleEvent[] = [
+    { type: 'clashStart', attackerId: 'a1', defenderId: 'e1', attackerSkillId: S1, defenderSkillId: S1 },
+    { type: 'clashRoundWin', winnerId: 'a1', loserId: 'e1', winnerDamage: 10, loserDamage: 5 },
+  ];
+
+  it('합을 이긴 쪽의 피해는 자기 대가다 — 멈춤·넉백·피해 숫자 없이 글자만', () => {
+    const director = makeDirector();
+    director.consume(clash);
+    const commands = director.consume([{ type: 'damageApplied', combatantId: 'a1', damage: 5, hp: 95 }]);
+    expect(pick(commands, 'damageNumber')).toHaveLength(0);
+    expect(pick(commands, 'knockback')).toHaveLength(0);
+    expect(pick(commands, 'hitStop')).toHaveLength(0);
+    const texts = pick(commands, 'floatText');
+    expect(texts.map((t) => [t.kind, t.text])).toEqual([['self', '-5']]);
+    expect(pick(commands, 'bar').some((b) => b.combatantId === 'a1' && b.kind === 'hp')).toBe(true);
+  });
+
+  it('진 쪽의 피해는 그대로 명중이다', () => {
+    const director = makeDirector();
+    director.consume(clash);
+    const commands = director.consume([{ type: 'damageApplied', combatantId: 'e1', damage: 12, hp: 88 }]);
+    expect(pick(commands, 'damageNumber')).toHaveLength(1);
+    expect(pick(commands, 'floatText')).toHaveLength(0);
+  });
+
+  it('일방 공격은 공격자가 이긴 쪽이다', () => {
+    const director = makeDirector();
+    director.consume([{ type: 'oneSidedStart', attackerId: 'a1', targetId: 'e1', skillId: S1 }]);
+    const commands = director.consume([{ type: 'damageApplied', combatantId: 'a1', damage: 3, hp: 97 }]);
+    expect(pick(commands, 'floatText').map((t) => t.kind)).toEqual(['self']);
+  });
+
+  it('상태 피해는 공격 연출 없이 숫자와 상태 이름', () => {
+    const director = makeDirector();
+    const commands = director.consume([{ type: 'statusTicked', combatantId: 'a1', status: 'bleed', damage: 4 }]);
+    expect(pick(commands, 'knockback')).toHaveLength(0);
+    expect(pick(commands, 'damageNumber')).toHaveLength(0);
+    expect(pick(commands, 'floatText').map((t) => [t.kind, t.text])).toEqual([['tick', `-4 ${catalog.status('bleed').name}`]]);
+  });
+
+  it('처형은 체력 바를 비우고 글자·번쩍임을 낸다', () => {
+    const director = makeDirector();
+    const commands = director.consume([{ type: 'executed', combatantId: 'e1' }]);
+    const hp = pick(commands, 'bar').find((b) => b.combatantId === 'e1' && b.kind === 'hp');
+    expect(hp?.ratio).toBe(0);
+    expect(pick(commands, 'floatText').map((t) => t.kind)).toEqual(['execute']);
+    expect(pick(commands, 'flash')).toHaveLength(1);
+  });
+
+  it('무효는 글자로 보인다', () => {
+    const director = makeDirector();
+    const commands = director.consume([{ type: 'damageNullified', combatantId: 'e1', skillId: S1 }]);
+    expect(pick(commands, 'floatText').map((t) => [t.kind, t.text])).toEqual([['nullify', '무효']]);
+  });
+
+  it('상태가 걸리면 이름이 뜨고 이름표가 붙고, 중첩이면 개수, 풀리면 빠진다', () => {
+    const director = makeDirector();
+    const name = catalog.status('bleed').name;
+    let commands = director.consume([{ type: 'statusApplied', combatantId: 'a1', status: 'bleed', turns: 2 }]);
+    expect(pick(commands, 'floatText').map((t) => t.text)).toEqual([name]);
+    expect(pick(commands, 'statusChips')[0]?.labels).toEqual([name]);
+    commands = director.consume([{ type: 'statusApplied', combatantId: 'a1', status: 'bleed', turns: 2 }]);
+    expect(pick(commands, 'statusChips')[0]?.labels).toEqual([`${name} 2`]);
+    director.consume([{ type: 'statusExpired', combatantId: 'a1', status: 'bleed' }]);
+    commands = director.consume([{ type: 'statusExpired', combatantId: 'a1', status: 'bleed' }]);
+    expect(pick(commands, 'statusChips')[0]?.labels).toEqual([]);
+  });
+
+  it.each([
+    ['ally', 'win', '승리'],
+    ['enemy', 'lose', '패배'],
+    [null, 'draw', '무승부'],
+  ] as const)('전투 끝 %s → %s 띠', (winner, outcome, text) => {
+    const commands = makeDirector().consume([{ type: 'battleEnd', winner }]);
+    expect(pick(commands, 'battleResult').map((r) => [r.outcome, r.text])).toEqual([[outcome, text]]);
+  });
+});
