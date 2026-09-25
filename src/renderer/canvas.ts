@@ -12,7 +12,7 @@ import type { RenderCommand } from '../render/presenter.js';
 import { SILENT, type SoundPlayer } from './sound.js';
 import type { Stage, StagePlacement } from '../render/stage.js';
 import type { UiCommand } from '../ui/director.js';
-import type { CutsceneFxData, DownData, EffectFxData, MotionData } from '../ui/data.js';
+import type { CameraData, CutsceneFxData, DownData, EffectFxData, MotionData } from '../ui/data.js';
 import { Scene, type CameraState } from './scene.js';
 
 //렌더러가 그림을 찾는 통로. 어느 파일이 어느 비트맵인지는 밖에서 정한다
@@ -242,6 +242,8 @@ export class CanvasRenderer {
     private readonly fx: EffectFxData,
     //쓰러짐 수치 (ui-data.json down)
     private readonly downFx: DownData,
+    //카메라 수치 (ui-data.json camera). 깊이 줌 보정 범위를 읽는다
+    private readonly cam: CameraData,
     //소리. 명령을 실제로 실행하는 순간 이름만 부른다 (SPEC-005 §7.5)
     private readonly sound: SoundPlayer = SILENT,
   ) {}
@@ -1066,7 +1068,11 @@ export class CanvasRenderer {
     const goal = this.subjects ? this.subjectFocus(this.subjects) : this.restFocus();
     const follow = 1 - Math.exp(-CAMERA_FOLLOW * dt);
     this.focus = { x: this.focus.x + (goal.x - this.focus.x) * follow, y: this.focus.y + (goal.y - this.focus.y) * follow };
-    this.zoom += (this.zoomGoal - this.zoom) * follow;
+    //교전이 앞뒤 어느 줄에서 벌어져도 화면상 크기가 같게 깊이만큼 더 당기거나 덜 당긴다.
+    //원근은 그대로 두고 카메라만 움직인다 (SPEC-005 §4, 2026-09-25)
+    const [minDepth, maxDepth] = this.cam.depthZoom;
+    const depth = this.subjects ? Math.max(minDepth, Math.min(maxDepth, this.scene.depthRatio(goal.y))) : 1;
+    this.zoom += (this.zoomGoal * depth - this.zoom) * follow;
     this.tilt += (this.tiltGoal - this.tilt) * follow;
 
     if (this.punch) {

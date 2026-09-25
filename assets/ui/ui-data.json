@@ -2,10 +2,11 @@
   "_주석": "UI·연출 수치. 단위는 캐릭터 키(H) 배수, 시간은 초. 픽셀 값을 넣지 않는다. 근거: SPEC-004 §7·§8",
   "dash": {
     "zoneWidth": 3.2,
-    "zoneDepth": 0.9,
+    "zoneDepth": 0.2,
     "pairGap": 0.85,
     "lateralJitter": [0.06, 0.16],
-    "depthJitter": 0.12,
+    "_depth": "구역 깊이·깊이 흔들림을 줄였다. 크면 교전마다 원근 배율이 달라 캐릭터 크기가 제각각이었다 (SPEC-004 §7.7, 2026-09-25)",
+    "depthJitter": 0.02,
     "_forward": "원작 BattleZone 이 캐릭터 줄보다 카메라 쪽으로 443 월드(0.78 카메라높이) 앞에 있다. 합을 걸면 앞으로 나와서 붙는다",
     "forward": 0.82,
     "safeDistance": 0.45,
@@ -145,12 +146,14 @@
   },
   "camera": {
     "focusZoom": 1.6,
-    "punchZoom": 0.1,
+    "punchZoom": 0.04,
     "punchSec": 0.14,
     "tiltDeg": 2.2,
     "slowmoScale": 0.3,
     "slowmoSec": 0.7,
-    "shakeReferenceDamage": 30
+    "shakeReferenceDamage": 30,
+    "_depthZoom": "교전 깊이만큼 줌을 보정하는 범위 [최소, 최대]. 일방 공격은 맞는 쪽 제자리(뒷줄)에서 벌어져 합보다 작게 보였다 (SPEC-005 §4, 2026-09-25)",
+    "depthZoom": [0.85, 1.45]
   },
   "_down": "쓰러진 사람은 맞은 자세로 굳어 어두워지며 사라진다. 시체 장이 없어서 새로 그리지 않는다 (SPEC-005 §7.2)",
   "down": {

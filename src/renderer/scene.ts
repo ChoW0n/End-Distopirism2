@@ -163,6 +163,11 @@ export class Scene {
   //
   //깊이를 화면 y 에 선형으로 깔면 좁은 띠에서는 비슷하지만 줄이 깊어지면 어긋난다.
   //뒷줄이 실제보다 훨씬 작아져서 원작 대형을 그대로 옮기면 사람이 사라진다
+  //접지선 배율 ÷ 이 깊이의 배율. 뒤에 선 사람일수록 1 보다 크다. 카메라가 깊이만큼 더 당길 때 쓴다
+  depthRatio(y: number): number {
+    return this.distanceTo({ x: 0, y }) / this.distanceTo({ x: 0, y: this.groundY });
+  }
+
   private flat(point: Point): Projected {
     const distance = this.distanceTo(point);
     const scale = this.focal / distance;

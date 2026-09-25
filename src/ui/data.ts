@@ -206,6 +206,8 @@ export interface CameraData {
   slowmoScale: number;
   slowmoSec: number;
   shakeReferenceDamage: number;
+  //교전 깊이에 따라 줌을 보정하는 범위. 뒷줄 교전도 화면상 같은 크기로 보인다 (SPEC-005 §4, 2026-09-25)
+  depthZoom: [number, number];
 }
 
 //쓰러진 사람이 사라지는 시간·어두워지는 정도 (SPEC-005 §7.2)
@@ -331,6 +333,7 @@ export function parseUiData(raw: unknown): UiData {
   const badge = obj(source['badge'], 'badge');
   const cutscene = obj(source['cutscene'], 'cutscene');
   const motion = obj(source['motion'], 'motion');
+  const camera = obj(source['camera'], 'camera');
   const floatColors = obj(obj(source['floatText'], 'floatText')['colors'], 'floatText.colors');
   const sound = obj(source['sound'], 'sound');
   const soundGains = obj(sound['gains'], 'sound.gains');
@@ -407,9 +410,12 @@ export function parseUiData(raw: unknown): UiData {
       blinkAt: range(cutscene, 'blinkAt', 'cutscene'),
       mouthAt: range(cutscene, 'mouthAt', 'cutscene'),
     },
-    camera: numbers('camera', [
-      'focusZoom', 'punchZoom', 'punchSec', 'tiltDeg', 'slowmoScale', 'slowmoSec', 'shakeReferenceDamage',
-    ] as const),
+    camera: {
+      ...numbers('camera', [
+        'focusZoom', 'punchZoom', 'punchSec', 'tiltDeg', 'slowmoScale', 'slowmoSec', 'shakeReferenceDamage',
+      ] as const),
+      depthZoom: range(camera, 'depthZoom', 'camera'),
+    },
     down: numbers('down', ['sec', 'dim'] as const),
     floatText: {
       ...numbers('floatText', ['size', 'rise', 'sec', 'height', 'chipSize', 'chipGap'] as const),

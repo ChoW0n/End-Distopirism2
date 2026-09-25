@@ -380,10 +380,13 @@ export class UiDirector {
 
     const first = movers[0];
     if (!first) return;
+    //가로는 교전 쌍의 중점, 깊이는 대형 전체의 중심 줄이다. 쌍의 깊이를 따르면 교전마다
+    //원근 배율이 달라 캐릭터가 커졌다 작아졌다 했다 (SPEC-004 §7.7)
     const spots = participants.map((id) => this.context.actor(id).position);
+    const everyone = this.context.combatants().map((id) => this.context.actor(id).position);
     const center = {
       x: spots.reduce((acc, p) => acc + p.x, 0) / spots.length,
-      y: spots.reduce((acc, p) => acc + p.y, 0) / spots.length,
+      y: everyone.reduce((acc, p) => acc + p.y, 0) / everyone.length,
     };
     for (const spot of this.dash.plan({ movers, center }, this.heightOf(first.combatantId))) {
       this.standing.set(spot.combatantId, { ...spot.position });

@@ -206,6 +206,7 @@ async function main(): Promise<void> {
     loaded.ui.cutscene,
     loaded.ui.effects,
     loaded.ui.down,
+    loaded.ui.camera,
     sound,
   );
 
