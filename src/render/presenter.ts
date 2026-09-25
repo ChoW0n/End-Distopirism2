@@ -61,6 +61,8 @@ interface ActiveEngagement {
   defender: EngagementSide;
   //지금까지 이긴 쪽. 일방 공격은 공격자다. 이 사람의 피해는 상대에게 맞은 게 아니라 자기 대가다 (SPEC-005 §7.3)
   winnerId: string | null;
+  //지난 합 라운드 수. 라운드마다 휘두름 장을 돌려 쓴다 (SPEC-005 §2.1 v1.6)
+  round: number;
 }
 
 export class BattlePresenter {
@@ -180,6 +182,7 @@ export class BattlePresenter {
           ? { combatantId: defenderId, frameId: this.idleOrNull(defenderId), effectIds: [], sequence: [], struck: false }
           : this.beginSide(commands, defenderId, defenderSkillId),
       winnerId: defenderSkillId === null ? attackerId : null,
+      round: 0,
     };
   }
 
@@ -250,11 +253,16 @@ export class BattlePresenter {
   private exchange(commands: RenderCommand[], winnerId: string | null): void {
     const engagement = this.engagement;
     if (!engagement) return;
+    const round = engagement.round;
+    engagement.round += 1;
     for (const side of [engagement.attacker, engagement.defender]) {
       const last = side.sequence[side.sequence.length - 1];
       if (!last) continue;
       const lost = winnerId !== null && side.combatantId !== winnerId;
-      const pose = lost ? this.recoilFrame(side.combatantId) ?? side.sequence[0] : last;
+      //휘두름 장(첫 장 뺀 나머지)을 라운드마다 돌려 쓴다. 같은 한 장만 반복하면 합이 되풀이로 보였다
+      const swings = side.sequence.slice(1);
+      const swing = swings[round % Math.max(1, swings.length)] ?? last;
+      const pose = lost ? this.recoilFrame(side.combatantId) ?? side.sequence[0] : swing;
       if (!pose) continue;
       commands.push({ type: 'playFrames', combatantId: side.combatantId, frameIds: [pose] });
       //진 쪽은 몸 가운데에서 막아낸 충격이 난다
@@ -279,12 +287,13 @@ export class BattlePresenter {
     }
   }
 
-  //합에서 밀렸을 때의 자세. 물러나는 장이 있으면 그걸, 없으면 막는 장을 쓴다. 이름으로 찾는다
+  //합에서 밀렸을 때의 자세. 막는 장이 있으면 그걸, 없으면 물러나는 장을 쓴다. 이름으로 찾는다.
+  //물러나는 장은 이동 전용으로 둔다. 전엔 이걸 먼저 써서 막는 장이 한 번도 안 나왔다 (SPEC-005 §2.1 v1.6)
   private recoilFrame(combatantId: string): string | null {
     const placement = this.context.actor(combatantId);
     if (!this.stage.has(placement.characterId)) return null;
     const catalog = this.stage.catalogFor(placement.characterId);
-    return (catalog.frameEndingWith('retreat') ?? catalog.frameEndingWith('guard'))?.id ?? null;
+    return (catalog.frameEndingWith('guard') ?? catalog.frameEndingWith('retreat'))?.id ?? null;
   }
 
   //피해가 들어가는 한 방. 전용기 전체를 휘두르고, 장마다 묶인 무기 궤적을 붙인다.
@@ -297,6 +306,12 @@ export class BattlePresenter {
     const placement = this.context.actor(side.combatantId);
     if (!this.stage.has(placement.characterId)) return;
     const catalog = this.stage.catalogFor(placement.characterId);
+
+    //일방 공격이면 맞는 쪽이 제자리에서 몸을 막는다 (SPEC-005 §2.1 v1.6)
+    const bracing = this.engagement
+      ? [this.engagement.attacker, this.engagement.defender].find((s) => s.combatantId === targetId)
+      : undefined;
+    if (bracing && bracing.sequence.length === 0) this.pushNamedFrame(commands, targetId, 'guard');
 
     commands.push({ type: 'playFrames', combatantId: side.combatantId, frameIds: [...side.sequence], wait: true });
 

@@ -106,17 +106,33 @@ describe('교전이 시작되면 전용기 동작이 나간다', () => {
     expect(framesFor(commands, 'e1')[0]).toEqual([sprites.frameSequence('S1')[0]]);
   });
 
-  //모두가 매번 휘두르면 공격만 반복돼서 누가 밀렸는지 안 보인다
-  it('라운드마다 이긴 쪽은 맞닿는 자세, 진 쪽은 물러나는 자세를 잡는다', () => {
+  //이긴 쪽은 휘두름 장을 라운드마다 돌려 쓰고, 진 쪽은 막는다 (SPEC-005 §2.1 v1.6)
+  it('라운드마다 이긴 쪽은 휘두름 장, 진 쪽은 막는 자세를 잡는다', () => {
     const presenter = makePresenter();
     const commands = presenter.consume(resolveTurn(makeBattle(S1), S2));
     const s2 = sprites.frameSequence('S2');
-    const retreat = sprites.frameEndingWith('retreat')!.id;
+    const guard = sprites.frameEndingWith('guard')!.id;
 
     //alwaysFail 코인이라 기본 피해가 큰 S2(a1) 가 이긴다
-    expect(framesFor(commands, 'a1')).toContainEqual([s2.at(-1)]);
-    expect(framesFor(commands, 'e1')).toContainEqual([retreat]);
+    expect(framesFor(commands, 'a1')).toContainEqual([s2[1]]);
+    expect(framesFor(commands, 'e1')).toContainEqual([guard]);
+    //물러나는 장은 이동 전용이다
+    expect(framesFor(commands, 'e1')).not.toContainEqual([sprites.frameEndingWith('retreat')!.id]);
     expect(framesFor(commands, 'e1')).not.toContainEqual([sprites.frameSequence('S1').at(-1)]);
+  });
+
+  it('여러 라운드면 휘두름 장을 차례로 돌려 쓴다', () => {
+    const presenter = makePresenter();
+    const s3 = sprites.frameSequence('S3');
+    const round = { type: 'clashRoundWin', winnerId: 'a1', loserId: 'e1', winnerDamage: 10, loserDamage: 5 } as const;
+    const commands = presenter.consume([
+      { type: 'clashStart', attackerId: 'a1', defenderId: 'e1', attackerSkillId: S3, defenderSkillId: S1 },
+      round,
+      round,
+      round,
+    ]);
+    const poses = framesFor(commands, 'a1').slice(1).map((f) => f[0]);
+    expect(poses).toEqual([s3[1], s3[2], s3[1]]);
   });
 
   it('다음 라운드 코인이 굴러가면 둘 다 준비 자세로 돌아온다', () => {
@@ -329,10 +345,11 @@ describe('교전이 끝나면 기본 자세로 돌아간다', () => {
     //준비 자세로 달려가서 한 방에 전용기 전체를 휘두른다
     expect(framesFor(commands, 'a1')[0]).toEqual([sprites.frameSequence('S2')[0]]);
     expect(framesFor(commands, 'a1')[1]).toEqual(sprites.frameSequence('S2'));
-    //맞는 쪽은 피격과 idle 만 나온다
+    //맞는 쪽은 휘두르기 시작할 때 막고, 맞고, 기본 자세로 돌아온다 (SPEC-005 §2.1 v1.6)
+    const guard = sprites.frameEndingWith('guard')!.id;
     const hit = sprites.frameEndingWith('hit')!.id;
     const idle = sprites.frameEndingWith('idle')!.id;
-    expect(framesFor(commands, 'e1')).toEqual([[hit], [idle]]);
+    expect(framesFor(commands, 'e1')).toEqual([[guard], [hit], [idle]]);
   });
 });
 
