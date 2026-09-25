@@ -175,6 +175,8 @@ const COIN_FLIP_SEC = 0.2;
 const COIN_STAGGER_SEC = 0.045;
 const POP_SEC = 0.12;
 const SPARK_SEC = 0.32;
+//결과 띠를 미룰 때 다시 볼 간격
+const RESULT_RETRY_SEC = 0.1;
 const BANNER_FADE_SEC = 0.3;
 
 const BADGE_COLOR: Record<LiveBadge['result'], string> = {
@@ -640,6 +642,11 @@ export class CanvasRenderer {
 
       //결과 띠. 대기열 맨 뒤라 마지막 연출이 다 나간 뒤다 (SPEC-005 §7.4)
       case 'battleResult':
+        //쓰러지는 중·슬로모·잔류 이펙트가 남아 있으면 다 끝날 때까지 미룬다. 마지막 충격을 띠가 덮지 않게 한다
+        if (this.settling()) {
+          this.queue.unshift(command);
+          return RESULT_RETRY_SEC;
+        }
         this.result = {
           text: command.text,
           outcome: command.outcome,
@@ -1237,6 +1244,15 @@ export class CanvasRenderer {
     }
     if (this.cutscene) this.drawCutscene(this.cutscene);
     if (this.result) this.drawResult(this.result);
+  }
+
+  //마지막 연출이 아직 도는 중인지. 결과 띠는 이게 끝나야 뜬다 (SPEC-005 §7.4)
+  private settling(): boolean {
+    if (this.slowmo || this.effects.length > 0) return true;
+    for (const actor of this.actors.values()) {
+      if (actor.down !== null && actor.down < this.downFx.sec) return true;
+    }
+    return false;
   }
 
   //쓰러진 사람이 얼마나 남아 있는지. 서 있으면 1
