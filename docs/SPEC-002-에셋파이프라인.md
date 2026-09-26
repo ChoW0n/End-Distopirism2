@@ -331,6 +331,7 @@ python3 tools/assets/normalize_sprites.py \
 - **이미지는 커밋하지 않는다.** 원본 리포가 647MB였던 이유가 에셋 통째 커밋이다(CLAUDE.md 함정표).
 - 커밋 대상은 `assets/<캐릭터>/sprite-manifest.json`(좌표 데이터)과 `tools/assets/` 도구뿐이다.
 - 정규화된 PNG는 각자 로컬 출력 폴더에 두고, 배포 시 별도 경로로 묶는다.
+- `assets/index.json` 에 매니페스트가 있는 캐릭터 목록을 둔다. 웹 로더는 이 목록만 읽는다 — 없는 캐릭터의 매니페스트를 찔러 404 를 내지 않는다 (SPEC-004 §12). 캐릭터를 반입하면 목록에 한 줄 더한다
 
 ---
 
