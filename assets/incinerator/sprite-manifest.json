@@ -693,7 +693,7 @@
   {
    "id": "ash-mixed",
    "name": "기존 연기·잔불",
-   "anchor": "emissionPoint",
+   "anchor": "groundPoint",
    "size": [
     473,
     464

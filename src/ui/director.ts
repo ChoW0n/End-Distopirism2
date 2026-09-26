@@ -104,6 +104,8 @@ export type UiCommand =
     }
   //렌더러 시계만 멈춘다. 도메인 결과와 무관하다
   | { type: 'hitStop'; sec: number }
+  //멈춤이 풀린 뒤 잠깐 느리게 흐른다. 렌더러 시계만 늦춘다 (SPEC-005 §2.3.6)
+  | { type: 'hitSlow'; scale: number; sec: number }
   | { type: 'knockback'; combatantId: string; dx: number; sec: number }
   | { type: 'flash'; alpha: number; sec: number }
   //다음 명령까지 쉬는 박자. 합 라운드가 읽히게 한다
@@ -642,6 +644,7 @@ export class UiDirector {
     if (!this.hasBody(damagedId)) return;
     const stop = this.data.hitStop;
     commands.push({ type: 'hitStop', sec: Math.min(stop.maxSec, stop.baseSec + damage * stop.perDamageSec) });
+    if (stop.slowSec > 0) commands.push({ type: 'hitSlow', scale: stop.slowScale, sec: stop.slowSec });
 
     const text = this.data.damageText;
     const height = this.heightOf(damagedId);

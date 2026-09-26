@@ -128,7 +128,7 @@ export class Stage {
   }
 
   //맞은 쪽의 몸통 높이. 접지점과 머리 중심의 중간을 쓴다
-  private hitPoint(context: EffectContext): Point {
+  hitPoint(context: EffectContext): Point {
     const { target, targetFrameId } = context;
     if (!target || !targetFrameId) throw new StageError('명중 좌표를 풀려면 대상이 있어야 한다');
 

@@ -106,6 +106,9 @@ export interface HitStopData {
   baseSec: number;
   perDamageSec: number;
   maxSec: number;
+  //멈춤이 풀린 뒤 이 배속으로 이만큼 느리게 흐른다 (SPEC-005 §2.3.6)
+  slowScale: number;
+  slowSec: number;
 }
 
 export interface DamageTextData {
@@ -427,7 +430,7 @@ export function parseUiData(raw: unknown): UiData {
       'coinSec', 'powerSec', 'resultSec', 'recoilWinner', 'recoilLoser', 'recoilSec', 'sparkSize',
       'coinSize', 'powerSize', 'powerOffsetX', 'powerOffsetY', 'contactHeight',
     ] as const),
-    hitStop: numbers('hitStop', ['clashSec', 'baseSec', 'perDamageSec', 'maxSec'] as const),
+    hitStop: numbers('hitStop', ['clashSec', 'baseSec', 'perDamageSec', 'maxSec', 'slowScale', 'slowSec'] as const),
     damageText: numbers('damageText', ['rise', 'sec', 'heavyDamage', 'height', 'size'] as const),
     banner: numbers('banner', ['sec', 'height', 'offsetX', 'size'] as const),
     knockback: numbers('knockback', ['distance', 'sec'] as const),

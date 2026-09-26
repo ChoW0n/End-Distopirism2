@@ -746,3 +746,39 @@ describe('피해 출처에 따른 동작', () => {
     expect(commands.some((c) => c.type === 'down' && c.combatantId === 'e1')).toBe(true);
   });
 });
+
+//SPEC-002 §5.4.3 의도 대조
+describe('SPEC-002 §5.4.3 이펙트 의도 대조', () => {
+  //준비 이펙트를 S3 에서만 내는 바인딩으로 바꿔 끼운다
+  function presenterWithReadySlots(slots: string[]) {
+    const bound = new SpriteCatalog(sprites.manifest, { ...sprites.bindings, ready: ['embers'], readySlots: slots });
+    return new BattlePresenter(catalog, new Stage(new Map([['incinerator', bound]])), context);
+  }
+
+  it('readySlots 에 없는 기술은 준비 이펙트를 내지 않는다', () => {
+    const commands = presenterWithReadySlots(['S3']).consume([
+      { type: 'clashStart', attackerId: 'a1', defenderId: 'e1', attackerSkillId: S3, defenderSkillId: S1 },
+    ]);
+    const ready = eventEffects(commands).filter((e) => e.onArrive === true);
+    expect(ready.map((e) => e.sourceId)).toEqual(['a1']);
+  });
+
+  it('피해 순간의 분출은 맞은 쪽 몸통에서 난다', () => {
+    const commands = makePresenter().consume(resolveTurn(makeBattle(S1), S3));
+    //S3 올려 베기 장의 불길(fire-rising). 장에 묶여 나가지만 자리는 맞는 쪽(e1)이다
+    const bursts = commands.filter(
+      (c): c is Extract<RenderCommand, { type: 'spawnEffect' }> =>
+        c.type === 'spawnEffect' &&
+        c.sourceId === 'a1' &&
+        (c.frameId !== null || c.targetId !== null) &&
+        sprites.effect(c.placement.effectId).anchor === 'emissionPoint',
+    );
+    expect(bursts.length).toBeGreaterThan(0);
+    for (const e of bursts) {
+      const target = context.actor('e1');
+      //맞은 쪽 발과 머리 사이. 때린 쪽 날끝이 아니다
+      expect(Math.abs(e.placement.anchorPoint.x - target.position.x)).toBeLessThan(sprites.characterHeight * 0.3);
+      expect(e.placement.anchorPoint.y).toBeLessThan(target.position.y);
+    }
+  });
+});

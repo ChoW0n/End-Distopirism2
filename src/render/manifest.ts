@@ -124,6 +124,8 @@ export interface EffectBindings {
   //사건 이펙트. 명중이 아니다 (SPEC-002 §5.4.2)
   //준비 자세를 잡을 때 발치
   ready: string[];
+  //준비 이펙트를 낼 기술 자리. null 이면 전부다. 기 모으기는 큰 기술에만 낸다 (SPEC-002 §5.4.3)
+  readySlots: string[] | null;
   //달려 나갈 때 출발점
   dash: string[];
   //합 라운드에서 이겼을 때 접점
@@ -142,6 +144,7 @@ export const EMPTY_BINDINGS: EffectBindings = {
   ultimateFrame: null,
   defeat: [],
   ready: [],
+  readySlots: null,
   dash: [],
   clash: [],
   recoil: [],
@@ -400,6 +403,7 @@ export function parseEffectBindings(raw: unknown): EffectBindings {
     ultimateFrame: optionalId(source['ultimateFrame'], 'bindings.ultimateFrame'),
     defeat: idList(source['defeat'], 'bindings.defeat'),
     ready: idList(source['ready'], 'bindings.ready'),
+    readySlots: source['readySlots'] === undefined ? null : idList(source['readySlots'], 'bindings.readySlots'),
     dash: idList(source['dash'], 'bindings.dash'),
     clash: idList(source['clash'], 'bindings.clash'),
     recoil: idList(source['recoil'], 'bindings.recoil'),

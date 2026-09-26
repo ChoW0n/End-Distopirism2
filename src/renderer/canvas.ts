@@ -132,6 +132,8 @@ interface LiveEffect {
   elapsed: number;
   //흐린 더하기 겹을 한 번 더 얹을지 (SPEC-002 §6-7)
   glow: boolean;
+  //태어난 순간의 카메라 배율. 무기 궤적이 아니면 화면 크기를 이 배율에 고정한다 (SPEC-005 §2.3.7)
+  zoomAtSpawn: number;
 }
 
 interface LiveSpark {
@@ -259,6 +261,8 @@ export class CanvasRenderer {
   private shakeLeft = 0;
   private shakeStrength = 0;
   private shake: Point = { x: 0, y: 0 };
+  //지난 장면에 실제로 건 카메라 배율(순간 확대 포함). 이펙트 크기 고정에 쓴다
+  private drawZoom = 1;
 
   //프레임에 묶인 이펙트. 그 장이 실제로 화면에 떠 있을 때 터뜨린다 (SPEC-005 §3.2)
   private pendingOnFrame: { combatantId: string; frameId: string; command: RenderCommand }[] = [];
@@ -733,6 +737,13 @@ export class CanvasRenderer {
         this.sound.play('result');
         return 0;
 
+      //멈춤이 끝난 뒤부터 센다. 더 긴 슬로모가 걸려 있으면 그쪽을 따른다 (SPEC-005 §2.3.6)
+      case 'hitSlow': {
+        const left = command.sec + this.freeze;
+        if (!this.slowmo || this.slowmo.left < left) this.slowmo = { scale: command.scale, left };
+        return 0;
+      }
+
       case 'hitStop':
         this.freeze = Math.max(this.freeze, command.sec);
         return command.sec;
@@ -845,7 +856,9 @@ export class CanvasRenderer {
     const placement = command.placement;
     const catalog = this.catalogOf(source);
     const anchor = catalog ? catalog.effect(placement.effectId).anchor : 'bladeTip';
-    const owner = anchor === 'hitPoint' && command.targetId ? (this.actors.get(command.targetId) ?? source) : source;
+    //명중 섬광과 맞는 쪽 몸통에서 나는 분출은 맞는 쪽의 지금 자리를 따라 옮긴다. 때린 쪽의 돌진 거리를 더하면 허공에 떴다 (SPEC-002 §5.4.3)
+    const onTarget = anchor === 'hitPoint' || anchor === 'emissionPoint';
+    const owner = onTarget && command.targetId ? (this.actors.get(command.targetId) ?? source) : source;
     const here = this.positionOf(owner);
     const shift = { x: here.x - owner.home.x, y: here.y - owner.home.y };
 
@@ -864,6 +877,7 @@ export class CanvasRenderer {
       frames: this.stretch(placement.frames),
       elapsed: 0,
       glow: catalog?.bindings.glow.includes(placement.effectId) ?? false,
+      zoomAtSpawn: this.drawZoom,
     });
     //휘두르는 장의 궤적이 터지는 순간이 바람 소리다. 한 장에 궤적이 여럿이어도 한 번만 낸다
     if (command.frameId && anchor === 'bladeTip') {
@@ -902,6 +916,7 @@ export class CanvasRenderer {
         frames: this.stretch(placement.frames),
         elapsed: 0,
         glow: catalog.bindings.glow.includes(effectId),
+        zoomAtSpawn: this.drawZoom,
       });
     }
     return true;
@@ -1258,6 +1273,7 @@ export class CanvasRenderer {
     const punch = this.punch ? this.punch.amount * Math.sin(Math.PI * (this.punch.t / this.punch.sec)) : 0;
     const kick = this.kick ? this.kick.amount * (1 - easeOutCubic(this.kick.t / this.kick.sec)) : 0;
     const zoom = this.zoom * (1 + punch + kick);
+    this.drawZoom = zoom;
     //기울여도 모서리가 비지 않을 만큼만 기운다
     const maxTilt = Math.max(0, ((zoom - 1) / (width / height)) * (180 / Math.PI));
     const tilt = Math.max(-maxTilt, Math.min(maxTilt, this.tilt));
@@ -1588,6 +1604,17 @@ export class CanvasRenderer {
     ctx.save();
     ctx.globalAlpha *= alpha;
     ctx.globalCompositeOperation = effect.blend as GlobalCompositeOperation;
+    //무기를 따라가지 않는 이펙트는 태어난 순간의 화면 크기를 지킨다. 카메라가 당겨지는 동안 1.7배까지 부풀었다 (SPEC-005 §2.3.7)
+    if (!effect.follow && this.drawZoom > 0) {
+      const lock = effect.zoomAtSpawn / this.drawZoom;
+      if (Math.abs(lock - 1) > 0.001) {
+        const cx = origin.x + width / 2;
+        const cy = origin.y + height / 2;
+        ctx.translate(cx, cy);
+        ctx.scale(lock, lock);
+        ctx.translate(-cx, -cy);
+      }
+    }
     if (effect.flipped) {
       ctx.translate(origin.x + width, origin.y);
       ctx.scale(-1, 1);

@@ -281,13 +281,19 @@ def frame_id(stem, config):
     return fid
 
 
+#팩의 앵커가 그림의 의도와 맞지 않는 이펙트. 재는 바닥에서 피어오르는 그림이다 (SPEC-002 §5.4.3)
+ANCHOR_OVERRIDE = {
+    "ash-mixed": "groundPoint",
+}
+
+
 def read_effects(pack_dir):
     #이펙트 팩의 정렬본과 피벗을 그대로 가져온다. 이미지는 건드리지 않는다
     man = json.load(open(Path(pack_dir) / "manifest.json", encoding="utf-8"))
     return [{
         "id": e["id"],
         "name": e["name"],
-        "anchor": e["anchor"],
+        "anchor": ANCHOR_OVERRIDE.get(e["id"], e["anchor"]),
         "size": e["aligned_size"],
         "pivot": e["aligned_pivot_px"],
         "blend": e["blend"],

@@ -20,7 +20,8 @@
 
   "_eventsComment": "사건 이펙트. 명중이 아니므로 명중 섬광(impact)은 넣지 않는다 (SPEC-002 §5.4.2). 합 불꽃은 그림이 없어서 렌더러 도형을 쓴다",
   "ready": ["embers"],
-  "dash": ["smoke"],
+  "_dashComment": "smoke 는 격파 뒤 잔류 연기라 달리기 먼지가 아니다. 허공에 떠 보여 뺐다 (SPEC-002 §5.4.3)",
+  "dash": [],
   "clash": [],
   "recoil": [],
 

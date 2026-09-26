@@ -205,11 +205,14 @@ export class BattlePresenter {
     if (ready) commands.push({ type: 'playFrames', combatantId, frameIds: [ready] });
     //달려 나가며 출발점에서, 준비 자세를 잡으며 도착한 자리에서 사건 이펙트가 난다.
     //지면 이펙트는 발, 나머지는 몸 가운데다 (SPEC-002 §5.4.2)
+    //기 모으기 같은 준비 이펙트는 정해진 기술에서만 낸다 (SPEC-002 §5.4.3)
+    const slot = this.battle.skill(skillId).slot;
+    const readyIds = catalog.bindings.readySlots === null || catalog.bindings.readySlots.includes(slot) ? catalog.bindings.ready : [];
     if (ready) {
       const feet = placement.position;
       const center = { x: feet.x, y: feet.y - catalog.characterHeight * 0.5 };
       for (const [effectIds, onArrive] of [
-        [catalog.bindings.ready, true],
+        [readyIds, true],
         [catalog.bindings.dash, false],
       ] as const) {
         for (const effectId of effectIds) {
@@ -330,16 +333,26 @@ export class BattlePresenter {
       //명중 섬광은 따로 낸다. 때리는 장(보통 마지막 장)의 지면·분출은 피해가 들어갈 때 onDamage 가 낸다
       if (anchor === 'hitPoint') continue;
       if (anchor !== 'bladeTip' && frameId === (side.frameId ?? lastFrame)) continue;
+      const burst = anchor === 'emissionPoint' && this.bodyOf(targetId) !== null;
       commands.push({
         type: 'spawnEffect',
         sourceId: side.combatantId,
-        targetId: null,
+        //맞는 쪽 몸통에서 나는 분출은 맞는 쪽을 적어 둔다. 렌더러가 그 사람의 지금 자리로 옮긴다
+        targetId: burst ? targetId : null,
         frameId,
         //캐릭터가 뒤집혀 있으면 궤적도 뒤집는다. 안 뒤집으면 적의 궤적이 반대로 뻗는다.
         //중간 장의 분출은 그 장의 날끝에서 난다 (SPEC-002 §5.4.2)
+        //분출은 맞는 쪽 몸통에서 난다. 날끝에서 내면 올려 벤 자세에서 공격자 머리 위에 떴다 (SPEC-002 §5.4.3)
         placement: this.stage.placeEffect(
           effectId,
-          { source: placement, sourceFrameId: frameId, emission: this.stage.framePoint(placement, frameId, 'bladeTip') },
+          {
+            source: placement,
+            sourceFrameId: frameId,
+            emission:
+              anchor === 'emissionPoint'
+                ? (this.bodyOf(targetId) ?? this.stage.framePoint(placement, frameId, 'bladeTip'))
+                : this.stage.framePoint(placement, frameId, 'bladeTip'),
+          },
           { flipped: placement.facing === -1 },
         ),
       });
@@ -473,14 +486,27 @@ export class BattlePresenter {
         sourceId: hitter.combatantId,
         targetId: damagedId,
         frameId: null,
-        //발생 좌표는 때린 순간의 날끝이다. 이후 무기를 따라가지 않는다
+        //발생 좌표는 맞은 쪽 몸통이다. 불길·재는 베인 자리에서 난다. 날끝에서 내면 올려 벤 자세에서 공격자 머리 위에 떴다 (SPEC-002 §5.4.3).
+        //이후 무기를 따라가지 않는다. 맞은 쪽 자세를 모르면 예전처럼 날끝에서 낸다
         placement: this.stage.placeEffect(
           effectId,
-          { ...context, emission: this.stage.framePoint(source, hitter.frameId, 'bladeTip') },
+          {
+            ...context,
+            emission: targetFrameId
+              ? this.stage.hitPoint(context)
+              : this.stage.framePoint(source, hitter.frameId, 'bladeTip'),
+          },
           { flipped: source.facing === -1 },
         ),
       });
     }
+  }
+
+  //맞는 쪽 몸통 자리. 대기 장의 머리 중심과 발의 중간이다. 그림이 없으면 null
+  private bodyOf(combatantId: string): Point | null {
+    const target = this.context.actor(combatantId);
+    if (!this.stage.has(target.characterId)) return null;
+    return this.stage.hitPoint({ source: target, sourceFrameId: this.namedFrame(combatantId, 'idle'), target, targetFrameId: this.namedFrame(combatantId, 'idle') });
   }
 
   //교전 중 이긴 쪽이 깎였는지. 우리 규칙에서 이긴 쪽은 상대에게 맞지 않으니 자기 대가다

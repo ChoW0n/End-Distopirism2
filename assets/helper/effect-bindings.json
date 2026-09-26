@@ -33,9 +33,11 @@
     "04_smoke_ash"
   ],
   "_eventsComment": "사건 이펙트. 명중이 아니므로 명중 섬광(02)은 넣지 않는다 (SPEC-002 §5.4.2)",
+  "_readySlots": "충전 고리는 기 모으기다. 큰 기술(S3·궁극기)을 잡을 때만 낸다 (SPEC-002 §5.4.3)",
   "ready": [
     "09_charge_ring"
   ],
+  "readySlots": ["S3", "ULT"],
   "dash": [
     "12_speed_wake"
   ],

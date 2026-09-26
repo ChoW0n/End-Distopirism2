@@ -544,6 +544,12 @@ describe('SPEC-005 피해 한 방', () => {
     expect(pick(hit(999), 'hitStop')[0]!.sec).toBe(stop.maxSec);
   });
 
+  it('멈춤 뒤에 잠깐 느려진다 (SPEC-005 §2.3.6)', () => {
+    const types = hit(12).map((c) => c.type);
+    expect(types.indexOf('hitSlow')).toBeGreaterThan(types.indexOf('hitStop'));
+    expect(pick(hit(12), 'hitSlow')[0]).toEqual({ type: 'hitSlow', scale: uiData.hitStop.slowScale, sec: uiData.hitStop.slowSec });
+  });
+
   it('큰 한 방만 번쩍인다', () => {
     const heavy = uiData.damageText.heavyDamage;
     expect(pick(hit(heavy - 1), 'flash')).toHaveLength(0);
