@@ -124,6 +124,21 @@ describe('§11-3 동점은 교착으로 처리된다', () => {
   });
 });
 
+describe('§4.6 합에서 지면 정신력이 깎인다 [D-21]', () => {
+  //강화 공격(기본 9)이 무난한 공격(기본 7)을 코인 없이 매번 이긴다
+  it('진 횟수만큼 5 씩 깎이고 이긴 쪽은 상한에서 멈춘다', () => {
+    const attacker = makeCombatant('a', 'main', 'ally');
+    const defender = makeCombatant('b', 'main', 'enemy');
+    const resolver = makeResolver(alwaysFailRng, [attacker, defender]);
+    const events = resolver.resolve(attacker, MAIN_S2, defender, MAIN_S1);
+
+    const lost = events.filter((e) => e.type === 'mentalityChanged' && e.reason === 'clashLose');
+    expect(lost).toHaveLength(defender.base.maxCoin);
+    expect(defender.mentality).toBe(100 + catalog.rules.mentalityOnClashLose * defender.base.maxCoin);
+    expect(attacker.mentality).toBe(100);
+  });
+});
+
 describe('§11-4 상태이상 4종이 명시된 타이밍에 발동한다', () => {
   it('출혈은 턴 시작에 최대체력의 1% 를 깎고 중첩된다', () => {
     const bleeding = makeCombatant('b', 'main', 'enemy');
@@ -134,13 +149,13 @@ describe('§11-4 상태이상 4종이 명시된 타이밍에 발동한다', () =
     bleeding.applyStatus('bleed', 3, true);
     resolver.applyTurnStartStatuses(bleeding, events);
 
-    //메인 캐릭터 최대체력 320 의 1% 는 3, 2중첩이면 6
+    //메인 캐릭터 최대체력 112 의 1% 는 1, 2중첩이면 2
     expect(events.find((e) => e.type === 'statusTicked')).toMatchObject({
       combatantId: 'b',
       status: 'bleed',
-      damage: 6,
+      damage: 2,
     });
-    expect(bleeding.hp).toBe(320 - 6);
+    expect(bleeding.hp).toBe(112 - 2);
   });
 
   it('출혈은 한 턴에 여러 교전을 치러도 한 번만 들어간다', () => {

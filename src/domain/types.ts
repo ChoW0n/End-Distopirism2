@@ -21,6 +21,7 @@ export interface BattleRules {
   coinBaseProbability: number;
   mentalityMax: number;
   mentalityOnClashWin: number;
+  mentalityOnClashLose: number;
   mentalityOnDeadlock: number;
   mentalityRegenPerTurn: number;
   mentalityRegenCap: number;
@@ -192,6 +193,7 @@ export interface BattleData {
 //정신력이 바뀐 이유. UI 가 연출을 고르는 데 쓴다
 export type MentalityReason =
   | 'clashWin'
+  | 'clashLose'
   | 'deadlock'
   | 'skill'
   | 'turnRegen';

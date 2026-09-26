@@ -183,6 +183,7 @@ function parseRules(raw: unknown): BattleRules {
     coinBaseProbability: num(source, 'coinBaseProbability', 'rules'),
     mentalityMax: num(source, 'mentalityMax', 'rules'),
     mentalityOnClashWin: num(source, 'mentalityOnClashWin', 'rules'),
+    mentalityOnClashLose: num(source, 'mentalityOnClashLose', 'rules'),
     mentalityOnDeadlock: num(source, 'mentalityOnDeadlock', 'rules'),
     mentalityRegenPerTurn: num(source, 'mentalityRegenPerTurn', 'rules'),
     mentalityRegenCap: num(source, 'mentalityRegenCap', 'rules'),

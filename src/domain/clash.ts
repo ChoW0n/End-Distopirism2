@@ -209,6 +209,8 @@ export class ClashResolver {
       loser.loseCoin();
       events.push({ type: 'coinLost', combatantId: loser.id, coin: loser.coin });
       this.changeMentality(winner, this.catalog.rules.mentalityOnClashWin, 'clashWin', events);
+      //지면 흔들린다. 합에서 진 만큼 정신력이 깎인다 (D-21)
+      this.changeMentality(loser, this.catalog.rules.mentalityOnClashLose, 'clashLose', events);
 
       //패자의 코인이 떨어지면 합이 끝나고 승자가 피해를 넣는다
       if (loser.coin <= 0) {
