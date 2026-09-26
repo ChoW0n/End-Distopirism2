@@ -46,6 +46,16 @@ export async function loadCharacter(root: string, characterId: string): Promise<
   return new SpriteCatalog(manifest, bindings);
 }
 
+//매니페스트가 있는 캐릭터 목록 (SPEC-002 §9). 없는 캐릭터를 찔러 404 를 내지 않는다
+export async function loadIndex(root: string): Promise<Set<string>> {
+  const raw = await json(`${root}/index.json`);
+  const list = raw && typeof raw === 'object' ? (raw as Record<string, unknown>)['characters'] : null;
+  if (!Array.isArray(list) || list.some((id) => typeof id !== 'string')) {
+    throw new Error('assets/index.json 의 characters 가 문자열 목록이 아니다');
+  }
+  return new Set(list as string[]);
+}
+
 export async function loadUi(root: string): Promise<UiData> {
   return parseUiData(await json(`${root}/ui/ui-data.json`));
 }
@@ -59,8 +69,15 @@ export async function loadMap(root: string): Promise<MapPlacement> {
 export class ImageBank implements ImageSource {
   private readonly bitmaps = new Map<string, HTMLImageElement>();
   private readonly missing = new Set<string>();
+  //받기 시작한 수와 끝난 수. 불러오기 화면이 진행률로 쓴다 (SPEC-004 §12)
+  private started = 0;
+  private finished = 0;
 
-  constructor(private readonly root: string) {}
+  //진행률이 바뀔 때마다 부른다
+  constructor(
+    private readonly root: string,
+    private readonly onProgress: (done: number, total: number) => void = () => undefined,
+  ) {}
 
   //캐릭터 하나가 쓰는 파일을 전부 받는다
   async preloadCharacter(characterId: string, catalog: SpriteCatalog): Promise<void> {
@@ -84,9 +101,13 @@ export class ImageBank implements ImageSource {
 
   private async take(key: string): Promise<void> {
     if (this.bitmaps.has(key) || this.missing.has(key)) return;
+    this.started += 1;
+    this.onProgress(this.finished, this.started);
     const bitmap = await image(`${this.root}/${key}`);
     if (bitmap) this.bitmaps.set(key, bitmap);
     else this.missing.add(key);
+    this.finished += 1;
+    this.onProgress(this.finished, this.started);
   }
 
   character(characterId: string, file: string): CanvasImageSource | null {

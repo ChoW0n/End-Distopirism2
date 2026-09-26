@@ -32,6 +32,9 @@ export type UiCommand =
       combatantId: string;
       kind: 'hp' | 'mentality';
       ratio: number;
+      //바 옆에 찍는 숫자. 렌더러가 비율에서 되돌려 계산하지 않는다 (SPEC-004 §11)
+      value: number;
+      max: number;
       origin: Point;
       size: { width: number; height: number };
       tweenSec: number;
@@ -350,7 +353,7 @@ export class UiDirector {
   //아군이 고른 대상을 화살표로 그린다. 이건 이벤트가 아니라 입력이라 따로 받는다
   selectTarget(sourceId: string, targetId: string): UiCommand[] {
     const commands: UiCommand[] = [];
-    this.pushArrow(commands, sourceId, targetId);
+    this.pushArrow(commands, sourceId, targetId, 'ally');
     return commands;
   }
 
@@ -485,6 +488,8 @@ export class UiDirector {
       combatantId,
       kind,
       ratio: kind === 'hp' ? this.hpRatio(combatantId) : this.mentalityRatio(combatantId),
+      value: kind === 'hp' ? Math.max(0, this.hpOf(combatantId)) : this.mentalityOf(combatantId),
+      max: kind === 'hp' ? this.maxHpOf(combatantId) : this.battle.rules.mentalityMax,
       origin: { x: this.context.actor(combatantId).position.x - width / 2, y: bottom - barHeight },
       size: { width, height: barHeight },
       tweenSec: bar.tweenSec,
@@ -746,7 +751,7 @@ export class UiDirector {
   }
 
   //화살표 하나를 그린다. 베지어 계산을 여기서 끝내고 점 목록만 넘긴다
-  private pushArrow(commands: UiCommand[], sourceId: string, targetId: string): void {
+  private pushArrow(commands: UiCommand[], sourceId: string, targetId: string, side: 'ally' | 'enemy' = 'enemy'): void {
     if (!this.hasBody(sourceId) || !this.hasBody(targetId)) return;
 
     const arrow = this.data.arrow;
@@ -768,8 +773,8 @@ export class UiDirector {
       curve,
       head: arrowHead(curve, arrow.headLength * height, arrow.headAngleDeg),
       drawSec: arrow.drawSec,
-      colorStart: arrow.colorStart,
-      colorEnd: arrow.colorEnd,
+      colorStart: side === 'ally' ? arrow.allyColorStart : arrow.colorStart,
+      colorEnd: side === 'ally' ? arrow.allyColorEnd : arrow.colorEnd,
     });
     this.arrowsDrawn = true;
   }
@@ -815,9 +820,13 @@ export class UiDirector {
 
   //따라 센 정신력. 아직 못 봤으면 캐릭터의 시작 정신력이다
   private mentalityRatio(combatantId: string): number {
+    return clamp01(this.mentalityOf(combatantId) / this.battle.rules.mentalityMax);
+  }
+
+  //따라 센 정신력 값
+  private mentalityOf(combatantId: string): number {
     const characterId = this.context.actor(combatantId).characterId;
-    const known = this.mentality.get(combatantId) ?? this.battle.character(characterId).mentality;
-    return clamp01(known / this.battle.rules.mentalityMax);
+    return this.mentality.get(combatantId) ?? this.battle.character(characterId).mentality;
   }
 }
 

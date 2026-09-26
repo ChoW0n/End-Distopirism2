@@ -122,3 +122,153 @@ button {
   cursor: pointer;
 }
 button:hover { background: #983030; }
+.panel .check { gap: 4px; }
+.dev { display: inline-flex; }
+.dev summary { cursor: pointer; color: #8a8278; }
+.dev[open] { gap: 10px; align-items: center; }
+.dev[open] summary { margin-right: 6px; }
+.dev label { margin-right: 10px; }
+
+/* 하단 현황판 (SPEC-004 §11). 아래 띠 안에 아군 왼쪽, 적 오른쪽 */
+.hud {
+  position: absolute;
+  left: 1.2%;
+  right: 1.2%;
+  bottom: 3.2%;
+  display: flex;
+  justify-content: space-between;
+  gap: 2%;
+  pointer-events: none;
+  font-size: clamp(10px, 0.95vw, 14px);
+}
+.hud-side { display: flex; gap: 8px; flex: 1 1 0; min-width: 0; }
+.hud-side.enemy { flex-direction: row-reverse; }
+.hud-unit {
+  flex: 0 1 13em;
+  min-width: 0;
+  padding: 4px 8px 5px;
+  background: rgba(10,9,9,0.72);
+  border-left: 3px solid var(--side);
+  display: grid;
+  gap: 2px;
+}
+.hud-side.enemy .hud-unit { border-left: 0; border-right: 3px solid var(--side); text-align: right; }
+.hud-unit b { color: var(--side); font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hud-unit.down { opacity: 0.4; }
+.hud-unit.down b::after { content: ' · 쓰러짐'; color: #a89f92; font-weight: 400; }
+.hud-bar { height: 5px; background: #000; position: relative; }
+.hud-bar i { position: absolute; inset: 0 auto 0 0; background: var(--fill); transition: width 0.4s; }
+.hud-side.enemy .hud-bar i { inset: 0 0 0 auto; }
+.hud-num { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 0.8em; white-space: nowrap; color: #cfc6b8; font-variant-numeric: tabular-nums; }
+.hud-num em { font-style: normal; color: #c9a24a; }
+
+/* 불러오기 */
+.loading {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 10px;
+  background: #08080a;
+  color: #cfc8bc;
+  letter-spacing: 0.08em;
+}
+.loading[hidden] { display: none; }
+.loading .meter { width: min(320px, 50vw); height: 4px; background: #1d1b1a; }
+.loading .meter i { display: block; height: 100%; width: 0; background: #9b2a26; transition: width 0.2s; }
+.loading small { color: #8a8278; font-variant-numeric: tabular-nums; }
+
+/* 도움말 */
+.help-open {
+  position: absolute;
+  right: 1.2%;
+  top: 1.8%;
+  width: 2em;
+  height: 2em;
+  border-radius: 50%;
+  padding: 0;
+  font-weight: 800;
+  background: rgba(20,16,15,0.8);
+  border: 1px solid #6d1f1f;
+}
+.help {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(560px, 90%);
+  max-height: 88%;
+  overflow: auto;
+  padding: 18px 22px;
+  background: rgba(14,12,11,0.96);
+  border: 1px solid #6d1f1f;
+  box-shadow: 0 10px 40px #000;
+  font-size: clamp(12px, 1.1vw, 15px);
+}
+.help[hidden] { display: none; }
+.help h2 { margin: 0 0 8px; font-size: 1.25em; letter-spacing: 0.06em; }
+.help ol { margin: 0 0 14px; padding-left: 1.3em; display: grid; gap: 6px; }
+.help .enemy-arrow { color: #ff9a3c; }
+.help button { padding: 6px 18px; }
+
+/* 명령 패널 (SPEC-004 §10). 무대 바로 아래에 붙는다. 캐릭터 발을 가리지 않는다 */
+.command {
+  width: min(100%, 1600px);
+  margin-top: -6px;
+  padding: 10px 14px 12px;
+  background: #121011;
+  border: 1px solid #3a1717;
+  border-top: 0;
+  display: grid;
+  gap: 8px;
+}
+.command.off .cmd-row { opacity: 0.35; pointer-events: none; }
+.cmd-head { display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; }
+.cmd-head b { color: #efe6d8; letter-spacing: 0.04em; }
+.cmd-head .hint { color: #b8b0a4; font-size: 13px; }
+.cmd-head .hint strong { color: #ffb347; }
+.cmd-row { display: flex; gap: 16px; align-items: stretch; flex-wrap: wrap; }
+.cmd-group { display: grid; gap: 4px; align-content: start; }
+.cmd-group.grow { flex: 1; min-width: 280px; }
+.cmd-group > small { color: #7d766c; letter-spacing: 0.1em; }
+.cmd-allies, .cmd-enemies, .cmd-cards { display: flex; gap: 6px; flex-wrap: wrap; }
+.pick {
+  background: #1d1a19;
+  color: #e8e0d2;
+  border: 1px solid #3b3634;
+  border-left: 3px solid var(--side, #555);
+  text-align: left;
+  padding: 6px 10px;
+  display: grid;
+  gap: 1px;
+  min-width: 7.5em;
+}
+.pick:hover { background: #2a2524; }
+.pick small { color: #9d958a; font-size: 11px; }
+.pick[aria-pressed="true"] { background: #3a2a18; border-color: #d9a441; border-left-color: var(--side, #d9a441); }
+.pick.done small { color: #7fc29b; }
+.pick.clash small { color: #ffb347; }
+.pick:disabled { opacity: 0.35; cursor: default; }
+.card {
+  background: #1b1918;
+  color: #e8e0d2;
+  border: 1px solid #3b3634;
+  text-align: left;
+  padding: 7px 10px 8px;
+  width: 11.5em;
+  display: grid;
+  gap: 3px;
+}
+.card:hover { background: #2a2524; border-color: #7a2222; }
+.card:disabled { opacity: 0.35; cursor: default; background: #1b1918; border-color: #3b3634; }
+.card .top { display: flex; justify-content: space-between; align-items: baseline; }
+.card .slot { font-weight: 800; color: #efe6d8; }
+.card .attr { font-size: 11px; color: #c9a24a; }
+.card .dmg { font-size: 15px; font-weight: 800; color: #ffd94a; font-variant-numeric: tabular-nums; }
+.card .dmg small { font-size: 11px; font-weight: 400; color: #9d958a; }
+.card p { margin: 0; font-size: 11px; color: #a89f92; line-height: 1.35; }
+.card.ult { border-color: #9b2a26; }
+.go { align-self: stretch; padding: 8px 18px; font-weight: 800; font-size: 15px; }
+.go:disabled { background: #2a2524; color: #6f6860; cursor: default; }
+.go kbd { font: inherit; font-size: 11px; opacity: 0.7; margin-left: 4px; }

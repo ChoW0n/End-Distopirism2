@@ -40,6 +40,9 @@ export interface ArrowData {
   headAngleDeg: number;
   colorStart: string;
   colorEnd: string;
+  //아군이 고른 대상 화살표 색. 적 화살표와 갈라 읽히게 한다 (SPEC-004 §11)
+  allyColorStart: string;
+  allyColorEnd: string;
 }
 
 //체력바·정신력바
@@ -50,6 +53,11 @@ export interface BarData {
   topMargin: number;
   tweenSec: number;
   easing: string;
+  hpColor: string;
+  //황동색. 코인(금)과 같은 계열로 묶는다 (SPEC-004 §11)
+  mentalityColor: string;
+  //바 옆 숫자 크기
+  numberSize: number;
 }
 
 //합 승리/패배/교착 배지
@@ -57,6 +65,20 @@ export interface BadgeData {
   rise: number;
   riseSec: number;
   deadlockMax: number;
+  //배지가 이보다 위로 못 올라간다. 화면 높이 비율이다. 위쪽 띠에 걸치지 않게 한다
+  safeTop: number;
+}
+
+//피아 구분 (SPEC-004 §11). 발밑 고리·이름표 색과 크기, 같은 편 뒷줄을 옆으로 벌리는 양
+export interface SideData {
+  ally: string;
+  enemy: string;
+  ringWidth: number;
+  ringDepth: number;
+  ringAlpha: number;
+  nameSize: number;
+  nameGap: number;
+  rowStagger: number;
 }
 
 //합 한 번의 박자와 모양 (SPEC-005 §2)
@@ -252,6 +274,7 @@ export interface UiData {
   arrow: ArrowData;
   bar: BarData;
   badge: BadgeData;
+  side: SideData;
   clash: ClashFxData;
   hitStop: HitStopData;
   damageText: DamageTextData;
@@ -331,6 +354,7 @@ export function parseUiData(raw: unknown): UiData {
   const arrow = obj(source['arrow'], 'arrow');
   const bar = obj(source['bar'], 'bar');
   const badge = obj(source['badge'], 'badge');
+  const side = obj(source['side'], 'side');
   const cutscene = obj(source['cutscene'], 'cutscene');
   const motion = obj(source['motion'], 'motion');
   const camera = obj(source['camera'], 'camera');
@@ -369,6 +393,8 @@ export function parseUiData(raw: unknown): UiData {
       headAngleDeg: num(arrow, 'headAngleDeg', 'arrow'),
       colorStart: str(arrow, 'colorStart', 'arrow'),
       colorEnd: str(arrow, 'colorEnd', 'arrow'),
+      allyColorStart: str(arrow, 'allyColorStart', 'arrow'),
+      allyColorEnd: str(arrow, 'allyColorEnd', 'arrow'),
     },
     bar: {
       width: num(bar, 'width', 'bar'),
@@ -377,11 +403,25 @@ export function parseUiData(raw: unknown): UiData {
       topMargin: num(bar, 'topMargin', 'bar'),
       tweenSec: num(bar, 'tweenSec', 'bar'),
       easing: str(bar, 'easing', 'bar'),
+      hpColor: str(bar, 'hpColor', 'bar'),
+      mentalityColor: str(bar, 'mentalityColor', 'bar'),
+      numberSize: num(bar, 'numberSize', 'bar'),
     },
     badge: {
       rise: num(badge, 'rise', 'badge'),
       riseSec: num(badge, 'riseSec', 'badge'),
       deadlockMax: num(badge, 'deadlockMax', 'badge'),
+      safeTop: num(badge, 'safeTop', 'badge'),
+    },
+    side: {
+      ally: str(side, 'ally', 'side'),
+      enemy: str(side, 'enemy', 'side'),
+      ringWidth: num(side, 'ringWidth', 'side'),
+      ringDepth: num(side, 'ringDepth', 'side'),
+      ringAlpha: num(side, 'ringAlpha', 'side'),
+      nameSize: num(side, 'nameSize', 'side'),
+      nameGap: num(side, 'nameGap', 'side'),
+      rowStagger: num(side, 'rowStagger', 'side'),
     },
     clash: numbers('clash', [
       'coinSec', 'powerSec', 'resultSec', 'recoilWinner', 'recoilLoser', 'recoilSec', 'sparkSize',

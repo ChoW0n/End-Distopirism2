@@ -1,0 +1,4 @@
+{
+  "_comment": "매니페스트가 있는 캐릭터 목록 (SPEC-002 §9). 웹 로더는 여기 있는 캐릭터만 읽는다. 반입하면 한 줄 더한다",
+  "characters": ["helper", "incinerator"]
+}

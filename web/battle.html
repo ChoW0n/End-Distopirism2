@@ -18,15 +18,66 @@
   <div class="stage-name">지하 1구역</div>
   <!-- 턴 표시 (TurnUI 상단 중앙 0,-20 · 150x150) -->
   <div class="turn"><span id="turn">1</span><small>턴</small></div>
+
+  <!-- 하단 현황판. 카메라가 둘만 비춰도 전장 전체를 읽는다 (SPEC-004 §11) -->
+  <div class="hud" aria-label="전장 현황">
+    <div class="hud-side ally" id="hud-ally"></div>
+    <div class="hud-side enemy" id="hud-enemy"></div>
+  </div>
+
+  <!-- 불러오기 (SPEC-004 §12) -->
+  <div id="loading" class="loading" role="status">
+    <b>불러오는 중</b>
+    <div class="meter"><i id="loading-bar"></i></div>
+    <small id="loading-text">데이터</small>
+  </div>
+
+  <button id="help-open" class="help-open" type="button" aria-label="도움말">?</button>
+  <!-- 규칙 요약. 첫 방문에 한 번 뜬다 -->
+  <div id="help" class="help" role="dialog" aria-labelledby="help-title" hidden>
+    <h2 id="help-title">전투 방법</h2>
+    <ol>
+      <li><b>아군</b>을 고르고 → 칠 <b>적</b>을 누르고 → <b>카드</b>를 고른다. 아군 수만큼 반복.</li>
+      <li>적 머리 위에서 나오는 <span class="enemy-arrow">주황 화살표</span>는 그 적이 노리는 아군이다.
+        <b>나를 노리는 적을 같이 노리면 합</b>, 아니면 서로 한 대씩 치는 일방 공격이다.</li>
+      <li><b>합</b>: 양쪽이 <b>코인</b>을 굴린다. 앞면(금색)마다 카드 위력이 오른다. 위력이 낮은 쪽이 코인을 하나 잃고, 코인이 다 떨어지면 이긴 쪽의 위력만큼 맞는다.</li>
+      <li><b>정신력</b>(황동색 바)이 높을수록 코인 앞면이 잘 나온다. 합에서 지면 깎이고 이기면 오른다.</li>
+      <li>적을 전부 쓰러뜨리면 승리.</li>
+    </ol>
+    <button id="help-close" type="button">시작</button>
+  </div>
 </div>
+
+<!-- 명령 패널. 입력 단계에만 켜진다 (SPEC-004 §10) -->
+<section id="command" class="command" aria-label="명령">
+  <div class="cmd-head">
+    <b id="cmd-step">…</b>
+    <span id="cmd-hint" class="hint"></span>
+  </div>
+  <div class="cmd-row">
+    <div class="cmd-group">
+      <small>아군</small>
+      <div id="cmd-allies" class="cmd-allies"></div>
+    </div>
+    <div class="cmd-group">
+      <small>대상</small>
+      <div id="cmd-enemies" class="cmd-enemies"></div>
+    </div>
+    <div class="cmd-group grow">
+      <small>카드</small>
+      <div id="cmd-cards" class="cmd-cards"></div>
+    </div>
+    <button id="cmd-go" class="go" type="button" disabled>합 진행 <kbd>Enter</kbd></button>
+  </div>
+</section>
 
 <!-- 보는 사람용 조작. 원작 HUD 가 아니라 화면 밖에 둔다 -->
 <div class="panel">
   <b id="status" class="status">…</b>
-  <label>대진
-    <select id="roster">
-      <option value="mirror">그림 있는 캐릭터 2 대 2</option>
-      <option value="all">전체 4 대 4 (그림 없는 캐릭터는 점선)</option>
+  <label>조작
+    <select id="mode">
+      <option value="play">직접 조작</option>
+      <option value="watch">자동 관전</option>
     </select>
   </label>
   <span class="speed" role="group" aria-label="배속">
@@ -34,9 +85,18 @@
     <button data-speed="2" aria-pressed="false">×2</button>
     <button data-speed="3" aria-pressed="false">×3</button>
   </span>
-  <label>시드 <input id="seed" type="number" value="1" min="0"></label>
   <label class="check"><input id="sound" type="checkbox" checked> 소리</label>
-  <label class="check"><input id="autonext" type="checkbox" checked> 끝나면 다음 판</label>
+  <details class="dev">
+    <summary>개발</summary>
+    <label>대진
+      <select id="roster">
+        <option value="mirror">그림 있는 캐릭터 2 대 2</option>
+        <option value="all">전체 캐릭터 4 대 4 (일부 그림 준비 중)</option>
+      </select>
+    </label>
+    <label>시드 <input id="seed" type="number" value="1" min="0"></label>
+    <label class="check"><input id="autonext" type="checkbox"> 끝나면 다음 판</label>
+  </details>
   <button id="restart" class="primary">재시작</button>
 </div>
 <script type="module" src="battle.js"></script>

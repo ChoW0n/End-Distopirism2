@@ -12,7 +12,7 @@ import type { RenderCommand } from '../render/presenter.js';
 import { SILENT, type SoundPlayer } from './sound.js';
 import type { Stage, StagePlacement } from '../render/stage.js';
 import type { UiCommand } from '../ui/director.js';
-import type { CameraData, CutsceneFxData, DownData, EffectFxData, MotionData } from '../ui/data.js';
+import type { BadgeData, BarData, CameraData, CutsceneFxData, DownData, EffectFxData, MotionData, SideData } from '../ui/data.js';
 import { Scene, type CameraState } from './scene.js';
 
 //렌더러가 그림을 찾는 통로. 어느 파일이 어느 비트맵인지는 밖에서 정한다
@@ -21,6 +21,31 @@ export interface ImageSource {
   character(characterId: string, file: string): CanvasImageSource | null;
   //배경 (assets/map/<파일>)
   map(file: string): CanvasImageSource | null;
+}
+
+//무대에 선 사람의 이름과 진영. 이름표·발밑 고리·현황판에 쓴다 (SPEC-004 §11)
+export interface ActorLabel {
+  combatantId: string;
+  name: string;
+  side: 'ally' | 'enemy';
+}
+
+//현황판이 읽는 한 사람의 지금 값. 숫자는 바가 받은 명령 그대로다
+export interface ActorSnapshot {
+  combatantId: string;
+  name: string;
+  side: 'ally' | 'enemy';
+  hp: { value: number; max: number } | null;
+  mentality: { value: number; max: number } | null;
+  down: boolean;
+}
+
+//입력 단계에서 고른 사람. 발밑 고리를 밝혀 보인다 (SPEC-004 §10)
+export interface Selection {
+  ally: string | null;
+  target: string | null;
+  //누를 수 있는 사람. 고리가 숨쉬듯 밝아진다
+  pickable: readonly string[];
 }
 
 //대기열에 들어가는 것. 카메라 명령도 같은 줄에 선다 (SPEC-005 §3.1)
@@ -85,6 +110,10 @@ interface Actor {
   down: number | null;
   //체력 바 아래 상태 이름표
   chips: { labels: string[]; size: number; gap: number; color: string } | null;
+  //이름과 진영. 없으면 이름표·고리를 안 그린다
+  label: ActorLabel | null;
+  //바 옆 숫자
+  barValue: Record<'hp' | 'mentality', { value: number; max: number } | null>;
 }
 
 //재생 중인 이펙트 하나. 마지막 키프레임에도 그림이 남으므로 끝나면 반드시 지운다
@@ -179,9 +208,10 @@ const SPARK_SEC = 0.32;
 const RESULT_RETRY_SEC = 0.1;
 const BANNER_FADE_SEC = 0.3;
 
+//패배는 회백색이다. 파랑은 배경에 묻혔다 (SPEC-004 §11)
 const BADGE_COLOR: Record<LiveBadge['result'], string> = {
   win: '#ffd94a',
-  lose: '#8fb7ff',
+  lose: '#e6e1d8',
   deadlock: '#c9c9c9',
 };
 
@@ -201,6 +231,10 @@ export class CanvasRenderer {
   private readonly badges: LiveBadge[] = [];
   private arrows: LiveArrow[] = [];
   private cutscene: LiveCutscene | null = null;
+  //입력 단계에서 고른 사람 (SPEC-004 §10)
+  private selection: Selection = { ally: null, target: null, pickable: [] };
+  //지난 장면에 사람이 그려진 화면 사각형. 누른 자리를 사람으로 되돌리는 데 쓴다 (§10.3)
+  private hitRects = new Map<string, { x0: number; y0: number; x1: number; y1: number }>();
 
   //아직 실행하지 않은 명령. 어댑터가 순서를 정하고 여기가 시간을 나눠 준다
   private queue: Queued[] = [];
@@ -246,12 +280,17 @@ export class CanvasRenderer {
     private readonly downFx: DownData,
     //카메라 수치 (ui-data.json camera). 깊이 줌 보정 범위를 읽는다
     private readonly cam: CameraData,
+    //피아 구분·바·배지 수치 (ui-data.json side·bar·badge)
+    private readonly hud: { side: SideData; bar: BarData; badge: BadgeData },
     //소리. 명령을 실제로 실행하는 순간 이름만 부른다 (SPEC-005 §7.5)
     private readonly sound: SoundPlayer = SILENT,
   ) {}
 
   //무대에 캐릭터를 세운다. 전투가 새로 시작될 때 부른다
-  reset(placements: readonly StagePlacement[]): void {
+  reset(placements: readonly StagePlacement[], labels: readonly ActorLabel[] = []): void {
+    const labelOf = new Map(labels.map((l) => [l.combatantId, l]));
+    this.selection = { ally: null, target: null, pickable: [] };
+    this.hitRects.clear();
     this.actors.clear();
     this.effects.length = 0;
     this.sparks.length = 0;
@@ -308,6 +347,8 @@ export class CanvasRenderer {
         presence: 1,
         down: null,
         chips: null,
+        label: labelOf.get(placement.combatantId) ?? null,
+        barValue: { hp: null, mentality: null },
       });
     }
     this.focus = this.restFocus();
@@ -335,6 +376,37 @@ export class CanvasRenderer {
   //컷신이 도는 중인지
   get busy(): boolean {
     return this.cutscene !== null;
+  }
+
+  //입력 단계에서 고른 사람을 밝힌다. 입력이 끝나면 빈 선택으로 되돌린다 (SPEC-004 §10)
+  setSelection(selection: Selection): void {
+    this.selection = { ...selection, pickable: [...selection.pickable] };
+  }
+
+  //캔버스 좌표를 사람으로 되돌린다. 겹치면 앞에 선 사람이 이긴다 (§10.3)
+  hitTest(x: number, y: number): string | null {
+    let found: string | null = null;
+    for (const [id, rect] of this.hitRects) {
+      if (x >= rect.x0 && x <= rect.x1 && y >= rect.y0 && y <= rect.y1) found = id;
+    }
+    return found;
+  }
+
+  //현황판이 읽는 지금 값 (§11). 바가 받은 명령의 숫자를 그대로 준다
+  snapshot(): ActorSnapshot[] {
+    const out: ActorSnapshot[] = [];
+    for (const actor of this.actors.values()) {
+      if (!actor.label) continue;
+      out.push({
+        combatantId: actor.placement.combatantId,
+        name: actor.label.name,
+        side: actor.label.side,
+        hp: actor.barValue.hp,
+        mentality: actor.barValue.mentality,
+        down: actor.down !== null,
+      });
+    }
+    return out;
   }
 
   //── 명령 적용 ──
@@ -470,6 +542,7 @@ export class CanvasRenderer {
         bar.target = command.ratio;
         bar.shown = command.ratio;
         bar.tweenSec = command.tweenSec;
+        actor.barValue[command.kind] = { value: command.value, max: command.max };
         actor.barBox[command.kind] = {
           rel: { x: command.origin.x - actor.home.x, y: command.origin.y - actor.home.y },
           width: command.size.width,
@@ -491,6 +564,8 @@ export class CanvasRenderer {
         return 0;
 
       case 'targetArrow':
+        //같은 사람이 다시 겨누면 앞 화살표를 걷는다. 입력 단계에서 지시를 바꿀 때다
+        this.arrows = this.arrows.filter((a) => a.sourceId !== command.sourceId);
         this.arrows.push({
           sourceId: command.sourceId,
           targetId: command.targetId,
@@ -1197,8 +1272,12 @@ export class CanvasRenderer {
 
     //뒤에 있는 캐릭터부터 그린다. 앞 사람이 뒤 사람을 가린다
     const ordered = [...this.actors.values()].sort((a, b) => this.positionOf(a, nowSec).y - this.positionOf(b, nowSec).y);
+    //발밑 고리는 바닥이라 사람보다 먼저 깐다 (SPEC-004 §11)
+    for (const actor of ordered) this.drawRing(actor, nowSec);
+    this.hitRects.clear();
     for (const actor of ordered) {
       if (this.presence(actor) <= 0.01 || this.downFade(actor) <= 0.01) continue;
+      if (actor.down === null) this.recordHit(actor, nowSec);
       ctx.save();
       ctx.globalAlpha = this.presence(actor) * this.downFade(actor);
       if (this.stage.has(actor.placement.characterId)) {
@@ -1464,7 +1543,7 @@ export class CanvasRenderer {
 
     const ctx = this.ctx;
     ctx.save();
-    ctx.strokeStyle = actor.placement.facing === 1 ? '#6f8fbf' : '#bf6f6f';
+    ctx.strokeStyle = actor.label ? (actor.label.side === 'ally' ? this.hud.side.ally : this.hud.side.enemy) : actor.placement.facing === 1 ? '#6f8fbf' : '#bf6f6f';
     ctx.setLineDash([6, 5]);
     ctx.lineWidth = 2;
     ctx.strokeRect(foot.x - width / 2, foot.y - height, width, height);
@@ -1472,7 +1551,7 @@ export class CanvasRenderer {
     ctx.fillStyle = 'rgba(232,228,220,0.6)';
     ctx.font = `${Math.max(10, height * 0.07)}px system-ui, sans-serif`;
     ctx.textAlign = 'center';
-    ctx.fillText(actor.placement.characterId, foot.x, foot.y - height * 0.5);
+    ctx.fillText(actor.label?.name ?? actor.placement.characterId, foot.x, foot.y - height * 0.5);
     ctx.restore();
   }
 
@@ -1608,10 +1687,100 @@ export class CanvasRenderer {
       //깎인 만큼 흰 칸이 잠깐 남는다
       ctx.fillStyle = 'rgba(245,235,220,0.85)';
       ctx.fillRect(at.x, at.y, width * bar.lag, height);
-      ctx.fillStyle = kind === 'hp' ? '#c8373a' : '#3f82c8';
+      ctx.fillStyle = kind === 'hp' ? this.hud.bar.hpColor : this.hud.bar.mentalityColor;
       ctx.fillRect(at.x, at.y, width * bar.shown, height);
+      //바 오른쪽 숫자. 체력은 남은/최대, 정신력은 값만 (SPEC-004 §11)
+      const value = actor.barValue[kind];
+      if (value) {
+        const size = Math.max(10, this.hud.bar.numberSize * this.placeholderHeight * scale);
+        ctx.font = `700 ${size}px system-ui, sans-serif`;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        ctx.lineWidth = Math.max(2, size * 0.2);
+        ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+        const text = kind === 'hp' ? `${Math.round(value.value)}/${value.max}` : String(Math.round(value.value));
+        ctx.strokeText(text, at.x + width + size * 0.4, at.y + height / 2);
+        ctx.fillStyle = kind === 'hp' ? '#f1e7da' : this.hud.bar.mentalityColor;
+        ctx.fillText(text, at.x + width + size * 0.4, at.y + height / 2);
+      }
       ctx.restore();
     }
+    this.drawName(actor, nowSec);
+  }
+
+  //체력바 위 이름표. 진영 색이고 적은 앞에 표시가 붙는다 (SPEC-004 §11)
+  private drawName(actor: Actor, nowSec: number): void {
+    const box = actor.barBox.hp;
+    //코인이 머리 위에 떠 있는 동안은 이름표를 걷는다. 같은 자리라 겹친다. 진영은 발밑 고리가 계속 보인다
+    if (!actor.label || !box || actor.coins) return;
+    const side = this.hud.side;
+    const gap = side.nameGap * this.placeholderHeight;
+    const { at, scale } = this.overHead(actor, { x: actor.home.x + box.rel.x, y: actor.home.y + box.rel.y - gap }, nowSec, true);
+    const size = Math.max(11, side.nameSize * this.placeholderHeight * scale);
+    const color = actor.label.side === 'ally' ? side.ally : side.enemy;
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.font = `800 ${size}px system-ui, sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'bottom';
+    ctx.lineJoin = 'round';
+    ctx.lineWidth = Math.max(2, size * 0.22);
+    ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+    const text = actor.label.side === 'enemy' ? `적 · ${actor.label.name}` : actor.label.name;
+    //진영 색 막대 하나를 앞에 세워 이름보다 먼저 읽히게 한다
+    ctx.fillStyle = color;
+    ctx.fillRect(at.x, at.y - size * 1.05, size * 0.22, size * 1.0);
+    ctx.strokeText(text, at.x + size * 0.4, at.y);
+    ctx.fillStyle = color;
+    ctx.fillText(text, at.x + size * 0.4, at.y);
+    ctx.restore();
+  }
+
+  //발밑 진영 고리. 고른 사람은 밝고 두껍게, 누를 수 있는 사람은 숨쉬듯 밝아진다 (SPEC-004 §10·§11)
+  private drawRing(actor: Actor, nowSec: number): void {
+    if (!actor.label || actor.down !== null) return;
+    const presence = this.presence(actor);
+    if (presence <= 0.01) return;
+    const side = this.hud.side;
+    const position = this.positionOf(actor, nowSec);
+    const foot = this.scene.project(position, this.view);
+    const rx = (side.ringWidth * this.placeholderHeight * foot.scale) / 2;
+    const ry = (side.ringDepth * this.placeholderHeight * foot.scale) / 2;
+    const id = actor.placement.combatantId;
+    const chosen = this.selection.ally === id || this.selection.target === id;
+    const pickable = this.selection.pickable.includes(id);
+    const pulse = pickable && !chosen ? 0.5 + 0.5 * Math.sin(nowSec * Math.PI * 2 * 1.2) : 0;
+    const ctx = this.ctx;
+    ctx.save();
+    ctx.globalAlpha = presence * Math.min(1, side.ringAlpha + (chosen ? 0.4 : 0) + pulse * 0.3);
+    ctx.strokeStyle = actor.label.side === 'ally' ? side.ally : side.enemy;
+    ctx.lineWidth = Math.max(2, rx * (chosen ? 0.09 : 0.05));
+    ctx.beginPath();
+    ctx.ellipse(foot.x, foot.y, rx, ry, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    if (chosen) {
+      ctx.globalAlpha *= 0.25;
+      ctx.fillStyle = ctx.strokeStyle;
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  //사람이 그려진 자리를 화면 좌표로 적어 둔다. 몸통 폭 정도의 세로 사각형이다
+  private recordHit(actor: Actor, nowSec: number): void {
+    const position = this.positionOf(actor, nowSec);
+    const foot = this.scene.project(position, this.view);
+    const h = this.placeholderHeight * foot.scale;
+    const w = h * 0.36;
+    const m = this.ctx.getTransform();
+    const a = m.transformPoint(new DOMPoint(foot.x - w / 2, foot.y - h));
+    const b = m.transformPoint(new DOMPoint(foot.x + w / 2, foot.y));
+    this.hitRects.set(actor.placement.combatantId, {
+      x0: Math.min(a.x, b.x),
+      y0: Math.min(a.y, b.y),
+      x1: Math.max(a.x, b.x),
+      y1: Math.max(a.y, b.y),
+    });
   }
 
   //머리 위 코인 한 줄. 하나씩 차례로 뒤집혀 앞면(금)·뒷면(검정)을 보인다
@@ -1692,6 +1861,8 @@ export class CanvasRenderer {
       fill = '#cfcfcf';
     }
     this.drawOutlinedText(String(power.value), x, y, size, fill, alpha, '#140f0c');
+    //피해 숫자와 헷갈리지 않게 위에 작게 이름을 단다 (SPEC-004 §11)
+    this.drawOutlinedText('위력', x, y - size * 0.72, size * 0.32, fill, alpha, '#140f0c');
   }
 
   //스킬 이름 띠. 상대 쪽에서 미끄러져 들어와 잠깐 머문다
@@ -1748,7 +1919,13 @@ export class CanvasRenderer {
     const here = { x: badge.from.x + (badge.to.x - badge.from.x) * t, y: badge.from.y + (badge.to.y - badge.from.y) * t };
     const { at, scale } = this.overHead(owner, here, performance.now() / 1000, true);
     const label = badge.text ?? (badge.result === 'win' ? '합 승리' : '합 패배');
-    this.drawOutlinedText(label, at.x, at.y, Math.max(12, this.placeholderHeight * 0.1 * scale), BADGE_COLOR[badge.result], 1 - t, '#000');
+    const size = Math.max(12, this.placeholderHeight * 0.1 * scale);
+    //위쪽 띠에 걸치지 않게 화면 안쪽으로 당긴다 (SPEC-004 §11). 카메라 변환을 거쳐 화면 높이로 잰다
+    const m = this.ctx.getTransform();
+    const screen = m.transformPoint(new DOMPoint(at.x, at.y));
+    const floor = this.scene.viewport.height * this.hud.badge.safeTop + size;
+    const spot = screen.y < floor ? m.inverse().transformPoint(new DOMPoint(screen.x, floor)) : at;
+    this.drawOutlinedText(label, spot.x, spot.y, size, BADGE_COLOR[badge.result], 1 - t, '#000');
   }
 
   //피해 숫자. 튀어나오며 떠오르다 사라진다. 큰 한 방은 크고 붉다
