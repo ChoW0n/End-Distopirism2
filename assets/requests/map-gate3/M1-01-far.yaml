@@ -3,7 +3,7 @@
 task:
   asset_name: "map-gate3/M1-01-far"
   purpose: "background"
-  requested_change: "[먼 층] 닫힌 제3 수문의 거대한 철문과 위쪽 벽, 천장 구조. 무대 뒤를 꽉 채운다. 장소: 제3 수문 안쪽 점검 통로. 6년 전 봉쇄된 거대한 수문과 점검실, 반쯤 잠긴 콘크리트 바닥. 여러 높이에 겹친 수위 자국과 날짜, 물이 빠진 벽 아래쪽 색 차이, 배관·기계식 계기(실제 연결 위치가 보이게), 닫힌 문, 비상등. 톱니바퀴·체인·붉은 눈 장식 반복 금지. 사람 없음"
+  requested_change: "[먼 층] 용도: 무대 가장 뒤. 장소가 어디인지 알려주는 층. 목적: 1장 첫 전투 무대가 제3 수문이라는 게 읽히고, 캐릭터가 배경에 묻히지 않는다. 구도·원근·배치는 담당이 정한다. 장소: 제3 수문 안쪽 점검 통로. 6년 전 카일이 봉쇄를 승인한 곳. 봉쇄된 수문, 점검실, 반쯤 잠긴 바닥. 세르나의 반복 모티브(여러 높이의 수위 자국, 물이 빠진 벽 아래 색 차이, 용도가 보이는 설비)를 쓸 수 있다 (STORY-001 §4.2 · §18). 톱니바퀴·체인·붉은 눈 장식 반복 금지. 사람 없음"
   approved_base_version: null
   input_files: []
   references:
@@ -15,19 +15,22 @@ constraints:
   anatomical_handedness: null
   weapon_mount: null
   camera_view: null
+  autonomy: "자세·동작 각도·구도·방향은 담당이 정한다. 이 요청서는 용도와 목적만 말한다. 고른 이유를 납품 때 한 줄로 적는다"
   facing: null
+  autonomy: "자세·동작 각도·구도·방향은 담당이 정한다. 이 요청서는 용도와 목적만 말한다. 고른 이유를 납품 때 한 줄로 적는다"
   target_size_px: "2560x1440 (4장 모두 같은 크기·같은 원근). iPhone 15 가로(2341x1080 기준 단위)까지 덮고 시차 여백을 둔다"
-  perspective: "2.5D 원근 카메라, 눈높이보다 약간 위. 기존 assets/map 4층과 같은 층 구성·지평선 높이"
+  use_context: "2.5D 원근 카메라로 층마다 시차를 준다. 기존 assets/map 4층과 같은 층 구성"
   layer_alpha: "불투명 RGB"
-  screen_zones: "화면 위 11%·아래 26% 는 UI 가 덮는다(SPEC-007 §9.4). 중요한 형태는 그 사이에 둔다"
-  tone: "배경 재질 톤: 무채색/브라운, 강한 명암 대비, 거친 마모 질감, 균열·녹·벗겨진 페인트·수위 자국 (CLAUDE.md · STORY-001 §18). 밤물은 탁한 청회색"
+  screen_zones: "화면 위 약 11%·아래 약 26% 는 UI 가 덮는다 (SPEC-007 §9.4)"
+  report: "지평선 높이(이미지 위에서부터 %)를 납품 때 적는다"
+  tone: "배경 재질 톤: 무채색/브라운, 강한 명암 대비, 거친 마모 질감, 균열·녹·벗겨진 페인트·수위 자국 (CLAUDE.md · STORY-001 §18)"
   one_file_per_pose: true
   no_text_in_image: true
   output_alpha: "투명 배경 (RGBA). 배경 알파 0. 바닥 그림자를 그리지 않는다 (코드가 그린다)"
   runtime_blend_mode: "일반 알파"
   preserve: []
   allowed_changes: []
-  note: "4층을 한 장으로 합쳐 그린 뒤 나누지 않는다. 층마다 1장씩"
+  note: "층마다 1장씩"
 
 delivery:
   result_files: []

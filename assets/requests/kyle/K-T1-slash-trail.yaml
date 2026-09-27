@@ -3,7 +3,7 @@
 task:
   asset_name: "kyle/K-T1-slash-trail"
   purpose: "effect"
-  requested_change: "카일 서명 이펙트 1종: 사선 베기 궤적. 화면 기준 왼쪽 위(카일 뒤쪽 위) → 오른쪽 아래(앞쪽 아래)로 짧게 휜 호 1개. 카일이 화면 오른쪽을 보고 벤 방향과 같다와 끝의 작은 타격점. 회색조로만 그린다(코드가 물들이고 쓸기·늘이기·사라짐으로 재생). 남색 불꽃·연기·파티클 없음. 정지 1장"
+  requested_change: "용도: K-06 위에 코드가 재생하는 카일 서명 궤적 1장(쓸기·늘이기·사라짐은 코드). 목적: 검격이 어디서 어디로 지나갔는지 읽힌다. 모양·방향은 K-06 승인본에 맞춰 담당이 정한다. 회색조로만 그린다(코드가 물들인다). 남색 불꽃 없음"
   approved_base_version: "K-06-attack 승인본"
   input_files: []
   references:
@@ -15,17 +15,19 @@ constraints:
   anatomical_handedness: null
   weapon_mount: null
   camera_view: null
+  autonomy: "자세·동작 각도·구도·방향은 담당이 정한다. 이 요청서는 용도와 목적만 말한다. 고른 이유를 납품 때 한 줄로 적는다"
   facing: null
-  target_size_px: "1024x1024 이상. 호가 캔버스 안에 다 들어온다"
-  anchor: "호의 시작점과 끝점을 납품 때 좌표로 적는다"
-  tone: "회색조 + 알파. 가장자리가 거칠게 끊기는 붓 자국. 캐릭터 셀화풍 외곽선과 어울리게"
+  autonomy: "자세·동작 각도·구도·방향은 담당이 정한다. 이 요청서는 용도와 목적만 말한다. 고른 이유를 납품 때 한 줄로 적는다"
+  target_size_px: "1024x1024 이상. 궤적이 캔버스 안에 다 들어온다"
+  report: "궤적 시작점·끝점 좌표를 납품 때 적는다"
+  tone: "회색조 + 알파. 캐릭터 셀화풍 외곽선과 어울리게"
   one_file_per_pose: true
   no_text_in_image: true
   output_alpha: "투명 배경 (RGBA). 배경 알파 0. 바닥 그림자를 그리지 않는다 (코드가 그린다)"
   runtime_blend_mode: "일반 알파"
   preserve: []
   allowed_changes: []
-  note: "SPEC-006 §4 서명 이펙트. 담당 문서 §6: 이펙트 연속 프레임은 요청하지 않는다"
+  note: "SPEC-006 §4 서명 이펙트. 연속 프레임은 요청하지 않는다 (담당 문서 §6)"
 
 delivery:
   result_files: []
