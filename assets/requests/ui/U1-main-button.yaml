@@ -3,7 +3,7 @@
 task:
   asset_name: "U1-main-button"
   purpose: "ui"
-  requested_change: "지시판 오른쪽 끝의 "해결" 버튼 바탕판. 가로로 긴 녹슨 철판 조각. 글자·아이콘 없음(코드가 얹는다). 눌림은 한 단 어둡고 안쪽으로 눌린 느낌, 잠김은 채도·명도를 낮춘 상태"
+  requested_change: "지시판 오른쪽 끝의 「해결」 버튼 바탕판. 가로로 긴 녹슨 철판 조각. 글자·아이콘 없음(코드가 얹는다). 눌림은 한 단 어둡고 안쪽으로 눌린 느낌, 잠김은 채도·명도를 낮춘 상태"
   approved_base_version: null
   input_files: []
   references:

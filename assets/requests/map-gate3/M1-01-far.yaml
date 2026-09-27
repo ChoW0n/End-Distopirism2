@@ -1,0 +1,50 @@
+# 아트 제작 요청 M1-01-far (SPEC-007 §9.6)
+# 양식: docs/참고/gpt-astra-이미지제작-능력.md §15. null·빈 목록은 합의 전 상태다
+task:
+  asset_name: "map-gate3/M1-01-far"
+  purpose: "background"
+  requested_change: "[먼 층] 닫힌 제3 수문의 거대한 철문과 위쪽 벽, 천장 구조. 무대 뒤를 꽉 채운다. 장소: 제3 수문 안쪽 점검 통로. 6년 전 봉쇄된 거대한 수문과 점검실, 반쯤 잠긴 콘크리트 바닥. 여러 높이에 겹친 수위 자국과 날짜, 물이 빠진 벽 아래쪽 색 차이, 배관·기계식 계기(실제 연결 위치가 보이게), 닫힌 문, 비상등. 톱니바퀴·체인·붉은 눈 장식 반복 금지. 사람 없음"
+  approved_base_version: null
+  input_files: []
+  references:
+    - file: "assets/map/far.png · mid.png · ground.png · front.png (기존 층 구성)"
+      role: "style"
+      inspected: false
+
+constraints:
+  anatomical_handedness: null
+  weapon_mount: null
+  camera_view: null
+  facing: null
+  target_size_px: "2560x1440 (4장 모두 같은 크기·같은 원근). iPhone 15 가로(2341x1080 기준 단위)까지 덮고 시차 여백을 둔다"
+  perspective: "2.5D 원근 카메라, 눈높이보다 약간 위. 기존 assets/map 4층과 같은 층 구성·지평선 높이"
+  layer_alpha: "불투명 RGB"
+  screen_zones: "화면 위 11%·아래 26% 는 UI 가 덮는다(SPEC-007 §9.4). 중요한 형태는 그 사이에 둔다"
+  tone: "배경 재질 톤: 무채색/브라운, 강한 명암 대비, 거친 마모 질감, 균열·녹·벗겨진 페인트·수위 자국 (CLAUDE.md · STORY-001 §18). 밤물은 탁한 청회색"
+  one_file_per_pose: true
+  no_text_in_image: true
+  output_alpha: "투명 배경 (RGBA). 배경 알파 0. 바닥 그림자를 그리지 않는다 (코드가 그린다)"
+  runtime_blend_mode: "일반 알파"
+  preserve: []
+  allowed_changes: []
+  note: "4층을 한 장으로 합쳐 그린 뒤 나누지 않는다. 층마다 1장씩"
+
+delivery:
+  result_files: []
+  generation_prompt: ""
+  pivot_coordinate_system: "이미지 왼쪽 위 (0,0), 픽셀"
+  pivots: []            # 접지점·무기 끝은 반입 때 사람이 확정한다 (SPEC-007 §9.3)
+
+verification:
+  file_checks: []        # 반입 도구: RGBA, 배경 알파 0, 가짜 테두리 투명, 크기
+  visual_checks: []      # 밝은·어두운 배경 합성, 승인 대표 포즈와 나란히 비교, 게임 무대 배치 캡처
+  playback_checked: false
+  engine_checked: false
+  user_approved: false
+  remaining_failures: []
+  unverified: []
+  evidence_files: []
+
+handoff:
+  next_owner: "gpt astra"
+  next_action: "이 자세 1장만 생성해 결과 파일·실제로 한 것·남은 문제·검사 안 한 것을 적어 돌려준다"

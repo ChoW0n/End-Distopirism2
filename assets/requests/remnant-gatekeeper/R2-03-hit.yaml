@@ -1,0 +1,49 @@
+# 아트 제작 요청 R2-03-hit (SPEC-007 §9.6)
+# 양식: docs/참고/gpt-astra-이미지제작-능력.md §15. null·빈 목록은 합의 전 상태다
+task:
+  asset_name: "remnant-gatekeeper/R2-03-hit"
+  purpose: "sprite"
+  requested_change: "[피격] 방호판 가장자리가 깨지며 침전 조각이 튄다. 몸이 뒤로 밀린다. 대상: 문지기 잔형 (1장 보스). 6년 전 봉쇄 때 사람을 밀어내던 팔 동작과 수문 경비의 방호판이 겹쳐 굳은 덩어리. 한쪽 팔과 방호판이 붙어 한 몸이 됐다. 사람형 상체 + 판재·녹슨 금속·젖은 천. 얼굴 없음. 희생자의 영혼·심판자처럼 보이지 않게"
+  approved_base_version: "R2-01-idle 승인본"
+  input_files: []
+  references:
+    - file: "R1-01-idle 승인본"
+      role: "style"
+      inspected: false
+
+constraints:
+  anatomical_handedness: null
+  weapon_mount: null
+  camera_view: "기존 조력자·소각원 전투 장과 같은 시점: 몸 3/4 측면, 눈높이보다 약간 위에서 내려다봄. 발끝까지 전신"
+  facing: "화면 왼쪽을 본다 (적 쪽). 반전 없이 이 방향으로 그린다"
+  target_height_px: "캐릭터 키(정수리~발바닥) 1400px 이상. 무기 끝·머리카락·발이 잘리지 않게 사방 여백. 정규화(키 700px·WebP)는 반입 도구가 한다 (SPEC-006 §3.1)"
+  proportion: "카일보다 1.3~1.5배 크다. 더 크게 만들지 않는다 (STORY-001 §16: 보스가 크다고 카메라를 멀리 보내지 않는다)"
+  tone: "잔형: 무채색 본체 + 청회색 젖은 면 + 작은 침전 결정. 고유색 없음. 정교한 얼굴 없음. 외곽선 굵기·셰이딩 단계는 캐릭터와 같게 맞춘다 (STORY-001 §5.2 · §16 · §18)"
+  one_file_per_pose: true
+  no_text_in_image: true
+  output_alpha: "투명 배경 (RGBA). 배경 알파 0. 바닥 그림자를 그리지 않는다 (코드가 그린다)"
+  runtime_blend_mode: "일반 알파"
+  preserve:
+    - "R2-01 승인본의 실루엣·방호판 모양"
+  allowed_changes: []
+  note: "SPEC-006 B 등급 5장"
+
+delivery:
+  result_files: []
+  generation_prompt: ""
+  pivot_coordinate_system: "이미지 왼쪽 위 (0,0), 픽셀"
+  pivots: []            # 접지점·무기 끝은 반입 때 사람이 확정한다 (SPEC-007 §9.3)
+
+verification:
+  file_checks: []        # 반입 도구: RGBA, 배경 알파 0, 가짜 테두리 투명, 크기
+  visual_checks: []      # 밝은·어두운 배경 합성, 승인 대표 포즈와 나란히 비교, 게임 무대 배치 캡처
+  playback_checked: false
+  engine_checked: false
+  user_approved: false
+  remaining_failures: []
+  unverified: []
+  evidence_files: []
+
+handoff:
+  next_owner: "gpt astra"
+  next_action: "이 자세 1장만 생성해 결과 파일·실제로 한 것·남은 문제·검사 안 한 것을 적어 돌려준다"

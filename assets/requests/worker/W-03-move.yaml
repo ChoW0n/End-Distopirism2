@@ -1,0 +1,49 @@
+# 아트 제작 요청 W-03-move (SPEC-007 §9.6)
+# 양식: docs/참고/gpt-astra-이미지제작-능력.md §15. null·빈 목록은 합의 전 상태다
+task:
+  asset_name: "worker/W-03-move"
+  purpose: "sprite"
+  requested_change: "[이동] 몸을 낮춰 한 걸음 옮긴다. 인물: 정비소 작업자 (이름 없는 주민). 성별 무관하게 1명 디자인. 낡은 작업복, 방수 부츠, 어깨에 공구 가방. 고유색 없음 — 무채색 안에서 채도 가장 낮게. 두 번째 작업자는 코드가 색 바꾸기로 만든다"
+  approved_base_version: "W-01-idle 승인본"
+  input_files: []
+  references:
+    - file: "카일 K-01 승인본"
+      role: "style"
+      inspected: false
+
+constraints:
+  anatomical_handedness: null
+  weapon_mount: null
+  camera_view: "기존 조력자·소각원 전투 장과 같은 시점: 몸 3/4 측면, 눈높이보다 약간 위에서 내려다봄. 발끝까지 전신"
+  facing: "화면 오른쪽을 본다 (아군 쪽 보호 대상)"
+  target_height_px: "캐릭터 키(정수리~발바닥) 1400px 이상. 무기 끝·머리카락·발이 잘리지 않게 사방 여백. 정규화(키 700px·WebP)는 반입 도구가 한다 (SPEC-006 §3.1)"
+  proportion: "기존 조력자·소각원 전투 장과 같은 등신. 하반신을 늘리지 않는다. 나란히 놓고 비교한다"
+  tone: "캐릭터 셀화풍: 검은 외곽선 + 평면 2~3단 셰이딩. 무채색 바탕 + 고유색 1개(낮은 채도). 배경 질감(녹·균열)을 몸·옷에 덧씌우지 않는다 (CLAUDE.md · STORY-001 §18)"
+  one_file_per_pose: true
+  no_text_in_image: true
+  output_alpha: "투명 배경 (RGBA). 배경 알파 0. 바닥 그림자를 그리지 않는다 (코드가 그린다)"
+  runtime_blend_mode: "일반 알파"
+  preserve:
+    - "W-01 승인본의 얼굴·등신·옷"
+  allowed_changes: []
+  note: "SPEC-006 C 등급 3장 + 색 바꾸기"
+
+delivery:
+  result_files: []
+  generation_prompt: ""
+  pivot_coordinate_system: "이미지 왼쪽 위 (0,0), 픽셀"
+  pivots: []            # 접지점·무기 끝은 반입 때 사람이 확정한다 (SPEC-007 §9.3)
+
+verification:
+  file_checks: []        # 반입 도구: RGBA, 배경 알파 0, 가짜 테두리 투명, 크기
+  visual_checks: []      # 밝은·어두운 배경 합성, 승인 대표 포즈와 나란히 비교, 게임 무대 배치 캡처
+  playback_checked: false
+  engine_checked: false
+  user_approved: false
+  remaining_failures: []
+  unverified: []
+  evidence_files: []
+
+handoff:
+  next_owner: "gpt astra"
+  next_action: "이 자세 1장만 생성해 결과 파일·실제로 한 것·남은 문제·검사 안 한 것을 적어 돌려준다"
