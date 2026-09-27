@@ -17,7 +17,7 @@ constraints:
   states: [normal, selected, disabled]
   one_file_per_state: true
   no_text_in_image: true
-  tone: "흑백/브라운 기반, 강한 명암 대비, 거친 드로잉, 균열·녹·벗겨진 페인트 (CLAUDE.md). 재질: 녹슨 철판·찢긴 테이프·스텐실 (SPEC-006 A-5 제안, 미확정)"
+  tone: "무채색·브라운 기반, 강한 명암 대비, 거친 마모 질감, 균열·녹·벗겨진 페인트 (배경·UI 재질 톤, CLAUDE.md · STORY-001 §18). 재질: 녹슨 철판·찢긴 테이프·스텐실 (SPEC-006 A-5 제안, 미확정)"
   output_alpha: "투명 배경 (RGBA). 배경 알파 0"
   runtime_blend_mode: "일반 알파"
   preserve: []
