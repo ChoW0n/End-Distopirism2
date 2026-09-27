@@ -1,0 +1,41 @@
+# UI 제작 요청 U6 · 아군 칸 판 (SPEC-007 §9.5)
+# 양식: docs/참고/gpt-astra-이미지제작-능력.md §15. null·빈 목록은 합의 전 상태다
+task:
+  asset_name: "U6-ally-slot-plate"
+  purpose: "ui"
+  requested_change: "지시판 왼쪽의 아군 3칸 바탕. 초상화 없음. 위쪽에 이름, 아래에 체력·정신력 바를 코드가 얹는다. 쓰러짐은 금 간 판"
+  approved_base_version: null
+  input_files: []
+  references:
+    - file: "게임 화면 캡처 (요청 시 첨부)"
+      role: "style"
+      inspected: false
+
+constraints:
+  target_size_reference_units: "170x196"
+  size_note: "목표값이다. 정확히 못 맞추면 비율만 지키고 크게 준다. 크기 맞춤·9분할은 반입 도구가 한다"
+  states: [normal, selected, down]
+  one_file_per_state: true
+  no_text_in_image: true
+  tone: "흑백/브라운 기반, 강한 명암 대비, 거친 드로잉, 균열·녹·벗겨진 페인트 (CLAUDE.md). 재질: 녹슨 철판·찢긴 테이프·스텐실 (SPEC-006 A-5 제안, 미확정)"
+  output_alpha: "투명 배경 (RGBA). 배경 알파 0"
+  runtime_blend_mode: "일반 알파"
+  preserve: []
+  allowed_changes: []
+  note: "초상화를 그려 넣지 않는다"
+
+delivery:
+  result_files: []
+  generation_prompt: ""
+
+verification:
+  file_checks: []        # 반입 도구: RGBA 여부, 배경 알파 0, 크기
+  visual_checks: []      # 밝은·어두운 배경 합성 캡처, 게임 화면 안 배치 캡처
+  engine_checked: false
+  user_approved: false
+  remaining_failures: []
+  unverified: []
+
+handoff:
+  next_owner: "gpt astra"
+  next_action: "상태별로 한 장씩 생성해 결과 파일과 남은 문제를 적어 돌려준다"
