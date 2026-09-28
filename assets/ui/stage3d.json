@@ -1,0 +1,93 @@
+{
+  "_주석": "웹 3D 무대 수치 (SPEC-005 §8·§9). 거리는 월드 단위(캐릭터 키 2.0), 각도는 도, 시간은 초. 1대1 미리보기·유니티 인스펙터 기본값과 같다",
+  "layout": {
+    "_주석": "§9.5. 무대 줄 z=0 에서 아군 x<0, 적 x>0. 같은 편은 깊이로 벌린다",
+    "characterHeight": 2.0,
+    "sideHalfGap": 2.4,
+    "rowDepth": 1.0,
+    "rowOutward": 1.5,
+    "textureMaxSide": 1024
+  },
+  "motion": {
+    "windupTime": 0.16,
+    "windupBack": 0.35,
+    "dashTime": 0.13,
+    "contactGap": 1.1,
+    "strikeTime": 0.1,
+    "strikeReach": 0.25,
+    "knockTime": 0.18,
+    "knockBase": 0.8,
+    "knockPerDamage": 0.02,
+    "knockMax": 2.2,
+    "staggerDrop": -0.12,
+    "staggerHold": 0.22,
+    "lingerAfterHit": 0.22,
+    "strikeTrailTime": 0.1,
+    "strikeTrailPeakShare": 0.5,
+    "settleTime": 0.55,
+    "settleAmplitude": 1.1,
+    "settlePeriod": 0.35,
+    "returnTime": 0.3,
+    "clashWinnerRecoil": 0.25,
+    "_clash": "§9.3 합 라운드. 진 쪽이 밀리는 거리, 교착 때 둘 다 밀리는 거리, 다시 부딪히는 시간, 라운드 사이 쉼",
+    "clashPush": 0.55,
+    "deadlockPush": 0.35,
+    "reengageTime": 0.12,
+    "roundRest": 0.18,
+    "downTime": 0.6,
+    "downSink": 0.25,
+    "downOpacity": 0.35,
+    "heavyDamage": 25
+  },
+  "camera": {
+    "focusSizeGain": 1.08,
+    "focusHeight": 0.1,
+    "panYawDeg": 24,
+    "dutchDeg": 2.5,
+    "fovZoom": 4,
+    "followTime": 0.12,
+    "returnFollowTime": 0.35
+  },
+  "shake": {
+    "damageForMaxShake": 30,
+    "traumaPerHit": 0.35,
+    "traumaPerDamage": 0.6,
+    "traumaDecay": 1.4,
+    "maxOffset": [0.35, 0.28, 0.2],
+    "maxAngle": [1.6, 1.6, 2.5],
+    "frequency": 22,
+    "kickImpulse": 0.25,
+    "kickStiffness": 220,
+    "kickDamping": 18,
+    "fovPunch": 3.5,
+    "clashPower": 0.35
+  },
+  "hitStop": {
+    "scale": 0.02,
+    "baseSeconds": 0.03,
+    "perDamageSeconds": 0.002,
+    "maxSeconds": 0.09,
+    "clashSeconds": 0.05
+  },
+  "sparks": {
+    "countHit": 26,
+    "countClash": 42,
+    "speedMin": 7,
+    "speedMax": 17,
+    "gravity": 16,
+    "drag": 1.8,
+    "lifeMin": 0.3,
+    "lifeMax": 0.62,
+    "length": 0.1,
+    "width": 0.05,
+    "coneDeg": 80,
+    "backShare": 0.3,
+    "coreSize": 0.6,
+    "coreLife": 0.08,
+    "contactBias": 0.7
+  },
+  "callout": {
+    "seconds": 1.1,
+    "headOffset": 0.35
+  }
+}

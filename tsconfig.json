@@ -16,5 +16,5 @@
     "types": ["vitest/globals", "node"]
   },
   "include": ["src", "tests", "scripts"],
-  "exclude": ["src/renderer"]
+  "exclude": ["src/renderer", "src/renderer3d"]
 }

@@ -11,7 +11,8 @@
     ]
   },
   "include": [
-    "src/renderer"
+    "src/renderer",
+    "src/renderer3d"
   ],
   "exclude": []
 }

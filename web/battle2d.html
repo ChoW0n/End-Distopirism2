@@ -1,10 +1,9 @@
 <!doctype html>
 <meta charset="utf-8">
-<title>End-Distopirism 전투</title>
+<title>End-Distopirism 전투 (2D)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="battle.css">
 <body>
-<!-- 3D 무대 (SPEC-005 §9). 2D 화면은 battle2d.html -->
 <!-- HUD 배치는 원작 Battle.unity 의 RectTransform 을 1920x1080 기준 비율로 옮긴 것이다 -->
 <div class="stage">
   <canvas id="view" width="1600" height="900"></canvas>
@@ -89,10 +88,16 @@
   <label class="check"><input id="sound" type="checkbox" checked> 소리</label>
   <details class="dev">
     <summary>개발</summary>
+    <label>대진
+      <select id="roster">
+        <option value="mirror">그림 있는 캐릭터 2 대 2</option>
+        <option value="all">전체 캐릭터 4 대 4 (일부 그림 준비 중)</option>
+      </select>
+    </label>
     <label>시드 <input id="seed" type="number" value="1" min="0"></label>
     <label class="check"><input id="autonext" type="checkbox"> 끝나면 다음 판</label>
   </details>
   <button id="restart" class="primary">재시작</button>
 </div>
-<script type="module" src="battle.js"></script>
+<script type="module" src="battle2d.js"></script>
 </body>

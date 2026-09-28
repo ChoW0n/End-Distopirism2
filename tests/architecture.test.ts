@@ -63,7 +63,7 @@ describe('계층 규칙', () => {
     }
   });
 
-  //렌더러만 DOM 을 쓴다. 타입 검사도 갈라 놓았다
+  //렌더러(2D renderer · 3D renderer3d)만 DOM 을 쓴다. 타입 검사도 갈라 놓았다
   it('renderer 만 DOM 을 쓴다', () => {
     const tsconfig = JSON.parse(readFileSync(resolve(here, '../tsconfig.json'), 'utf-8')) as {
       compilerOptions: { lib: string[] };
@@ -71,11 +71,21 @@ describe('계층 규칙', () => {
     };
     expect(tsconfig.compilerOptions.lib).not.toContain('DOM');
     expect(tsconfig.exclude).toContain('src/renderer');
+    expect(tsconfig.exclude).toContain('src/renderer3d');
 
     const renderer = JSON.parse(
       readFileSync(resolve(here, '../tsconfig.renderer.json'), 'utf-8'),
     ) as { compilerOptions: { lib: string[] }; include: string[] };
     expect(renderer.compilerOptions.lib).toContain('DOM');
-    expect(renderer.include).toEqual(['src/renderer']);
+    expect(renderer.include).toEqual(['src/renderer', 'src/renderer3d']);
+  });
+
+  //three.js 는 3D 렌더러만 안다 (SPEC-005 §9.1)
+  it('three.js 는 renderer3d 에서만 가져다 쓴다', () => {
+    for (const layer of ['domain', 'render', 'ui', 'camera', 'renderer', 'platform']) {
+      for (const file of filesIn(join(src, layer))) {
+        expect(file.text, file.path).not.toMatch(/from 'three/);
+      }
+    }
   });
 });
