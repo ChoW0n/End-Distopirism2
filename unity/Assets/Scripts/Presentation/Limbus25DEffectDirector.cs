@@ -97,10 +97,8 @@ namespace EndDistopirism.Presentation
         [Serializable]
         public sealed class CameraSettings
         {
-            public float focusDistanceBase = 5.5f;
-            public float focusDistancePerUnit = 0.9f;
-            public float focusDistanceMin = 6f;
-            public float focusDistanceMax = 11f;
+            [Tooltip("초점 때 캐릭터 화면 크기가 대기 때의 몇 배까지 커질지. 초점 거리는 이 값에서 나온다")]
+            public float focusSizeGain = 1.08f;
             public float focusHeight = 0.1f;
             [Tooltip("공격자 쪽으로 도는 각도")]
             public float panYawDeg = 6f;
@@ -261,6 +259,19 @@ namespace EndDistopirism.Presentation
         private void LateUpdate()
         {
             WriteCamera(Time.unscaledDeltaTime);
+            FaceActorsToCamera();
+        }
+
+        //캐릭터 판을 카메라 쪽으로 세운다 (SPEC-005 §8.9). 흔들림 전 자세를 쓰고, 기울기(롤)는 빼서 화면 기울임은 그대로 보이게 한다
+        private void FaceActorsToCamera()
+        {
+            if (cameraRig == null) return;
+            Vector3 euler = (cameraReady ? currentRotation : cameraRig.rotation).eulerAngles;
+            Quaternion facing = Quaternion.Euler(euler.x, euler.y, 0f);
+            foreach (Limbus25DActor actor in Limbus25DActor.Active)
+            {
+                if (actor != null && actor.FacesCamera) actor.transform.rotation = facing;
+            }
         }
 
         //── 대기열 ──
@@ -509,15 +520,17 @@ namespace EndDistopirism.Presentation
         {
             if (!cameraReady) return;
             Vector3 middle = (a.Chest + b.Chest) * 0.5f + Vector3.up * cameraSettings.focusHeight;
-            float separation = Mathf.Abs(b.transform.position.x - a.transform.position.x);
-            float distance = Mathf.Clamp(
-                cameraSettings.focusDistanceBase + separation * cameraSettings.focusDistancePerUnit,
-                cameraSettings.focusDistanceMin,
-                cameraSettings.focusDistanceMax);
+            //초점 거리는 캐릭터 화면 크기가 대기 때의 focusSizeGain 배를 넘지 않게 정한다 (SPEC-005 §8.4)
+            //간격에 맞춰 당기면 크기가 1.6배까지 들쭉날쭉했다
+            float zoomFov = homeFov - cameraSettings.fovZoom;
+            float distance = Vector3.Distance(homePosition, middle)
+                * Mathf.Tan(homeFov * 0.5f * Mathf.Deg2Rad)
+                / Mathf.Tan(Mathf.Max(1f, zoomFov) * 0.5f * Mathf.Deg2Rad)
+                / Mathf.Max(0.01f, cameraSettings.focusSizeGain);
             Vector3 view = Quaternion.AngleAxis(-dir * cameraSettings.panYawDeg, Vector3.up) * (homeRotation * Vector3.forward);
             goalPosition = middle - view.normalized * distance;
             goalRotation = Quaternion.LookRotation(middle - goalPosition, Vector3.up) * Quaternion.Euler(0f, 0f, dir * cameraSettings.dutchDeg);
-            goalFov = homeFov - cameraSettings.fovZoom;
+            goalFov = zoomFov;
             focused = true;
         }
 

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
 
@@ -40,6 +41,10 @@ namespace EndDistopirism.Presentation
         [Tooltip("타격 뒤 이어 트는 장. 베기 궤적이 사라지는 순서대로 넣는다 (카일 slash 01~07)")]
         [SerializeField] private Sprite[] strikeTrail;
 
+        [Header("카메라")]
+        [Tooltip("판을 늘 카메라 쪽으로 세운다 (SPEC-005 §8.9). 연출 감독이 매 프레임 돌린다")]
+        [SerializeField] private bool facesCamera = true;
+
         [Header("그 밖")]
         [Tooltip("몸 가운데 높이(로컬). 이펙트·카메라 초점이 여기를 본다")]
         [SerializeField] private float chestHeight = 1.1f;
@@ -54,6 +59,11 @@ namespace EndDistopirism.Presentation
         private Vector3 rootScaleAbs = Vector3.one;
         //대기 자리. 공격자가 돌진했다 돌아올 곳이다
         private Vector3 home;
+
+        //무대에 켜져 있는 인형들. 연출 감독이 카메라 쪽으로 세울 때 쓴다
+        private static readonly HashSet<Limbus25DActor> active = new HashSet<Limbus25DActor>();
+        public static IReadOnlyCollection<Limbus25DActor> Active => active;
+        public bool FacesCamera => facesCamera;
 
         public Transform Visual => visual;
         public SpriteRenderer Renderer => spriteRenderer;
@@ -83,6 +93,16 @@ namespace EndDistopirism.Presentation
             rootScaleAbs = new Vector3(Mathf.Abs(transform.localScale.x), Mathf.Abs(transform.localScale.y), Mathf.Abs(transform.localScale.z));
             home = transform.position;
             SetFacing(startFacing);
+        }
+
+        private void OnEnable()
+        {
+            active.Add(this);
+        }
+
+        private void OnDisable()
+        {
+            active.Remove(this);
         }
 
         //바라보는 쪽을 바꾼다. 좌우는 여기서만 바뀐다
