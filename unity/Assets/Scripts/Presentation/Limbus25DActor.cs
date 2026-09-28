@@ -18,10 +18,17 @@ namespace EndDistopirism.Presentation
         [SerializeField] private SpriteRenderer spriteRenderer;
 
         [Header("방향")]
-        [Tooltip("원화가 오른쪽을 보고 그려졌는지. 카일 원화는 왼쪽을 본다")]
-        [SerializeField] private bool artFacesRight = false;
         [Tooltip("시작할 때 바라볼 쪽. 1 = 화면 오른쪽, -1 = 왼쪽")]
         [SerializeField] private int startFacing = 1;
+
+        [Header("장마다 원화가 오른쪽을 보는지 (카일: 대기·회복은 오른쪽, 준비·돌진·베기는 왼쪽)")]
+        [SerializeField] private bool idleFacesRight = true;
+        [SerializeField] private bool windupFacesRight = false;
+        [SerializeField] private bool dashFacesRight = false;
+        [SerializeField] private bool strikeFacesRight = false;
+        [SerializeField] private bool recoverFacesRight = true;
+        [SerializeField] private bool hurtFacesRight = true;
+        [SerializeField] private bool strikeTrailFacesRight = false;
 
         [Header("장 (없으면 대기 장)")]
         [SerializeField] private Sprite idle;
@@ -41,6 +48,8 @@ namespace EndDistopirism.Presentation
 
         //바라보는 쪽. 1 = 화면 오른쪽. 이 값이 좌우의 유일한 출처다
         private int facing = 1;
+        //지금 걸린 장의 원화가 오른쪽을 보는지. 아니면 그림만 뒤집어 오른쪽을 보게 맞춘다
+        private bool shownFacesRight = true;
         //루트 배율의 크기. 부호는 facing 이 정한다
         private Vector3 rootScaleAbs = Vector3.one;
         //대기 자리. 공격자가 돌진했다 돌아올 곳이다
@@ -69,6 +78,7 @@ namespace EndDistopirism.Presentation
             if (spriteRenderer == null) spriteRenderer = visual.GetComponentInChildren<SpriteRenderer>();
             if (idle == null && spriteRenderer != null) idle = spriteRenderer.sprite;
             if (spriteRenderer != null) spriteRenderer.sortingOrder = baseSortingOrder;
+            ShowSprite(spriteRenderer != null ? spriteRenderer.sprite : null, idleFacesRight);
 
             rootScaleAbs = new Vector3(Mathf.Abs(transform.localScale.x), Mathf.Abs(transform.localScale.y), Mathf.Abs(transform.localScale.z));
             home = transform.position;
@@ -92,16 +102,26 @@ namespace EndDistopirism.Presentation
         public void SetPose(Pose pose)
         {
             if (spriteRenderer == null) return;
-            Sprite chosen = pose switch
+            (Sprite chosen, bool right) = pose switch
             {
-                Pose.Windup => windup,
-                Pose.Dash => dash,
-                Pose.Strike => strike,
-                Pose.Recover => recover,
-                Pose.Hurt => hurt,
-                _ => idle,
+                Pose.Windup => (windup, windupFacesRight),
+                Pose.Dash => (dash, dashFacesRight),
+                Pose.Strike => (strike, strikeFacesRight),
+                Pose.Recover => (recover, recoverFacesRight),
+                Pose.Hurt => (hurt, hurtFacesRight),
+                _ => (idle, idleFacesRight),
             };
-            spriteRenderer.sprite = chosen != null ? chosen : idle;
+            if (chosen == null) { chosen = idle; right = idleFacesRight; }
+            ShowSprite(chosen, right);
+        }
+
+        //그림을 걸고, 원화가 왼쪽을 보면 flipX 로 오른쪽을 보게 맞춘다. 화면 좌우는 루트 부호가 따로 정한다
+        private void ShowSprite(Sprite sprite, bool facesRight)
+        {
+            if (spriteRenderer == null) return;
+            if (sprite != null) spriteRenderer.sprite = sprite;
+            shownFacesRight = facesRight;
+            spriteRenderer.flipX = !facesRight;
         }
 
         //타격 장 뒤로 궤적이 사라지는 장들을 게임 시간으로 넘긴다. 역경직 동안 같이 멈춘다
@@ -115,14 +135,14 @@ namespace EndDistopirism.Presentation
                     int index = Mathf.Clamp(Mathf.FloorToInt(value), 0, last);
                     if (index == shown || strikeTrail[index] == null) return;
                     shown = index;
-                    spriteRenderer.sprite = strikeTrail[index];
+                    ShowSprite(strikeTrail[index], strikeTrailFacesRight);
                 }, last + 0.999f, seconds)
                 .SetEase(Ease.Linear)
                 .SetLink(gameObject);
         }
 
-        //월드에서 보이는 좌우 부호. 원화 방향과 바라보는 쪽을 곱한 값이다
-        public float MirrorSign => facing * (artFacesRight ? 1f : -1f);
+        //루트 배율 부호. 그림은 늘 오른쪽을 보게 맞춰 두므로 바라보는 쪽과 같다
+        public float MirrorSign => facing;
 
         //월드 방향의 x 이동을 Visual 로컬 값으로 바꾼다. 루트가 뒤집혀 있으면 로컬 x 가 반대로 먹는다
         public float WorldToLocalX(float worldDx)
@@ -148,6 +168,8 @@ namespace EndDistopirism.Presentation
         {
             float want = MirrorSign;
             if (Mathf.Sign(transform.localScale.x) != want) ApplyFacing();
+            //다른 곳에서 flipX 를 건드렸으면 지금 장의 원화 방향대로 되돌린다
+            if (spriteRenderer != null && spriteRenderer.flipX != !shownFacesRight) spriteRenderer.flipX = !shownFacesRight;
             if (visual == null) return;
             //Visual 배율은 늘 양수. 음수가 섞이면 그림이 한 번 더 뒤집힌다
             Vector3 s = visual.localScale;

@@ -8,7 +8,7 @@ namespace EndDistopirism.Presentation
     public sealed class Limbus25DDuelDemo : MonoBehaviour
     {
         [SerializeField] private Limbus25DEffectDirector director;
-        [Tooltip("아군 자리(화면 왼쪽)에 선다. 카일 원화는 왼쪽을 보므로 루트가 뒤집힌다")]
+        [Tooltip("아군 자리(화면 왼쪽)에 서서 오른쪽을 본다. 장마다 다른 원화 방향은 액터가 맞춘다")]
         [SerializeField] private Limbus25DActor kyle;
         [Tooltip("적 자리(화면 오른쪽)")]
         [SerializeField] private Limbus25DActor enemy;
