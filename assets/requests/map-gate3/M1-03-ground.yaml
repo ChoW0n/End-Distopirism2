@@ -18,7 +18,7 @@ constraints:
   autonomy: "자세·동작 각도·구도·방향은 담당이 정한다. 이 요청서는 용도와 목적만 말한다. 고른 이유를 납품 때 한 줄로 적는다"
   facing: null
   autonomy: "자세·동작 각도·구도·방향은 담당이 정한다. 이 요청서는 용도와 목적만 말한다. 고른 이유를 납품 때 한 줄로 적는다"
-  target_size_px: "2560x1440 (4장 모두 같은 크기·같은 원근). iPhone 15 가로(2341x1080 기준 단위)까지 덮고 시차 여백을 둔다"
+  target_size_px: "6400x1440 가로로 긴 한 장면 (4장 모두 같은 크기·같은 원근). 가운데 2560x1440 이 정면 대기 화면이고, 좌우는 카메라가 측면으로 24° 돌 때 보이는 곳이다. 좌우 끝까지 이어지는 장소로 그린다 (거울 반복 금지)"
   use_context: "2.5D 원근 카메라로 층마다 시차를 준다. 기존 assets/map 4층과 같은 층 구성"
   layer_alpha: "RGBA. 바닥이 아닌 곳은 알파 0"
   screen_zones: "화면 위 약 11%·아래 약 26% 는 UI 가 덮는다 (SPEC-007 §9.4)"
@@ -26,7 +26,7 @@ constraints:
   tone: "배경 재질 톤: 무채색/브라운, 강한 명암 대비, 거친 마모 질감, 균열·녹·벗겨진 페인트·수위 자국 (CLAUDE.md · STORY-001 §18)"
   one_file_per_pose: true
   no_text_in_image: true
-  output_alpha: "투명 배경 (RGBA). 배경 알파 0. 바닥 그림자를 그리지 않는다 (코드가 그린다)"
+  output_alpha: "투명 배경 (RGBA). 배경 알파 0. 바닥 그림자를 그리지 않는다 (게임도 그림자를 두지 않는다)"
   runtime_blend_mode: "일반 알파"
   preserve:
     - "M1-01 승인본의 원근·조명·톤"

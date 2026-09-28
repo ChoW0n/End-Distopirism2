@@ -130,7 +130,7 @@ namespace EndDistopirism.Presentation
             public float focusSizeGain = 1.08f;
             public float focusHeight = 0.1f;
             [Tooltip("공격자 쪽으로 도는 각도")]
-            public float panYawDeg = 6f;
+            public float panYawDeg = 24f;
             [Tooltip("공격자 쪽으로 기우는 각도")]
             public float dutchDeg = 2.5f;
             public float fovZoom = 4f;

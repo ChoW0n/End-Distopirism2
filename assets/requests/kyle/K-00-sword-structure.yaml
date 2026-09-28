@@ -22,7 +22,7 @@ constraints:
   tone: "캐릭터 셀화풍: 검은 외곽선 + 평면 2~3단 셰이딩. 무채색 바탕 + 고유색 1개(낮은 채도). 배경 질감(녹·균열)을 몸·옷에 덧씌우지 않는다 (CLAUDE.md · STORY-001 §18)"
   one_file_per_pose: true
   no_text_in_image: true
-  output_alpha: "투명 배경 (RGBA). 배경 알파 0. 바닥 그림자를 그리지 않는다 (코드가 그린다)"
+  output_alpha: "투명 배경 (RGBA). 배경 알파 0. 바닥 그림자를 그리지 않는다 (게임도 그림자를 두지 않는다)"
   runtime_blend_mode: "일반 알파"
   preserve: []
   allowed_changes: []

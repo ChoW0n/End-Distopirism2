@@ -25,11 +25,13 @@ namespace EndDistopirism.Presentation
             [Tooltip("세운 판: 무대 줄(z=0)에서 뒤로 떨어진 거리")]
             public float depth = 20f;
             [Tooltip("바닥 판: 카메라 쪽 끝(음수)과 먼 쪽 끝")]
-            public Vector2 floorRange = new Vector2(-8f, 40f);
+            public Vector2 floorRange = new Vector2(-14f, 40f);
             [Tooltip("바닥 판: 좌우 반폭")]
-            public float halfWidth = 45f;
-            [Tooltip("그림 밖을 거울로 이어 붙인다. 바닥은 켠다 (초점 카메라가 원화보다 가까운 바닥을 볼 때 줄무늬 방지)")]
-            public bool mirrorOutside;
+            public float halfWidth = 120f;
+            [Tooltip("그림 좌우 밖을 거울로 이어 붙인다. 카메라가 측면으로 돌 때 원화 밖이 보인다")]
+            public bool mirrorOutsideX = true;
+            [Tooltip("그림 위아래 밖을 거울로 이어 붙인다. 바닥만 켠다 (초점 카메라가 원화보다 가까운 바닥을 볼 때 줄무늬 방지)")]
+            public bool mirrorOutsideY;
             public int sortingOrder = -30;
             [Tooltip("판을 잘게 나눈 수. 투영 좌표를 꼭짓점마다 구하므로 바닥은 촘촘해야 한다")]
             public Vector2Int segments = new Vector2Int(24, 24);
@@ -47,6 +49,8 @@ namespace EndDistopirism.Presentation
         [SerializeField] private float lookAtHeight = 1.742f;
         [SerializeField] private float fieldOfView = 38f;
         [SerializeField] private float aspect = 16f / 9f;
+        [Tooltip("세운 층을 기준 카메라 화면 좌우로 몇 배까지 넓게 세울지. 카메라가 측면으로 24° 돌아도 덮는다")]
+        [SerializeField] private float standSpread = 4f;
 
         [Header("재질")]
         [Tooltip("투명 언릿 재질. 비어 있으면 Sprites/Default 로 만든다")]
@@ -55,9 +59,9 @@ namespace EndDistopirism.Presentation
         [Header("층 (먼 것부터)")]
         [SerializeField] private List<Layer> layers = new List<Layer>
         {
-            new Layer { name = "far", shape = Shape.Stand, screenRect = new Rect(-0.02f, -0.02f, 1.04f, 1.04f), depth = 70f, sortingOrder = -30 },
-            new Layer { name = "mid", shape = Shape.Stand, screenRect = new Rect(-0.02f, -0.08f, 1.04f, 1.04f), depth = 22f, sortingOrder = -20 },
-            new Layer { name = "ground", shape = Shape.Floor, screenRect = new Rect(0f, -0.158f, 1f, 1.158f), floorRange = new Vector2(-8f, 40f), halfWidth = 45f, mirrorOutside = true, sortingOrder = -10, segments = new Vector2Int(90, 160) },
+            new Layer { name = "far", shape = Shape.Stand, screenRect = new Rect(-0.02f, -0.02f, 1.04f, 1.04f), depth = 70f, sortingOrder = -30, segments = new Vector2Int(96, 24) },
+            new Layer { name = "mid", shape = Shape.Stand, screenRect = new Rect(-0.02f, -0.08f, 1.04f, 1.04f), depth = 22f, sortingOrder = -20, segments = new Vector2Int(96, 24) },
+            new Layer { name = "ground", shape = Shape.Floor, screenRect = new Rect(0f, -0.158f, 1f, 1.158f), floorRange = new Vector2(-14f, 40f), halfWidth = 120f, mirrorOutsideY = true, sortingOrder = -10, segments = new Vector2Int(240, 160) },
         };
 
         //기준 카메라의 월드→클립 행렬과 자세
@@ -101,12 +105,12 @@ namespace EndDistopirism.Presentation
             }
         }
 
-        //세운 판. 기준 카메라 화면보다 조금 넓게 그 깊이의 평면에 세운다
+        //세운 판. 기준 카메라 화면보다 좌우로 넓게 그 깊이의 평면에 세운다
         private GameObject BuildStand(Layer layer)
         {
             float z = layer.depth;
-            Vector3 a = RayToZ(-1.3f, 1.3f, z);
-            Vector3 b = RayToZ(1.3f, -1.3f, z);
+            Vector3 a = RayToZ(-standSpread, 1.3f, z);
+            Vector3 b = RayToZ(standSpread, -1.3f, z);
             var corners = new[] { new Vector3(a.x, b.y, z), new Vector3(b.x, b.y, z), new Vector3(a.x, a.y, z), new Vector3(b.x, a.y, z) };
             return BuildGrid(layer, corners);
         }
@@ -164,7 +168,8 @@ namespace EndDistopirism.Presentation
             var renderer = go.AddComponent<MeshRenderer>();
             Material material = baseMaterial != null ? new Material(baseMaterial) : new Material(Shader.Find("Sprites/Default"));
             material.mainTexture = layer.texture;
-            layer.texture.wrapMode = layer.mirrorOutside ? TextureWrapMode.Mirror : TextureWrapMode.Clamp;
+            layer.texture.wrapModeU = layer.mirrorOutsideX ? TextureWrapMode.Mirror : TextureWrapMode.Clamp;
+            layer.texture.wrapModeV = layer.mirrorOutsideY ? TextureWrapMode.Mirror : TextureWrapMode.Clamp;
             renderer.sharedMaterial = material;
             renderer.sortingOrder = layer.sortingOrder;
             renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;

@@ -55,7 +55,7 @@
   "alphaNote": "투명 영역에 일부 알파 1/255 잔여값이 있음. 알파 16 초과의 의도 밖 잔여 형상은 지정 빈 영역에서 0픽셀.",
   "reference": "Alleyway Watchdog의 원경·중경·전투 바닥·전경 구성 원리 참조. 원작 메시·피벗·셰이더 복원이 아님.",
   "projection": {
-    "note": "3D 무대에서 층을 기준 카메라에서 비춰 판에 입힐 때 쓰는 값 (SPEC-005 §8.8). 거리 단위는 캐릭터 키 2.0 기준. depth 는 무대 줄(발 선)에서 뒤로 떨어진 거리",
+    "note": "3D 무대에서 층을 기준 카메라에서 비춰 판에 입힐 때 쓰는 값 (SPEC-005 §8.8). 거리 단위는 캐릭터 키 2.0 기준. depth 는 무대 줄(발 선)에서 뒤로 떨어진 거리. 원화가 16:9 한 장뿐이면 좌우 밖은 거울로 잇는다. 가로로 긴 원화(M1 요청 6400x1440)가 오면 rect 를 x -0.75 · 너비 2.5 로 바꾸고 거울을 끈다",
     "camera": {
       "back": 9.17,
       "height": 3.3,
@@ -72,19 +72,23 @@
     "layers": {
       "far": {
         "shape": "stand",
-        "depth": 70
+        "depth": 70,
+        "mirrorOutsideX": true
       },
       "mid": {
         "shape": "stand",
-        "depth": 22
+        "depth": 22,
+        "mirrorOutsideX": true
       },
       "ground": {
         "shape": "floor",
-        "near": -8,
+        "near": -14,
         "far": 40,
-        "halfWidth": 45,
-        "mirrorOutside": true
+        "halfWidth": 120,
+        "mirrorOutsideX": true,
+        "mirrorOutsideY": true
       }
-    }
+    },
+    "standSpread": 4
   }
 }

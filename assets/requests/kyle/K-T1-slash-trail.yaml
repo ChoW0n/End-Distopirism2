@@ -23,7 +23,7 @@ constraints:
   tone: "회색조 + 알파. 캐릭터 셀화풍 외곽선과 어울리게"
   one_file_per_pose: true
   no_text_in_image: true
-  output_alpha: "투명 배경 (RGBA). 배경 알파 0. 바닥 그림자를 그리지 않는다 (코드가 그린다)"
+  output_alpha: "투명 배경 (RGBA). 배경 알파 0. 바닥 그림자를 그리지 않는다 (게임도 그림자를 두지 않는다)"
   runtime_blend_mode: "일반 알파"
   preserve: []
   allowed_changes: []

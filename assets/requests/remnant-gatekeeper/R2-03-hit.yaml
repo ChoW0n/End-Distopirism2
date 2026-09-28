@@ -22,7 +22,7 @@ constraints:
   tone: "잔형: 무채색 본체 + 청회색 젖은 면 + 작은 침전 결정. 고유색 없음. 정교한 얼굴 없음. 외곽선 굵기·셰이딩 단계는 캐릭터와 같게 맞춘다 (STORY-001 §5.2 · §16 · §18)"
   one_file_per_pose: true
   no_text_in_image: true
-  output_alpha: "투명 배경 (RGBA). 배경 알파 0. 바닥 그림자를 그리지 않는다 (코드가 그린다)"
+  output_alpha: "투명 배경 (RGBA). 배경 알파 0. 바닥 그림자를 그리지 않는다 (게임도 그림자를 두지 않는다)"
   runtime_blend_mode: "일반 알파"
   preserve:
     - "R2-01 승인본의 실루엣·재질"
