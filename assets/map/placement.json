@@ -80,7 +80,8 @@
         "shape": "stand",
         "depth": 22,
         "mirrorOutsideX": true,
-        "scale": 2.0
+        "scale": 2.0,
+        "offsetY": 0.022
       },
       "ground": {
         "shape": "floor",

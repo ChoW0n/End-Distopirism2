@@ -24,6 +24,8 @@ namespace EndDistopirism.Presentation
             public Rect screenRect = new Rect(0f, 0f, 1f, 1f);
             [Tooltip("세운 판: 화면 자리를 바닥 경계 가운데 기준으로 키우는 배율. 측면 회전 때 원화만으로 좌우를 덮는다")]
             public float scale = 1f;
+            [Tooltip("세운 판: 키운 뒤 화면 아래로 내리는 양(화면 높이 비율). 구조물 밑동을 바닥 턱 뒤로 묻는다")]
+            public float offsetY = 0f;
             [Tooltip("세운 판: 무대 줄(z=0)에서 뒤로 떨어진 거리")]
             public float depth = 20f;
             [Tooltip("바닥 판: 카메라 쪽 끝(음수)과 먼 쪽 끝")]
@@ -65,7 +67,7 @@ namespace EndDistopirism.Presentation
         [SerializeField] private List<Layer> layers = new List<Layer>
         {
             new Layer { name = "far", shape = Shape.Stand, screenRect = new Rect(-0.02f, -0.02f, 1.04f, 1.04f), depth = 70f, scale = 2.1f, sortingOrder = -30, segments = new Vector2Int(96, 24) },
-            new Layer { name = "mid", shape = Shape.Stand, screenRect = new Rect(-0.02f, -0.08f, 1.04f, 1.04f), depth = 22f, scale = 2.0f, sortingOrder = -20, segments = new Vector2Int(96, 24) },
+            new Layer { name = "mid", shape = Shape.Stand, screenRect = new Rect(-0.02f, -0.08f, 1.04f, 1.04f), depth = 22f, scale = 2.0f, offsetY = 0.022f, sortingOrder = -20, segments = new Vector2Int(96, 24) },
             new Layer { name = "ground", shape = Shape.Floor, screenRect = new Rect(0f, -0.158f, 1f, 1.158f), floorRange = new Vector2(-14f, 40f), halfWidth = 120f, mirrorOutsideY = true, sortingOrder = -10, segments = new Vector2Int(240, 160) },
         };
 
@@ -117,7 +119,9 @@ namespace EndDistopirism.Presentation
             Vector3 a = RayToZ(-standSpread, 1.3f, z);
             Vector3 b = RayToZ(standSpread, -1.3f, z);
             var corners = new[] { new Vector3(a.x, b.y, z), new Vector3(b.x, b.y, z), new Vector3(a.x, a.y, z), new Vector3(b.x, a.y, z) };
-            return BuildGrid(layer, corners, ScaledRect(layer.screenRect, layer.scale));
+            Rect rect = ScaledRect(layer.screenRect, layer.scale);
+            rect.y += layer.offsetY;
+            return BuildGrid(layer, corners, rect);
         }
 
         //층의 화면 자리를 기준점에서 키운다. 구조물 밑동이 바닥 경계에 그대로 붙어 있다
