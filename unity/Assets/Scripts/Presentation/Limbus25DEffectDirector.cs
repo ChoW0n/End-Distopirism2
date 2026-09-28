@@ -115,9 +115,9 @@ namespace EndDistopirism.Presentation
             [Header("⑥ 복귀")]
             public float lingerAfterHit = 0.22f;
             [Tooltip("타격 뒤 궤적 장들을 넘기는 시간. 레퍼런스처럼 약 1초 동안 사라진다")]
-            public float strikeTrailTime = 0.22f;
+            public float strikeTrailTime = 0.1f;
             [Tooltip("궤적 시간 중 첫 장(최대 궤적)을 보여 주는 몫. 나머지 장은 남은 시간에 빠르게 넘긴다")]
-            [Range(0f, 1f)] public float strikeTrailPeakShare = 0.45f;
+            [Range(0f, 1f)] public float strikeTrailPeakShare = 0.5f;
             public float settleTime = 0.55f;
             public float settleAmplitude = 1.1f;
             public float settlePeriod = 0.35f;

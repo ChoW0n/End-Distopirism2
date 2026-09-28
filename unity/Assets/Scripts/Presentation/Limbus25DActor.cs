@@ -165,7 +165,7 @@ namespace EndDistopirism.Presentation
 
         //타격 장 뒤로 궤적이 사라지는 장들을 게임 시간으로 넘긴다. 역경직 동안 같이 멈춘다
         //첫 장(최대 궤적)을 peakShare 만큼 보여 준 뒤 나머지를 빠르게 넘긴다. 고르게 넘기면 스르륵 사라진다
-        public Tween PlayStrikeTrail(float seconds, float peakShare = 0.45f)
+        public Tween PlayStrikeTrail(float seconds, float peakShare = 0.5f)
         {
             if (spriteRenderer == null || strikeTrail == null || strikeTrail.Length == 0) return null;
             int last = strikeTrail.Length - 1;
