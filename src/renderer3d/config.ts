@@ -142,6 +142,8 @@ export interface BackdropLayer {
 
 //기준 카메라와 배경 층들
 export interface BackdropConfig {
+  //화면 왼쪽 위에 적는 장소 이름. 없으면 빈 문자열
+  name: string;
   camera: { back: number; height: number; lookAtHeight: number; fov: number; aspect: number };
   standSpread: number;
   scaleAnchor: [number, number];
@@ -257,5 +259,6 @@ export function parseBackdropConfig(raw: unknown): BackdropConfig {
       hideInCombat: spec['hideInCombat'] === true,
     });
   }
-  return { camera, standSpread: spread, scaleAnchor: [anchor[0] as number, anchor[1] as number], layers };
+  const name = typeof root['name'] === 'string' ? (root['name'] as string) : '';
+  return { name, camera, standSpread: spread, scaleAnchor: [anchor[0] as number, anchor[1] as number], layers };
 }

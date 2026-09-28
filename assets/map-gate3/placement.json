@@ -1,5 +1,6 @@
 {
   "id": "gate3-watchdog-v2",
+  "name": "제3 수문",
   "_comment": "제3 수문 안쪽 점검 통로 (드라이브 '제3 수문_Watchdog-v2', 2026-09-28). 5층 모두 1672x941 같은 원점에 겹친다 (layout.json). 3D 무대 배치는 SPEC-005 §8.8·§9",
   "coordinateSystem": "정규화 좌표 · 좌상단 원점 · x는 화면 너비, y는 화면 높이 기준",
   "viewport": [1672, 941],

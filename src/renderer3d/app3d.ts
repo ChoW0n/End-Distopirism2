@@ -184,6 +184,9 @@ async function main(): Promise<void> {
     if (loadingBar) loadingBar.style.width = `${Math.round(ratio * 100)}%`;
   });
   loading?.setAttribute('hidden', '');
+  //장소 이름은 맵 데이터가 정한다
+  const stageName = document.querySelector('.stage-name');
+  if (stageName && loaded.backdrop.name) stageName.textContent = loaded.backdrop.name;
   if (loaded.sprites.size === 0) throw new Error('에셋이 들어온 캐릭터가 하나도 없다');
 
   const sound = new SynthSound(loaded.ui.sound);

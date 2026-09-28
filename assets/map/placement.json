@@ -1,5 +1,6 @@
 {
   "id": "end-distopirism-city-v3",
+  "name": "지하 1구역",
   "coordinateSystem": "정규화 좌표 · 좌상단 원점 · x는 화면 너비, y는 화면 높이 기준",
   "viewport": [1600, 900],
   "drawOrder": [
