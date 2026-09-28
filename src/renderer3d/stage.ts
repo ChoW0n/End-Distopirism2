@@ -20,6 +20,8 @@ import { SparkField } from './sparks.js';
 export interface RosterEntry {
   combatantId: string;
   characterId: string;
+  //세울 그림의 캐릭터 id. 그림이 없는 캐릭터는 대진 설정의 자리 표시 그림을 쓴다 (SPEC-001 §7 [D-22])
+  artId: string;
   name: string;
   side: Side;
   hp: number;
@@ -107,9 +109,15 @@ export class Stage3D {
     const catalog = this.sprites.get(characterId);
     if (!catalog) return null;
     const out = new Map<string, THREE.Texture>();
+    //같은 그림·같은 자리를 여러 장이 나눠 쓰면 텍스처도 하나만 만든다 (카일 전용기 3장이 같은 베기 장을 쓴다)
+    const byFile = new Map<string, THREE.Texture>();
     for (const frame of catalog.manifest.frames) {
       const image = this.frameImages(characterId, frame.file);
-      if (image) out.set(frame.id, frameTexture(image, frame, catalog.manifest.canvas.width, this.config.layout.textureMaxSide));
+      if (!image) continue;
+      const key = `${frame.file}|${frame.bbox.join(',')}`;
+      const texture = byFile.get(key) ?? frameTexture(image, frame, catalog.manifest.canvas.width, this.config.layout.textureMaxSide);
+      byFile.set(key, texture);
+      out.set(frame.id, texture);
     }
     this.textures.set(characterId, out);
     //키는 대기 장에서 잰다. 공격 장으로 재면 판마다 크기가 흔들린다
@@ -131,13 +139,13 @@ export class Stage3D {
     const layout = this.config.layout;
     const index = { ally: 0, enemy: 0 };
     for (const entry of roster) {
-      const catalog = this.sprites.get(entry.characterId);
-      const textures = this.texturesOf(entry.characterId);
+      const catalog = this.sprites.get(entry.artId);
+      const textures = this.texturesOf(entry.artId);
       //그림이 없는 캐릭터는 3D 에 세우지 않는다. 남의 그림을 대신 쓰지 않는다 (§9.4)
       if (!catalog || !textures) continue;
       const row = index[entry.side]++;
       const sign = entry.side === 'ally' ? -1 : 1;
-      const doll = new PaperDoll(entry.combatantId, catalog, textures, this.worldPerPixel.get(entry.characterId) ?? 1, 10 + row);
+      const doll = new PaperDoll(entry.combatantId, catalog, textures, this.worldPerPixel.get(entry.artId) ?? 1, 10 + row);
       doll.home.set(sign * (layout.sideHalfGap + row * layout.rowOutward), 0, -row * layout.rowDepth);
       doll.setFacing(entry.side === 'ally' ? 1 : -1);
       doll.reset();

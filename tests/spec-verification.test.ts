@@ -232,6 +232,9 @@ describe('§11-5 전용기 수치가 v2.0 §1.1 표와 일치한다', () => {
 
   //캐릭터는 나중에 계속 추가된다. 개수를 박지 않고 로스터에서 뽑는다
   const roster = catalog.data.characters.map((c) => c.id);
+  //§1.1 공통 표를 쓰는 캐릭터. 카일·걸음 잔형은 SPEC-001 §7 [D-22] 의 자기 표를 쓴다
+  const OWN_TABLE = new Set(['kyle', 'remnantWalker']);
+  const common = roster.filter((id) => !OWN_TABLE.has(id));
 
   it('캐릭터마다 전용기 3종이 있고 궁극기는 1종이다', () => {
     expect(catalog.data.skills.filter((s) => s.slot !== 'ULT')).toHaveLength(roster.length * 3);
@@ -247,7 +250,7 @@ describe('§11-5 전용기 수치가 v2.0 §1.1 표와 일치한다', () => {
   });
 
   it.each(expected)('$slot 의 수치와 속성이 스펙과 같다', (row) => {
-    for (const characterId of roster) {
+    for (const characterId of common) {
       const skill = catalog.skill(skillOf(characterId, row.slot));
       expect(skill.attribute).toBe(row.attribute);
       expect(skill.baseDamage).toBe(row.baseDamage);
@@ -278,12 +281,34 @@ describe('§11-5 전용기 수치가 v2.0 §1.1 표와 일치한다', () => {
     }
   });
 
-  it('밸런싱 원칙 1 — 변동폭이 3.0배를 넘지 않는다', () => {
+  it('밸런싱 원칙 1 — 변동폭이 3.0배를 넘지 않는다 (카드 주인의 코인 수 기준)', () => {
     const maxCoin = Math.max(...catalog.data.characters.map((c) => c.maxCoin));
     for (const skill of catalog.data.skills) {
       if (skill.baseDamage === 0) continue;
-      const swing = (skill.baseDamage + maxCoin * skill.coinPower) / skill.baseDamage;
+      const coins = skill.character ? catalog.character(skill.character).maxCoin : maxCoin;
+      const swing = (skill.baseDamage + coins * skill.coinPower) / skill.baseDamage;
       expect(swing).toBeLessThanOrEqual(3.0);
     }
+  });
+});
+
+describe('§7 [D-22] 카일·걸음 잔형 제안값', () => {
+  const table = [
+    { id: 'kyle', slot: 'S1', attribute: 'defense', baseDamage: 6, coinPower: 3 },
+    { id: 'kyle', slot: 'S2', attribute: 'attack', baseDamage: 8, coinPower: 4 },
+    { id: 'kyle', slot: 'S3', attribute: 'support', baseDamage: 7, coinPower: 3 },
+    { id: 'remnantWalker', slot: 'S1', attribute: 'attack', baseDamage: 7, coinPower: 3 },
+    { id: 'remnantWalker', slot: 'S2', attribute: 'defense', baseDamage: 9, coinPower: 3 },
+    { id: 'remnantWalker', slot: 'S3', attribute: 'support', baseDamage: 11, coinPower: 2 },
+  ] as const;
+
+  it.each(table)('$id $slot 수치가 표와 같다', (row) => {
+    const skill = catalog.skill(skillOf(row.id, row.slot));
+    expect(skill).toMatchObject({ attribute: row.attribute, baseDamage: row.baseDamage, coinPower: row.coinPower });
+  });
+
+  it('카일 스탯이 표와 같다', () => {
+    expect(catalog.character('kyle')).toMatchObject({ maxHp: 96, atkLevel: 34, defLevel: 6, maxCoin: 4, mentality: 100 });
+    expect(catalog.character('remnantWalker')).toMatchObject({ maxHp: 110, atkLevel: 30, defLevel: 8, maxCoin: 3, mentality: 100 });
   });
 });

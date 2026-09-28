@@ -1,0 +1,107 @@
+{
+  "id": "gate3-watchdog-v2",
+  "_comment": "제3 수문 안쪽 점검 통로 (드라이브 '제3 수문_Watchdog-v2', 2026-09-28). 5층 모두 1672x941 같은 원점에 겹친다 (layout.json). 3D 무대 배치는 SPEC-005 §8.8·§9",
+  "coordinateSystem": "정규화 좌표 · 좌상단 원점 · x는 화면 너비, y는 화면 높이 기준",
+  "viewport": [1672, 941],
+  "drawOrder": ["far", "booth", "floor", "water", "actors", "front"],
+  "groundBoundaryApprox": 0.487,
+  "characterHeightRatio": 0.24,
+  "footYRatio": 0.765,
+  "layers": [
+    {
+      "id": "far",
+      "file": "01-far-gallery.png",
+      "x": 0,
+      "y": 0,
+      "width": 1,
+      "height": 1,
+      "parallax": 0.2
+    },
+    {
+      "id": "booth",
+      "file": "02-gate-booth.png",
+      "x": 0,
+      "y": 0,
+      "width": 1,
+      "height": 1,
+      "parallax": 0.5
+    },
+    {
+      "id": "floor",
+      "file": "03-battle-floor.png",
+      "x": 0,
+      "y": 0,
+      "width": 1,
+      "height": 1,
+      "parallax": 0
+    },
+    {
+      "id": "water",
+      "file": "04-water.png",
+      "x": 0,
+      "y": 0,
+      "width": 1,
+      "height": 1,
+      "parallax": 0
+    },
+    {
+      "id": "front",
+      "file": "05-foreground.png",
+      "x": 0,
+      "y": 0,
+      "width": 1,
+      "height": 1,
+      "parallax": 1
+    }
+  ],
+  "projection": {
+    "note": "기준 카메라는 layout.json 의 제안 배치(발 720/941 = 0.765, 키 226/941 = 0.24)와 바닥 뒤 끝(0.487, 깊이 16)을 맞춘다. 수문·점검실 층은 밑동(0.467)이 바닥에 닿는 깊이 19 에 세운다. 수면은 바닥 판에 같이 비춘다(반사가 바닥을 따라 움직인다). 근경(05-foreground)은 3D 에 세우지 않는다: 카메라 바로 앞이라 초점·측면 회전 때 시차가 커서 배관이 화면 절반을 덮고 인형을 가렸다. 측면 24° 에서 보이는 범위를 덮게 뒤 두 층을 키운다",
+    "camera": {
+      "back": 11.46,
+      "height": 3.96,
+      "lookAtHeight": 2.202,
+      "fov": 38,
+      "aspect": 1.7768
+    },
+    "fitTargets": {
+      "footY": 0.765,
+      "characterHeight": 0.24,
+      "groundBoundaryY": 0.487,
+      "groundBoundaryDepth": 16
+    },
+    "standSpread": 4,
+    "scaleAnchor": [0.5, 0.467],
+    "layers": {
+      "far": {
+        "shape": "stand",
+        "depth": 70,
+        "scale": 2.1,
+        "mirrorOutsideX": true,
+        "order": -30
+      },
+      "booth": {
+        "shape": "stand",
+        "depth": 19,
+        "scale": 2.0,
+        "mirrorOutsideX": true,
+        "order": -20
+      },
+      "floor": {
+        "shape": "floor",
+        "near": -14,
+        "far": 40,
+        "halfWidth": 120,
+        "mirrorOutsideX": true,
+        "mirrorOutsideY": true,
+        "order": -10
+      },
+      "water": {
+        "shape": "floor",
+        "near": -14,
+        "far": 40,
+        "halfWidth": 120,
+        "order": -9
+      }
+    }
+  }
+}

@@ -34,3 +34,19 @@ describe('3D 무대 수치', () => {
     expect(byFile.get('far.png')?.depth).toBe(70);
   });
 });
+
+describe('카일 1대1 무대 (SPEC-001 §7 [D-22])', () => {
+  it('대진은 카일 대 걸음 잔형이고 제3 수문에서 싸운다', () => {
+    const config = parseStage3dConfig(read('assets/ui/stage3d.json'));
+    expect(config.battle).toMatchObject({ map: 'map-gate3', ally: ['kyle'], enemy: ['remnantWalker'] });
+    expect(config.battle.artAlias['remnantWalker']).toBe('kyle');
+  });
+
+  it('제3 수문 층을 읽는다. 근경은 3D 에 세우지 않는다', () => {
+    const config = parseBackdropConfig(read('assets/map-gate3/placement.json'));
+    const files = config.layers.map((l) => l.file);
+    expect(files).toEqual(['01-far-gallery.png', '02-gate-booth.png', '03-battle-floor.png', '04-water.png']);
+    expect(config.layers.find((l) => l.file === '04-water.png')?.shape).toBe('floor');
+    expect(config.camera).toMatchObject({ back: 11.46, height: 3.96 });
+  });
+});

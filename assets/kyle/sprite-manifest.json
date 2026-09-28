@@ -1,0 +1,770 @@
+{
+  "_comment": "카일 종이 인형 장 (SPEC-005 §9.4). 원화는 전부 오른쪽을 본다. 캔버스 1280x720, 발 (657, 659). 피격 장은 드라이브 kyle-hit.png 를 머리 폭 기준으로 줄여 같은 캔버스에 앉혔다 (frames/05-hit-canvas.png). 전용기 3장 모두 같은 준비·베기 장을 쓴다(베기 그림이 한 벌뿐)",
+  "version": 1,
+  "character": "kyle",
+  "canvas": [
+    1280,
+    720
+  ],
+  "ground": [
+    657,
+    659
+  ],
+  "frames": [
+    {
+      "id": "00-idle",
+      "file": "frames/01-idle.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        643.8,
+        118.4
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        632,
+        85
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        385,
+        85,
+        972,
+        660
+      ]
+    },
+    {
+      "id": "01-advance",
+      "file": "frames/03-user.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        806.0,
+        242.3
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        833,
+        221
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        259,
+        219,
+        881,
+        611
+      ]
+    },
+    {
+      "id": "02-retreat",
+      "file": "frames/06-recover.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        669.5,
+        162.3
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        663,
+        131
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        425,
+        131,
+        962,
+        661
+      ]
+    },
+    {
+      "id": "03-guard",
+      "file": "frames/02-preload.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        748.4,
+        312.1
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        302,
+        366
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        302,
+        289,
+        882,
+        661
+      ]
+    },
+    {
+      "id": "04-hit",
+      "file": "frames/05-hit-canvas.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        584.2,
+        173.3
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        584,
+        144
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        436,
+        143,
+        970,
+        663
+      ]
+    },
+    {
+      "id": "11-skill1-ready",
+      "file": "frames/02-preload.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        748.4,
+        312.1
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        302,
+        366
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        302,
+        289,
+        882,
+        661
+      ]
+    },
+    {
+      "id": "11-skill1-01-peak",
+      "file": "slash/01-peak.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        168.4,
+        183.1
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        62,
+        211
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        54,
+        152,
+        1088,
+        662
+      ]
+    },
+    {
+      "id": "11-skill1-02-erode15",
+      "file": "slash/02-erode15.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        167.9,
+        183.2
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        63,
+        210
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        54,
+        152,
+        993,
+        662
+      ]
+    },
+    {
+      "id": "11-skill1-03-erode35",
+      "file": "slash/03-erode35.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        167.3,
+        182.3
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        61,
+        211
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        53,
+        151,
+        918,
+        662
+      ]
+    },
+    {
+      "id": "11-skill1-04-erode60",
+      "file": "slash/04-erode60.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        166.8,
+        182.1
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        59,
+        212
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        52,
+        151,
+        919,
+        661
+      ]
+    },
+    {
+      "id": "11-skill1-05-erode80",
+      "file": "slash/05-erode80.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        168.8,
+        182.1
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        66,
+        206
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        54,
+        151,
+        921,
+        661
+      ]
+    },
+    {
+      "id": "11-skill1-06-remnants",
+      "file": "slash/06-remnants.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        187.8,
+        179.7
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        98,
+        190
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        98,
+        152,
+        919,
+        662
+      ]
+    },
+    {
+      "id": "11-skill1-07-clear",
+      "file": "slash/07-clear.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        205.0,
+        180.3
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        137,
+        153
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        137,
+        153,
+        919,
+        662
+      ]
+    },
+    {
+      "id": "12-skill2-ready",
+      "file": "frames/02-preload.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        748.4,
+        312.1
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        302,
+        366
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        302,
+        289,
+        882,
+        661
+      ]
+    },
+    {
+      "id": "12-skill2-01-peak",
+      "file": "slash/01-peak.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        168.4,
+        183.1
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        62,
+        211
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        54,
+        152,
+        1088,
+        662
+      ]
+    },
+    {
+      "id": "12-skill2-02-erode15",
+      "file": "slash/02-erode15.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        167.9,
+        183.2
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        63,
+        210
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        54,
+        152,
+        993,
+        662
+      ]
+    },
+    {
+      "id": "12-skill2-03-erode35",
+      "file": "slash/03-erode35.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        167.3,
+        182.3
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        61,
+        211
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        53,
+        151,
+        918,
+        662
+      ]
+    },
+    {
+      "id": "12-skill2-04-erode60",
+      "file": "slash/04-erode60.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        166.8,
+        182.1
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        59,
+        212
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        52,
+        151,
+        919,
+        661
+      ]
+    },
+    {
+      "id": "12-skill2-05-erode80",
+      "file": "slash/05-erode80.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        168.8,
+        182.1
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        66,
+        206
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        54,
+        151,
+        921,
+        661
+      ]
+    },
+    {
+      "id": "12-skill2-06-remnants",
+      "file": "slash/06-remnants.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        187.8,
+        179.7
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        98,
+        190
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        98,
+        152,
+        919,
+        662
+      ]
+    },
+    {
+      "id": "12-skill2-07-clear",
+      "file": "slash/07-clear.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        205.0,
+        180.3
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        137,
+        153
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        137,
+        153,
+        919,
+        662
+      ]
+    },
+    {
+      "id": "13-skill3-ready",
+      "file": "frames/02-preload.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        748.4,
+        312.1
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        302,
+        366
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        302,
+        289,
+        882,
+        661
+      ]
+    },
+    {
+      "id": "13-skill3-01-peak",
+      "file": "slash/01-peak.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        168.4,
+        183.1
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        62,
+        211
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        54,
+        152,
+        1088,
+        662
+      ]
+    },
+    {
+      "id": "13-skill3-02-erode15",
+      "file": "slash/02-erode15.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        167.9,
+        183.2
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        63,
+        210
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        54,
+        152,
+        993,
+        662
+      ]
+    },
+    {
+      "id": "13-skill3-03-erode35",
+      "file": "slash/03-erode35.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        167.3,
+        182.3
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        61,
+        211
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        53,
+        151,
+        918,
+        662
+      ]
+    },
+    {
+      "id": "13-skill3-04-erode60",
+      "file": "slash/04-erode60.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        166.8,
+        182.1
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        59,
+        212
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        52,
+        151,
+        919,
+        661
+      ]
+    },
+    {
+      "id": "13-skill3-05-erode80",
+      "file": "slash/05-erode80.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        168.8,
+        182.1
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        66,
+        206
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        54,
+        151,
+        921,
+        661
+      ]
+    },
+    {
+      "id": "13-skill3-06-remnants",
+      "file": "slash/06-remnants.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        187.8,
+        179.7
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        98,
+        190
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        98,
+        152,
+        919,
+        662
+      ]
+    },
+    {
+      "id": "13-skill3-07-clear",
+      "file": "slash/07-clear.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        657,
+        659
+      ],
+      "headCenter": [
+        205.0,
+        180.3
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        137,
+        153
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        137,
+        153,
+        919,
+        662
+      ]
+    }
+  ],
+  "effects": []
+}

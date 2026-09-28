@@ -1,0 +1,17 @@
+{
+  "scene": "제3 수문 안쪽 점검 통로",
+  "version": "watchdog-v2",
+  "canvas": {"width": 1672, "height": 941},
+  "origin": "top-left",
+  "blend": "source-over",
+  "layers": [
+    {"file":"layers/01-far-gallery.png","name":"후경 통로","order":0,"x":0,"y":0,"width":1672,"height":941,"sourceWidth":1672},
+    {"file":"layers/02-gate-booth.png","name":"수문·점검실","order":10,"x":0,"y":0,"width":1672,"height":941,"sourceWidth":1672},
+    {"file":"layers/03-battle-floor.png","name":"전투 바닥","order":20,"x":0,"y":0,"width":1672,"height":941,"sourceWidth":1671},
+    {"file":"layers/04-water.png","name":"수면","order":30,"x":0,"y":0,"width":1672,"height":941,"sourceWidth":1672},
+    {"file":"layers/05-foreground.png","name":"근경 배관·난간","order":50,"x":0,"y":0,"width":1672,"height":941,"sourceWidth":1672}
+  ],
+  "suggestedActorOrder":40,
+  "unverifiedActorLayout": {"feetY":720,"height":226,"leftX":500,"rightX":1120},
+  "notes":["Actor coordinates are preview proposals, not verified gameplay positions.","Floor source is 1px narrower: render it at 1672x941 without changing the PNG.","No parallax motion is approved; static assembly only.","Water is a static painted overlay, not animated water or actor reflection."]
+}

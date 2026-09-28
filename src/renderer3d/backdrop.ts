@@ -29,10 +29,9 @@ export class Backdrop {
 
   //층을 전부 세운다. 그림은 파일 이름으로 찾는다. 없는 층은 빠진다
   build(images: Map<string, HTMLImageElement>): void {
-    const order = [-30, -20, -10];
-    this.config.layers.forEach((layer, i) => {
+    for (const layer of this.config.layers) {
       const image = images.get(layer.file);
-      if (!image) return;
+      if (!image) continue;
       const texture = new THREE.Texture(image);
       texture.colorSpace = THREE.SRGBColorSpace;
       texture.anisotropy = 4;
@@ -40,9 +39,9 @@ export class Backdrop {
       texture.wrapT = layer.mirrorY ? THREE.MirroredRepeatWrapping : THREE.ClampToEdgeWrapping;
       texture.needsUpdate = true;
       const mesh = layer.shape === 'floor' ? this.floor(layer, texture) : this.stand(layer, texture);
-      mesh.renderOrder = order[Math.min(i, order.length - 1)] ?? -10;
+      mesh.renderOrder = layer.order;
       this.scene.add(mesh);
-    });
+    }
   }
 
   //기준 카메라 화면의 한 점(정규 좌표)에서 쏜 선이 z 평면과 만나는 곳

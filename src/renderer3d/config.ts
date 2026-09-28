@@ -96,7 +96,18 @@ export interface CalloutConfig {
   headOffset: number;
 }
 
+//싸울 무대와 대진 (SPEC-001 §7 [D-22])
+export interface BattleSetup {
+  //배경 폴더 (assets/<map>/placement.json)
+  map: string;
+  ally: string[];
+  enemy: string[];
+  //그림이 없는 캐릭터에 임시로 세울 그림. 이름표에 자리 표시라고 적는다
+  artAlias: Record<string, string>;
+}
+
 export interface Stage3dConfig {
+  battle: BattleSetup;
   layout: LayoutConfig;
   motion: MotionConfig;
   camera: CameraConfig;
@@ -120,6 +131,8 @@ export interface BackdropLayer {
   halfWidth: number;
   mirrorX: boolean;
   mirrorY: boolean;
+  //그리기 순서. 인형은 10 대, 근경은 인형보다 크게
+  order: number;
 }
 
 //기준 카메라와 배경 층들
@@ -163,6 +176,7 @@ function numbers<T>(source: unknown, path: string, keys: readonly (keyof T & str
 export function parseStage3dConfig(raw: unknown): Stage3dConfig {
   const root = obj(raw, 'stage3d');
   return {
+    battle: parseBattleSetup(root['battle']),
     layout: numbers<LayoutConfig>(root['layout'], 'layout', ['characterHeight', 'sideHalfGap', 'rowDepth', 'rowOutward', 'textureMaxSide']),
     motion: numbers<MotionConfig>(root['motion'], 'motion', [
       'windupTime', 'windupBack', 'dashTime', 'contactGap', 'strikeTime', 'strikeReach', 'knockTime', 'knockBase',
@@ -182,6 +196,21 @@ export function parseStage3dConfig(raw: unknown): Stage3dConfig {
     ]),
     callout: numbers<CalloutConfig>(root['callout'], 'callout', ['seconds', 'headOffset']),
   };
+}
+
+//대진 설정을 읽는다
+function parseBattleSetup(raw: unknown): BattleSetup {
+  const o = obj(raw, 'battle');
+  const list = (key: string): string[] => {
+    const v = o[key];
+    if (!Array.isArray(v) || v.length === 0 || v.some((x) => typeof x !== 'string')) throw new Stage3dConfigError(`battle.${key} 가 캐릭터 id 목록이 아니다`);
+    return v as string[];
+  };
+  if (typeof o['map'] !== 'string') throw new Stage3dConfigError('battle.map 이 문자열이 아니다');
+  const alias = obj(o['artAlias'] ?? {}, 'battle.artAlias');
+  const artAlias: Record<string, string> = {};
+  for (const [k, v] of Object.entries(alias)) if (typeof v === 'string') artAlias[k] = v;
+  return { map: o['map'] as string, ally: list('ally'), enemy: list('enemy'), artAlias };
 }
 
 //placement.json 의 층 자리와 projection 을 합쳐 배경 설정을 만든다
@@ -218,6 +247,7 @@ export function parseBackdropConfig(raw: unknown): BackdropConfig {
       halfWidth: n('halfWidth', 45),
       mirrorX: spec['mirrorOutsideX'] === true,
       mirrorY: spec['mirrorOutsideY'] === true,
+      order: n('order', shape === 'floor' ? -10 : -20),
     });
   }
   return { camera, standSpread: spread, scaleAnchor: [anchor[0] as number, anchor[1] as number], layers };

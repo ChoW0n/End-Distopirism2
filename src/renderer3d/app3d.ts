@@ -16,14 +16,12 @@ import { OrderInput, type InputMember } from '../ui/input.js';
 import { loadCharacter, loadIndex, loadUi } from '../renderer/assets.js';
 import { BattleHud, CommandPanel } from '../renderer/command-panel.js';
 import { SynthSound } from '../renderer/sound.js';
-import { parseBackdropConfig, parseStage3dConfig, type BackdropConfig, type Stage3dConfig } from './config.js';
+import { parseBackdropConfig, parseStage3dConfig, type BackdropConfig, type BattleSetup, type Stage3dConfig } from './config.js';
 import { Stage3D, type RosterEntry } from './stage.js';
 
 const view = document.getElementById('view') as HTMLCanvasElement | null;
 const ASSETS = view?.dataset['assets'] ?? '../assets';
 const DATA = view?.dataset['battle'] ?? '../docs/battle-data.json';
-//한 편에 세울 인원
-const MIRROR_SIZE = 2;
 
 async function json(url: string): Promise<unknown> {
   const response = await fetch(url);
@@ -54,15 +52,12 @@ interface Boot {
 
 //데이터와 그림을 받아 온다. 3D 는 인형 장과 배경만 쓴다 (캐릭터 이펙트는 2단계, §9.7)
 async function boot(progress: (text: string, ratio: number) => void): Promise<Boot> {
-  const [rawBattle, ui, rawStage, rawPlacement] = await Promise.all([
-    json(DATA),
-    loadUi(ASSETS),
-    json(`${ASSETS}/ui/stage3d.json`),
-    json(`${ASSETS}/map/placement.json`),
-  ]);
+  const [rawBattle, ui, rawStage] = await Promise.all([json(DATA), loadUi(ASSETS), json(`${ASSETS}/ui/stage3d.json`)]);
   const catalog = new BattleCatalog(parseBattleData(rawBattle));
   const stage = parseStage3dConfig(rawStage);
-  const backdrop = parseBackdropConfig(rawPlacement);
+  //배경 폴더는 대진 설정이 정한다 (제3 수문 = map-gate3)
+  const mapDir = stage.battle.map;
+  const backdrop = parseBackdropConfig(await json(`${ASSETS}/${mapDir}/placement.json`));
   const drawn = await loadIndex(ASSETS);
 
   const sprites = new Map<string, SpriteCatalog>();
@@ -76,7 +71,7 @@ async function boot(progress: (text: string, ratio: number) => void): Promise<Bo
 
   //받을 파일 목록. 진행률을 보여 준다 (SPEC-004 §12)
   const jobs: { key: string; url: string }[] = [];
-  for (const layer of backdrop.layers) jobs.push({ key: `map/${layer.file}`, url: `${ASSETS}/map/${layer.file}` });
+  for (const layer of backdrop.layers) jobs.push({ key: `${mapDir}/${layer.file}`, url: `${ASSETS}/${mapDir}/${layer.file}` });
   for (const [id, sprite] of sprites) {
     for (const frame of sprite.manifest.frames) jobs.push({ key: `${id}/${frame.file}`, url: `${ASSETS}/${id}/${frame.file}` });
   }
@@ -96,7 +91,7 @@ async function boot(progress: (text: string, ratio: number) => void): Promise<Bo
 
   const backdropImages = new Map<string, HTMLImageElement>();
   for (const layer of backdrop.layers) {
-    const found = loaded.get(`map/${layer.file}`);
+    const found = loaded.get(`${mapDir}/${layer.file}`);
     if (found) backdropImages.set(layer.file, found);
   }
   return { catalog, ui, stage, backdrop, backdropImages, sprites, frames: loaded, missing };
@@ -111,27 +106,32 @@ class Session {
   constructor(
     private readonly catalog: BattleCatalog,
     rng: Rng,
-    characterIds: readonly string[],
+    private readonly setup: BattleSetup,
   ) {
-    const roster = (side: Side) =>
-      characterIds.map((characterId, i) => ({ id: `${side === 'ally' ? 'a' : 'e'}${i + 1}`, characterId, side }));
-    this.battle = new Battle(catalog, roster('ally'), roster('enemy'), { rng, enemyAi: this.ai });
+    const roster = (side: Side, ids: readonly string[]) =>
+      ids.map((characterId, i) => ({ id: `${side === 'ally' ? 'a' : 'e'}${i + 1}`, characterId, side }));
+    this.battle = new Battle(catalog, roster('ally', setup.ally), roster('enemy', setup.enemy), { rng, enemyAi: this.ai });
     const resolver = new ClashResolver(catalog, rng, { alliesOf: (c) => this.battle.sideOf(c.side) });
     this.aiContext = { catalog, resolver, rng };
   }
 
   //무대에 세울 사람들
   roster(): RosterEntry[] {
-    return this.battle.combatants.map((c) => ({
-      combatantId: c.id,
-      characterId: c.base.id,
-      name: c.base.name,
-      side: c.side,
-      hp: c.hp,
-      maxHp: c.base.maxHp,
-      mentality: c.mentality,
-      maxMentality: this.catalog.rules.mentalityMax,
-    }));
+    return this.battle.combatants.map((c) => {
+      const alias = this.setup.artAlias[c.base.id];
+      return {
+        combatantId: c.id,
+        characterId: c.base.id,
+        artId: alias ?? c.base.id,
+        //남의 그림을 세우면 이름표에 자리 표시라고 적는다
+        name: alias ? `${c.base.name} · 자리 표시` : c.base.name,
+        side: c.side,
+        hp: c.hp,
+        maxHp: c.base.maxHp,
+        mentality: c.mentality,
+        maxMentality: this.catalog.rules.mentalityMax,
+      };
+    });
   }
 
   inputAllies(): (InputMember & { name: string })[] {
@@ -265,15 +265,9 @@ async function main(): Promise<void> {
     { hp: loaded.ui.bar.hpColor, mentality: loaded.ui.bar.mentalityColor },
   );
 
-  //한 편 구성. 3D 는 그림이 있는 캐릭터만 세운다
-  const roster = (): string[] => {
-    const drawn = loaded.catalog.data.characters.map((c) => c.id).filter((id) => loaded.sprites.has(id));
-    return Array.from({ length: MIRROR_SIZE }, (_, i) => drawn[i % drawn.length] as string);
-  };
-
   const restart = (): void => {
     const seed = Number(seedInput.value) || 1;
-    session = new Session(loaded.catalog, createSeededRng(seed), roster());
+    session = new Session(loaded.catalog, createSeededRng(seed), loaded.stage.battle);
     stage.reset(session.roster());
     restSec = 0;
     input = null;
