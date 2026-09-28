@@ -89,17 +89,18 @@ namespace EndDistopirism.Presentation
             [Header("② 선딜레이")]
             public float windupTime = 0.16f;
             public float windupBack = 0.35f;
-            public Vector2 windupSquash = new Vector2(1.06f, 0.94f);
-            public float windupLeanDeg = 8f;
+            [Tooltip("종이 인형은 찌그러지지도 기울지도 않는다 (SPEC-005 §8.3). 기본 1·0")]
+            public Vector2 windupSquash = Vector2.one;
+            public float windupLeanDeg = 0f;
             [Header("③ 돌진")]
             public float dashTime = 0.13f;
             public float contactGap = 1.1f;
-            public Vector2 dashStretch = new Vector2(1.15f, 0.92f);
+            public Vector2 dashStretch = Vector2.one;
             [Header("④ 충돌")]
             public float strikeTime = 0.10f;
             public float strikeReach = 0.25f;
-            public Vector2 strikeStretch = new Vector2(1.12f, 0.9f);
-            public float strikeLeanDeg = 14f;
+            public Vector2 strikeStretch = Vector2.one;
+            public float strikeLeanDeg = 0f;
             [Header("⑤ 넉백")]
             public float knockTime = 0.18f;
             public float knockBase = 0.8f;
@@ -108,6 +109,7 @@ namespace EndDistopirism.Presentation
             [Tooltip("밀려날 때 젖힘. 기본은 기울지 않는다 (SPEC-005 v1.9.5)")]
             public float knockLeanDeg = 0f;
             public float staggerSnapDeg = 0f;
+            public Vector2 knockSquash = Vector2.one;
             public float staggerDrop = -0.12f;
             public float staggerHold = 0.22f;
             [Header("⑥ 복귀")]
@@ -191,6 +193,31 @@ namespace EndDistopirism.Presentation
             [Range(0f, 1f)] public float contactBias = 0.7f;
         }
 
+        //금속 스파크 수치 (SPEC-005 §8.6). 충돌 이펙트 프리팹이 없으면 코드로 만든 스파크를 쓴다
+        [Serializable]
+        public sealed class SparkSettings
+        {
+            public bool enabled = true;
+            [Tooltip("가산 합성 파티클 재질. 비어 있으면 찾을 수 있는 파티클 셰이더로 만든다")]
+            public Material material;
+            public int countHit = 26;
+            public int countClash = 42;
+            public Vector2 speed = new Vector2(7f, 17f);
+            public float gravity = 16f;
+            public float drag = 1.8f;
+            public Vector2 lifetime = new Vector2(0.3f, 0.62f);
+            [Tooltip("속도에 비례해 늘이는 길이 (Stretched Billboard 속도 배율)")]
+            public float length = 0.1f;
+            public float width = 0.05f;
+            public float coneDeg = 80f;
+            [Range(0f, 1f)] public float backShare = 0.3f;
+            public float coreSize = 0.6f;
+            public float coreLife = 0.08f;
+            public Color head = new Color(1f, 0.97f, 0.8f);
+            public Color body = new Color(1f, 0.8f, 0.25f);
+            public Color tail = new Color(1f, 0.45f, 0.1f);
+        }
+
         //결과 알림 수치 (SPEC-005 §8.10)
         [Serializable]
         public sealed class CalloutSettings
@@ -220,6 +247,7 @@ namespace EndDistopirism.Presentation
         [SerializeField] private HitStopSettings hitStop = new HitStopSettings();
         [SerializeField] private EffectSettings effects = new EffectSettings();
         [SerializeField] private CalloutSettings callout = new CalloutSettings();
+        [SerializeField] private SparkSettings sparks = new SparkSettings();
 
         //교전 하나가 끝날 때마다 알린다. 전투 흐름이 다음 턴으로 넘어가는 데 쓴다
         public event Action<PresentationCue> CueFinished;
@@ -310,12 +338,11 @@ namespace EndDistopirism.Presentation
             FaceActorsToCamera();
         }
 
-        //캐릭터 판을 카메라 쪽으로 세운다 (SPEC-005 §8.9). 흔들림 전 자세를 쓰고, 기울기(롤)는 빼서 화면 기울임은 그대로 보이게 한다
+        //캐릭터 판을 카메라 회전과 똑같이 돌린다 (SPEC-005 §8.9). 늘 정면으로 보이고 화면에서 기울지 않는다
         private void FaceActorsToCamera()
         {
             if (cameraRig == null) return;
-            Vector3 euler = (cameraReady ? currentRotation : cameraRig.rotation).eulerAngles;
-            Quaternion facing = Quaternion.Euler(euler.x, euler.y, 0f);
+            Quaternion facing = cameraRig.rotation;
             foreach (Limbus25DActor actor in Limbus25DActor.Active)
             {
                 if (actor != null && actor.FacesCamera) actor.transform.rotation = facing;
@@ -414,7 +441,9 @@ namespace EndDistopirism.Presentation
             {
                 SpawnEffect(effects.defaultClashSpark, (attacker.Chest + defender.Chest) * 0.5f, defender, EffectLayer.Front, dir);
             }
-            SpawnEffect(cue.impactEffect != null ? cue.impactEffect : effects.defaultImpact, contact, defender, cue.impactLayer, dir);
+            GameObject impact = cue.impactEffect != null ? cue.impactEffect : effects.defaultImpact;
+            if (impact != null) SpawnEffect(impact, contact, defender, cue.impactLayer, dir);
+            else if (sparks.enabled) SpawnSparks(contact, defender, dir, clash);
             attacker.PlayStrikeTrail(motion.strikeTrailTime);
             StartHitStop(Mathf.Min(hitStop.maxSeconds, hitStop.baseSeconds + cue.damage * hitStop.perDamageSeconds));
             AddImpact(power, dir);
@@ -498,7 +527,7 @@ namespace EndDistopirism.Presentation
                 seq.Join(v.DOLocalRotate(new Vector3(0f, 0f, roll), t).SetEase(Ease.OutExpo));
             }
             seq.Join(v.DOLocalMove(new Vector3(actor.WorldToLocalX(dir * distance), stagger ? motion.staggerDrop : 0f, 0f), t).SetEase(Ease.OutExpo));
-            seq.Join(v.DOScale(new Vector3(0.92f, 1.08f, 1f), t * 0.5f).SetEase(Ease.OutQuad));
+            seq.Join(v.DOScale(new Vector3(motion.knockSquash.x, motion.knockSquash.y, 1f), t * 0.5f).SetEase(Ease.OutQuad));
             if (stagger) seq.AppendInterval(motion.staggerHold);
             return seq;
         }
@@ -546,6 +575,142 @@ namespace EndDistopirism.Presentation
                 actor.ResetVisual();
             }
             ReleaseFocus();
+        }
+
+        //── 금속 스파크 (SPEC-005 §8.6) ──
+
+        private Material sparkMaterial;
+        private Texture2D sparkTexture;
+
+        //금속끼리 부딪힌 스파크. 짧은 섬광 + 노란 불똥 줄기가 공격 방향 부채꼴로 튀고 중력으로 떨어진다
+        //게임 시간으로 흘러 역경직 동안 같이 멈춘다
+        private void SpawnSparks(Vector3 position, Limbus25DActor reference, float dir, bool clash)
+        {
+            var root = new GameObject("Sparks");
+            root.transform.position = position;
+            int order = reference != null ? reference.SortingOrder + effects.frontOrderOffset + 1 : 0;
+            int count = clash ? sparks.countClash : sparks.countHit;
+            int back = Mathf.RoundToInt(count * sparks.backShare);
+            float cone = sparks.coneDeg * (clash ? 1.4f : 1f);
+            //앞쪽 불똥, 되튀는 불똥, 가운데 섬광
+            BuildSparkSystem(root.transform, "Forward", count - back, dir, cone, order, false);
+            BuildSparkSystem(root.transform, "Back", back, -dir, cone, order, false);
+            BuildSparkSystem(root.transform, "Core", 1, dir, 0f, order, true);
+            Destroy(root, sparks.lifetime.y + 0.5f);
+        }
+
+        //불똥 한 묶음을 파티클 시스템으로 만든다. 늘인 빌보드라 속도 방향으로 길어진다
+        private void BuildSparkSystem(Transform parent, string name, int count, float dir, float coneDeg, int order, bool core)
+        {
+            if (count <= 0) return;
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            //원뿔이 공격 방향(월드 x)으로, 살짝 위를 향하게
+            go.transform.rotation = Quaternion.LookRotation(new Vector3(dir, 0.25f, 0f).normalized, Vector3.up);
+            var ps = go.AddComponent<ParticleSystem>();
+            ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
+            var main = ps.main;
+            main.duration = 0.1f;
+            main.loop = false;
+            main.playOnAwake = false;
+            main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.useUnscaledTime = false;
+            main.maxParticles = count;
+            if (core)
+            {
+                main.startLifetime = sparks.coreLife;
+                main.startSpeed = 0f;
+                main.startSize = sparks.coreSize;
+                main.startColor = sparks.head;
+                main.gravityModifier = 0f;
+            }
+            else
+            {
+                main.startLifetime = new ParticleSystem.MinMaxCurve(sparks.lifetime.x, sparks.lifetime.y);
+                main.startSpeed = new ParticleSystem.MinMaxCurve(sparks.speed.x, sparks.speed.y);
+                main.startSize = new ParticleSystem.MinMaxCurve(sparks.width * 0.7f, sparks.width * 1.3f);
+                main.startColor = new ParticleSystem.MinMaxGradient(sparks.head, sparks.body);
+                main.gravityModifier = sparks.gravity / Mathf.Max(0.01f, -Physics.gravity.y);
+            }
+
+            var emission = ps.emission;
+            emission.rateOverTime = 0f;
+            emission.SetBursts(new[] { new ParticleSystem.Burst(0f, (short)count) });
+
+            var shape = ps.shape;
+            shape.enabled = !core;
+            shape.shapeType = ParticleSystemShapeType.Cone;
+            shape.angle = coneDeg * 0.5f;
+            shape.radius = 0.02f;
+
+            if (!core)
+            {
+                var drag = ps.limitVelocityOverLifetime;
+                drag.enabled = true;
+                drag.drag = sparks.drag;
+                drag.multiplyDragByParticleSize = false;
+                drag.multiplyDragByParticleVelocity = false;
+            }
+
+            //뜨거운 머리 → 식는 꼬리 색, 끝에서 흐려진다
+            var color = ps.colorOverLifetime;
+            color.enabled = true;
+            var gradient = new Gradient();
+            gradient.SetKeys(
+                new[] { new GradientColorKey(sparks.head, 0f), new GradientColorKey(sparks.body, 0.4f), new GradientColorKey(sparks.tail, 1f) },
+                new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(1f, 0.5f), new GradientAlphaKey(0f, 1f) });
+            color.color = gradient;
+
+            var renderer = go.GetComponent<ParticleSystemRenderer>();
+            renderer.renderMode = core ? ParticleSystemRenderMode.Billboard : ParticleSystemRenderMode.Stretch;
+            renderer.velocityScale = sparks.length;
+            renderer.lengthScale = 1f;
+            renderer.sharedMaterial = GetSparkMaterial();
+            renderer.sortingOrder = order;
+
+            ps.Play(true);
+        }
+
+        //스파크 재질. 지정이 없으면 파티클 셰이더를 찾아 부드러운 점 텍스처로 만든다
+        private Material GetSparkMaterial()
+        {
+            if (sparks.material != null) return sparks.material;
+            if (sparkMaterial != null) return sparkMaterial;
+            Shader shader = Shader.Find("Universal Render Pipeline/Particles/Unlit");
+            if (shader == null) shader = Shader.Find("Legacy Shaders/Particles/Additive");
+            if (shader == null) shader = Shader.Find("Sprites/Default");
+            sparkMaterial = new Material(shader) { name = "SparkRuntime" };
+            if (sparkTexture == null)
+            {
+                //가운데가 밝은 둥근 점. 늘이면 불똥 줄기가 된다
+                const int n = 32;
+                sparkTexture = new Texture2D(n, n, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+                for (int y = 0; y < n; y++)
+                {
+                    for (int x = 0; x < n; x++)
+                    {
+                        float d = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(n * 0.5f, n * 0.5f)) / (n * 0.5f);
+                        float a = Mathf.Clamp01(1f - d);
+                        sparkTexture.SetPixel(x, y, new Color(1f, 1f, 1f, a * a));
+                    }
+                }
+                sparkTexture.Apply();
+            }
+            sparkMaterial.mainTexture = sparkTexture;
+            if (sparkMaterial.HasProperty("_BaseMap")) sparkMaterial.SetTexture("_BaseMap", sparkTexture);
+            //URP 파티클 셰이더면 투명·가산으로 맞춘다
+            if (sparkMaterial.HasProperty("_Surface"))
+            {
+                sparkMaterial.SetFloat("_Surface", 1f);
+                sparkMaterial.SetFloat("_Blend", 2f);
+                sparkMaterial.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+                sparkMaterial.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.One);
+                sparkMaterial.SetInt("_ZWrite", 0);
+                sparkMaterial.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+                sparkMaterial.renderQueue = (int)UnityEngine.Rendering.RenderQueue.Transparent;
+            }
+            return sparkMaterial;
         }
 
         //── 결과 알림 (SPEC-005 §8.10) ──

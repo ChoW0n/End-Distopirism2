@@ -45,6 +45,10 @@ namespace EndDistopirism.Presentation
         [Tooltip("판을 늘 카메라 쪽으로 세운다 (SPEC-005 §8.9). 연출 감독이 매 프레임 돌린다")]
         [SerializeField] private bool facesCamera = true;
 
+        [Header("판 고정")]
+        [Tooltip("종이 인형은 기울지도 찌그러지지도 않는다 (SPEC-005 §8.3). 켜 두면 Visual 회전·배율을 매 프레임 되돌린다")]
+        [SerializeField] private bool keepFlat = true;
+
         [Header("편")]
         [Tooltip("플레이어 쪽(아군)인지. 결과 알림은 아군에게만 뜬다 (SPEC-005 §8.10)")]
         [SerializeField] private bool playerSide;
@@ -206,6 +210,12 @@ namespace EndDistopirism.Presentation
             //다른 곳에서 flipX 를 건드렸으면 지금 장의 원화 방향대로 되돌린다
             if (spriteRenderer != null && spriteRenderer.flipX != !shownFacesRight) spriteRenderer.flipX = !shownFacesRight;
             if (visual == null) return;
+            if (keepFlat)
+            {
+                visual.localRotation = Quaternion.identity;
+                visual.localScale = Vector3.one;
+                return;
+            }
             //Visual 배율은 늘 양수. 음수가 섞이면 그림이 한 번 더 뒤집힌다
             Vector3 s = visual.localScale;
             if (s.x < 0f || s.y < 0f || s.z < 0f) visual.localScale = new Vector3(Mathf.Abs(s.x), Mathf.Abs(s.y), Mathf.Abs(s.z));
