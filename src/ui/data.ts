@@ -139,6 +139,23 @@ export interface FlashData {
   sec: number;
 }
 
+//합 라운드마다 밀려났다가 다시 달려드는 박자 (SPEC-005 §2.3.8)
+export interface ExchangeData {
+  separateLoser: number;
+  separateWinner: number;
+  separateTie: number;
+  separateSec: number;
+  lingerSec: number;
+  reengageSec: number;
+  pullOut: number;
+  reengageKick: number;
+  roundFlashAlpha: number;
+  roundFlashSec: number;
+  roundShake: number;
+  hitFlashAlpha: number;
+  hitFlashSec: number;
+}
+
 export interface AfterimageData {
   count: number;
   intervalSec: number;
@@ -284,6 +301,7 @@ export interface UiData {
   banner: BannerData;
   knockback: KnockbackData;
   flash: FlashData;
+  exchange: ExchangeData;
   afterimage: AfterimageData;
   motion: MotionData;
   effects: EffectFxData;
@@ -435,6 +453,10 @@ export function parseUiData(raw: unknown): UiData {
     banner: numbers('banner', ['sec', 'height', 'offsetX', 'size'] as const),
     knockback: numbers('knockback', ['distance', 'sec'] as const),
     flash: numbers('flash', ['alpha', 'sec'] as const),
+    exchange: numbers('exchange', [
+      'separateLoser', 'separateWinner', 'separateTie', 'separateSec', 'lingerSec', 'reengageSec',
+      'pullOut', 'reengageKick', 'roundFlashAlpha', 'roundFlashSec', 'roundShake', 'hitFlashAlpha', 'hitFlashSec',
+    ] as const),
     afterimage: numbers('afterimage', ['count', 'intervalSec', 'alpha'] as const),
     motion: {
       ...numbers('motion', [

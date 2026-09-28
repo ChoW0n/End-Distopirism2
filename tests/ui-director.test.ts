@@ -482,22 +482,32 @@ describe('SPEC-005 합 한 번의 연출', () => {
     expect(a.value).toBe(15);
   });
 
-  it('진 쪽이 더 크게, 접점에서 멀어지는 쪽으로 밀린다', () => {
-    const result = pick(makeDirector().consume([start, ...round]), 'clashResult')[0]!;
-    const winner = result.recoil.find((r) => r.combatantId === 'a1')!;
-    const loser = result.recoil.find((r) => r.combatantId === 'e1')!;
+  it('진 쪽이 더 크게, 접점에서 멀어지는 쪽으로 벌어진다 (SPEC-005 §2.3.8)', () => {
+    const commands = makeDirector().consume([start, ...round]);
+    expect(pick(commands, 'clashResult')[0]!.winnerId).toBe('a1');
+    const separate = pick(commands, 'separate')[0]!;
+    const winner = separate.moves.find((m) => m.combatantId === 'a1')!;
+    const loser = separate.moves.find((m) => m.combatantId === 'e1')!;
     expect(Math.abs(loser.dx)).toBeGreaterThan(Math.abs(winner.dx));
     //a1 은 왼쪽이라 왼쪽(-)으로, e1 은 오른쪽(+)으로
     expect(winner.dx).toBeLessThan(0);
     expect(loser.dx).toBeGreaterThan(0);
-    expect(result.winnerId).toBe('a1');
   });
 
-  it('맞부딪히면 잠깐 멈추고 결과 박자를 준다', () => {
+  it('맞부딪힘 → 멈춤 → 번쩍임 → 벌어짐 → 여운 → 다시 달려듦 순이다 (SPEC-005 §2.3.8)', () => {
     const commands = makeDirector().consume([start, ...round]);
     const at = commands.findIndex((c) => c.type === 'clashResult');
+    const ex = uiData.exchange;
     expect(commands[at + 1]).toEqual({ type: 'hitStop', sec: uiData.hitStop.clashSec });
-    expect(commands[at + 2]).toEqual({ type: 'beat', sec: uiData.clash.resultSec });
+    expect(commands[at + 2]).toEqual({ type: 'flash', alpha: ex.roundFlashAlpha, sec: ex.roundFlashSec });
+    expect(commands[at + 3]?.type).toBe('separate');
+    expect(commands[at + 4]).toEqual({ type: 'beat', sec: ex.separateSec + ex.lingerSec });
+    const reengage = commands[at + 5];
+    expect(reengage?.type).toBe('reengage');
+    if (reengage?.type === 'reengage') {
+      expect(reengage.combatantIds.sort()).toEqual(['a1', 'e1']);
+      expect(reengage.sec).toBe(ex.reengageSec);
+    }
   });
 
   it('교착이면 불꽃은 튀고 양쪽이 똑같이 밀린다', () => {
@@ -507,8 +517,9 @@ describe('SPEC-005 합 한 번의 연출', () => {
     ]);
     const result = pick(commands, 'clashResult')[0]!;
     expect(result.winnerId).toBeNull();
-    const [first, second] = result.recoil;
+    const [first, second] = pick(commands, 'separate')[0]!.moves;
     expect(Math.abs(first!.dx)).toBeCloseTo(Math.abs(second!.dx));
+    expect(Math.abs(first!.dx)).toBeGreaterThan(0);
   });
 
   it('진 쪽 코인이 깨진다', () => {
@@ -550,10 +561,10 @@ describe('SPEC-005 피해 한 방', () => {
     expect(pick(hit(12), 'hitSlow')[0]).toEqual({ type: 'hitSlow', scale: uiData.hitStop.slowScale, sec: uiData.hitStop.slowSec });
   });
 
-  it('큰 한 방만 번쩍인다', () => {
+  it('큰 한 방은 세게, 아니면 가볍게 번쩍인다 (SPEC-005 §2.3.8)', () => {
     const heavy = uiData.damageText.heavyDamage;
-    expect(pick(hit(heavy - 1), 'flash')).toHaveLength(0);
-    expect(pick(hit(heavy), 'flash')).toHaveLength(1);
+    expect(pick(hit(heavy - 1), 'flash')).toEqual([{ type: 'flash', alpha: uiData.exchange.hitFlashAlpha, sec: uiData.exchange.hitFlashSec }]);
+    expect(pick(hit(heavy), 'flash')).toEqual([{ type: 'flash', alpha: uiData.flash.alpha, sec: uiData.flash.sec }]);
     expect(pick(hit(heavy), 'damageNumber')[0]!.heavy).toBe(true);
   });
 

@@ -104,6 +104,10 @@ interface Actor {
   slides: { dx: number; sec: number; t: number }[];
   //대시가 끝난 뒤 밀려나거나 따라 들어간 누적 거리. 월드에 박히는 표시를 이만큼 옮긴다
   drift: number;
+  //합 라운드 뒤 벌어진 거리. 다시 달려들 때 이만큼 되돌아간다 (SPEC-005 §2.3.8)
+  apart: number;
+  //다시 달려드는 중이면 남은 시간. 이 동안 잔상을 남긴다
+  rush: number;
   //보이는 정도. 교전에 안 낀 사람은 othersAlpha 쪽으로 othersFadeSec 동안 옮겨 간다
   presence: number;
   //쓰러졌으면 지난 시간. 쓰러진 사람은 굳어 사라지고 명령을 받지 않는다 (SPEC-005 §7.2)
@@ -202,6 +206,8 @@ const SHAKE_SEC = 0.25;
 const SHAKE_PX = 16;
 //카메라가 목표를 따라가는 빠르기. 클수록 빨리 붙는다
 const CAMERA_FOLLOW = 7;
+//합 라운드 뒤 카메라가 빠졌다 돌아오는 속도. 따라가기보다 빨라야 벌어지는 순간이 보인다
+const PULL_FOLLOW = 10;
 const COIN_FLIP_SEC = 0.2;
 const COIN_STAGGER_SEC = 0.045;
 const POP_SEC = 0.12;
@@ -258,6 +264,9 @@ export class CanvasRenderer {
   private punch: { amount: number; sec: number; t: number } | null = null;
   //휘두르는 장이 바뀔 때의 작은 순간 확대. 카메라 감독 명령이 아니라 렌더러 안에서 건다
   private kick: { amount: number; sec: number; t: number } | null = null;
+  //합 라운드 뒤 벌어진 둘을 담으려고 카메라가 빠지는 양. 목표만 바꾸고 tickCamera 가 따라간다 (SPEC-005 §2.3.8)
+  private pull = 0;
+  private pullGoal = 0;
   private shakeLeft = 0;
   private shakeStrength = 0;
   private shake: Point = { x: 0, y: 0 };
@@ -315,6 +324,7 @@ export class CanvasRenderer {
     this.tilt = this.tiltGoal = 0;
     this.punch = null;
     this.kick = null;
+    this.pull = this.pullGoal = 0;
     this.shakeLeft = 0;
 
     for (const placement of placements) {
@@ -348,6 +358,8 @@ export class CanvasRenderer {
         striking: false,
         slides: [],
         drift: 0,
+        apart: 0,
+        rush: 0,
         presence: 1,
         down: null,
         chips: null,
@@ -514,6 +526,8 @@ export class CanvasRenderer {
         actor.float = null;
         actor.slides = [];
         actor.drift = 0;
+        actor.apart = 0;
+        actor.rush = 0;
         actor.trail = { ...command.trail };
         actor.ghosts = [];
         //도착할 때까지 기다린다. 달려가는 중에 코인이 뒤집히면 안 된다
@@ -528,6 +542,8 @@ export class CanvasRenderer {
         actor.power = null;
         actor.slides = [];
         actor.drift = 0;
+        actor.apart = 0;
+        actor.rush = 0;
         actor.striking = false;
         //돌아가는 건 기다리지 않는다. 다음 교전이 겹쳐 시작해도 된다
         return 0;
@@ -761,6 +777,43 @@ export class CanvasRenderer {
       case 'flash':
         this.flash = { alpha: command.alpha, sec: command.sec, t: 0 };
         return 0;
+
+      //합 라운드 뒤 벌어진다. 밀린 자리에 머물고, 카메라는 빠지며 짧게 흔들린다 (SPEC-005 §2.3.8)
+      case 'separate': {
+        for (const { combatantId, dx } of command.moves) {
+          const actor = this.actors.get(combatantId);
+          if (!actor || actor.down !== null) continue;
+          actor.slides.push({ dx, sec: command.sec, t: 0 });
+          actor.apart += dx;
+        }
+        this.pullGoal = command.pullOut;
+        if (command.shake > 0) {
+          this.shakeLeft = SHAKE_SEC;
+          this.shakeStrength = Math.max(this.shakeStrength, command.shake);
+        }
+        return 0;
+      }
+
+      //벌어진 만큼 잔상을 끌며 다시 붙는다. 붙을 때까지 기다린다
+      case 'reengage': {
+        let moved = false;
+        for (const id of command.combatantIds) {
+          const actor = this.actors.get(id);
+          if (!actor || actor.down !== null || actor.apart === 0) continue;
+          actor.slides.push({ dx: -actor.apart, sec: command.sec, t: 0 });
+          actor.apart = 0;
+          actor.rush = command.sec;
+          actor.trail = { ...command.trail };
+          actor.ghosts = [];
+          actor.ghostClock = 0;
+          moved = true;
+        }
+        this.pullGoal = 0;
+        if (!moved) return 0;
+        this.sound.play('dash');
+        this.kick = { amount: command.kick, sec: command.sec + 0.12, t: 0 };
+        return command.sec;
+      }
 
       case 'beat':
         return command.sec;
@@ -1006,8 +1059,18 @@ export class CanvasRenderer {
         };
       }
     }
+    //다시 달려드는 동안에도 잔상을 남긴다 (SPEC-005 §2.3.8)
+    if (!actor.target && actor.rush > 0 && actor.trail && dt > 0) {
+      actor.rush = Math.max(0, actor.rush - dt);
+      actor.ghostClock += dt;
+      if (actor.ghostClock >= actor.trail.intervalSec) {
+        actor.ghostClock = 0;
+        actor.ghosts.unshift({ position: { ...actor.placement.position }, frameId: this.currentFrame(actor), age: 0 });
+        actor.ghosts.length = Math.min(actor.ghosts.length, actor.trail.count);
+      }
+    }
     for (const ghost of actor.ghosts) ghost.age += dt;
-    if (!actor.target && actor.trail) {
+    if (!actor.target && actor.rush <= 0 && actor.trail) {
       const life = actor.trail.count * actor.trail.intervalSec;
       actor.ghosts = actor.ghosts.filter((g) => g.age < life);
     }
@@ -1091,7 +1154,7 @@ export class CanvasRenderer {
     if (!this.subjects || this.subjects.length !== 2 || dt <= 0) return;
     const a = this.actors.get(this.subjects[0] ?? '');
     const b = this.actors.get(this.subjects[1] ?? '');
-    if (!a || !b || a.target || b.target || a.down !== null || b.down !== null) return;
+    if (!a || !b || a.target || b.target || a.rush > 0 || b.rush > 0 || a.down !== null || b.down !== null) return;
     //a 가 보는 쪽에 b 가 있어야 한다. 서로 마주 보지 않으면 재지 않는다
     const toward = a.placement.facing;
     if (b.placement.facing === toward) return;
@@ -1171,6 +1234,7 @@ export class CanvasRenderer {
     const depth = this.subjects ? Math.max(minDepth, Math.min(maxDepth, this.scene.depthRatio(goal.y))) : 1;
     this.zoom += (this.zoomGoal * depth - this.zoom) * follow;
     this.tilt += (this.tiltGoal - this.tilt) * follow;
+    this.pull += (this.pullGoal - this.pull) * (1 - Math.exp(-PULL_FOLLOW * dt));
 
     if (this.punch) {
       this.punch.t += realSec;
@@ -1272,7 +1336,7 @@ export class CanvasRenderer {
     const pivot = this.scene.pivot;
     const punch = this.punch ? this.punch.amount * Math.sin(Math.PI * (this.punch.t / this.punch.sec)) : 0;
     const kick = this.kick ? this.kick.amount * (1 - easeOutCubic(this.kick.t / this.kick.sec)) : 0;
-    const zoom = this.zoom * (1 + punch + kick);
+    const zoom = this.zoom * (1 + punch + kick - this.pull);
     this.drawZoom = zoom;
     //기울여도 모서리가 비지 않을 만큼만 기운다
     const maxTilt = Math.max(0, ((zoom - 1) / (width / height)) * (180 / Math.PI));

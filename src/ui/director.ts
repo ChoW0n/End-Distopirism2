@@ -107,6 +107,16 @@ export type UiCommand =
   //멈춤이 풀린 뒤 잠깐 느리게 흐른다. 렌더러 시계만 늦춘다 (SPEC-005 §2.3.6)
   | { type: 'hitSlow'; scale: number; sec: number }
   | { type: 'knockback'; combatantId: string; dx: number; sec: number }
+  //합 라운드 뒤 둘이 벌어진다. 밀린 자리에 머문다. 카메라는 살짝 빠지고 짧게 흔들린다 (SPEC-005 §2.3.8)
+  | { type: 'separate'; moves: { combatantId: string; dx: number }[]; sec: number; pullOut: number; shake: number }
+  //벌어진 만큼 잔상을 끌며 다시 붙는다. 카메라가 다시 당겨진다
+  | {
+      type: 'reengage';
+      combatantIds: string[];
+      sec: number;
+      kick: number;
+      trail: { count: number; intervalSec: number; alpha: number };
+    }
   | { type: 'flash'; alpha: number; sec: number }
   //다음 명령까지 쉬는 박자. 합 라운드가 읽히게 한다
   | { type: 'beat'; sec: number }
@@ -636,7 +646,27 @@ export class UiDirector {
       recoilSec: clash.recoilSec,
     });
     commands.push({ type: 'hitStop', sec: this.data.hitStop.clashSec });
-    commands.push({ type: 'beat', sec: clash.resultSec });
+    this.pushExchange(commands, ids, contact, winnerId);
+  }
+
+  //맞부딪힌 뒤 벌어졌다가 이펙트가 사라질 때쯤 다시 달려든다 (SPEC-005 §2.3.8)
+  private pushExchange(commands: UiCommand[], ids: string[], contact: Point, winnerId: string | null): void {
+    const ex = this.data.exchange;
+    commands.push({ type: 'flash', alpha: ex.roundFlashAlpha, sec: ex.roundFlashSec });
+    commands.push({
+      type: 'separate',
+      //접점에서 멀어지는 쪽으로 민다. 진 쪽이 크게, 교착이면 둘 다 같은 만큼
+      moves: ids.map((id) => {
+        const away = this.whereIs(id).x >= contact.x ? 1 : -1;
+        const distance = winnerId === null ? ex.separateTie : id === winnerId ? ex.separateWinner : ex.separateLoser;
+        return { combatantId: id, dx: away * distance * this.heightOf(id) };
+      }),
+      sec: ex.separateSec,
+      pullOut: ex.pullOut,
+      shake: ex.roundShake,
+    });
+    commands.push({ type: 'beat', sec: ex.separateSec + ex.lingerSec });
+    commands.push({ type: 'reengage', combatantIds: ids, sec: ex.reengageSec, kick: ex.reengageKick, trail: { ...this.data.afterimage } });
   }
 
   //피해가 실제로 들어간 한 방. 멈춤·숫자·넉백·(크면) 번쩍임
@@ -677,7 +707,12 @@ export class UiDirector {
       sec: this.data.knockback.sec,
     });
 
-    if (heavy) commands.push({ type: 'flash', alpha: this.data.flash.alpha, sec: this.data.flash.sec });
+    //큰 한 방은 세게, 아니어도 가볍게 번쩍인다 (SPEC-005 §2.3.8)
+    commands.push(
+      heavy
+        ? { type: 'flash', alpha: this.data.flash.alpha, sec: this.data.flash.sec }
+        : { type: 'flash', alpha: this.data.exchange.hitFlashAlpha, sec: this.data.exchange.hitFlashSec },
+    );
     //한 방 뒤에 쉰다. 이펙트가 다 사라지기 전에 제자리로 돌아가지 않는다 (SPEC-005 §2.3.2)
     commands.push({ type: 'beat', sec: this.data.motion.afterHitSec });
   }

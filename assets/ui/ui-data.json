@@ -63,8 +63,8 @@
     "coinSec": 0.34,
     "powerSec": 0.26,
     "resultSec": 0.3,
-    "recoilWinner": 0.05,
-    "recoilLoser": 0.16,
+    "recoilWinner": 0,
+    "recoilLoser": 0,
     "recoilSec": 0.22,
     "sparkSize": 0.32,
     "coinSize": 0.055,
@@ -95,12 +95,28 @@
     "size": 0.075
   },
   "knockback": {
-    "distance": 0.14,
-    "sec": 0.24
+    "distance": 0.32,
+    "sec": 0.3
   },
   "flash": {
     "alpha": 0.32,
     "sec": 0.14
+  },
+  "exchange": {
+    "_note": "합 라운드마다 밀려났다 다시 달려드는 박자 (SPEC-005 §2.3.8). 거리는 캐릭터 키 배수",
+    "separateLoser": 0.85,
+    "separateWinner": 0.15,
+    "separateTie": 0.42,
+    "separateSec": 0.26,
+    "lingerSec": 0.55,
+    "reengageSec": 0.24,
+    "pullOut": 0.1,
+    "reengageKick": 0.05,
+    "roundFlashAlpha": 0.18,
+    "roundFlashSec": 0.08,
+    "roundShake": 0.35,
+    "hitFlashAlpha": 0.22,
+    "hitFlashSec": 0.1
   },
   "afterimage": {
     "count": 5,
