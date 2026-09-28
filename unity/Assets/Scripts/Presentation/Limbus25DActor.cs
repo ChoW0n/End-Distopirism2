@@ -45,9 +45,15 @@ namespace EndDistopirism.Presentation
         [Tooltip("판을 늘 카메라 쪽으로 세운다 (SPEC-005 §8.9). 연출 감독이 매 프레임 돌린다")]
         [SerializeField] private bool facesCamera = true;
 
+        [Header("편")]
+        [Tooltip("플레이어 쪽(아군)인지. 결과 알림은 아군에게만 뜬다 (SPEC-005 §8.10)")]
+        [SerializeField] private bool playerSide;
+
         [Header("그 밖")]
         [Tooltip("몸 가운데 높이(로컬). 이펙트·카메라 초점이 여기를 본다")]
         [SerializeField] private float chestHeight = 1.1f;
+        [Tooltip("머리 꼭대기 높이(로컬). 결과 알림이 이 위에 뜬다")]
+        [SerializeField] private float headHeight = 2.0f;
         [Tooltip("이펙트 앞/뒤를 가를 기준 정렬 순서")]
         [SerializeField] private int baseSortingOrder = 0;
 
@@ -64,6 +70,7 @@ namespace EndDistopirism.Presentation
         private static readonly HashSet<Limbus25DActor> active = new HashSet<Limbus25DActor>();
         public static IReadOnlyCollection<Limbus25DActor> Active => active;
         public bool FacesCamera => facesCamera;
+        public bool IsPlayerSide => playerSide;
 
         public Transform Visual => visual;
         public SpriteRenderer Renderer => spriteRenderer;
@@ -73,6 +80,14 @@ namespace EndDistopirism.Presentation
         public int SortingLayerId => spriteRenderer != null ? spriteRenderer.sortingLayerID : 0;
         //몸 가운데의 월드 좌표
         public Vector3 Chest => transform.position + Vector3.up * chestHeight * rootScaleAbs.y;
+        //머리 꼭대기의 월드 좌표. 몸짓으로 옮겨진 만큼 따라간다
+        public Vector3 Head => (visual != null ? visual.position : transform.position) + Vector3.up * headHeight * rootScaleAbs.y;
+
+        //아군인지 정한다
+        public void SetPlayerSide(bool value)
+        {
+            playerSide = value;
+        }
 
         //구조를 잡고 시작 방향을 건다
         private void Awake()

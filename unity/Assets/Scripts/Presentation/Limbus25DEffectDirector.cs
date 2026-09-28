@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using DG.Tweening;
+using TMPro;
 using UnityEngine;
 
 namespace EndDistopirism.Presentation
@@ -12,6 +13,23 @@ namespace EndDistopirism.Presentation
 
     //이펙트를 맞는 쪽 앞에 둘지 뒤에 둘지
     public enum EffectLayer { Front, Back }
+
+    //달려갈 때 머리 위에 띄울 결과 한 줄 (SPEC-005 §8.10). 문장은 어댑터가 전투 규칙에서 만들어 넘긴다
+    [Serializable]
+    public struct CueCallout
+    {
+        public Limbus25DActor actor;
+        public bool success;
+        //작은 줄. 성공이면 위력 비교, 패배면 원인 한 줄. 비어 있어도 된다
+        public string reason;
+
+        public CueCallout(Limbus25DActor actor, bool success, string reason)
+        {
+            this.actor = actor;
+            this.success = success;
+            this.reason = reason;
+        }
+    }
 
     //전투 계산이 끝난 뒤 연출에 넘기는 한 건. 연출은 규칙을 모르고 이 값만 본다 (SPEC-005 §8.1)
     //맞부딪힘이면 attacker 가 이긴 쪽, defender 가 진 쪽이다
@@ -26,6 +44,16 @@ namespace EndDistopirism.Presentation
         //비어 있으면 감독의 기본 충돌 이펙트를 쓴다
         public GameObject impactEffect;
         public EffectLayer impactLayer;
+        //결과 알림. 아군 쪽 것만 뜬다
+        public CueCallout[] callouts;
+
+        //결과 알림을 붙인 사본을 돌려준다
+        public PresentationCue WithCallouts(params CueCallout[] list)
+        {
+            PresentationCue copy = this;
+            copy.callouts = list;
+            return copy;
+        }
 
         //일방 공격 한 건을 만든다
         public static PresentationCue OneSided(Limbus25DActor attacker, Limbus25DActor defender, int damage, bool stagger = false)
@@ -77,8 +105,9 @@ namespace EndDistopirism.Presentation
             public float knockBase = 0.8f;
             public float knockPerDamage = 0.02f;
             public float knockMax = 2.2f;
-            public float knockLeanDeg = 18f;
-            public float staggerSnapDeg = 28f;
+            [Tooltip("밀려날 때 젖힘. 기본은 기울지 않는다 (SPEC-005 v1.9.5)")]
+            public float knockLeanDeg = 0f;
+            public float staggerSnapDeg = 0f;
             public float staggerDrop = -0.12f;
             public float staggerHold = 0.22f;
             [Header("⑥ 복귀")]
@@ -162,6 +191,24 @@ namespace EndDistopirism.Presentation
             [Range(0f, 1f)] public float contactBias = 0.7f;
         }
 
+        //결과 알림 수치 (SPEC-005 §8.10)
+        [Serializable]
+        public sealed class CalloutSettings
+        {
+            [Tooltip("TextMeshPro(월드용)가 붙은 프리팹. 비어 있으면 기본 글꼴로 만든다")]
+            public GameObject prefab;
+            public float seconds = 1.1f;
+            [Tooltip("머리 위로 띄우는 높이")]
+            public float headOffset = 0.35f;
+            public float fontSize = 3f;
+            public string successText = "공격 성공";
+            public string loseText = "패배";
+            public Color successColor = new Color(0.953f, 0.902f, 0.8f);
+            public Color loseColor = new Color(1f, 0.478f, 0.4f);
+            public Color reasonColor = new Color(0.604f, 0.557f, 0.502f);
+            public int sortingOrder = 500;
+        }
+
         [Header("카메라 (원근)")]
         [SerializeField] private Camera targetCamera;
         [Tooltip("움직일 트랜스폼. 비어 있으면 카메라 자신")]
@@ -172,6 +219,7 @@ namespace EndDistopirism.Presentation
         [SerializeField] private ShakeSettings shake = new ShakeSettings();
         [SerializeField] private HitStopSettings hitStop = new HitStopSettings();
         [SerializeField] private EffectSettings effects = new EffectSettings();
+        [SerializeField] private CalloutSettings callout = new CalloutSettings();
 
         //교전 하나가 끝날 때마다 알린다. 전투 흐름이 다음 턴으로 넘어가는 데 쓴다
         public event Action<PresentationCue> CueFinished;
@@ -340,7 +388,8 @@ namespace EndDistopirism.Presentation
             if (clash) windup.Join(Windup(defender, -dir));
             await AwaitTween(windup, token);
 
-            //③ 돌진
+            //③ 돌진. 달려가는 쪽이 아군이면 결과 알림
+            ShowCallouts(cue, clash, token);
             Sequence rush = DOTween.Sequence().SetLink(gameObject);
             if (clash)
             {
@@ -497,6 +546,57 @@ namespace EndDistopirism.Presentation
                 actor.ResetVisual();
             }
             ReleaseFocus();
+        }
+
+        //── 결과 알림 (SPEC-005 §8.10) ──
+
+        //달려가는 캐릭터 중 아군에게만 결과 알림을 띄운다. 적에게는 띄우지 않는다
+        private void ShowCallouts(PresentationCue cue, bool clash, CancellationToken token)
+        {
+            if (cue.callouts == null) return;
+            foreach (CueCallout c in cue.callouts)
+            {
+                if (c.actor == null || !c.actor.IsPlayerSide) continue;
+                bool runs = c.actor == cue.attacker || (clash && c.actor == cue.defender);
+                if (!runs) continue;
+                _ = RunCalloutAsync(c, token);
+            }
+        }
+
+        //글을 만들어 머리를 따라다니게 하고, 끝에서 흐려지며 사라진다. 실제 시간이라 역경직에 멈추지 않는다
+        private async Task RunCalloutAsync(CueCallout c, CancellationToken token)
+        {
+            GameObject go = callout.prefab != null ? Instantiate(callout.prefab) : new GameObject("Callout");
+            TMP_Text text = go.GetComponentInChildren<TMP_Text>();
+            if (text == null) text = go.AddComponent<TextMeshPro>();
+            text.alignment = TextAlignmentOptions.Bottom;
+            text.fontSize = callout.fontSize;
+            string big = c.success ? callout.successText : callout.loseText;
+            Color bigColor = c.success ? callout.successColor : callout.loseColor;
+            text.text = string.IsNullOrEmpty(c.reason)
+                ? $"<color=#{ColorUtility.ToHtmlStringRGB(bigColor)}>{big}</color>"
+                : $"<color=#{ColorUtility.ToHtmlStringRGB(bigColor)}>{big}</color>\n<size=70%><color=#{ColorUtility.ToHtmlStringRGB(callout.reasonColor)}>{c.reason}</color></size>";
+            var textRenderer = text.GetComponent<Renderer>();
+            if (textRenderer != null) textRenderer.sortingOrder = callout.sortingOrder;
+
+            float start = Time.unscaledTime;
+            try
+            {
+                while (!token.IsCancellationRequested && c.actor != null)
+                {
+                    float k = (Time.unscaledTime - start) / Mathf.Max(0.01f, callout.seconds);
+                    if (k >= 1f) break;
+                    go.transform.position = c.actor.Head + Vector3.up * callout.headOffset;
+                    if (cameraRig != null) go.transform.rotation = Quaternion.Euler(cameraRig.eulerAngles.x, cameraRig.eulerAngles.y, 0f);
+                    //앞 12% 에 나타나고, 뒤 22% 에 흐려진다
+                    text.alpha = k < 0.12f ? k / 0.12f : (k > 0.78f ? (1f - k) / 0.22f : 1f);
+                    await Task.Yield();
+                }
+            }
+            finally
+            {
+                if (go != null) Destroy(go);
+            }
         }
 
         //── 카메라 (SPEC-005 §8.4) ──

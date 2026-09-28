@@ -31,6 +31,8 @@ namespace EndDistopirism.Presentation
         private void Start()
         {
             rng = new System.Random(seed);
+            kyle.SetPlayerSide(true);
+            enemy.SetPlayerSide(false);
             kyle.SetFacing(1);
             enemy.SetFacing(-1);
             kyle.MarkHome();
@@ -71,10 +73,18 @@ namespace EndDistopirism.Presentation
             {
                 //맞부딪힘은 이긴 쪽이 친다. 가짜 계산이라 반반이다
                 bool kyleWins = rng.Next(2) == 0;
-                director.Enqueue(PresentationCue.Clash(kyleWins ? kyle : enemy, kyleWins ? enemy : kyle, damage, stagger));
+                Limbus25DActor winner = kyleWins ? kyle : enemy;
+                Limbus25DActor loser = kyleWins ? enemy : kyle;
+                //가짜 위력. 실제로는 SPEC-007 §4.2 위력 비교 결과와 원인 문장이 어댑터에서 온다
+                int winPower = rng.Next(12, 21);
+                int losePower = rng.Next(6, winPower);
+                director.Enqueue(PresentationCue.Clash(winner, loser, damage, stagger).WithCallouts(
+                    new CueCallout(winner, true, $"위력 {winPower} > {losePower}"),
+                    new CueCallout(loser, false, $"위력 열세 {losePower} < {winPower}")));
                 return;
             }
-            director.Enqueue(PresentationCue.OneSided(attacker, defender, damage, stagger));
+            director.Enqueue(PresentationCue.OneSided(attacker, defender, damage, stagger).WithCallouts(
+                new CueCallout(attacker, true, "")));
         }
     }
 }
