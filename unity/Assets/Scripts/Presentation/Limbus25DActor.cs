@@ -21,14 +21,14 @@ namespace EndDistopirism.Presentation
         [Tooltip("시작할 때 바라볼 쪽. 1 = 화면 오른쪽, -1 = 왼쪽")]
         [SerializeField] private int startFacing = 1;
 
-        [Header("장마다 원화가 오른쪽을 보는지 (카일: 대기·회복은 오른쪽, 준비·돌진·베기는 왼쪽)")]
+        [Header("장마다 원화가 오른쪽을 보는지 (카일은 전부 오른쪽)")]
         [SerializeField] private bool idleFacesRight = true;
-        [SerializeField] private bool windupFacesRight = false;
-        [SerializeField] private bool dashFacesRight = false;
-        [SerializeField] private bool strikeFacesRight = false;
+        [SerializeField] private bool windupFacesRight = true;
+        [SerializeField] private bool dashFacesRight = true;
+        [SerializeField] private bool strikeFacesRight = true;
         [SerializeField] private bool recoverFacesRight = true;
         [SerializeField] private bool hurtFacesRight = true;
-        [SerializeField] private bool strikeTrailFacesRight = false;
+        [SerializeField] private bool strikeTrailFacesRight = true;
 
         [Header("장 (없으면 대기 장)")]
         [SerializeField] private Sprite idle;
