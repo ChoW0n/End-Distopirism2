@@ -254,11 +254,23 @@
       "text": "궁극기 전 준비 기술. 합 승리 시 보조 속성 +1"
     },
     {
-      "_comment": "카일 전용기. SPEC-001 §7 [D-22] 제안값",
+      "_comment": "카일 전용기. SPEC-001 §7 [D-22]. 이름은 동작을 담지 않는다. S2·S3 이름은 완성 스프라이트를 보고 정한다",
       "id": 2041,
-      "name": "받아 흘린 뒤 찌르기",
+      "name": "물금",
       "character": "kyle",
       "slot": "S1",
+      "attribute": "attack",
+      "baseDamage": 8,
+      "coinPower": 4,
+      "archetype": "표준",
+      "maxInDeck": 1,
+      "text": "1타. 합 승리 시 공격 속성 +1"
+    },
+    {
+      "id": 2042,
+      "name": "카일 S2",
+      "character": "kyle",
+      "slot": "S2",
       "attribute": "defense",
       "baseDamage": 6,
       "coinPower": 3,
@@ -272,23 +284,11 @@
           "amount": 3
         }
       },
-      "text": "받아 흘리고 한 번 찌른다. 합에서 이기면 피해 +3. 합 승리 시 방어 속성 +1"
-    },
-    {
-      "id": 2042,
-      "name": "반 걸음 비껴 사선 베기",
-      "character": "kyle",
-      "slot": "S2",
-      "attribute": "attack",
-      "baseDamage": 8,
-      "coinPower": 4,
-      "archetype": "표준",
-      "maxInDeck": 1,
-      "text": "반 걸음 비껴 사선으로 벤다. 합 승리 시 공격 속성 +1"
+      "text": "2타. 합에서 이기면 피해 +3 (반격). 합 승리 시 방어 속성 +1"
     },
     {
       "id": 2043,
-      "name": "노출부 끊기",
+      "name": "카일 S3",
       "character": "kyle",
       "slot": "S3",
       "attribute": "support",
@@ -305,7 +305,7 @@
           "turns": 1
         }
       },
-      "text": "공격선을 낮게 피해 노출부를 끊는다. 합에서 이기면 상대 방어력감소 1턴. 합 승리 시 보조 속성 +1"
+      "text": "3타. 합에서 이기면 상대 방어력감소 1턴. 합 승리 시 보조 속성 +1"
     },
     {
       "_comment": "걸음 잔형. SPEC-001 §7 [D-22] 제안값",

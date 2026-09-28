@@ -294,8 +294,8 @@ describe('§11-5 전용기 수치가 v2.0 §1.1 표와 일치한다', () => {
 
 describe('§7 [D-22] 카일·걸음 잔형 제안값', () => {
   const table = [
-    { id: 'kyle', slot: 'S1', attribute: 'defense', baseDamage: 6, coinPower: 3 },
-    { id: 'kyle', slot: 'S2', attribute: 'attack', baseDamage: 8, coinPower: 4 },
+    { id: 'kyle', slot: 'S1', attribute: 'attack', baseDamage: 8, coinPower: 4 },
+    { id: 'kyle', slot: 'S2', attribute: 'defense', baseDamage: 6, coinPower: 3 },
     { id: 'kyle', slot: 'S3', attribute: 'support', baseDamage: 7, coinPower: 3 },
     { id: 'remnantWalker', slot: 'S1', attribute: 'attack', baseDamage: 7, coinPower: 3 },
     { id: 'remnantWalker', slot: 'S2', attribute: 'defense', baseDamage: 9, coinPower: 3 },
@@ -305,6 +305,11 @@ describe('§7 [D-22] 카일·걸음 잔형 제안값', () => {
   it.each(table)('$id $slot 수치가 표와 같다', (row) => {
     const skill = catalog.skill(skillOf(row.id, row.slot));
     expect(skill).toMatchObject({ attribute: row.attribute, baseDamage: row.baseDamage, coinPower: row.coinPower });
+  });
+
+  it('카일 S1 은 물금이고, 반격은 S2 에 있다', () => {
+    expect(catalog.skill(skillOf('kyle', 'S1')).name).toBe('물금');
+    expect(catalog.skill(skillOf('kyle', 'S2')).effect?.onWin).toMatchObject({ type: 'damageModifier', amount: 3 });
   });
 
   it('카일 스탯이 표와 같다', () => {
