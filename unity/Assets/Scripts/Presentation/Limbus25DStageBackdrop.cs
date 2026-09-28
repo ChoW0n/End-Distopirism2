@@ -22,6 +22,8 @@ namespace EndDistopirism.Presentation
             public Shape shape = Shape.Stand;
             [Tooltip("원화 합성에서 이 층이 놓인 화면 자리. 좌상단 원점, 화면 너비·높이 기준 (x, y, 너비, 높이)")]
             public Rect screenRect = new Rect(0f, 0f, 1f, 1f);
+            [Tooltip("세운 판: 화면 자리를 바닥 경계 가운데 기준으로 키우는 배율. 측면 회전 때 원화만으로 좌우를 덮는다")]
+            public float scale = 1f;
             [Tooltip("세운 판: 무대 줄(z=0)에서 뒤로 떨어진 거리")]
             public float depth = 20f;
             [Tooltip("바닥 판: 카메라 쪽 끝(음수)과 먼 쪽 끝")]
@@ -52,6 +54,9 @@ namespace EndDistopirism.Presentation
         [Tooltip("세운 층을 기준 카메라 화면 좌우로 몇 배까지 넓게 세울지. 카메라가 측면으로 24° 돌아도 덮는다")]
         [SerializeField] private float standSpread = 4f;
 
+        [Tooltip("층을 키울 때 기준점. 화면 좌상단 원점 비율 (바닥 경계 가운데)")]
+        [SerializeField] private Vector2 scaleAnchor = new Vector2(0.5f, 0.445f);
+
         [Header("재질")]
         [Tooltip("투명 언릿 재질. 비어 있으면 Sprites/Default 로 만든다")]
         [SerializeField] private Material baseMaterial;
@@ -59,8 +64,8 @@ namespace EndDistopirism.Presentation
         [Header("층 (먼 것부터)")]
         [SerializeField] private List<Layer> layers = new List<Layer>
         {
-            new Layer { name = "far", shape = Shape.Stand, screenRect = new Rect(-0.02f, -0.02f, 1.04f, 1.04f), depth = 70f, sortingOrder = -30, segments = new Vector2Int(96, 24) },
-            new Layer { name = "mid", shape = Shape.Stand, screenRect = new Rect(-0.02f, -0.08f, 1.04f, 1.04f), depth = 22f, sortingOrder = -20, segments = new Vector2Int(96, 24) },
+            new Layer { name = "far", shape = Shape.Stand, screenRect = new Rect(-0.02f, -0.02f, 1.04f, 1.04f), depth = 70f, scale = 2.1f, sortingOrder = -30, segments = new Vector2Int(96, 24) },
+            new Layer { name = "mid", shape = Shape.Stand, screenRect = new Rect(-0.02f, -0.08f, 1.04f, 1.04f), depth = 22f, scale = 2.0f, sortingOrder = -20, segments = new Vector2Int(96, 24) },
             new Layer { name = "ground", shape = Shape.Floor, screenRect = new Rect(0f, -0.158f, 1f, 1.158f), floorRange = new Vector2(-14f, 40f), halfWidth = 120f, mirrorOutsideY = true, sortingOrder = -10, segments = new Vector2Int(240, 160) },
         };
 
@@ -112,7 +117,14 @@ namespace EndDistopirism.Presentation
             Vector3 a = RayToZ(-standSpread, 1.3f, z);
             Vector3 b = RayToZ(standSpread, -1.3f, z);
             var corners = new[] { new Vector3(a.x, b.y, z), new Vector3(b.x, b.y, z), new Vector3(a.x, a.y, z), new Vector3(b.x, a.y, z) };
-            return BuildGrid(layer, corners);
+            return BuildGrid(layer, corners, ScaledRect(layer.screenRect, layer.scale));
+        }
+
+        //층의 화면 자리를 기준점에서 키운다. 구조물 밑동이 바닥 경계에 그대로 붙어 있다
+        private Rect ScaledRect(Rect r, float k)
+        {
+            k = Mathf.Max(0.01f, k);
+            return new Rect(scaleAnchor.x + (r.x - scaleAnchor.x) * k, scaleAnchor.y + (r.y - scaleAnchor.y) * k, r.width * k, r.height * k);
         }
 
         //바닥 판. y=0 평면에 카메라 쪽부터 먼 쪽까지 깐다
@@ -122,11 +134,11 @@ namespace EndDistopirism.Presentation
             float far = layer.floorRange.y;
             float w = layer.halfWidth;
             var corners = new[] { new Vector3(-w, 0f, near), new Vector3(w, 0f, near), new Vector3(-w, 0f, far), new Vector3(w, 0f, far) };
-            return BuildGrid(layer, corners);
+            return BuildGrid(layer, corners, layer.screenRect);
         }
 
         //네 모서리(왼아래·오른아래·왼위·오른위)로 격자 판을 만들고 꼭짓점마다 투영 좌표를 넣는다
-        private GameObject BuildGrid(Layer layer, Vector3[] c)
+        private GameObject BuildGrid(Layer layer, Vector3[] c, Rect rect)
         {
             int nx = Mathf.Max(1, layer.segments.x);
             int ny = Mathf.Max(1, layer.segments.y);
@@ -142,7 +154,7 @@ namespace EndDistopirism.Presentation
                 {
                     int k = j * (nx + 1) + i;
                     vertices[k] = Vector3.Lerp(left, right, (float)i / nx);
-                    uvs[k] = ProjectUV(vertices[k], layer.screenRect);
+                    uvs[k] = ProjectUV(vertices[k], rect);
                 }
             }
             int t = 0;
