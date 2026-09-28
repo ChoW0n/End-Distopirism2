@@ -109,7 +109,7 @@ export class Stage3D {
     const out = new Map<string, THREE.Texture>();
     for (const frame of catalog.manifest.frames) {
       const image = this.frameImages(characterId, frame.file);
-      if (image) out.set(frame.id, frameTexture(image, frame, this.config.layout.textureMaxSide));
+      if (image) out.set(frame.id, frameTexture(image, frame, catalog.manifest.canvas.width, this.config.layout.textureMaxSide));
     }
     this.textures.set(characterId, out);
     //키는 대기 장에서 잰다. 공격 장으로 재면 판마다 크기가 흔들린다

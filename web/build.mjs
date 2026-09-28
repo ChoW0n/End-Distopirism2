@@ -35,8 +35,8 @@ await build({
 //파일 하나로도 열리게 묶어 둔다. file:// 로 열면 fetch 가 막혀서 데이터를 안에 박는다
 const read = (p) => readFileSync(p, 'utf-8');
 const html = read('web/index.html')
-  .replace('<link rel="stylesheet" href="style.css">', `<style>\n${read('web/style.css')}\n</style>`)
-  .replace('<script src="domain.js"></script>', `<script>\n${read('web/domain.js')}\n</script>`)
+  .replace('<link rel="stylesheet" href="style.css">', () => `<style>\n${read('web/style.css')}\n</style>`)
+  .replace('<script src="domain.js"></script>', () => `<script>\n${read('web/domain.js')}\n</script>`)
   .replace('<script src="main.js"></script>',
     `<script>\nwindow.__BATTLE_DATA__ = ${read('web/battle-data.json')};\n${read('web/main.js')}\n</script>`);
 writeFileSync('web/standalone.html', html);
@@ -45,10 +45,11 @@ writeFileSync('web/standalone.html', html);
 //그림은 리포에 없으므로(SPEC-002 §9) 올릴 때 파일을 따로 붙인다
 const page = read('web/battle.html')
   .replace('<!doctype html>\n', '')
-  .replace('<link rel="stylesheet" href="battle.css">', `<style>\n${read('web/battle.css')}\n</style>`)
+  .replace('<link rel="stylesheet" href="battle.css">', () => `<style>\n${read('web/battle.css')}\n</style>`)
   .replace('<canvas id="view" width="1600" height="900">',
     '<canvas id="view" width="1600" height="900" data-assets="assets" data-battle="data/battle-data.json">')
-  .replace('<script type="module" src="battle.js"></script>', `<script type="module">\n${read('web/battle.js')}\n</script>`)
+  //코드에 $& · $' 같은 글자가 있으면 문자열 치환이 그걸 치환 패턴으로 읽어 코드가 깨진다. 함수로 넘긴다
+  .replace('<script type="module" src="battle.js"></script>', () => `<script type="module">\n${read('web/battle.js').replace(/<\/script/gi, '<\\/script')}\n</script>`)
   .replace('<body>\n', '')
   .replace('\n</body>', '');
 mkdirSync('web/share', { recursive: true });

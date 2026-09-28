@@ -147,10 +147,13 @@ export class PaperDoll {
 }
 
 //프레임 PNG(공통 캔버스)를 bbox 로 잘라 텍스처로 만든다. 긴 변은 maxSide 로 줄인다
-export function frameTexture(image: HTMLImageElement, frame: FrameData, maxSide: number): THREE.Texture {
-  const [x0, y0, x1, y1] = frame.bbox;
-  const w = Math.max(1, x1 - x0);
-  const h = Math.max(1, y1 - y0);
+//올린 그림이 줄어 있을 수 있어(공유본은 절반) bbox 를 실제 그림 크기 비율로 맞춘다
+export function frameTexture(image: HTMLImageElement, frame: FrameData, canvasWidth: number, maxSide: number): THREE.Texture {
+  const r = image.naturalWidth > 0 ? image.naturalWidth / canvasWidth : 1;
+  const x0 = frame.bbox[0] * r;
+  const y0 = frame.bbox[1] * r;
+  const w = Math.max(1, (frame.bbox[2] - frame.bbox[0]) * r);
+  const h = Math.max(1, (frame.bbox[3] - frame.bbox[1]) * r);
   const k = Math.min(1, maxSide / Math.max(w, h));
   const canvas = document.createElement('canvas');
   canvas.width = Math.max(1, Math.round(w * k));
