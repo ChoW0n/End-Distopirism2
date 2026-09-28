@@ -79,6 +79,28 @@ namespace EndDistopirism.Presentation
         public CueRound[] rounds;
         //마지막에 진 쪽을 치는 쪽. 비어 있으면 마무리가 없다 (교착 한도로 끝남)
         public Limbus25DActor finisher;
+        //양쪽이 낸 카드 슬롯. 슬롯마다 준비·맞닿음·궤적 장이 다르다 (SPEC-005 §9.4)
+        public SkillSlot attackerSlot;
+        public SkillSlot defenderSlot;
+        //이 교전의 한 방으로 맞은 쪽이 쓰러지는지 (도메인 defeated). 넉백 대신 쓰러진다
+        public bool targetDefeated;
+
+        //낸 카드 슬롯을 붙인 사본을 돌려준다
+        public PresentationCue WithSlots(SkillSlot attacker, SkillSlot defender = SkillSlot.None)
+        {
+            PresentationCue copy = this;
+            copy.attackerSlot = attacker;
+            copy.defenderSlot = defender;
+            return copy;
+        }
+
+        //맞은 쪽이 쓰러지는 사본을 돌려준다
+        public PresentationCue WithDefeat(bool defeated = true)
+        {
+            PresentationCue copy = this;
+            copy.targetDefeated = defeated;
+            return copy;
+        }
 
         //결과 알림을 붙인 사본을 돌려준다
         public PresentationCue WithCallouts(params CueCallout[] list)
@@ -132,27 +154,17 @@ namespace EndDistopirism.Presentation
             [Header("② 선딜레이")]
             public float windupTime = 0.16f;
             public float windupBack = 0.35f;
-            [Tooltip("종이 인형은 찌그러지지도 기울지도 않는다 (SPEC-005 §8.3). 기본 1·0")]
-            public Vector2 windupSquash = Vector2.one;
-            public float windupLeanDeg = 0f;
             [Header("③ 돌진")]
             public float dashTime = 0.13f;
             public float contactGap = 1.1f;
-            public Vector2 dashStretch = Vector2.one;
             [Header("④ 충돌")]
             public float strikeTime = 0.10f;
             public float strikeReach = 0.25f;
-            public Vector2 strikeStretch = Vector2.one;
-            public float strikeLeanDeg = 0f;
             [Header("⑤ 넉백")]
             public float knockTime = 0.18f;
             public float knockBase = 0.8f;
             public float knockPerDamage = 0.02f;
             public float knockMax = 2.2f;
-            [Tooltip("밀려날 때 젖힘. 기본은 기울지 않는다 (SPEC-005 v1.9.5)")]
-            public float knockLeanDeg = 0f;
-            public float staggerSnapDeg = 0f;
-            public Vector2 knockSquash = Vector2.one;
             public float staggerDrop = -0.12f;
             public float staggerHold = 0.22f;
             [Header("⑥ 복귀")]
@@ -179,6 +191,56 @@ namespace EndDistopirism.Presentation
             public float reengageTime = 0.12f;
             [Tooltip("라운드 사이 쉼 (게임 시간)")]
             public float roundRest = 0.18f;
+            [Header("쓰러짐·흐트러짐")]
+            [Tooltip("쓰러질 때 가라앉으며 흐려지는 시간")]
+            public float downTime = 0.6f;
+            public float downSink = 0.25f;
+            [Tooltip("쓰러진 인형의 투명도")]
+            [Range(0f, 1f)] public float downOpacity = 0.35f;
+            [Tooltip("이 피해 이상이면 흐트러짐: 주저앉아 버티고, 숫자가 붉고, '흐트러짐' 딱지가 붙는다")]
+            public int heavyDamage = 25;
+        }
+
+        //소리 (웹 SynthSound 의 소리 자리와 같다). 클립이 없으면 조용하다
+        [Serializable]
+        public sealed class SoundSettings
+        {
+            [Tooltip("비어 있으면 감독에 붙여 만든다")]
+            public AudioSource source;
+            [Range(0f, 1f)] public float volume = 0.8f;
+            [Tooltip("달려 나갈 때")]
+            public AudioClip dash;
+            [Tooltip("합에서 부딪힐 때·피해 없는 충돌")]
+            public AudioClip clash;
+            [Tooltip("교착")]
+            public AudioClip clashTie;
+            public AudioClip hit;
+            [Tooltip("흐트러짐 피해")]
+            public AudioClip hitHeavy;
+            [Tooltip("쓰러짐")]
+            public AudioClip down;
+        }
+
+        //피해 숫자 모양 (웹 .num3d). 크기는 월드 글 크기
+        [Serializable]
+        public sealed class NumberSettings
+        {
+            public float seconds = 1.1f;
+            public float fontSize = 5f;
+            public float tagFontSize = 2.4f;
+            [Tooltip("머리 위로 더 띄우는 높이. 숫자는 키의 0.1, 딱지는 0.55 (웹 headPoint lift × 키 2)")]
+            public float lift = 0.2f;
+            public float tagLift = 1.1f;
+            [Tooltip("사라지는 동안 떠오르는 높이")]
+            public float rise = 0.5f;
+            public string staggerText = "흐트러짐";
+            public Color color = new Color(0.961f, 0.929f, 0.878f);
+            public Color outline = new Color(0.071f, 0.047f, 0.039f);
+            public Color heavyColor = new Color(1f, 0.294f, 0.227f);
+            public Color heavyOutline = new Color(1f, 0.949f, 0.878f);
+            public Color tagColor = new Color(0.914f, 0.78f, 0.478f);
+            [Range(0f, 1f)] public float outlineWidth = 0.2f;
+            public int sortingOrder = 520;
         }
 
         //카메라 수치 (SPEC-005 §8.4)
@@ -207,8 +269,6 @@ namespace EndDistopirism.Presentation
             public float traumaPerHit = 0.35f;
             public float traumaPerDamage = 0.6f;
             public float traumaDecay = 1.4f;
-            [Tooltip("트라우마 → 흔들림 세기. 기본은 제곱")]
-            public AnimationCurve traumaToShake = AnimationCurve.EaseInOut(0f, 0f, 1f, 1f);
             public Vector3 maxOffset = new Vector3(0.35f, 0.28f, 0.2f);
             public Vector3 maxAngle = new Vector3(1.6f, 1.6f, 2.5f);
             public float frequency = 22f;
@@ -294,6 +354,17 @@ namespace EndDistopirism.Presentation
             public Color successColor = new Color(0.953f, 0.902f, 0.8f);
             public Color loseColor = new Color(1f, 0.478f, 0.4f);
             public Color reasonColor = new Color(0.604f, 0.557f, 0.502f);
+            [Tooltip("어두운 반투명 상자 한 겹 (웹 rgba(12,10,9,0.82))")]
+            public Color boxColor = new Color(0.047f, 0.039f, 0.035f, 0.82f);
+            [Tooltip("상자 윗줄. 성공은 파랑, 패배는 빨강")]
+            public Color successLine = new Color(0.561f, 0.69f, 0.784f);
+            public Color loseLine = new Color(0.702f, 0.149f, 0.169f);
+            public float lineWidth = 0.03f;
+            [Tooltip("글자 크기에 곱하는 상자 안 여백 (가로, 세로)")]
+            public Vector2 boxPadding = new Vector2(0.09f, 0.03f);
+            [Tooltip("나타날 때 아래에서 올라오는 거리와 사라질 때 더 올라가는 거리")]
+            public float enterDrop = 0.12f;
+            public float exitRise = 0.06f;
             public int sortingOrder = 500;
         }
 
@@ -313,6 +384,8 @@ namespace EndDistopirism.Presentation
         [SerializeField] private EffectSettings effects = new EffectSettings();
         [SerializeField] private CalloutSettings callout = new CalloutSettings();
         [SerializeField] private SparkSettings sparks = new SparkSettings();
+        [SerializeField] private SoundSettings sound = new SoundSettings();
+        [SerializeField] private NumberSettings numbers = new NumberSettings();
 
         //교전 하나가 끝날 때마다 알린다. 전투 흐름이 다음 턴으로 넘어가는 데 쓴다
         public event Action<PresentationCue> CueFinished;
@@ -478,91 +551,56 @@ namespace EndDistopirism.Presentation
             }
         }
 
-        //── 한 교전의 타임라인 (SPEC-005 §8.2) ──
+        //── 한 교전의 타임라인 (SPEC-005 §8.2·§9.3). 웹 renderer3d/stage.ts 와 같은 순서다 ──
 
-        //초점 → 선딜레이 → 돌진 → 충돌 → 역경직·흔들림 → 넉백·회전 → 복귀
+        //일방 공격: 초점 → 선딜레이(준비 장) → 돌진 → 충돌(맞닿는 장) → 스파크·역경직·흔들림·피해 숫자 → 넉백 → 복귀
+        //맞부딪힘: PlayClashRoundsAsync
         public async Task PlayAsync(PresentationCue cue, CancellationToken token)
         {
             Limbus25DActor attacker = cue.attacker;
             Limbus25DActor defender = cue.defender;
             if (attacker == null || defender == null) return;
-            bool clash = cue.kind == CueKind.Clash;
-            if (clash && cue.rounds != null && cue.rounds.Length > 0)
+            if (cue.kind == CueKind.Clash)
             {
+                //라운드 목록이 없는 옛 맞부딪힘은 한 라운드로 돈다. attacker 가 이긴 쪽이다
+                if (cue.rounds == null || cue.rounds.Length == 0)
+                {
+                    cue.rounds = new[] { CueRound.Win(attacker, defender, cue.callouts ?? new CueCallout[0]) };
+                    cue.finisher = attacker;
+                }
                 await PlayClashRoundsAsync(cue, token);
                 return;
             }
-            float dir = Mathf.Sign(defender.transform.position.x - attacker.transform.position.x);
-            if (dir == 0f) dir = attacker.Facing;
-            float power = Mathf.Clamp01(cue.damage / Mathf.Max(1f, shake.damageForMaxShake));
 
-            attacker.transform.DOKill();
-            attacker.Visual.DOKill();
-            defender.transform.DOKill();
-            defender.Visual.DOKill();
+            float dir = DirOf(attacker, defender);
+            KillMotion(attacker);
+            KillMotion(defender);
 
-            //① 초점. 둘 가운데로 다가가며 공격자 쪽으로 돌고 기운다
             FocusOn(attacker, defender, dir);
-
-            //② 선딜레이. 뒤로 튕기며 웅크린다. 맞부딪힘이면 둘 다
-            Sequence windup = Windup(attacker, dir);
-            if (clash) windup.Join(Windup(defender, -dir));
-            await AwaitTween(windup, token);
-
-            //③ 돌진. 달려가는 쪽이 아군이면 결과 알림
-            ShowCallouts(cue, clash, token);
-            Sequence rush = DOTween.Sequence().SetLink(gameObject);
-            if (clash)
-            {
-                float middle = (attacker.transform.position.x + defender.transform.position.x) * 0.5f;
-                rush.Join(Dash(attacker, middle - dir * motion.contactGap * 0.5f, dir));
-                rush.Join(Dash(defender, middle + dir * motion.contactGap * 0.5f, -dir));
-            }
-            else
-            {
-                rush.Join(Dash(attacker, defender.transform.position.x - dir * motion.contactGap, dir));
-            }
-            await AwaitTween(rush, token);
+            await AwaitTween(Windup(attacker, cue.attackerSlot, dir), token);
+            ShowCallouts(cue.callouts, attacker, null, token);
+            await AwaitTween(Dash(attacker, defender.transform.position.x - dir * motion.contactGap, defender.transform.position.z, motion.dashTime), token);
             FollowPair(attacker, defender, dir);
-
-            //④ 충돌. 앞으로 찍어 누르는 순간이 맞닿는 프레임이다
-            Sequence strike = Strike(attacker, dir);
-            if (clash) strike.Join(Strike(defender, -dir));
-            await AwaitTween(strike, token);
+            await AwaitTween(Strike(attacker, cue.attackerSlot, dir), token);
 
             Vector3 contact = Vector3.Lerp(attacker.Chest, defender.Chest, effects.contactBias);
-            if (clash && effects.defaultClashSpark != null)
-            {
-                SpawnEffect(effects.defaultClashSpark, (attacker.Chest + defender.Chest) * 0.5f, defender, EffectLayer.Front, dir);
-            }
-            GameObject impact = cue.impactEffect != null ? cue.impactEffect : effects.defaultImpact;
-            if (impact != null) SpawnEffect(impact, contact, defender, cue.impactLayer, dir);
-            else if (sparks.enabled) SpawnSparks(contact, defender, dir, clash);
-            attacker.PlayStrikeTrail(motion.strikeTrailTime, motion.strikeTrailPeakShare);
-            StartHitStop(Mathf.Min(hitStop.maxSeconds, hitStop.baseSeconds + cue.damage * hitStop.perDamageSeconds));
-            AddImpact(power, dir);
-
-            //⑤ 넉백·회전. 맞은 쪽은 공격 반대로 밀리며 젖혀진다. 흐트러짐이면 순간 꺾인다
-            Sequence knock = Knockback(defender, dir, cue.damage, cue.stagger);
-            Sequence settleAttacker = SettleVisual(attacker, motion.knockTime);
-            if (clash) settleAttacker.Join(attacker.transform.DOMoveX(attacker.transform.position.x - dir * motion.clashWinnerRecoil, motion.knockTime).SetEase(Ease.OutQuad));
-            await AwaitTween(knock, token);
+            Impact(cue, contact, defender, dir, cue.damage, false, cue.targetDefeated);
+            Tween trail = attacker.PlayStrikeTrail(motion.strikeTrailTime, motion.strikeTrailPeakShare, cue.attackerSlot);
+            Sequence after = DOTween.Sequence().SetLink(gameObject).Join(VisualHome(attacker, motion.knockTime));
+            bool heavy = IsHeavy(cue);
+            if (cue.damage > 0 && !defender.IsDown) after.Join(Knockback(defender, dir, cue.damage, heavy));
+            await AwaitTween(after, token);
             await WaitRealtime(motion.lingerAfterHit, token);
-            //궤적이 다 사라질 때까지 공격자는 그 자리에서 버틴다 (게임 시간)
-            await WaitScaled(Mathf.Max(0f, motion.strikeTrailTime - motion.knockTime - motion.lingerAfterHit), token);
+            await AwaitTween(trail, token);
 
-            //⑥ 복귀. 맞은 쪽은 스프링처럼 튕기며, 공격자는 원위치로, 카메라는 원경으로
             ReleaseFocus();
             Sequence back = DOTween.Sequence().SetLink(gameObject);
-            back.Join(SpringBack(defender));
-            back.Join(ReturnHome(attacker));
-            if (clash) back.Join(ReturnHome(defender));
+            if (!defender.IsDown) back.Join(SpringBack(defender));
+            if (!attacker.IsDown) back.Join(ReturnHome(attacker));
             await AwaitTween(back, token);
-            attacker.SetPose(Limbus25DActor.Pose.Idle);
-            defender.SetPose(Limbus25DActor.Pose.Idle);
+            Settle(attacker);
+            Settle(defender);
         }
-
-        //── 여러 라운드 맞부딪힘 (SPEC-005 §9.3) ──
 
         //초점 → 둘 다 선딜레이 → 라운드마다 (돌진·재돌진 → 부딪힘 → 밀림) → 마무리 한 방 → 복귀
         //라운드 사이에 제자리로 돌아가지 않고 붙은 채로 이어 간다
@@ -570,45 +608,40 @@ namespace EndDistopirism.Presentation
         {
             Limbus25DActor a = cue.attacker;
             Limbus25DActor d = cue.defender;
-            float dir = Mathf.Sign(d.transform.position.x - a.transform.position.x);
-            if (dir == 0f) dir = a.Facing;
-            foreach (Limbus25DActor actor in new[] { a, d })
-            {
-                actor.transform.DOKill();
-                actor.Visual.DOKill();
-            }
+            float dir = DirOf(a, d);
+            KillMotion(a);
+            KillMotion(d);
 
             FocusOn(a, d, dir);
-            await AwaitTween(Windup(a, dir).Join(Windup(d, -dir)), token);
+            await AwaitTween(Windup(a, cue.attackerSlot, dir).Join(Windup(d, cue.defenderSlot, -dir)), token);
 
             //붙는 자리. 가운데에서 서로 contactGap 만큼 떨어진다
-            float middle = (a.transform.position.x + d.transform.position.x) * 0.5f;
-            float ax = middle - dir * motion.contactGap * 0.5f;
-            float dx = middle + dir * motion.contactGap * 0.5f;
+            float midX = (a.transform.position.x + d.transform.position.x) * 0.5f;
+            float midZ = (a.transform.position.z + d.transform.position.z) * 0.5f;
+            float ax = midX - dir * motion.contactGap * 0.5f;
+            float dx = midX + dir * motion.contactGap * 0.5f;
 
             for (int i = 0; i < cue.rounds.Length; i++)
             {
                 CueRound round = cue.rounds[i];
                 ShowCallouts(round.callouts, a, d, token);
                 float time = i == 0 ? motion.dashTime : motion.reengageTime;
-                await AwaitTween(DOTween.Sequence().SetLink(gameObject).Join(Dash(a, ax, dir, time)).Join(Dash(d, dx, -dir, time)), token);
+                await AwaitTween(DOTween.Sequence().SetLink(gameObject).Join(Dash(a, ax, midZ, time)).Join(Dash(d, dx, midZ, time)), token);
                 FollowPair(a, d, dir);
-                await AwaitTween(Strike(a, dir).Join(Strike(d, -dir)), token);
+                await AwaitTween(Strike(a, cue.attackerSlot, dir).Join(Strike(d, cue.defenderSlot, -dir)), token);
 
                 Vector3 contact = (a.Chest + d.Chest) * 0.5f;
-                if (effects.defaultClashSpark != null) SpawnEffect(effects.defaultClashSpark, contact, d, EffectLayer.Front, dir);
-                else if (sparks.enabled) SpawnSparks(contact, d, dir, true);
-                StartHitStop(hitStop.clashSeconds);
-                AddImpact(shake.clashPower, dir);
+                Impact(cue, contact, d, dir, 0, true, false);
+                PlaySound(round.kind == RoundKind.Deadlock ? sound.clashTie : sound.clash);
 
                 //진 쪽이 밀린다. 교착이면 둘 다 조금 밀린다
                 Sequence push = DOTween.Sequence().SetLink(gameObject);
-                if (round.kind == RoundKind.Win && round.loser != null)
+                if (round.kind == RoundKind.Win && (round.loser == a || round.loser == d))
                 {
                     Limbus25DActor loser = round.loser;
                     Limbus25DActor winner = loser == a ? d : a;
                     push.Join(Push(loser, loser == a ? -dir : dir, motion.clashPush));
-                    push.Join(SettleVisual(winner, motion.knockTime));
+                    push.Join(VisualHome(winner, motion.knockTime));
                 }
                 else
                 {
@@ -624,24 +657,19 @@ namespace EndDistopirism.Presentation
             {
                 //이긴 쪽이 진 쪽을 친다
                 Limbus25DActor l = w == a ? d : a;
-                float wdir = Mathf.Sign(l.transform.position.x - w.transform.position.x);
-                if (wdir == 0f) wdir = w.Facing;
-                await AwaitTween(Dash(w, l.transform.position.x - wdir * motion.contactGap, wdir, motion.reengageTime), token);
-                await AwaitTween(Strike(w, wdir), token);
+                SkillSlot slot = w == a ? cue.attackerSlot : cue.defenderSlot;
+                float wdir = DirOf(w, l);
+                await AwaitTween(Dash(w, l.transform.position.x - wdir * motion.contactGap, l.transform.position.z, motion.reengageTime), token);
+                await AwaitTween(Strike(w, slot, wdir), token);
 
                 Vector3 contact = Vector3.Lerp(w.Chest, l.Chest, effects.contactBias);
-                GameObject impact = cue.impactEffect != null ? cue.impactEffect : effects.defaultImpact;
-                if (impact != null) SpawnEffect(impact, contact, l, cue.impactLayer, wdir);
-                else if (sparks.enabled) SpawnSparks(contact, l, wdir, false);
-                w.PlayStrikeTrail(motion.strikeTrailTime, motion.strikeTrailPeakShare);
-                StartHitStop(Mathf.Min(hitStop.maxSeconds, hitStop.baseSeconds + cue.damage * hitStop.perDamageSeconds));
-                AddImpact(Mathf.Clamp01(cue.damage / Mathf.Max(1f, shake.damageForMaxShake)), wdir);
-
-                Sequence after = SettleVisual(w, motion.knockTime);
-                if (cue.damage > 0) after.Join(Knockback(l, wdir, cue.damage, cue.stagger));
+                Impact(cue, contact, l, wdir, cue.damage, false, cue.targetDefeated);
+                Tween trail = w.PlayStrikeTrail(motion.strikeTrailTime, motion.strikeTrailPeakShare, slot);
+                Sequence after = DOTween.Sequence().SetLink(gameObject).Join(VisualHome(w, motion.knockTime));
+                if (cue.damage > 0 && !l.IsDown) after.Join(Knockback(l, wdir, cue.damage, IsHeavy(cue)));
                 await AwaitTween(after, token);
                 await WaitRealtime(motion.lingerAfterHit, token);
-                await WaitScaled(Mathf.Max(0f, motion.strikeTrailTime - motion.knockTime - motion.lingerAfterHit), token);
+                await AwaitTween(trail, token);
             }
             else
             {
@@ -649,9 +677,66 @@ namespace EndDistopirism.Presentation
             }
 
             ReleaseFocus();
-            await AwaitTween(DOTween.Sequence().SetLink(gameObject).Join(ReturnHome(a)).Join(ReturnHome(d)), token);
-            a.SetPose(Limbus25DActor.Pose.Idle);
-            d.SetPose(Limbus25DActor.Pose.Idle);
+            Sequence back = DOTween.Sequence().SetLink(gameObject);
+            if (!a.IsDown) back.Join(ReturnHome(a));
+            if (!d.IsDown) back.Join(ReturnHome(d));
+            await AwaitTween(back, token);
+            Settle(a);
+            Settle(d);
+        }
+
+        //맞는 순간. 이펙트·스파크·역경직·카메라·소리·피해 숫자·쓰러짐 (웹 impact 와 같다)
+        private void Impact(PresentationCue cue, Vector3 contact, Limbus25DActor target, float dir, int damage, bool clash, bool defeated)
+        {
+            bool heavy = damage >= motion.heavyDamage || (!clash && cue.stagger);
+            GameObject prefab = clash ? effects.defaultClashSpark : (cue.impactEffect != null ? cue.impactEffect : effects.defaultImpact);
+            if (prefab != null) SpawnEffect(prefab, contact, target, clash ? EffectLayer.Front : cue.impactLayer, dir);
+            else if (sparks.enabled) SpawnSparks(contact, target, dir, clash);
+            float seconds = clash && damage <= 0 ? hitStop.clashSeconds : Mathf.Min(hitStop.maxSeconds, hitStop.baseSeconds + damage * hitStop.perDamageSeconds);
+            StartHitStop(seconds);
+            AddImpact(damage > 0 ? Mathf.Min(1f, damage / Mathf.Max(1f, shake.damageForMaxShake)) : shake.clashPower, dir);
+            PlaySound(damage <= 0 ? sound.clash : heavy ? sound.hitHeavy : sound.hit);
+            if (defeated) Defeat(target);
+            if (damage > 0)
+            {
+                ShowNumber(target, damage.ToString(), heavy ? NumberKind.Heavy : NumberKind.Normal);
+                if (heavy) ShowNumber(target, numbers.staggerText, NumberKind.Tag);
+            }
+        }
+
+        //흐트러짐인지. 웹은 피해가 heavyDamage 이상이면 흐트러짐이다. 어댑터가 따로 알려도 따른다
+        private bool IsHeavy(PresentationCue cue)
+        {
+            return cue.damage >= motion.heavyDamage || cue.stagger;
+        }
+
+        //쓰러뜨린다. 교전 밖(출혈 등)에서 쓰러질 때도 부른다
+        public void Defeat(Limbus25DActor actor)
+        {
+            if (actor == null || actor.IsDown) return;
+            actor.Visual.DOKill();
+            actor.FallDown(motion.downTime, motion.downSink, motion.downOpacity);
+            PlaySound(sound.down);
+        }
+
+        //공격 방향. 같은 자리면 바라보는 쪽
+        private static float DirOf(Limbus25DActor from, Limbus25DActor to)
+        {
+            float dir = Mathf.Sign(to.transform.position.x - from.transform.position.x);
+            return Mathf.Approximately(to.transform.position.x, from.transform.position.x) ? from.Facing : dir;
+        }
+
+        //앞 교전에서 남은 트윈을 끊는다
+        private static void KillMotion(Limbus25DActor actor)
+        {
+            actor.transform.DOKill();
+            actor.Visual.DOKill();
+        }
+
+        //걸음이 끝난 인형을 대기 장으로. 쓰러졌으면 그대로 둔다
+        private static void Settle(Limbus25DActor actor)
+        {
+            if (!actor.IsDown) actor.SetPose(Limbus25DActor.Pose.Idle);
         }
 
         //합에서 밀린다. 막는 장으로 바꾸고 자리째 뒤로 미끄러진다. 판은 기울이지 않는다
@@ -660,70 +745,49 @@ namespace EndDistopirism.Presentation
             actor.SetPose(Limbus25DActor.Pose.Guard);
             return DOTween.Sequence().SetLink(actor.gameObject)
                 .Join(actor.transform.DOMoveX(actor.transform.position.x + away * distance, motion.knockTime).SetEase(Ease.OutExpo))
-                .Join(actor.Visual.DOLocalMove(Vector3.zero, motion.knockTime).SetEase(Ease.OutQuad));
+                .Join(actor.Visual.DOLocalMoveX(0f, motion.knockTime).SetEase(Ease.Linear));
         }
 
-        //── 몸짓 (SPEC-005 §8.3) ──
-        //이동·회전은 월드 방향으로 계산해 로컬로 바꿔 넣는다. 루트 배율 부호는 건드리지 않는다
+        //── 몸짓 (SPEC-005 §8.3). 판은 기울지도 찌그러지지도 않는다. 위치 이동과 장 바꾸기로만 한다 ──
+        //이동은 월드 방향으로 계산해 로컬로 바꿔 넣는다. 루트 배율 부호는 건드리지 않는다
 
-        //② 뒤로 튕기며 웅크린다. 뒤로 당김 + 눌림 + 뒤로 젖힘
-        private Sequence Windup(Limbus25DActor actor, float dir)
+        //② 뒤로 물러나며 준비 장
+        private Sequence Windup(Limbus25DActor actor, SkillSlot slot, float dir)
         {
-            actor.SetPose(Limbus25DActor.Pose.Windup);
-            Transform v = actor.Visual;
-            float t = motion.windupTime;
+            actor.ShowSkillReady(slot);
             return DOTween.Sequence().SetLink(actor.gameObject)
-                .Join(v.DOLocalMove(new Vector3(actor.WorldToLocalX(-dir * motion.windupBack), 0f, 0f), t).SetEase(Ease.OutQuad))
-                .Join(v.DOScale(new Vector3(motion.windupSquash.x, motion.windupSquash.y, 1f), t).SetEase(Ease.OutQuad))
-                .Join(v.DOLocalRotate(new Vector3(0f, 0f, actor.WorldToLocalRoll(dir * motion.windupLeanDeg)), t).SetEase(Ease.OutQuad));
+                .Join(actor.Visual.DOLocalMoveX(actor.WorldToLocalX(-dir * motion.windupBack), motion.windupTime).SetEase(Ease.OutQuad));
         }
 
-        //③ 상대 앞까지 가속해 들어간다. 달리는 동안 몸이 앞으로 늘어난다
-        private Sequence Dash(Limbus25DActor actor, float toX, float dir, float time = -1f)
+        //③ 상대 앞까지 가속해 들어간다. 깊이(z)도 상대 줄에 맞춘다
+        private Sequence Dash(Limbus25DActor actor, float toX, float toZ, float time)
         {
             actor.SetPose(Limbus25DActor.Pose.Dash);
-            Transform v = actor.Visual;
-            float t = time > 0f ? time : motion.dashTime;
+            PlaySound(sound.dash);
             return DOTween.Sequence().SetLink(actor.gameObject)
-                .Join(actor.transform.DOMoveX(toX, t).SetEase(Ease.InQuad))
-                .Join(v.DOLocalMove(Vector3.zero, t).SetEase(Ease.OutQuad))
-                .Join(v.DOScale(new Vector3(motion.dashStretch.x, motion.dashStretch.y, 1f), t).SetEase(Ease.OutQuad))
-                .Join(v.DOLocalRotate(new Vector3(0f, 0f, actor.WorldToLocalRoll(-dir * motion.strikeLeanDeg * 0.5f)), t).SetEase(Ease.OutQuad));
+                .Join(actor.transform.DOMoveX(toX, time).SetEase(Ease.InQuad))
+                .Join(actor.transform.DOMoveZ(toZ, time).SetEase(Ease.InQuad))
+                .Join(actor.Visual.DOLocalMoveX(0f, time).SetEase(Ease.Linear));
         }
 
-        //④ 앞으로 찍어 누른다. 늘림 + 숙임을 탄성 있게 (OutBack)
-        private Sequence Strike(Limbus25DActor actor, float dir)
+        //④ 앞으로 내딛는 맞닿는 장. 탄성 있게 (OutBack)
+        private Sequence Strike(Limbus25DActor actor, SkillSlot slot, float dir)
         {
-            actor.SetPose(Limbus25DActor.Pose.Strike);
-            Transform v = actor.Visual;
-            float t = motion.strikeTime;
+            actor.ShowSkillPeak(slot);
             return DOTween.Sequence().SetLink(actor.gameObject)
-                .Join(v.DOLocalMove(new Vector3(actor.WorldToLocalX(dir * motion.strikeReach), 0f, 0f), t).SetEase(Ease.OutBack))
-                .Join(v.DOScale(new Vector3(motion.strikeStretch.x, motion.strikeStretch.y, 1f), t).SetEase(Ease.OutBack))
-                .Join(v.DOLocalRotate(new Vector3(0f, 0f, actor.WorldToLocalRoll(-dir * motion.strikeLeanDeg)), t).SetEase(Ease.OutBack));
+                .Join(actor.Visual.DOLocalMoveX(actor.WorldToLocalX(dir * motion.strikeReach), motion.strikeTime).SetEase(Ease.OutBack));
         }
 
-        //⑤ 공격 반대로 밀리며 뒤로 젖혀진다. 흐트러짐이면 보간 없이 순간 꺾이고(2D 컷오프) 잠깐 버틴다
-        private Sequence Knockback(Limbus25DActor actor, float dir, int damage, bool stagger)
+        //⑤ 맞은 쪽이 공격 반대로 밀린다. 흐트러짐이면 조금 주저앉아 잠깐 버틴다. 기울지 않는다 (§8.9)
+        private Sequence Knockback(Limbus25DActor actor, float dir, int damage, bool heavy)
         {
             actor.SetPose(Limbus25DActor.Pose.Hurt);
             Transform v = actor.Visual;
-            float t = motion.knockTime;
             float distance = Mathf.Min(motion.knockMax, motion.knockBase + damage * motion.knockPerDamage);
-            float roll = actor.WorldToLocalRoll(-dir * (stagger ? motion.staggerSnapDeg : motion.knockLeanDeg));
-            Sequence seq = DOTween.Sequence().SetLink(actor.gameObject);
-            if (stagger)
-            {
-                //꺾임은 트윈하지 않는다. 한 프레임에 꺾여야 종이가 부러지듯 보인다
-                v.localRotation = Quaternion.Euler(0f, 0f, roll);
-            }
-            else
-            {
-                seq.Join(v.DOLocalRotate(new Vector3(0f, 0f, roll), t).SetEase(Ease.OutExpo));
-            }
-            seq.Join(v.DOLocalMove(new Vector3(actor.WorldToLocalX(dir * distance), stagger ? motion.staggerDrop : 0f, 0f), t).SetEase(Ease.OutExpo));
-            seq.Join(v.DOScale(new Vector3(motion.knockSquash.x, motion.knockSquash.y, 1f), t * 0.5f).SetEase(Ease.OutQuad));
-            if (stagger) seq.AppendInterval(motion.staggerHold);
+            Sequence seq = DOTween.Sequence().SetLink(actor.gameObject)
+                .Join(v.DOLocalMoveX(actor.WorldToLocalX(dir * distance), motion.knockTime).SetEase(Ease.OutExpo))
+                .Join(v.DOLocalMoveY(heavy ? motion.staggerDrop : 0f, motion.knockTime).SetEase(Ease.OutExpo));
+            if (heavy) seq.AppendInterval(motion.staggerHold);
             return seq;
         }
 
@@ -734,28 +798,26 @@ namespace EndDistopirism.Presentation
             Transform v = actor.Visual;
             float t = motion.settleTime;
             return DOTween.Sequence().SetLink(actor.gameObject)
-                .Join(v.DOLocalMove(Vector3.zero, t).SetEase(Ease.OutElastic, motion.settleAmplitude, motion.settlePeriod))
-                .Join(v.DOLocalRotate(Vector3.zero, t).SetEase(Ease.OutElastic, motion.settleAmplitude, motion.settlePeriod))
-                .Join(v.DOScale(Vector3.one, t).SetEase(Ease.OutElastic, motion.settleAmplitude, motion.settlePeriod));
+                .Join(v.DOLocalMoveX(0f, t).SetEase(Ease.OutElastic, motion.settleAmplitude, motion.settlePeriod))
+                .Join(v.DOLocalMoveY(0f, t).SetEase(Ease.OutElastic, motion.settleAmplitude, motion.settlePeriod));
         }
 
-        //몸짓만 대기 모양으로 되돌린다. 자리는 그대로다
-        private Sequence SettleVisual(Limbus25DActor actor, float time)
+        //몸짓 위치만 제자리로. 자리는 그대로다
+        private Sequence VisualHome(Limbus25DActor actor, float time)
         {
-            Transform v = actor.Visual;
             return DOTween.Sequence().SetLink(actor.gameObject)
-                .Join(v.DOLocalMove(Vector3.zero, time).SetEase(Ease.OutQuad))
-                .Join(v.DOLocalRotate(Vector3.zero, time).SetEase(Ease.OutQuad))
-                .Join(v.DOScale(Vector3.one, time).SetEase(Ease.OutQuad));
+                .Join(actor.Visual.DOLocalMoveX(0f, time).SetEase(Ease.Linear));
         }
 
-        //원위치로 돌아간다
+        //⑥ 원위치로 돌아간다
         private Sequence ReturnHome(Limbus25DActor actor)
         {
             actor.SetPose(Limbus25DActor.Pose.Recover);
             return DOTween.Sequence().SetLink(actor.gameObject)
-                .Join(actor.transform.DOMove(actor.Home, motion.returnTime).SetEase(Ease.OutCubic))
-                .Join(SettleVisual(actor, motion.returnTime));
+                .Join(actor.transform.DOMoveX(actor.Home.x, motion.returnTime).SetEase(Ease.OutCubic))
+                .Join(actor.transform.DOMoveZ(actor.Home.z, motion.returnTime).SetEase(Ease.OutCubic))
+                .Join(actor.Visual.DOLocalMoveX(0f, motion.returnTime).SetEase(Ease.Linear))
+                .Join(actor.Visual.DOLocalMoveY(0f, motion.returnTime).SetEase(Ease.Linear));
         }
 
         //연출이 끊겼을 때 두 사람을 즉시 제자리로 돌린다
@@ -764,12 +826,26 @@ namespace EndDistopirism.Presentation
             foreach (Limbus25DActor actor in new[] { cue.attacker, cue.defender })
             {
                 if (actor == null) continue;
-                actor.transform.DOKill();
-                actor.Visual.DOKill();
-                actor.transform.position = actor.Home;
+                KillMotion(actor);
+                if (!actor.IsDown) actor.transform.position = actor.Home;
                 actor.ResetVisual();
             }
             ReleaseFocus();
+        }
+
+        //── 소리 ──
+
+        //소리를 한 번 낸다. 클립이 없으면 조용히 넘어간다
+        private void PlaySound(AudioClip clip)
+        {
+            if (clip == null) return;
+            if (sound.source == null)
+            {
+                sound.source = gameObject.AddComponent<AudioSource>();
+                sound.source.playOnAwake = false;
+                sound.source.spatialBlend = 0f;
+            }
+            sound.source.PlayOneShot(clip, sound.volume);
         }
 
         //── 금속 스파크 (SPEC-005 §8.6) ──
@@ -910,20 +986,7 @@ namespace EndDistopirism.Presentation
 
         //── 결과 알림 (SPEC-005 §8.10) ──
 
-        //달려가는 캐릭터 중 아군에게만 결과 알림을 띄운다. 적에게는 띄우지 않는다
-        private void ShowCallouts(PresentationCue cue, bool clash, CancellationToken token)
-        {
-            if (cue.callouts == null) return;
-            foreach (CueCallout c in cue.callouts)
-            {
-                if (c.actor == null || !c.actor.IsPlayerSide) continue;
-                bool runs = c.actor == cue.attacker || (clash && c.actor == cue.defender);
-                if (!runs) continue;
-                _ = RunCalloutAsync(c, token);
-            }
-        }
-
-        //라운드 알림. 둘 다 달려가므로 둘 중 아군에게만 띄운다
+        //달려가는 사람(a, b) 중 아군에게만 결과 알림을 띄운다. 적에게는 띄우지 않는다
         private void ShowCallouts(CueCallout[] list, Limbus25DActor a, Limbus25DActor b, CancellationToken token)
         {
             if (list == null) return;
@@ -935,21 +998,63 @@ namespace EndDistopirism.Presentation
             }
         }
 
+        //흰 점 하나짜리 스프라이트. 알림 상자와 윗줄을 그린다
+        private Sprite whiteSprite;
+
+        private Sprite WhiteSprite()
+        {
+            if (whiteSprite == null) whiteSprite = Sprite.Create(Texture2D.whiteTexture, new Rect(0f, 0f, 4f, 4f), new Vector2(0.5f, 0.5f), 4f);
+            return whiteSprite;
+        }
+
+        //글에 맞춘 판 하나를 만든다. 알림 상자 바탕·윗줄에 쓴다
+        private SpriteRenderer MakePanel(Transform parent, string name, Color color, int order)
+        {
+            var go = new GameObject(name);
+            go.transform.SetParent(parent, false);
+            var r = go.AddComponent<SpriteRenderer>();
+            r.sprite = WhiteSprite();
+            r.color = color;
+            r.sortingOrder = order;
+            return r;
+        }
+
         //글을 만들어 머리를 따라다니게 하고, 끝에서 흐려지며 사라진다. 실제 시간이라 역경직에 멈추지 않는다
+        //모양은 웹 .callout3d 와 같다: 어두운 반투명 상자 한 겹 + 윗줄(성공 파랑·패배 빨강), 큰 줄 + 작은 줄
         private async Task RunCalloutAsync(CueCallout c, CancellationToken token)
         {
-            GameObject go = callout.prefab != null ? Instantiate(callout.prefab) : new GameObject("Callout");
-            TMP_Text text = go.GetComponentInChildren<TMP_Text>();
-            if (text == null) text = go.AddComponent<TextMeshPro>();
-            text.alignment = TextAlignmentOptions.Bottom;
+            GameObject go = new GameObject("Callout");
+            GameObject textGo = callout.prefab != null ? Instantiate(callout.prefab, go.transform) : new GameObject("Text");
+            textGo.transform.SetParent(go.transform, false);
+            TMP_Text text = textGo.GetComponentInChildren<TMP_Text>();
+            if (text == null) text = textGo.AddComponent<TextMeshPro>();
+            text.alignment = TextAlignmentOptions.Center;
             text.fontSize = callout.fontSize;
+            text.enableWordWrapping = false;
             string big = !string.IsNullOrEmpty(c.headline) ? c.headline : (c.success ? callout.successText : callout.loseText);
             Color bigColor = c.success ? callout.successColor : callout.loseColor;
             text.text = string.IsNullOrEmpty(c.reason)
-                ? $"<color=#{ColorUtility.ToHtmlStringRGB(bigColor)}>{big}</color>"
-                : $"<color=#{ColorUtility.ToHtmlStringRGB(bigColor)}>{big}</color>\n<size=70%><color=#{ColorUtility.ToHtmlStringRGB(callout.reasonColor)}>{c.reason}</color></size>";
+                ? $"<cspace=0.08em><color=#{ColorUtility.ToHtmlStringRGB(bigColor)}>{big}</color></cspace>"
+                : $"<cspace=0.08em><color=#{ColorUtility.ToHtmlStringRGB(bigColor)}>{big}</color></cspace>\n<size=70%><color=#{ColorUtility.ToHtmlStringRGB(callout.reasonColor)}>{c.reason}</color></size>";
             var textRenderer = text.GetComponent<Renderer>();
             if (textRenderer != null) textRenderer.sortingOrder = callout.sortingOrder;
+
+            //글 크기에 맞춰 상자와 윗줄을 깐다. 상자는 글 아래가 알림 기준점(머리 위)에 오게 올린다
+            text.ForceMeshUpdate();
+            Vector2 size = text.GetRenderedValues(false);
+            float padX = callout.fontSize * callout.boxPadding.x;
+            float padY = callout.fontSize * callout.boxPadding.y;
+            float boxW = size.x + padX * 2f;
+            float boxH = size.y + padY * 2f;
+            text.transform.localPosition = new Vector3(0f, boxH * 0.5f, 0f);
+            SpriteRenderer box = MakePanel(go.transform, "Box", callout.boxColor, callout.sortingOrder - 2);
+            box.transform.localPosition = new Vector3(0f, boxH * 0.5f, 0.001f);
+            box.transform.localScale = new Vector3(boxW, boxH, 1f);
+            SpriteRenderer line = MakePanel(go.transform, "Line", c.success ? callout.successLine : callout.loseLine, callout.sortingOrder - 1);
+            line.transform.localPosition = new Vector3(0f, boxH, 0.0005f);
+            line.transform.localScale = new Vector3(boxW, callout.lineWidth, 1f);
+            float boxAlpha = callout.boxColor.a;
+            float lineAlpha = line.color.a;
 
             float start = Time.unscaledTime;
             try
@@ -958,10 +1063,72 @@ namespace EndDistopirism.Presentation
                 {
                     float k = (Time.unscaledTime - start) / Mathf.Max(0.01f, callout.seconds);
                     if (k >= 1f) break;
-                    go.transform.position = c.actor.Head + Vector3.up * callout.headOffset;
-                    if (cameraRig != null) go.transform.rotation = Quaternion.Euler(cameraRig.eulerAngles.x, cameraRig.eulerAngles.y, 0f);
-                    //앞 12% 에 나타나고, 뒤 22% 에 흐려진다
-                    text.alpha = k < 0.12f ? k / 0.12f : (k > 0.78f ? (1f - k) / 0.22f : 1f);
+                    //앞 12% 에 아래에서 올라오며 나타나고, 78% 부터 조금 더 올라가며 흐려진다
+                    float alpha = k < 0.12f ? k / 0.12f : (k > 0.78f ? (1f - k) / 0.22f : 1f);
+                    float rise = k < 0.12f ? Mathf.Lerp(-callout.enterDrop, 0f, k / 0.12f) : (k > 0.78f ? Mathf.Lerp(0f, callout.exitRise, (k - 0.78f) / 0.22f) : 0f);
+                    //판처럼 카메라 회전을 그대로 따른다. 화면에서 기울지 않는다
+                    Quaternion facing = cameraRig != null ? cameraRig.rotation : Quaternion.identity;
+                    go.transform.SetPositionAndRotation(c.actor.Head + facing * Vector3.up * (callout.headOffset + rise), facing);
+                    text.alpha = alpha;
+                    box.color = WithAlpha(box.color, boxAlpha * alpha);
+                    line.color = WithAlpha(line.color, lineAlpha * alpha);
+                    await Task.Yield();
+                }
+            }
+            finally
+            {
+                if (go != null) Destroy(go);
+            }
+        }
+
+        private static Color WithAlpha(Color c, float a)
+        {
+            c.a = a;
+            return c;
+        }
+
+        //── 피해 숫자 (웹 .num3d) ──
+
+        //피해 숫자 종류. 보통·흐트러짐(큰 피해)·글 딱지
+        public enum NumberKind { Normal, Heavy, Tag }
+
+        //맞은 사람 머리 위에 숫자나 글을 띄운다. 출혈 같은 교전 밖 피해에도 쓴다. 실제 시간
+        public void ShowNumber(Limbus25DActor target, string value, NumberKind kind)
+        {
+            if (target == null || target.IsHidden || string.IsNullOrEmpty(value)) return;
+            _ = RunNumberAsync(target, value, kind, lifetime != null ? lifetime.Token : CancellationToken.None);
+        }
+
+        //튀어나오며 커졌다 줄고(1.8 → 0.92 → 1), 떠오르며 끝에서 흐려진다. 뜬 자리에 머문다
+        private async Task RunNumberAsync(Limbus25DActor target, string value, NumberKind kind, CancellationToken token)
+        {
+            var go = new GameObject("Number");
+            TextMeshPro text = go.AddComponent<TextMeshPro>();
+            text.alignment = TextAlignmentOptions.Center;
+            text.enableWordWrapping = false;
+            text.fontStyle = FontStyles.Bold;
+            text.fontSize = kind == NumberKind.Tag ? numbers.tagFontSize : numbers.fontSize;
+            text.color = kind == NumberKind.Heavy ? numbers.heavyColor : kind == NumberKind.Tag ? numbers.tagColor : numbers.color;
+            text.outlineWidth = kind == NumberKind.Tag ? 0f : numbers.outlineWidth;
+            text.outlineColor = kind == NumberKind.Heavy ? numbers.heavyOutline : numbers.outline;
+            text.text = value;
+            var r = text.GetComponent<Renderer>();
+            if (r != null) r.sortingOrder = numbers.sortingOrder;
+
+            float lift = kind == NumberKind.Tag ? numbers.tagLift : numbers.lift;
+            Vector3 anchor = target.Head + Vector3.up * lift;
+            float start = Time.unscaledTime;
+            try
+            {
+                while (!token.IsCancellationRequested)
+                {
+                    float k = (Time.unscaledTime - start) / Mathf.Max(0.01f, numbers.seconds);
+                    if (k >= 1f) break;
+                    float scale = k < 0.12f ? Mathf.Lerp(1.8f, 0.92f, k / 0.12f) : (k < 0.22f ? Mathf.Lerp(0.92f, 1f, (k - 0.12f) / 0.1f) : 1f);
+                    Quaternion facing = cameraRig != null ? cameraRig.rotation : Quaternion.identity;
+                    go.transform.SetPositionAndRotation(anchor + facing * Vector3.up * (numbers.rise * k), facing);
+                    go.transform.localScale = Vector3.one * scale;
+                    text.alpha = k > 0.75f ? (1f - k) / 0.25f : 1f;
                     await Task.Yield();
                 }
             }
@@ -1044,7 +1211,9 @@ namespace EndDistopirism.Presentation
 
             //트라우마 흔들림. 위치 3축과 회전 3축을 서로 다른 잡음으로 흔든다
             trauma = Mathf.Max(0f, trauma - shake.traumaDecay * dt);
-            float amount = Mathf.Clamp01(shake.traumaToShake.Evaluate(trauma * trauma));
+            //트라우마 제곱을 부드러운 계단(smoothstep)으로 (웹 camera.ts 와 같다)
+            float tt = trauma * trauma;
+            float amount = tt * tt * (3f - 2f * tt);
             float t = Time.unscaledTime * shake.frequency;
             Vector3 shakeOffset = Vector3.Scale(new Vector3(Noise(0, t), Noise(1, t), Noise(2, t)), shake.maxOffset) * amount;
             Vector3 shakeAngles = Vector3.Scale(new Vector3(Noise(3, t), Noise(4, t), Noise(5, t)), shake.maxAngle) * amount;
@@ -1062,10 +1231,11 @@ namespace EndDistopirism.Presentation
             }
         }
 
-        //-1 ~ 1 사이의 부드러운 잡음
+        //-1 ~ 1 사이의 부드러운 잡음. 채널마다 다른 씨앗의 사인 세 겹 (웹 camera.ts noise 와 같다)
         private float Noise(int channel, float t)
         {
-            return Mathf.PerlinNoise(noiseSeeds[channel], t) * 2f - 1f;
+            float s = noiseSeeds[channel];
+            return 0.55f * Mathf.Sin(t + s) + 0.3f * Mathf.Sin(t * 2.17f + s * 1.7f) + 0.15f * Mathf.Sin(t * 4.31f + s * 2.9f);
         }
 
         //감쇠 스프링 한 걸음. 큰 dt 는 잘게 나눠 튀지 않게 한다
