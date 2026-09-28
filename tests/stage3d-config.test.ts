@@ -36,9 +36,9 @@ describe('3D 무대 수치', () => {
 });
 
 describe('카일 1대1 무대 (SPEC-001 §7 [D-22])', () => {
-  it('대진은 카일 대 걸음 잔형이고 제3 수문에서 싸운다', () => {
+  it('대진은 카일 대 걸음 잔형이고 제3 수문 v4 에서 싸운다', () => {
     const config = parseStage3dConfig(read('assets/ui/stage3d.json'));
-    expect(config.battle).toMatchObject({ map: 'map-gate3', ally: ['kyle'], enemy: ['remnantWalker'] });
+    expect(config.battle).toMatchObject({ map: 'map-gate3-v4', ally: ['kyle'], enemy: ['remnantWalker'] });
     expect(config.battle.artAlias['remnantWalker']).toBe('kyle');
   });
 
@@ -50,5 +50,34 @@ describe('카일 1대1 무대 (SPEC-001 §7 [D-22])', () => {
     expect(config.name).toBe('제3 수문');
     expect(config.layers.find((l) => l.file === '04-water.png')?.shape).toBe('floor');
     expect(config.camera).toMatchObject({ back: 11.46, height: 3.96 });
+  });
+
+  it('제3 수문 v4 층을 읽는다. 상단 철골·하단 잔해는 교전 중에 숨긴다 (SPEC-005 §9.5.1)', () => {
+    const config = parseBackdropConfig(read('assets/map-gate3-v4/placement.json'));
+    expect(config.name).toBe('제3 수문');
+    expect(config.layers.map((l) => l.file)).toEqual(['01-far-gallery.png', '03-battle-floor.png', '02-gate-booth.png', '04-upper-frame.png', '05-lower-frame.png']);
+    expect(config.layers.filter((l) => l.hideInCombat).map((l) => l.file)).toEqual(['04-upper-frame.png', '05-lower-frame.png']);
+    //바닥이 수문 층보다 먼저 그려져 연석이 바닥 겹침을 가린다 (v4 build.cjs 순서)
+    const order = (file: string): number => config.layers.find((l) => l.file === file)?.order ?? 0;
+    expect(order('03-battle-floor.png')).toBeLessThan(order('02-gate-booth.png'));
+    //v4 구도(모두 보이는 넓은 방)를 지키려고 세운 층을 키우지 않는다
+    expect(config.layers.filter((l) => l.shape === 'stand').every((l) => l.scale === 1)).toBe(true);
+  });
+
+  it('v4 기준 카메라가 원화 배치(발 0.741, 키 0.24, 바닥 뒤 끝 0.51)를 맞춘다', () => {
+    const config = parseBackdropConfig(read('assets/map-gate3-v4/placement.json'));
+    const { back, height, lookAtHeight, fov } = config.camera;
+    //기준 카메라로 (0, y, z) 를 비춘 화면 세로 자리 (위 0, 아래 1)
+    const screenY = (y: number, z: number): number => {
+      const pitch = Math.atan2(height - lookAtHeight, back);
+      const dy = y - height;
+      const dz = back - z;
+      const forward = dz * Math.cos(pitch) - dy * Math.sin(pitch);
+      const up = dz * Math.sin(pitch) + dy * Math.cos(pitch);
+      return 0.5 - up / forward / Math.tan((fov * Math.PI) / 360) / 2;
+    };
+    expect(screenY(0, 0)).toBeCloseTo(0.741, 2);
+    expect(screenY(0, 0) - screenY(2, 0)).toBeCloseTo(0.24, 2);
+    expect(screenY(0, -5.5)).toBeCloseTo(0.51, 2);
   });
 });
