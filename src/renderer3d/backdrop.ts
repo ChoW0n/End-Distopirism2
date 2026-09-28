@@ -11,6 +11,8 @@ export class Backdrop {
   readonly homePosition: THREE.Vector3;
   readonly homeLookAt: THREE.Vector3;
   readonly fov: number;
+  //교전 중에 숨길 층의 재질 (근경)
+  readonly combatHidden: THREE.MeshBasicMaterial[] = [];
 
   constructor(
     private readonly scene: THREE.Scene,
@@ -40,6 +42,7 @@ export class Backdrop {
       texture.needsUpdate = true;
       const mesh = layer.shape === 'floor' ? this.floor(layer, texture) : this.stand(layer, texture);
       mesh.renderOrder = layer.order;
+      if (layer.hideInCombat) this.combatHidden.push(mesh.material as THREE.MeshBasicMaterial);
       this.scene.add(mesh);
     }
   }

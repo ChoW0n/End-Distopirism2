@@ -46,7 +46,10 @@
     "downTime": 0.6,
     "downSink": 0.25,
     "downOpacity": 0.35,
-    "heavyDamage": 25
+    "heavyDamage": 25,
+    "_hide": "§9.3 구경꾼 숨기기·§9.5.1 근경 숨기기에 걸리는 시간",
+    "bystanderFade": 0.15,
+    "foregroundFade": 0.25
   },
   "camera": {
     "focusSizeGain": 1.08,

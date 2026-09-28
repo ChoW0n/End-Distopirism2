@@ -67,6 +67,19 @@ export class Stage3D {
   //캐릭터별 장 텍스처. 재시작해도 다시 만들지 않는다
   private readonly textures = new Map<string, Map<string, THREE.Texture>>();
   private readonly worldPerPixel = new Map<string, number>();
+  //교전 중에 숨길 근경 재질과 그 투명도 손잡이
+  private readonly foreground: THREE.MeshBasicMaterial[];
+  private readonly foregroundFade = {
+    stage: this as Stage3D,
+    value: 1,
+    get v(): number {
+      return this.value;
+    },
+    set v(x: number) {
+      this.value = x;
+      for (const m of this.stage.foreground) m.opacity = x;
+    },
+  };
 
   constructor(
     private readonly canvas: HTMLCanvasElement,
@@ -85,6 +98,7 @@ export class Stage3D {
     this.scene.background = new THREE.Color(0x0e0c0b);
     const backdrop = new Backdrop(this.scene, backdropConfig);
     backdrop.build(backdropImages);
+    this.foreground = backdrop.combatHidden;
     this.camera = new THREE.PerspectiveCamera(backdrop.fov, canvas.width / canvas.height, 0.1, 300);
     this.rig = new CameraRig(this.camera, backdrop.homePosition, backdrop.homeLookAt, backdrop.fov, config.camera, config.shake);
     this.sparks = new SparkField(this.scene, config.sparks);
@@ -153,6 +167,7 @@ export class Stage3D {
       this.actors.set(entry.combatantId, { entry, doll, hp: entry.hp, mentality: entry.mentality });
     }
     this.overlay.setActors(roster.filter((r) => this.actors.has(r.combatantId)));
+    this.foregroundFade.v = 1;
     this.rig.snapHome();
   }
 
@@ -176,10 +191,13 @@ export class Stage3D {
           this.applyAll(stepEvents(step));
           continue;
         }
+        if (step.kind !== 'state') this.enterExchange(step.kind === 'oneSided' ? [step.attackerId, step.targetId] : [step.attackerId, step.defenderId]);
         if (step.kind === 'oneSided') await this.playOneSided(step, epoch);
         else if (step.kind === 'clash') await this.playClash(step, epoch);
         else this.applyState(step.event);
       }
+      //대기열이 비면 모두 다시 보이고 근경도 돌아온다
+      if (epoch === this.epoch) this.leaveExchange();
     } catch (error) {
       if (!(error instanceof Aborted)) console.error(error);
     } finally {
@@ -190,6 +208,28 @@ export class Stage3D {
   private stepOnStage(step: Exclude<StageStep, { kind: 'state' }>): boolean {
     const ids = step.kind === 'oneSided' ? [step.attackerId, step.targetId] : [step.attackerId, step.defenderId];
     return ids.every((id) => this.actors.has(id));
+  }
+
+  //교전 한 건을 연다. 참가자만 보이고 구경꾼·근경은 흐려져 사라진다 (SPEC-005 §9.3·§9.5.1)
+  private enterExchange(participants: readonly string[]): void {
+    const m = this.config.motion;
+    this.clock.tween(this.foregroundFade, 'v', 0, m.foregroundFade);
+    for (const [id, a] of this.actors) this.setShown(a.doll, participants.includes(id));
+  }
+
+  //교전이 다 끝났다. 모두 다시 보이고 근경도 돌아온다
+  private leaveExchange(): void {
+    this.clock.tween(this.foregroundFade, 'v', 1, this.config.motion.foregroundFade);
+    for (const a of this.actors.values()) this.setShown(a.doll, true);
+  }
+
+  //인형 하나를 보이거나 숨긴다. 쓰러진 인형은 쓰러짐 흐림으로 돌아간다
+  private setShown(d: PaperDoll, shown: boolean): void {
+    const m = this.config.motion;
+    if (d.hidden === !shown) return;
+    d.hidden = !shown;
+    const target = shown ? (d.down ? m.downOpacity : 1) : 0;
+    this.clock.tween(d.fade, 'v', target, m.bystanderFade);
   }
 
   //세대가 바뀌었으면 멈춘다. 모든 await 뒤에 부른다
@@ -323,16 +363,11 @@ export class Stage3D {
     d.down = true;
     d.setPose('hurt');
     this.sound.play('down');
-    const fade = {
-      get v(): number {
-        return d.opacityValue;
-      },
-      set v(x: number) {
-        d.setOpacity(x);
-      },
-    };
     await this.wait(
-      all(this.clock.tween(d.visual.position, 'y', -m.downSink, m.downTime, ease.outCubic), this.clock.tween(fade, 'v', m.downOpacity, m.downTime)),
+      all(
+        this.clock.tween(d.visual.position, 'y', -m.downSink, m.downTime, ease.outCubic),
+        this.clock.tween(d.fade, 'v', d.hidden ? 0 : m.downOpacity, m.downTime),
+      ),
       epoch,
     );
   }
@@ -495,7 +530,7 @@ export class Stage3D {
   //머리 위 화면 좌표 (0~1). lift 는 캐릭터 키 비율로 더 올린다
   private headPoint(id: string, lift: number): ScreenPoint {
     const a = this.actors.get(id);
-    if (!a) return null;
+    if (!a || a.doll.hidden) return null;
     const d = a.doll;
     const h = this.config.layout.characterHeight;
     const p = new THREE.Vector3(d.root.position.x + d.visual.position.x * d.root.scale.x, h * (1.05 + lift) + d.visual.position.y, d.root.position.z).project(this.camera);
@@ -520,7 +555,7 @@ export class Stage3D {
     const rect = this.canvas.getBoundingClientRect();
     const ndc = new THREE.Vector2(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
     this.raycaster.setFromCamera(ndc, this.camera);
-    const targets = [...this.actors.values()].filter((a) => !a.doll.down).map((a) => a.doll.pickTarget).filter((t): t is THREE.Object3D => t !== null);
+    const targets = [...this.actors.values()].filter((a) => !a.doll.down && !a.doll.hidden).map((a) => a.doll.pickTarget).filter((t): t is THREE.Object3D => t !== null);
     const hit = this.raycaster.intersectObjects(targets, false)[0];
     return hit ? ((hit.object.userData['combatantId'] as string | undefined) ?? null) : null;
   }

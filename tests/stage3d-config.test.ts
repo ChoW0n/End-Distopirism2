@@ -42,10 +42,11 @@ describe('카일 1대1 무대 (SPEC-001 §7 [D-22])', () => {
     expect(config.battle.artAlias['remnantWalker']).toBe('kyle');
   });
 
-  it('제3 수문 층을 읽는다. 근경은 3D 에 세우지 않는다', () => {
+  it('제3 수문 층을 읽는다. 근경은 교전 중에 숨긴다 (SPEC-005 §9.5.1)', () => {
     const config = parseBackdropConfig(read('assets/map-gate3/placement.json'));
     const files = config.layers.map((l) => l.file);
-    expect(files).toEqual(['01-far-gallery.png', '02-gate-booth.png', '03-battle-floor.png', '04-water.png']);
+    expect(files).toEqual(['01-far-gallery.png', '02-gate-booth.png', '03-battle-floor.png', '04-water.png', '05-foreground.png']);
+    expect(config.layers.filter((l) => l.hideInCombat).map((l) => l.file)).toEqual(['05-foreground.png']);
     expect(config.layers.find((l) => l.file === '04-water.png')?.shape).toBe('floor');
     expect(config.camera).toMatchObject({ back: 11.46, height: 3.96 });
   });

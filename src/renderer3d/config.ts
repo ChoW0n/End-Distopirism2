@@ -38,6 +38,9 @@ export interface MotionConfig {
   downSink: number;
   downOpacity: number;
   heavyDamage: number;
+  //교전에 끼지 않은 인형·근경이 흐려져 사라지는 시간 (SPEC-005 §9.3·§9.5.1)
+  bystanderFade: number;
+  foregroundFade: number;
 }
 
 export interface CameraConfig {
@@ -133,6 +136,8 @@ export interface BackdropLayer {
   mirrorY: boolean;
   //그리기 순서. 인형은 10 대, 근경은 인형보다 크게
   order: number;
+  //교전 중에는 숨긴다 (근경. SPEC-005 §9.5.1)
+  hideInCombat: boolean;
 }
 
 //기준 카메라와 배경 층들
@@ -183,6 +188,7 @@ export function parseStage3dConfig(raw: unknown): Stage3dConfig {
       'knockPerDamage', 'knockMax', 'staggerDrop', 'staggerHold', 'lingerAfterHit', 'strikeTrailTime',
       'strikeTrailPeakShare', 'settleTime', 'settleAmplitude', 'settlePeriod', 'returnTime', 'clashWinnerRecoil',
       'clashPush', 'deadlockPush', 'reengageTime', 'roundRest', 'downTime', 'downSink', 'downOpacity', 'heavyDamage',
+      'bystanderFade', 'foregroundFade',
     ]),
     camera: numbers<CameraConfig>(root['camera'], 'camera', ['focusSizeGain', 'focusHeight', 'panYawDeg', 'dutchDeg', 'fovZoom', 'followTime', 'returnFollowTime']),
     shake: numbers<ShakeConfig>(root['shake'], 'shake', [
@@ -248,6 +254,7 @@ export function parseBackdropConfig(raw: unknown): BackdropConfig {
       mirrorX: spec['mirrorOutsideX'] === true,
       mirrorY: spec['mirrorOutsideY'] === true,
       order: n('order', shape === 'floor' ? -10 : -20),
+      hideInCombat: spec['hideInCombat'] === true,
     });
   }
   return { camera, standSpread: spread, scaleAnchor: [anchor[0] as number, anchor[1] as number], layers };

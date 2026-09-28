@@ -28,6 +28,18 @@ export class PaperDoll {
   //판 투명도. 쓰러지면 흐려진다
   private opacity = 1;
   down = false;
+  //교전에 끼지 않아 숨겨진 상태 (SPEC-005 §9.3)
+  hidden = false;
+  //투명도를 트윈할 손잡이. 쓰러짐·숨기기가 같은 손잡이를 써서 서로 끊는다
+  readonly fade = {
+    doll: this as PaperDoll,
+    get v(): number {
+      return this.doll.opacity;
+    },
+    set v(x: number) {
+      this.doll.setOpacity(x);
+    },
+  };
 
   //장 id 들. 카드 슬롯마다 몇 장인지 매니페스트가 정한다
   constructor(
@@ -141,6 +153,7 @@ export class PaperDoll {
     this.root.position.copy(this.home);
     this.visual.position.set(0, 0, 0);
     this.down = false;
+    this.hidden = false;
     this.setOpacity(1);
     this.setPose('idle');
   }
