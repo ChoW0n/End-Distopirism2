@@ -69,6 +69,8 @@ namespace EndDistopirism.Presentation
         private Vector3 rootScaleAbs = Vector3.one;
         //대기 자리. 공격자가 돌진했다 돌아올 곳이다
         private Vector3 home;
+        //구경꾼 흐림 트윈. 새로 걸 때 앞 것을 끊는다
+        private Tween fadeTween;
 
         //무대에 켜져 있는 인형들. 연출 감독이 카메라 쪽으로 세울 때 쓴다
         private static readonly HashSet<Limbus25DActor> active = new HashSet<Limbus25DActor>();
@@ -223,6 +225,23 @@ namespace EndDistopirism.Presentation
             //Visual 배율은 늘 양수. 음수가 섞이면 그림이 한 번 더 뒤집힌다
             Vector3 s = visual.localScale;
             if (s.x < 0f || s.y < 0f || s.z < 0f) visual.localScale = new Vector3(Mathf.Abs(s.x), Mathf.Abs(s.y), Mathf.Abs(s.z));
+        }
+
+        //교전에 끼지 않으면 흐려져 사라지고, 차례가 오면 다시 보인다 (SPEC-005 §9.3 구경꾼 숨기기)
+        //색의 알파만 바꾼다. 판 배율·회전은 건드리지 않는다. 실제 시간으로 돈다
+        public void SetShown(bool shown, float seconds)
+        {
+            if (spriteRenderer == null) return;
+            float target = shown ? 1f : 0f;
+            fadeTween?.Kill();
+            fadeTween = DOTween.To(() => spriteRenderer.color.a, a =>
+                {
+                    Color c = spriteRenderer.color;
+                    c.a = a;
+                    spriteRenderer.color = c;
+                }, target, Mathf.Max(0f, seconds))
+                .SetUpdate(true)
+                .SetLink(gameObject);
         }
 
         //몸짓을 대기 상태로 즉시 되돌린다. 교전이 끊겼을 때 쓴다

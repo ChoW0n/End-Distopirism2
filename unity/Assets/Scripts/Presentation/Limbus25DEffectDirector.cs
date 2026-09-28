@@ -124,6 +124,10 @@ namespace EndDistopirism.Presentation
             public float returnTime = 0.3f;
             [Header("맞부딪힘에서 이긴 쪽이 튕기는 거리")]
             public float clashWinnerRecoil = 0.25f;
+            [Tooltip("교전에 끼지 않은 인형이 흐려져 사라지는 시간 (SPEC-005 §9.3)")]
+            public float bystanderFade = 0.15f;
+            [Tooltip("근경이 교전 시작에 사라지고 교전 사이에 다시 보이는 시간 (SPEC-005 §9.5.1)")]
+            public float foregroundFade = 0.25f;
         }
 
         //카메라 수치 (SPEC-005 §8.4)
@@ -243,6 +247,10 @@ namespace EndDistopirism.Presentation
         [Tooltip("움직일 트랜스폼. 비어 있으면 카메라 자신")]
         [SerializeField] private Transform cameraRig;
 
+        [Header("무대")]
+        [Tooltip("근경을 교전 중에 숨길 배경. 비어 있으면 장면에서 찾는다")]
+        [SerializeField] private Limbus25DStageBackdrop backdrop;
+
         [SerializeField] private MotionSettings motion = new MotionSettings();
         [SerializeField] private CameraSettings cameraSettings = new CameraSettings();
         [SerializeField] private ShakeSettings shake = new ShakeSettings();
@@ -296,6 +304,7 @@ namespace EndDistopirism.Presentation
         {
             if (targetCamera == null) targetCamera = Camera.main;
             if (cameraRig == null && targetCamera != null) cameraRig = targetCamera.transform;
+            if (backdrop == null) backdrop = FindObjectOfType<Limbus25DStageBackdrop>();
             CaptureCameraHome();
         }
 
@@ -369,6 +378,7 @@ namespace EndDistopirism.Presentation
                 while (queue.Count > 0 && lifetime != null)
                 {
                     PresentationCue cue = queue.Dequeue();
+                    EnterExchange(cue);
                     try
                     {
                         await PlayAsync(cue, lifetime.Token);
@@ -388,6 +398,28 @@ namespace EndDistopirism.Presentation
             finally
             {
                 running = false;
+                LeaveExchange();
+            }
+        }
+
+        //교전 한 건이 시작된다. 근경을 숨기고, 이 교전의 두 사람만 남긴다 (SPEC-005 §9.3·§9.5.1)
+        private void EnterExchange(PresentationCue cue)
+        {
+            if (backdrop != null) backdrop.SetCombat(true, motion.foregroundFade);
+            foreach (Limbus25DActor actor in Limbus25DActor.Active)
+            {
+                if (actor == null) continue;
+                actor.SetShown(actor == cue.attacker || actor == cue.defender, motion.bystanderFade);
+            }
+        }
+
+        //대기열이 비었다. 입력·대기 동안은 모두 다시 보인다
+        private void LeaveExchange()
+        {
+            if (backdrop != null) backdrop.SetCombat(false, motion.foregroundFade);
+            foreach (Limbus25DActor actor in Limbus25DActor.Active)
+            {
+                if (actor != null) actor.SetShown(true, motion.bystanderFade);
             }
         }
 

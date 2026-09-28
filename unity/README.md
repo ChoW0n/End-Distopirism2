@@ -12,12 +12,15 @@
 
 ## 카일 1대1 무대 꾸리기
 
-1. 카메라: **Perspective**. 빈 오브젝트 `Stage` 에 `Limbus25DStageBackdrop` 을 붙이고 층 그림(far·mid·ground)을 넣는다.
-   카메라는 시작할 때 기준 자세로 옮겨진다 (SPEC-005 §8.8). 캐릭터는 z=0 줄에, 배경은 +Z 쪽에 선다
+1. 카메라: **Perspective**. 빈 오브젝트 `Stage` 에 `Limbus25DStageBackdrop` 을 붙이고 층 그림을 넣는다.
+   기본값은 제3 수문(`assets/map-gate3/placement.json`) 5층이다: far `01-far-gallery` · booth `02-gate-booth` · floor `03-battle-floor` ·
+   water `04-water` · front `05-foreground`. 카메라는 시작할 때 기준 자세로 옮겨진다 (SPEC-005 §8.8). 캐릭터는 z=0 줄에, 배경은 +Z 쪽에 선다
+   - front(근경)는 카메라 쪽 z=−4 에 서고 `hideInCombat` 이 켜져 있다. 교전 중에는 숨고 교전 사이에만 보인다 (SPEC-005 §9.5.1)
    - 층 그림 임포트: Texture Type `Default`, Alpha Is Transparency 켬, Read/Write 불필요
-2. 빈 오브젝트 `Director` 에 `Limbus25DEffectDirector` 를 붙이고 카메라를 넣는다
+2. 빈 오브젝트 `Director` 에 `Limbus25DEffectDirector` 를 붙이고 카메라를 넣는다. `backdrop` 칸은 비워도 장면에서 찾는다.
+   교전 한 건이 도는 동안 끼지 않은 인형은 흐려져 숨는다 (SPEC-005 §9.3)
 3. 캐릭터마다: 루트 오브젝트 → 자식 `Visual` → 자식 `SpriteRenderer`. 루트에 `Limbus25DActor`
-   - 카일: 장마다 원화 방향 체크 — 모든 장이 오른쪽이라 전부 켬(기본값). 다른 캐릭터는 장마다 얼굴이 향한 쪽을 보고 체크한다. 장: 대기 `01-idle` · 준비 `02-preload` · 돌진 `03-user` · 타격 `slash/01-peak` · 타격 뒤 궤적 `slash/01~07` · 회복 `06-recover`
+   - 카일: 장마다 원화 방향 체크 — 모든 장이 오른쪽이라 전부 켬(기본값). 다른 캐릭터는 장마다 얼굴이 향한 쪽을 보고 체크한다. 장: 대기 `01-idle` · 준비 `02-preload` · 돌진 `03-user` · 타격 `slash/01-peak` · 타격 뒤 궤적 `slash/01~07` · 회복 `06-recover` · 피격 `frames/05-hit-canvas`
    - 아군이면 `playerSide` 켬 (결과 알림은 아군에게만 뜬다, SPEC-005 §8.10). 시험 무대는 카일을 자동으로 켠다
    - 스프라이트 피벗은 **발(아래 가운데)**. 카일 PNG 는 1280×720 캔버스라 Sprite Editor 에서 피벗을 발 위치로 맞춘다
    - 적 그림이 아직 없으면 적 액터에도 카일 장을 넣는다 (자리 표시. 이름표에 적는다)

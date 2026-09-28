@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using DG.Tweening;
 using UnityEngine;
 
 namespace EndDistopirism.Presentation
@@ -13,7 +14,7 @@ namespace EndDistopirism.Presentation
         //층 모양. 세운 판이거나 바닥 판이다
         public enum Shape { Stand, Floor }
 
-        //배경 한 층. 수치는 assets/map/placement.json 과 같다
+        //배경 한 층. 수치는 assets/<맵>/placement.json 의 projection 과 같다
         [System.Serializable]
         public sealed class Layer
         {
@@ -26,7 +27,7 @@ namespace EndDistopirism.Presentation
             public float scale = 1f;
             [Tooltip("세운 판: 키운 뒤 화면 아래로 내리는 양(화면 높이 비율). 구조물 밑동을 바닥 턱 뒤로 묻는다")]
             public float offsetY = 0f;
-            [Tooltip("세운 판: 무대 줄(z=0)에서 뒤로 떨어진 거리")]
+            [Tooltip("세운 판: 무대 줄(z=0)에서 뒤로 떨어진 거리. 음수면 카메라 쪽(근경)")]
             public float depth = 20f;
             [Tooltip("바닥 판: 카메라 쪽 끝(음수)과 먼 쪽 끝")]
             public Vector2 floorRange = new Vector2(-14f, 40f);
@@ -39,6 +40,8 @@ namespace EndDistopirism.Presentation
             public int sortingOrder = -30;
             [Tooltip("판을 잘게 나눈 수. 투영 좌표를 꼭짓점마다 구하므로 바닥은 촘촘해야 한다")]
             public Vector2Int segments = new Vector2Int(24, 24);
+            [Tooltip("교전 중에는 숨기고 교전 사이에만 보인다. 근경에 켠다 (SPEC-005 §9.5.1)")]
+            public bool hideInCombat;
         }
 
         [Header("기준 카메라 (원화 합성과 맞춘 대기 카메라)")]
@@ -46,29 +49,31 @@ namespace EndDistopirism.Presentation
         [SerializeField] private Camera targetCamera;
         [Tooltip("시작할 때 카메라를 기준 자세로 옮긴다. 연출 감독이 이 자세를 대기 자세로 기억한다")]
         [SerializeField] private bool alignCameraOnAwake = true;
-        [Tooltip("무대 줄 앞으로 떨어진 거리와 높이 (발 0.76 · 키 0.3 · 바닥 뒤 경계 0.445 를 맞춘 값)")]
-        [SerializeField] private float cameraBack = 9.17f;
-        [SerializeField] private float cameraHeight = 3.3f;
+        [Tooltip("무대 줄 앞으로 떨어진 거리와 높이 (제3 수문: 발 0.765 · 키 0.24 · 바닥 뒤 경계 0.487 을 맞춘 값)")]
+        [SerializeField] private float cameraBack = 11.46f;
+        [SerializeField] private float cameraHeight = 3.96f;
         [Tooltip("무대 줄(z=0)에서 카메라가 바라보는 높이")]
-        [SerializeField] private float lookAtHeight = 1.742f;
+        [SerializeField] private float lookAtHeight = 2.202f;
         [SerializeField] private float fieldOfView = 38f;
-        [SerializeField] private float aspect = 16f / 9f;
+        [SerializeField] private float aspect = 1672f / 941f;
         [Tooltip("세운 층을 기준 카메라 화면 좌우로 몇 배까지 넓게 세울지. 카메라가 측면으로 24° 돌아도 덮는다")]
         [SerializeField] private float standSpread = 4f;
 
         [Tooltip("층을 키울 때 기준점. 화면 좌상단 원점 비율 (바닥 경계 가운데)")]
-        [SerializeField] private Vector2 scaleAnchor = new Vector2(0.5f, 0.445f);
+        [SerializeField] private Vector2 scaleAnchor = new Vector2(0.5f, 0.467f);
 
         [Header("재질")]
         [Tooltip("투명 언릿 재질. 비어 있으면 Sprites/Default 로 만든다")]
         [SerializeField] private Material baseMaterial;
 
-        [Header("층 (먼 것부터)")]
+        [Header("층 (먼 것부터). 기본값은 제3 수문 (assets/map-gate3/placement.json)")]
         [SerializeField] private List<Layer> layers = new List<Layer>
         {
-            new Layer { name = "far", shape = Shape.Stand, screenRect = new Rect(-0.02f, -0.02f, 1.04f, 1.04f), depth = 70f, scale = 2.1f, sortingOrder = -30, segments = new Vector2Int(96, 24) },
-            new Layer { name = "mid", shape = Shape.Stand, screenRect = new Rect(-0.02f, -0.08f, 1.04f, 1.04f), depth = 22f, scale = 2.0f, offsetY = 0.022f, sortingOrder = -20, segments = new Vector2Int(96, 24) },
-            new Layer { name = "ground", shape = Shape.Floor, screenRect = new Rect(0f, -0.158f, 1f, 1.158f), floorRange = new Vector2(-14f, 40f), halfWidth = 120f, mirrorOutsideY = true, sortingOrder = -10, segments = new Vector2Int(240, 160) },
+            new Layer { name = "far", shape = Shape.Stand, depth = 70f, scale = 2.1f, sortingOrder = -30, segments = new Vector2Int(96, 24) },
+            new Layer { name = "booth", shape = Shape.Stand, depth = 19f, scale = 2.0f, sortingOrder = -20, segments = new Vector2Int(96, 24) },
+            new Layer { name = "floor", shape = Shape.Floor, floorRange = new Vector2(-14f, 40f), halfWidth = 120f, mirrorOutsideY = true, sortingOrder = -10, segments = new Vector2Int(240, 160) },
+            new Layer { name = "water", shape = Shape.Floor, floorRange = new Vector2(-14f, 40f), halfWidth = 120f, mirrorOutsideX = false, sortingOrder = -9, segments = new Vector2Int(240, 160) },
+            new Layer { name = "front", shape = Shape.Stand, depth = -4f, scale = 1f, mirrorOutsideX = false, sortingOrder = 50, hideInCombat = true, segments = new Vector2Int(96, 24) },
         };
 
         //기준 카메라의 월드→클립 행렬과 자세
@@ -76,6 +81,8 @@ namespace EndDistopirism.Presentation
         private Vector3 paintPosition;
         private Quaternion paintRotation;
         private readonly List<GameObject> built = new List<GameObject>();
+        //교전 중에 숨길 층의 재질 (근경)
+        private readonly List<Material> combatHidden = new List<Material>();
 
         //기준 카메라를 세우고, 층마다 판을 만들어 비춘다
         private void Awake()
@@ -105,6 +112,7 @@ namespace EndDistopirism.Presentation
         {
             foreach (GameObject go in built) if (go != null) Destroy(go);
             built.Clear();
+            combatHidden.Clear();
             foreach (Layer layer in layers)
             {
                 if (layer.texture == null) continue;
@@ -187,10 +195,26 @@ namespace EndDistopirism.Presentation
             layer.texture.wrapModeU = layer.mirrorOutsideX ? TextureWrapMode.Mirror : TextureWrapMode.Clamp;
             layer.texture.wrapModeV = layer.mirrorOutsideY ? TextureWrapMode.Mirror : TextureWrapMode.Clamp;
             renderer.sharedMaterial = material;
+            if (layer.hideInCombat) combatHidden.Add(material);
             renderer.sortingOrder = layer.sortingOrder;
             renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
             renderer.receiveShadows = false;
             return go;
+        }
+
+        //교전이 시작되면 근경을 흐려 숨기고, 교전 사이에는 다시 보인다 (SPEC-005 §9.5.1)
+        //실제 시간으로 돈다. 역경직에 멈추지 않는다
+        public void SetCombat(bool inCombat, float seconds)
+        {
+            float target = inCombat ? 0f : 1f;
+            foreach (Material material in combatHidden)
+            {
+                if (material == null) continue;
+                material.DOKill();
+                //URP 언릿은 _BaseColor, 스프라이트 기본 재질은 _Color 에 색이 있다
+                string property = material.HasProperty("_BaseColor") ? "_BaseColor" : "_Color";
+                material.DOFade(target, property, Mathf.Max(0f, seconds)).SetUpdate(true).SetLink(gameObject);
+            }
         }
 
         //월드 한 점을 기준 카메라 화면에 찍어 그 층 그림의 좌표로 바꾼다
