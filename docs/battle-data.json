@@ -262,9 +262,9 @@
       "attribute": "attack",
       "baseDamage": 8,
       "coinPower": 4,
-      "archetype": "표준",
+      "archetype": "도박",
       "maxInDeck": 1,
-      "text": "1타. 합 승리 시 공격 속성 +1"
+      "text": "1타. 합 승리 시 궁극기 게이지 +1"
     },
     {
       "id": 2042,
@@ -273,26 +273,6 @@
       "slot": "S2",
       "attribute": "defense",
       "baseDamage": 6,
-      "coinPower": 3,
-      "archetype": "안정",
-      "maxInDeck": 1,
-      "effect": {
-        "timing": "beforeDamage",
-        "onWin": {
-          "type": "damageModifier",
-          "target": "self",
-          "amount": 3
-        }
-      },
-      "text": "2타. 합에서 이기면 피해 +3 (반격). 합 승리 시 방어 속성 +1"
-    },
-    {
-      "id": 2043,
-      "name": "카일 S3",
-      "character": "kyle",
-      "slot": "S3",
-      "attribute": "support",
-      "baseDamage": 7,
       "coinPower": 3,
       "archetype": "도박",
       "maxInDeck": 1,
@@ -305,7 +285,27 @@
           "turns": 1
         }
       },
-      "text": "3타. 합에서 이기면 상대 방어력감소 1턴. 합 승리 시 보조 속성 +1"
+      "text": "2타. 합에서 이기면 상대 방어력감소 1턴. 합 승리 시 궁극기 게이지 +1"
+    },
+    {
+      "id": 2043,
+      "name": "카일 S3",
+      "character": "kyle",
+      "slot": "S3",
+      "attribute": "support",
+      "baseDamage": 7,
+      "coinPower": 3,
+      "archetype": "도박",
+      "maxInDeck": 1,
+      "effect": {
+        "timing": "beforeDamage",
+        "onWin": {
+          "type": "damageModifier",
+          "target": "self",
+          "amount": 3
+        }
+      },
+      "text": "3타. 합에서 이기면 피해 +3. 합 승리 시 궁극기 게이지 +1"
     },
     {
       "_comment": "걸음 잔형. SPEC-001 §7 [D-22] 제안값",

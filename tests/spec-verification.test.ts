@@ -307,9 +307,17 @@ describe('§7 [D-22] 카일·걸음 잔형 제안값', () => {
     expect(skill).toMatchObject({ attribute: row.attribute, baseDamage: row.baseDamage, coinPower: row.coinPower });
   });
 
-  it('카일 S1 은 물금이고, 반격은 S2 에 있다', () => {
+  it('카일 S1 은 물금이고, S2 가 틈을 드러내고 S3 가 그 틈을 친다', () => {
     expect(catalog.skill(skillOf('kyle', 'S1')).name).toBe('물금');
-    expect(catalog.skill(skillOf('kyle', 'S2')).effect?.onWin).toMatchObject({ type: 'damageModifier', amount: 3 });
+    expect(catalog.skill(skillOf('kyle', 'S2')).effect?.onWin).toMatchObject({ type: 'applyStatus', status: 'defenseDown', turns: 1 });
+    expect(catalog.skill(skillOf('kyle', 'S3')).effect?.onWin).toMatchObject({ type: 'damageModifier', amount: 3 });
+  });
+
+  it('카일 카드 설명에 역할(속성 이름)을 드러내지 않는다', () => {
+    for (const slot of ['S1', 'S2', 'S3'] as const) {
+      const text = catalog.skill(skillOf('kyle', slot)).text;
+      expect(text).not.toMatch(/공격 속성|방어 속성|보조 속성/);
+    }
   });
 
   it('카일 스탯이 표와 같다', () => {
