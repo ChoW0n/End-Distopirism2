@@ -20,6 +20,8 @@ namespace EndDistopirism.Presentation
         [SerializeField] private int staggerAt = 26;
         [Tooltip("몇 번째 교전마다 맞부딪힘으로 할지")]
         [SerializeField] private int clashEvery = 3;
+        [Tooltip("맞부딪힘 한 건의 최대 라운드 수")]
+        [SerializeField] private int maxRounds = 3;
         [SerializeField] private float pauseBetween = 0.45f;
         [SerializeField] private bool autoPlay = true;
 
@@ -71,20 +73,41 @@ namespace EndDistopirism.Presentation
 
             if (clashEvery > 0 && exchange % clashEvery == 0)
             {
-                //맞부딪힘은 이긴 쪽이 친다. 가짜 계산이라 반반이다
-                bool kyleWins = rng.Next(2) == 0;
-                Limbus25DActor winner = kyleWins ? kyle : enemy;
-                Limbus25DActor loser = kyleWins ? enemy : kyle;
-                //가짜 위력. 실제로는 SPEC-007 §4.2 위력 비교 결과와 원인 문장이 어댑터에서 온다
-                int winPower = rng.Next(12, 21);
-                int losePower = rng.Next(6, winPower);
-                director.Enqueue(PresentationCue.Clash(winner, loser, damage, stagger).WithCallouts(
-                    new CueCallout(winner, true, $"위력 {winPower} > {losePower}"),
-                    new CueCallout(loser, false, $"위력 열세 {losePower} < {winPower}")));
+                director.Enqueue(FakeClash(damage, stagger));
                 return;
             }
             director.Enqueue(PresentationCue.OneSided(attacker, defender, damage, stagger).WithCallouts(
                 new CueCallout(attacker, true, "")));
+        }
+
+        //가짜 맞부딪힘. 라운드 1~maxRounds 번, 가끔 교착이 끼고 마지막 라운드에서 이긴 쪽이 친다
+        //실제로는 도메인 이벤트(clashRoundWin·deadlock)와 위력 값이 어댑터에서 온다 (SPEC-005 §9.2)
+        private PresentationCue FakeClash(int damage, bool stagger)
+        {
+            int count = rng.Next(1, Mathf.Max(1, maxRounds) + 1);
+            var rounds = new CueRound[count];
+            Limbus25DActor last = null;
+            for (int i = 0; i < count; i++)
+            {
+                bool final = i == count - 1;
+                if (!final && rng.Next(3) == 0)
+                {
+                    int tie = rng.Next(8, 18);
+                    rounds[i] = CueRound.Deadlock(new CueCallout(kyle, false, $"위력 {tie} = {tie}", "교착"));
+                    continue;
+                }
+                bool kyleWins = rng.Next(2) == 0;
+                Limbus25DActor winner = kyleWins ? kyle : enemy;
+                Limbus25DActor loser = kyleWins ? enemy : kyle;
+                int winPower = rng.Next(12, 21);
+                int losePower = rng.Next(6, winPower);
+                rounds[i] = CueRound.Win(winner, loser,
+                    kyleWins
+                        ? new CueCallout(kyle, true, $"위력 {winPower} > {losePower}", "합 승리")
+                        : new CueCallout(kyle, false, $"위력 열세 {losePower} < {winPower}", "합 패배"));
+                last = winner;
+            }
+            return PresentationCue.ClashRounds(kyle, enemy, rounds, last, damage, stagger);
         }
     }
 }

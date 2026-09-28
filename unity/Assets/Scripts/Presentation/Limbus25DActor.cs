@@ -11,7 +11,7 @@ namespace EndDistopirism.Presentation
     public sealed class Limbus25DActor : MonoBehaviour
     {
         //장 종류. 그림이 없으면 대기 장으로 떨어진다
-        public enum Pose { Idle, Windup, Dash, Strike, Recover, Hurt }
+        public enum Pose { Idle, Windup, Dash, Strike, Recover, Hurt, Guard }
 
         [Header("구조")]
         [Tooltip("몸짓을 거는 자식. 비어 있으면 첫 번째 자식을 쓴다")]
@@ -29,6 +29,7 @@ namespace EndDistopirism.Presentation
         [SerializeField] private bool strikeFacesRight = true;
         [SerializeField] private bool recoverFacesRight = true;
         [SerializeField] private bool hurtFacesRight = true;
+        [SerializeField] private bool guardFacesRight = true;
         [SerializeField] private bool strikeTrailFacesRight = true;
 
         [Header("장 (없으면 대기 장)")]
@@ -38,6 +39,8 @@ namespace EndDistopirism.Presentation
         [SerializeField] private Sprite strike;
         [SerializeField] private Sprite recover;
         [SerializeField] private Sprite hurt;
+        [Tooltip("합에서 밀릴 때 막는 장 (카일 02-preload)")]
+        [SerializeField] private Sprite guard;
         [Tooltip("타격 뒤 이어 트는 장. 베기 궤적이 사라지는 순서대로 넣는다 (카일 slash 01~07)")]
         [SerializeField] private Sprite[] strikeTrail;
 
@@ -150,6 +153,7 @@ namespace EndDistopirism.Presentation
                 Pose.Strike => (strike, strikeFacesRight),
                 Pose.Recover => (recover, recoverFacesRight),
                 Pose.Hurt => (hurt, hurtFacesRight),
+                Pose.Guard => (guard, guardFacesRight),
                 _ => (idle, idleFacesRight),
             };
             if (chosen == null) { chosen = idle; right = idleFacesRight; }

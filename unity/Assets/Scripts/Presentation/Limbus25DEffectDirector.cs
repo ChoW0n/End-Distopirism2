@@ -22,12 +22,41 @@ namespace EndDistopirism.Presentation
         public bool success;
         //작은 줄. 성공이면 위력 비교, 패배면 원인 한 줄. 비어 있어도 된다
         public string reason;
+        //큰 줄. 비어 있으면 감독의 기본 문구(공격 성공·패배)를 쓴다. 합 라운드는 합 승리·합 패배·교착
+        public string headline;
 
-        public CueCallout(Limbus25DActor actor, bool success, string reason)
+        public CueCallout(Limbus25DActor actor, bool success, string reason, string headline = null)
         {
             this.actor = actor;
             this.success = success;
             this.reason = reason;
+            this.headline = headline;
+        }
+    }
+
+    //맞부딪힘 한 라운드의 결과. 이기면 진 쪽이 밀리고, 교착이면 둘 다 조금 밀린다 (SPEC-005 §9.3)
+    public enum RoundKind { Win, Deadlock }
+
+    //맞부딪힘 한 라운드. 교착이면 winner·loser 를 비워 둔다
+    [Serializable]
+    public struct CueRound
+    {
+        public RoundKind kind;
+        public Limbus25DActor winner;
+        public Limbus25DActor loser;
+        //이 라운드에 달려갈 때 띄울 결과 알림. 아군 쪽 것만 뜬다
+        public CueCallout[] callouts;
+
+        //이긴 라운드를 만든다
+        public static CueRound Win(Limbus25DActor winner, Limbus25DActor loser, params CueCallout[] callouts)
+        {
+            return new CueRound { kind = RoundKind.Win, winner = winner, loser = loser, callouts = callouts };
+        }
+
+        //교착 라운드를 만든다
+        public static CueRound Deadlock(params CueCallout[] callouts)
+        {
+            return new CueRound { kind = RoundKind.Deadlock, callouts = callouts };
         }
     }
 
@@ -46,6 +75,10 @@ namespace EndDistopirism.Presentation
         public EffectLayer impactLayer;
         //결과 알림. 아군 쪽 것만 뜬다
         public CueCallout[] callouts;
+        //맞부딪힘 라운드 목록. 있으면 attacker·defender 는 합을 건 쪽·받은 쪽이고, 붙은 채로 라운드를 이어 간다
+        public CueRound[] rounds;
+        //마지막에 진 쪽을 치는 쪽. 비어 있으면 마무리가 없다 (교착 한도로 끝남)
+        public Limbus25DActor finisher;
 
         //결과 알림을 붙인 사본을 돌려준다
         public PresentationCue WithCallouts(params CueCallout[] list)
@@ -65,6 +98,16 @@ namespace EndDistopirism.Presentation
         public static PresentationCue Clash(Limbus25DActor winner, Limbus25DActor loser, int damage, bool stagger = false)
         {
             return new PresentationCue { attacker = winner, defender = loser, kind = CueKind.Clash, damage = damage, stagger = stagger, impactLayer = EffectLayer.Front };
+        }
+
+        //라운드가 여러 번인 맞부딪힘을 만든다. finisher 가 비어 있지 않으면 마지막에 상대를 damage 만큼 친다
+        public static PresentationCue ClashRounds(Limbus25DActor attacker, Limbus25DActor defender, CueRound[] rounds, Limbus25DActor finisher, int damage, bool stagger = false)
+        {
+            return new PresentationCue
+            {
+                attacker = attacker, defender = defender, kind = CueKind.Clash, rounds = rounds, finisher = finisher,
+                damage = damage, stagger = stagger, impactLayer = EffectLayer.Front,
+            };
         }
     }
 
@@ -128,6 +171,14 @@ namespace EndDistopirism.Presentation
             public float bystanderFade = 0.15f;
             [Tooltip("근경이 교전 시작에 사라지고 교전 사이에 다시 보이는 시간 (SPEC-005 §9.5.1)")]
             public float foregroundFade = 0.25f;
+            [Tooltip("맞부딪힘 라운드에서 진 쪽이 밀리는 거리")]
+            public float clashPush = 0.55f;
+            [Tooltip("교착 라운드에서 둘 다 밀리는 거리")]
+            public float deadlockPush = 0.35f;
+            [Tooltip("붙은 자리에서 다시 부딪히는 짧은 재돌진 시간. 마무리 돌진도 이 시간")]
+            public float reengageTime = 0.12f;
+            [Tooltip("라운드 사이 쉼 (게임 시간)")]
+            public float roundRest = 0.18f;
         }
 
         //카메라 수치 (SPEC-005 §8.4)
@@ -167,6 +218,8 @@ namespace EndDistopirism.Presentation
             public float kickDamping = 18f;
             [Header("화각 펀치")]
             public float fovPunch = 3.5f;
+            [Tooltip("피해 없는 합 충돌의 흔들림 세기 (0~1)")]
+            [Range(0f, 1f)] public float clashPower = 0.35f;
         }
 
         //역경직 수치 (SPEC-005 §8.5)
@@ -178,6 +231,8 @@ namespace EndDistopirism.Presentation
             public float baseSeconds = 0.03f;
             public float perDamageSeconds = 0.002f;
             public float maxSeconds = 0.09f;
+            [Tooltip("피해 없는 합 충돌의 역경직")]
+            public float clashSeconds = 0.05f;
         }
 
         //이펙트 배치 수치 (SPEC-005 §8.6)
@@ -432,6 +487,11 @@ namespace EndDistopirism.Presentation
             Limbus25DActor defender = cue.defender;
             if (attacker == null || defender == null) return;
             bool clash = cue.kind == CueKind.Clash;
+            if (clash && cue.rounds != null && cue.rounds.Length > 0)
+            {
+                await PlayClashRoundsAsync(cue, token);
+                return;
+            }
             float dir = Mathf.Sign(defender.transform.position.x - attacker.transform.position.x);
             if (dir == 0f) dir = attacker.Facing;
             float power = Mathf.Clamp01(cue.damage / Mathf.Max(1f, shake.damageForMaxShake));
@@ -502,6 +562,107 @@ namespace EndDistopirism.Presentation
             defender.SetPose(Limbus25DActor.Pose.Idle);
         }
 
+        //── 여러 라운드 맞부딪힘 (SPEC-005 §9.3) ──
+
+        //초점 → 둘 다 선딜레이 → 라운드마다 (돌진·재돌진 → 부딪힘 → 밀림) → 마무리 한 방 → 복귀
+        //라운드 사이에 제자리로 돌아가지 않고 붙은 채로 이어 간다
+        private async Task PlayClashRoundsAsync(PresentationCue cue, CancellationToken token)
+        {
+            Limbus25DActor a = cue.attacker;
+            Limbus25DActor d = cue.defender;
+            float dir = Mathf.Sign(d.transform.position.x - a.transform.position.x);
+            if (dir == 0f) dir = a.Facing;
+            foreach (Limbus25DActor actor in new[] { a, d })
+            {
+                actor.transform.DOKill();
+                actor.Visual.DOKill();
+            }
+
+            FocusOn(a, d, dir);
+            await AwaitTween(Windup(a, dir).Join(Windup(d, -dir)), token);
+
+            //붙는 자리. 가운데에서 서로 contactGap 만큼 떨어진다
+            float middle = (a.transform.position.x + d.transform.position.x) * 0.5f;
+            float ax = middle - dir * motion.contactGap * 0.5f;
+            float dx = middle + dir * motion.contactGap * 0.5f;
+
+            for (int i = 0; i < cue.rounds.Length; i++)
+            {
+                CueRound round = cue.rounds[i];
+                ShowCallouts(round.callouts, a, d, token);
+                float time = i == 0 ? motion.dashTime : motion.reengageTime;
+                await AwaitTween(DOTween.Sequence().SetLink(gameObject).Join(Dash(a, ax, dir, time)).Join(Dash(d, dx, -dir, time)), token);
+                FollowPair(a, d, dir);
+                await AwaitTween(Strike(a, dir).Join(Strike(d, -dir)), token);
+
+                Vector3 contact = (a.Chest + d.Chest) * 0.5f;
+                if (effects.defaultClashSpark != null) SpawnEffect(effects.defaultClashSpark, contact, d, EffectLayer.Front, dir);
+                else if (sparks.enabled) SpawnSparks(contact, d, dir, true);
+                StartHitStop(hitStop.clashSeconds);
+                AddImpact(shake.clashPower, dir);
+
+                //진 쪽이 밀린다. 교착이면 둘 다 조금 밀린다
+                Sequence push = DOTween.Sequence().SetLink(gameObject);
+                if (round.kind == RoundKind.Win && round.loser != null)
+                {
+                    Limbus25DActor loser = round.loser;
+                    Limbus25DActor winner = loser == a ? d : a;
+                    push.Join(Push(loser, loser == a ? -dir : dir, motion.clashPush));
+                    push.Join(SettleVisual(winner, motion.knockTime));
+                }
+                else
+                {
+                    push.Join(Push(a, -dir, motion.deadlockPush));
+                    push.Join(Push(d, dir, motion.deadlockPush));
+                }
+                await AwaitTween(push, token);
+                await WaitScaled(motion.roundRest, token);
+            }
+
+            Limbus25DActor w = cue.finisher;
+            if (w == a || w == d)
+            {
+                //이긴 쪽이 진 쪽을 친다
+                Limbus25DActor l = w == a ? d : a;
+                float wdir = Mathf.Sign(l.transform.position.x - w.transform.position.x);
+                if (wdir == 0f) wdir = w.Facing;
+                await AwaitTween(Dash(w, l.transform.position.x - wdir * motion.contactGap, wdir, motion.reengageTime), token);
+                await AwaitTween(Strike(w, wdir), token);
+
+                Vector3 contact = Vector3.Lerp(w.Chest, l.Chest, effects.contactBias);
+                GameObject impact = cue.impactEffect != null ? cue.impactEffect : effects.defaultImpact;
+                if (impact != null) SpawnEffect(impact, contact, l, cue.impactLayer, wdir);
+                else if (sparks.enabled) SpawnSparks(contact, l, wdir, false);
+                w.PlayStrikeTrail(motion.strikeTrailTime, motion.strikeTrailPeakShare);
+                StartHitStop(Mathf.Min(hitStop.maxSeconds, hitStop.baseSeconds + cue.damage * hitStop.perDamageSeconds));
+                AddImpact(Mathf.Clamp01(cue.damage / Mathf.Max(1f, shake.damageForMaxShake)), wdir);
+
+                Sequence after = SettleVisual(w, motion.knockTime);
+                if (cue.damage > 0) after.Join(Knockback(l, wdir, cue.damage, cue.stagger));
+                await AwaitTween(after, token);
+                await WaitRealtime(motion.lingerAfterHit, token);
+                await WaitScaled(Mathf.Max(0f, motion.strikeTrailTime - motion.knockTime - motion.lingerAfterHit), token);
+            }
+            else
+            {
+                await WaitRealtime(motion.lingerAfterHit, token);
+            }
+
+            ReleaseFocus();
+            await AwaitTween(DOTween.Sequence().SetLink(gameObject).Join(ReturnHome(a)).Join(ReturnHome(d)), token);
+            a.SetPose(Limbus25DActor.Pose.Idle);
+            d.SetPose(Limbus25DActor.Pose.Idle);
+        }
+
+        //합에서 밀린다. 막는 장으로 바꾸고 자리째 뒤로 미끄러진다. 판은 기울이지 않는다
+        private Sequence Push(Limbus25DActor actor, float away, float distance)
+        {
+            actor.SetPose(Limbus25DActor.Pose.Guard);
+            return DOTween.Sequence().SetLink(actor.gameObject)
+                .Join(actor.transform.DOMoveX(actor.transform.position.x + away * distance, motion.knockTime).SetEase(Ease.OutExpo))
+                .Join(actor.Visual.DOLocalMove(Vector3.zero, motion.knockTime).SetEase(Ease.OutQuad));
+        }
+
         //── 몸짓 (SPEC-005 §8.3) ──
         //이동·회전은 월드 방향으로 계산해 로컬로 바꿔 넣는다. 루트 배율 부호는 건드리지 않는다
 
@@ -518,11 +679,11 @@ namespace EndDistopirism.Presentation
         }
 
         //③ 상대 앞까지 가속해 들어간다. 달리는 동안 몸이 앞으로 늘어난다
-        private Sequence Dash(Limbus25DActor actor, float toX, float dir)
+        private Sequence Dash(Limbus25DActor actor, float toX, float dir, float time = -1f)
         {
             actor.SetPose(Limbus25DActor.Pose.Dash);
             Transform v = actor.Visual;
-            float t = motion.dashTime;
+            float t = time > 0f ? time : motion.dashTime;
             return DOTween.Sequence().SetLink(actor.gameObject)
                 .Join(actor.transform.DOMoveX(toX, t).SetEase(Ease.InQuad))
                 .Join(v.DOLocalMove(Vector3.zero, t).SetEase(Ease.OutQuad))
@@ -762,6 +923,18 @@ namespace EndDistopirism.Presentation
             }
         }
 
+        //라운드 알림. 둘 다 달려가므로 둘 중 아군에게만 띄운다
+        private void ShowCallouts(CueCallout[] list, Limbus25DActor a, Limbus25DActor b, CancellationToken token)
+        {
+            if (list == null) return;
+            foreach (CueCallout c in list)
+            {
+                if (c.actor == null || !c.actor.IsPlayerSide) continue;
+                if (c.actor != a && c.actor != b) continue;
+                _ = RunCalloutAsync(c, token);
+            }
+        }
+
         //글을 만들어 머리를 따라다니게 하고, 끝에서 흐려지며 사라진다. 실제 시간이라 역경직에 멈추지 않는다
         private async Task RunCalloutAsync(CueCallout c, CancellationToken token)
         {
@@ -770,7 +943,7 @@ namespace EndDistopirism.Presentation
             if (text == null) text = go.AddComponent<TextMeshPro>();
             text.alignment = TextAlignmentOptions.Bottom;
             text.fontSize = callout.fontSize;
-            string big = c.success ? callout.successText : callout.loseText;
+            string big = !string.IsNullOrEmpty(c.headline) ? c.headline : (c.success ? callout.successText : callout.loseText);
             Color bigColor = c.success ? callout.successColor : callout.loseColor;
             text.text = string.IsNullOrEmpty(c.reason)
                 ? $"<color=#{ColorUtility.ToHtmlStringRGB(bigColor)}>{big}</color>"
