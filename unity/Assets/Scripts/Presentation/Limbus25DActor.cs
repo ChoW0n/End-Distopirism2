@@ -164,18 +164,22 @@ namespace EndDistopirism.Presentation
         }
 
         //타격 장 뒤로 궤적이 사라지는 장들을 게임 시간으로 넘긴다. 역경직 동안 같이 멈춘다
-        public Tween PlayStrikeTrail(float seconds)
+        //첫 장(최대 궤적)을 peakShare 만큼 보여 준 뒤 나머지를 빠르게 넘긴다. 고르게 넘기면 스르륵 사라진다
+        public Tween PlayStrikeTrail(float seconds, float peakShare = 0.4f)
         {
             if (spriteRenderer == null || strikeTrail == null || strikeTrail.Length == 0) return null;
             int last = strikeTrail.Length - 1;
+            float peak = Mathf.Clamp01(peakShare);
             int shown = -1;
             return DOTween.To(() => 0f, value =>
                 {
-                    int index = Mathf.Clamp(Mathf.FloorToInt(value), 0, last);
+                    int index = value < peak || last == 0
+                        ? 0
+                        : Mathf.Clamp(1 + Mathf.FloorToInt((value - peak) / Mathf.Max(0.0001f, 1f - peak) * last), 1, last);
                     if (index == shown || strikeTrail[index] == null) return;
                     shown = index;
                     ShowSprite(strikeTrail[index], strikeTrailFacesRight);
-                }, last + 0.999f, seconds)
+                }, 1f, seconds)
                 .SetEase(Ease.Linear)
                 .SetLink(gameObject);
         }
