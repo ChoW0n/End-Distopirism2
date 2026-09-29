@@ -12,6 +12,7 @@ import type { BattleEvent, Side } from '../domain/types.js';
 import { toStageSteps } from '../render/exchange.js';
 import { showcaseCycle, type ShowcaseCard } from '../render/showcase.js';
 import type { SpriteCatalog } from '../render/manifest.js';
+import { parseCharacterSounds, type CharacterSounds } from '../render/sounds.js';
 import { parseUltimateArt, type UltimateArt } from '../render/ultimate.js';
 import type { UiData } from '../ui/data.js';
 import { OrderInput, type InputMember } from '../ui/input.js';
@@ -50,6 +51,9 @@ interface Boot {
   sprites: Map<string, SpriteCatalog>;
   frames: Map<string, HTMLImageElement>;
   ultimates: Map<string, UltimateBundle>;
+  //캐릭터 id → 녹음 소리 묶음과 받은 파일 (SPEC-005 §14)
+  voices: Map<string, CharacterSounds>;
+  samples: Map<string, ArrayBuffer>;
   missing: string[];
 }
 
@@ -83,6 +87,29 @@ async function boot(progress: (text: string, ratio: number) => void): Promise<Bo
         const art = parseUltimateArt(await json(`${ASSETS}/${id}/ultimate.json`));
         const environment = art.environment ? parseBackdropConfig(await json(`${ASSETS}/${art.environment}/placement.json`)) : null;
         arts.set(id, { art, environment });
+      }),
+  );
+
+  //녹음 소리가 있는 캐릭터 (assets/index.json 의 sounds). 소리는 그림과 따로 받는다. 못 받아도 전투는 된다
+  const soundIds = Array.isArray(index['sounds']) ? (index['sounds'] as unknown[]).filter((id): id is string => typeof id === 'string') : [];
+  const voices = new Map<string, CharacterSounds>();
+  const samples = new Map<string, ArrayBuffer>();
+  await Promise.all(
+    soundIds
+      .filter((id) => sprites.has(id))
+      .map(async (id) => {
+        const voice = parseCharacterSounds(await json(`${ASSETS}/${id}/sounds.json`));
+        voices.set(id, voice);
+        await Promise.all(
+          Object.entries(voice.files).map(async ([soundId, file]) => {
+            try {
+              const res = await fetch(`${ASSETS}/${id}/${file}`);
+              if (res.ok) samples.set(`${id}/${soundId}`, await res.arrayBuffer());
+            } catch {
+              //소리 파일이 없으면 그 소리만 빠진다
+            }
+          }),
+        );
       }),
   );
 
@@ -134,7 +161,7 @@ async function boot(progress: (text: string, ratio: number) => void): Promise<Bo
       image: (file) => loaded.get(`${id}/${file}`) ?? null,
     });
   }
-  return { catalog, ui, stage, backdrop, backdropImages, sprites, frames: loaded, ultimates, missing };
+  return { catalog, ui, stage, backdrop, backdropImages, sprites, frames: loaded, ultimates, voices, samples, missing };
 }
 
 //전투 한 판을 들고 있는 통. 재시작하면 통째로 갈아 끼운다
@@ -230,6 +257,7 @@ async function main(): Promise<void> {
   if (loaded.sprites.size === 0) throw new Error('에셋이 들어온 캐릭터가 하나도 없다');
 
   const sound = new SynthSound(loaded.ui.sound);
+  for (const [id, data] of loaded.samples) sound.addSample(id, data);
   const soundToggle = document.getElementById('sound') as HTMLInputElement | null;
   const unlock = (): void => {
     sound.unlock();
@@ -253,6 +281,7 @@ async function main(): Promise<void> {
     },
     sound,
     loaded.ultimates,
+    loaded.voices,
   );
   window.addEventListener('resize', () => stage.resize());
 

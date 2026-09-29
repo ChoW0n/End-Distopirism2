@@ -8,6 +8,8 @@ import { SOUND_CUES, type SoundCue, type SoundData } from '../ui/data.js';
 //렌더러가 쓰는 쪽. 테스트나 소리 없는 환경에서는 아무것도 안 하는 것으로 갈아 끼운다
 export interface SoundPlayer {
   play(cue: SoundCue): void;
+  //녹음 소리 한 번. 없거나 아직 못 풀었으면 false (SPEC-005 §14)
+  playSample?(id: string, gain?: number): boolean;
 }
 
 //아무 소리도 안 낸다
@@ -30,6 +32,9 @@ export class SynthSound implements SoundPlayer {
   private noise: AudioBuffer | null = null;
   private muted = false;
   private readonly recipes: Record<SoundCue, Recipe>;
+  //녹음 소리. 열리기 전에 받은 것은 열릴 때 푼다
+  private readonly pending = new Map<string, ArrayBuffer>();
+  private readonly samples = new Map<string, AudioBuffer>();
 
   //세기는 데이터에서 받는다. 소리 모양은 아래 조리법이 정한다
   constructor(private readonly data: SoundData) {
@@ -88,6 +93,41 @@ export class SynthSound implements SoundPlayer {
       this.noise = noiseBuffer(this.audio);
     }
     if (this.audio.state === 'suspended') void this.audio.resume();
+    this.decodePending();
+  }
+
+  //녹음 소리를 받아 둔다 (WAV 바이트). 소리가 열려 있으면 바로 푼다
+  addSample(id: string, data: ArrayBuffer): void {
+    this.pending.set(id, data);
+    this.decodePending();
+  }
+
+  private decodePending(): void {
+    const audio = this.audio;
+    if (!audio) return;
+    for (const [id, data] of this.pending) {
+      this.pending.delete(id);
+      audio.decodeAudioData(data).then(
+        (buffer) => this.samples.set(id, buffer),
+        () => undefined,
+      );
+    }
+  }
+
+  //녹음 소리 한 번. 못 내면 false 라 부른 쪽이 합성 소리로 대신한다
+  playSample(id: string, gain = 1): boolean {
+    const audio = this.audio;
+    const buffer = this.samples.get(id);
+    if (!audio || !this.master || !buffer) return false;
+    if (this.muted || audio.state !== 'running') return true;
+    const source = audio.createBufferSource();
+    source.buffer = buffer;
+    const out = audio.createGain();
+    out.gain.value = gain;
+    source.connect(out);
+    out.connect(this.master);
+    source.start(audio.currentTime + 0.005);
+    return true;
   }
 
   //끄고 켠다. 끈 동안의 소리는 그냥 버린다

@@ -212,6 +212,9 @@ web/share/
 assets/**/*.png
 assets/**/*.jpg
 assets/**/*.gif
+assets/**/*.wav
+assets/**/*.mp3
+assets/**/*.ogg
 
 #파이썬 도구 캐시
 __pycache__/

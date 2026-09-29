@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import type { BattleEvent, CardFace, Side, SkillSlot } from '../domain/types.js';
 import { splitDamage, type ClashRound, type FlipView, type StageStep, type StepCallout } from '../render/exchange.js';
 import type { SpriteCatalog } from '../render/manifest.js';
+import type { CharacterSounds } from '../render/sounds.js';
 import type { UltimateArt } from '../render/ultimate.js';
 import type { SoundPlayer } from '../renderer/sound.js';
 import { Backdrop } from './backdrop.js';
@@ -135,6 +136,8 @@ export class Stage3D {
     private readonly skillInfo: (skillId: number) => StageSkill,
     private readonly sound: SoundPlayer,
     ultimates: Map<string, UltimateBundle> = new Map(),
+    //그림 주인 캐릭터 id → 녹음 소리 묶음 (SPEC-005 §14)
+    private readonly voices: Map<string, CharacterSounds> = new Map(),
   ) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -151,6 +154,23 @@ export class Stage3D {
     this.cutscene = new CutsceneOverlay(host);
     for (const [characterId, bundle] of ultimates) this.prepareUltimate(characterId, bundle);
     this.resize();
+    this.preload();
+  }
+
+  //모든 장·이펙트·고유 전장 텍스처를 미리 그래픽 카드에 올린다
+  //처음 보이는 순간 올리면 그 한 프레임이 멈춰 장이 끊겨 보인다 (SPEC-005 §12.1)
+  private preload(): void {
+    const upload = (texture: THREE.Texture | null | undefined): void => {
+      if (texture) this.renderer.initTexture(texture);
+    };
+    for (const characterId of this.sprites.keys()) for (const texture of this.texturesOf(characterId)?.values() ?? []) upload(texture);
+    for (const u of this.ultimates.values()) {
+      for (const list of u.effects.values()) list.forEach(upload);
+      u.environment?.root.traverse((node) => {
+        const material = (node as THREE.Mesh).material;
+        if (material && !Array.isArray(material)) upload((material as THREE.MeshBasicMaterial).map);
+      });
+    }
   }
 
   //궁극기 한 벌을 미리 세운다. 고유 전장은 숨겨 두고, 컷신 배경은 전장 층을 합쳐 한 장으로 만든다
@@ -375,7 +395,7 @@ export class Stage3D {
   //상대 앞까지 가속해 들어간다
   private dash(d: PaperDoll, toX: number, toZ: number, time: number): Promise<unknown> {
     d.setPose('dash');
-    this.sound.play('dash');
+    this.dashSound(d);
     return all(
       this.clock.tween(d.root.position, 'x', toX, time, ease.inQuad),
       this.clock.tween(d.root.position, 'z', toZ, time, ease.inQuad),
@@ -408,6 +428,7 @@ export class Stage3D {
     for (const id of segment.slice(1)) {
       if (d.down) return;
       d.showFrame(id);
+      this.frameVoice(d, id);
       await this.wait(this.clock.waitGame(this.frameSeconds(d, id, segment.length - 1)), epoch);
     }
   }
@@ -442,13 +463,10 @@ export class Stage3D {
     for (let k = 0; k < segments.length; k++) {
       const segment = segments[k] as string[];
       const last = k === segments.length - 1;
-      //날아간 자리로 처음처럼 돌진 장으로 달려가 붙는다 (§12.1 v2.13)
-      if (k > 0 && !L.down) {
+      //따라붙기가 모자랐으면(쓰러졌다 등) 남은 거리만 장을 바꾸지 않고 붙는다
+      if (k > 0 && !L.down && Math.abs(this.worldX(L) - this.worldX(W)) > m.contactGap * 1.25) {
         const toX = this.worldX(L) - dir * m.contactGap;
-        const time = Math.max(m.followTime, Math.abs(toX - this.worldX(W)) / m.followSpeed);
-        this.rig.focus(this.chest(W), this.chest(L), dir);
-        await this.wait(this.dash(W, toX, L.root.position.z, time) as Promise<void>, epoch);
-        this.rig.focus(this.chest(W), this.chest(L), dir);
+        await this.wait(this.clock.tween(W.root.position, 'x', toX, m.followTime, ease.inOutQuad), epoch);
       }
       if (parry && k === 0) {
         //받아내기: 진 쪽이 먼저 파고들어 막는 장에 부딪힌다. 일방이면 막는 장 그대로 밀쳐 들어간다
@@ -462,14 +480,28 @@ export class Stage3D {
       } else {
         await this.wait(this.strike(W, segment[0] as string, dir), epoch);
       }
+      //칼 소리: 받아내기는 막는 소리, 나머지는 그 타 장의 소리 (§14)
+      if (parry && k === 0) this.voice(W, this.voiceOf(W)?.parry ?? null);
+      else this.frameVoice(W, segment[0] as string);
       const contact = this.chest(W).lerp(this.chest(L), this.config.sparks.contactBias);
       const part = parts[k] ?? 0;
       this.impact(contact, L, dir, part, false, last ? events : [], last ? damage : 0, !(parry && k === 0));
       if (k === 0) for (const card of cards) void this.fadeCard(card);
       const jobs: Promise<void>[] = [this.clock.tween(W.visual.position, 'x', 0, m.knockTime), this.playSegment(W, segment, epoch)];
       if (!L.down) {
-        if (!last) jobs.push(this.nudge(L, dir), this.clock.tween(L.visual.position, 'x', 0, m.knockTime));
-        else if (damage > 0) jobs.push(this.knockback(L, dir, damage, damage >= m.heavyDamage, epoch));
+        if (!last) {
+          //날아갈 자리를 알고, 이 타의 남은 장이 넘어가는 동안 그 앞까지 달려 붙는다. 돌진 장으로 갈아 끼우지 않는다 (§12.1 v2.14)
+          const toX = this.worldX(L) + dir * (m.hitKnock - m.contactGap);
+          const remain = segment.reduce((sum, id) => sum + this.frameSeconds(W, id, segment.length - 1), 0);
+          const time = Math.max(m.followTime, remain, Math.abs(toX - this.worldX(W)) / m.followSpeed);
+          this.dashSound(W);
+          jobs.push(
+            this.nudge(L, dir),
+            this.clock.tween(L.visual.position, 'x', 0, m.knockTime),
+            this.clock.tween(W.root.position, 'x', toX, time, ease.inOutQuad),
+            this.clock.tween(W.root.position, 'z', L.root.position.z, time),
+          );
+        } else if (damage > 0) jobs.push(this.knockback(L, dir, damage, damage >= m.heavyDamage, epoch));
       }
       //날아가는 쪽까지 카메라가 둘을 잡는다
       const fly = last ? Math.min(m.knockMax, m.knockBase + damage * m.knockPerDamage) : m.hitKnock;
@@ -530,6 +562,30 @@ export class Stage3D {
       ),
       epoch,
     );
+  }
+
+  //── 녹음 소리 (§14) ──
+
+  //이 인형 그림 주인의 소리 묶음
+  private voiceOf(d: PaperDoll): CharacterSounds | null {
+    return this.voices.get(d.catalog.manifest.character) ?? null;
+  }
+
+  //소리 id 하나를 낸다. 없으면 조용히 넘어간다. 녹음이 났으면 true
+  private voice(d: PaperDoll, id: string | null): boolean {
+    const v = this.voiceOf(d);
+    if (!v || !id) return false;
+    return this.sound.playSample?.(`${v.character}/${id}`, v.gain[id] ?? 1) ?? false;
+  }
+
+  //장이 보일 때 그 장에 묶인 소리
+  private frameVoice(d: PaperDoll, frameId: string): void {
+    this.voice(d, this.voiceOf(d)?.frames[frameId] ?? null);
+  }
+
+  //돌진 소리. 녹음이 없으면 합성
+  private dashSound(d: PaperDoll): void {
+    if (!this.voice(d, this.voiceOf(d)?.dash ?? null)) this.sound.play('dash');
   }
 
   //피격 슬로우 (§12.1). 역경직·밀림이 끝난 뒤(after 초, 실제 시간) 잠깐 게임 시간이 느려진다. 다음 타가 오면 새로 건다
@@ -647,7 +703,7 @@ export class Stage3D {
     const c = this.config.cardFlip;
     const gameSec = (c.spinTime + c.revealPop + c.holdTime) * c.slowScale;
     d.setPose('dash');
-    this.sound.play('dash');
+    this.dashSound(d);
     const x = d.root.position.x + (toX - d.root.position.x) * c.approachShare;
     const z = d.root.position.z + (toZ - d.root.position.z) * c.approachShare;
     return all(
@@ -852,6 +908,8 @@ export class Stage3D {
 
     //0 준비 장 + 발밑 밤물
     W.showFrame(u.art.frames.ready);
+    const ultVoice = (key: string) => this.voice(W, this.voiceOf(W)?.ultimate[key] ?? null);
+    ultVoice('start');
     this.rig.focus(this.chest(W), this.chest(L), wdir);
     const pool = spawn(u.art.effects.pool, this.footOf(W), { hold: true, order: 9 });
     if (pool) {
@@ -866,6 +924,9 @@ export class Stage3D {
 
     //컷신
     await at(t.cutsceneStart);
+    void this.clock.waitReal(t.cutLine - t.cutsceneStart).then(() => {
+      if (this.cutscene.active) ultVoice('cutLine');
+    });
     this.cutscene.play(u.art.cutscene, { background: u.background, foreground: u.foreground, line: u.line }, this.clock.realNow, t.cutsceneEnd - t.cutsceneStart, t.cutLine - t.cutsceneStart);
 
     //컷신이 걷히면 적 뒤편에 납도 직전 장으로 서 있다
@@ -882,7 +943,15 @@ export class Stage3D {
     const parts = splitDamage(damage, cuts.count);
     const h = this.config.layout.characterHeight;
     let knock: Promise<void> = Promise.resolve();
-    const beats: { time: number; run: () => void }[] = [{ time: t.water, run: () => void spawn(u.art.effects.water, this.footOf(L)) }];
+    const beats: { time: number; run: () => void }[] = [
+      {
+        time: t.water,
+        run: () => {
+          spawn(u.art.effects.water, this.footOf(L));
+          ultVoice('water');
+        },
+      },
+    ];
     for (let i = 0; i < cuts.count; i++) {
       const last = i === cuts.count - 1;
       beats.push({
@@ -890,6 +959,7 @@ export class Stage3D {
         run: () => {
           if (i === 0) {
             W.showFrame(u.art.frames.closed);
+            ultVoice('sheathClick');
             for (const card of cards) void this.fadeCard(card);
           }
           const [ox, oy] = cuts.offset[i % cuts.offset.length] ?? [0, 0];

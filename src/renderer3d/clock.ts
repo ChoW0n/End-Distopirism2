@@ -8,6 +8,7 @@ export const ease = {
   linear: (t: number) => t,
   outQuad: (t: number) => 1 - (1 - t) * (1 - t),
   inQuad: (t: number) => t * t,
+  inOutQuad: (t: number) => (t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2),
   outCubic: (t: number) => 1 - (1 - t) ** 3,
   outExpo: (t: number) => (t >= 1 ? 1 : 1 - 2 ** (-10 * t)),
   outBack: (t: number) => {

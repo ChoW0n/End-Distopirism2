@@ -1,11 +1,14 @@
 {
-  "_comment": "매니페스트가 있는 캐릭터 목록 (SPEC-002 §9). 웹 로더는 여기 있는 캐릭터만 읽는다. 반입하면 한 줄 더한다. 궁극기 시간표(ultimate.json)가 있는 캐릭터는 ultimates 에 적는다 (SPEC-005 §10.2)",
+  "_comment": "매니페스트가 있는 캐릭터 목록 (SPEC-002 §9). 웹 로더는 여기 있는 캐릭터만 읽는다. 반입하면 한 줄 더한다. 궁극기 시간표(ultimate.json)가 있는 캐릭터는 ultimates 에, 녹음 소리(sounds.json)가 있는 캐릭터는 sounds 에 적는다 (SPEC-005 §10.2, §14)",
   "characters": [
     "helper",
     "incinerator",
     "kyle"
   ],
   "ultimates": [
+    "kyle"
+  ],
+  "sounds": [
     "kyle"
   ]
 }

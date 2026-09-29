@@ -36,6 +36,11 @@ export class CutsceneOverlay {
     this.canvas.style.display = 'block';
   }
 
+  //지금 컷신이 보이는지
+  get active(): boolean {
+    return this.showing !== null;
+  }
+
   //컷신을 닫는다 (재시작)
   clear(): void {
     this.showing = null;
