@@ -14,6 +14,8 @@ interface Playing {
   start: number;
   //마지막 장에서 멈춰 있는다 (밤물처럼 한 장짜리를 붙잡을 때)
   hold: boolean;
+  //화면에서 기울기(라디안). 카메라를 본 채로 돈다
+  roll: number;
   fade: { from: number; to: number; start: number; seconds: number } | null;
 }
 
@@ -27,7 +29,7 @@ export class EffectLayer {
   ) {}
 
   //장을 세운다. at 은 피벗이 올 월드 자리, facing 이 -1 이면 좌우를 뒤집는다
-  spawn(effect: EffectData, textures: THREE.Texture[], at: THREE.Vector3, facing: 1 | -1, now: number, options: { hold?: boolean; order?: number } = {}): Playing | null {
+  spawn(effect: EffectData, textures: THREE.Texture[], at: THREE.Vector3, facing: 1 | -1, now: number, options: { hold?: boolean; order?: number; roll?: number } = {}): Playing | null {
     if (textures.length === 0) return null;
     const { width, height } = effect.size;
     const perPixel = (this.characterHeight * effect.scale) / Math.max(width, height);
@@ -48,7 +50,7 @@ export class EffectLayer {
     mesh.position.copy(at);
     mesh.scale.x = facing;
     this.scene.add(mesh);
-    const p: Playing = { mesh, material, textures, effect, start: now, hold: options.hold ?? false, fade: null };
+    const p: Playing = { mesh, material, textures, effect, start: now, hold: options.hold ?? false, roll: options.roll ?? 0, fade: null };
     this.playing.add(p);
     return p;
   }
@@ -91,6 +93,7 @@ export class EffectLayer {
       //판 회전은 카메라와 같게, 좌우 부호는 지킨다
       const sx = p.mesh.scale.x;
       p.mesh.quaternion.copy(camera.quaternion);
+      if (p.roll !== 0) p.mesh.rotateZ(p.roll);
       p.mesh.scale.set(sx, 1, 1);
     }
   }

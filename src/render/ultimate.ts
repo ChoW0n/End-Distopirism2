@@ -32,6 +32,19 @@ export interface UltimateCutscene {
   fade: number;
 }
 
+//여러 번 베기 (SPEC-005 §10.2 v2.11). 벤 횟수·간격과 베기선마다 기울기·자리
+export interface UltimateSlashes {
+  count: number;
+  //베기 사이 간격(초)
+  interval: number;
+  //베기선마다 기울기(도). 횟수보다 짧으면 되풀이한다
+  rollDeg: number[];
+  //베기선마다 자리 (캐릭터 키 비율 x, y). 횟수보다 짧으면 되풀이한다
+  offset: [number, number][];
+  //중간 베기에 밀리는 거리 = 타 밀림(hitKnock) × 이 몫
+  nudgeShare: number;
+}
+
 export interface UltimateArt {
   character: string;
   //잠시 바꿀 전장 폴더 (assets/<environment>). 없으면 null
@@ -40,6 +53,7 @@ export interface UltimateArt {
   effects: { pool: string; slash: string; water: string };
   cutscene: UltimateCutscene;
   timeline: UltimateTimeline;
+  slashes: UltimateSlashes;
   //적 뒤편에 나타날 때 적과 벌어지는 거리(월드)
   behindGap: number;
 }
@@ -94,6 +108,7 @@ export function parseUltimateArt(raw: unknown): UltimateArt {
   if (timeline.appearBehind < timeline.cutsceneEnd) throw new UltimateArtError('timeline.appearBehind 가 컷신이 걷히기 전이다');
   if (timeline.restoreEnvironment + timeline.restoreFade > timeline.end + 1e-9) throw new UltimateArtError('전장 복귀가 끝보다 늦다');
 
+  const slashes = parseSlashes(root['slashes']);
   const environment = root['environment'];
   return {
     character: str(root, 'character', 'root'),
@@ -111,6 +126,22 @@ export function parseUltimateArt(raw: unknown): UltimateArt {
       fade: num(cut, 'fade', 'cutscene'),
     },
     timeline,
+    slashes,
     behindGap: num(root, 'behindGap', 'root'),
   };
+}
+
+//여러 번 베기. 없으면 한 번 벤다
+function parseSlashes(value: unknown): UltimateSlashes {
+  if (value === undefined) return { count: 1, interval: 0, rollDeg: [0], offset: [[0, 0]], nudgeShare: 0 };
+  const o = obj(value, 'slashes');
+  const count = num(o, 'count', 'slashes');
+  if (!Number.isInteger(count) || count < 1) throw new UltimateArtError('slashes.count 가 1 이상 정수가 아니다');
+  const rollDeg = o['rollDeg'];
+  const offset = o['offset'];
+  if (!Array.isArray(rollDeg) || rollDeg.length === 0 || rollDeg.some((v) => typeof v !== 'number')) throw new UltimateArtError('slashes.rollDeg 가 숫자 목록이 아니다');
+  if (!Array.isArray(offset) || offset.length === 0 || offset.some((v) => !Array.isArray(v) || v.length !== 2 || v.some((x) => typeof x !== 'number'))) {
+    throw new UltimateArtError('slashes.offset 이 숫자 2개짜리 목록이 아니다');
+  }
+  return { count, interval: num(o, 'interval', 'slashes'), rollDeg: rollDeg as number[], offset: offset as [number, number][], nudgeShare: num(o, 'nudgeShare', 'slashes') };
 }

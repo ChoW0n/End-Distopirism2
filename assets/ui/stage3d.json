@@ -25,9 +25,9 @@
     "strikeTime": 0.1,
     "strikeReach": 0.25,
     "knockTime": 0.18,
-    "knockBase": 0.8,
+    "knockBase": 1.1,
     "knockPerDamage": 0.02,
-    "knockMax": 2.2,
+    "knockMax": 2.6,
     "staggerDrop": -0.12,
     "staggerHold": 0.22,
     "lingerAfterHit": 0.22,
@@ -53,8 +53,10 @@
     "_hits": "SPEC-005 §12 타수. 도착 뒤 준비 장 시간, 다음 타로 따라가는 시간, 마지막이 아닌 타에 밀리는 거리, 받아내기 때 진 쪽이 파고드는 거리",
     "readyHold": 0.22,
     "followTime": 0.14,
-    "hitKnock": 0.45,
-    "parryLunge": 0.35
+    "hitKnock": 0.8,
+    "parryLunge": 0.35,
+    "hitSlowScale": 0.4,
+    "hitSlowTime": 0.28
   },
   "camera": {
     "focusSizeGain": 1.08,

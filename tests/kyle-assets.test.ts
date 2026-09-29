@@ -107,10 +107,23 @@ describe('카일 궁극기 시간표 (SPEC-005 §10.2)', () => {
     for (const id of Object.values(art.effects)) expect(kyle?.effect(id)).toBeTruthy();
   });
 
-  it('피격 잔흔(15장 × 60ms)은 전장 복귀 전에 끝난다', () => {
+  it('여러 번 벤다 (v2.11): 4번, 0.08초 간격, 베기선마다 기울기가 다르다', () => {
+    expect(art.slashes.count).toBe(4);
+    expect(art.slashes.interval).toBeCloseTo(0.08);
+    expect(new Set(art.slashes.rollDeg.slice(0, 4)).size).toBe(4);
+  });
+
+  it('마지막 베기선의 잔흔(15장 × 60ms)도 전장 복귀 전에 끝난다', () => {
     const slash = kyle?.effect(art.effects.slash);
     const seconds = (slash?.frames.reduce((s, f) => s + f.ms, 0) ?? 0) / 1000;
-    expect(art.timeline.sheathClick + seconds).toBeLessThanOrEqual(art.timeline.restoreEnvironment);
+    const lastCut = art.timeline.sheathClick + (art.slashes.count - 1) * art.slashes.interval;
+    expect(lastCut + seconds).toBeLessThanOrEqual(art.timeline.restoreEnvironment + 1e-9);
+  });
+
+  it('여러 번 베기가 없으면 한 번 벤다', () => {
+    const raw = readJson('assets/kyle/ultimate.json') as Record<string, unknown>;
+    delete raw['slashes'];
+    expect(parseUltimateArt(raw).slashes.count).toBe(1);
   });
 
   it('시각이 거꾸로 가면 멈춘다', () => {

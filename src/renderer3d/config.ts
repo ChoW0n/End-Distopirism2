@@ -46,6 +46,9 @@ export interface MotionConfig {
   followTime: number;
   hitKnock: number;
   parryLunge: number;
+  //피격 슬로우 (SPEC-005 §12.1 v2.11). 게임 시간 배율과 실제 시간
+  hitSlowScale: number;
+  hitSlowTime: number;
 }
 
 export interface CameraConfig {
@@ -219,7 +222,7 @@ export function parseStage3dConfig(raw: unknown): Stage3dConfig {
       'knockPerDamage', 'knockMax', 'staggerDrop', 'staggerHold', 'lingerAfterHit', 'strikeTrailTime',
       'strikeTrailPeakShare', 'settleTime', 'settleAmplitude', 'settlePeriod', 'returnTime', 'clashWinnerRecoil',
       'clashPush', 'deadlockPush', 'reengageTime', 'roundRest', 'downTime', 'downSink', 'downOpacity', 'heavyDamage',
-      'bystanderFade', 'foregroundFade', 'readyHold', 'followTime', 'hitKnock', 'parryLunge',
+      'bystanderFade', 'foregroundFade', 'readyHold', 'followTime', 'hitKnock', 'parryLunge', 'hitSlowScale', 'hitSlowTime',
     ]),
     camera: numbers<CameraConfig>(root['camera'], 'camera', ['focusSizeGain', 'focusHeight', 'panYawDeg', 'dutchDeg', 'fovZoom', 'followTime', 'returnFollowTime']),
     shake: numbers<ShakeConfig>(root['shake'], 'shake', [

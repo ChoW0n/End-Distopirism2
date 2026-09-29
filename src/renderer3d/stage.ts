@@ -413,10 +413,11 @@ export class Stage3D {
   }
 
   //중간 타에 맞은 쪽이 피격 장으로 밀린다. 자리 자체가 밀려서 때린 쪽이 따라간다 (§12.1)
-  private nudge(d: PaperDoll, dir: number): Promise<void> {
+  //distance 를 주면 그만큼만 밀린다 (궁극기 연속 베기는 조금씩)
+  private nudge(d: PaperDoll, dir: number, distance = this.config.motion.hitKnock): Promise<void> {
     const m = this.config.motion;
     d.setPose('hurt');
-    return this.clock.tween(d.root.position, 'x', d.root.position.x + dir * m.hitKnock, m.knockTime, ease.outExpo);
+    return this.clock.tween(d.root.position, 'x', d.root.position.x + dir * distance, m.knockTime, ease.outExpo);
   }
 
   //맞은 쪽의 지금 발 x (월드)
@@ -468,7 +469,7 @@ export class Stage3D {
       }
       const contact = this.chest(W).lerp(this.chest(L), this.config.sparks.contactBias);
       const part = parts[k] ?? 0;
-      this.impact(contact, L, dir, part, false, last ? events : [], last ? damage : 0);
+      this.impact(contact, L, dir, part, false, last ? events : [], last ? damage : 0, !(parry && k === 0));
       if (k === 0) for (const card of cards) void this.fadeCard(card);
       const jobs: Promise<void>[] = [this.clock.tween(W.visual.position, 'x', 0, m.knockTime), this.playSegment(W, segment, epoch)];
       if (!L.down) {
@@ -533,13 +534,26 @@ export class Stage3D {
     );
   }
 
+  //피격 슬로우 (§12.1). 역경직이 끝난 뒤 잠깐 게임 시간이 느려진다. 다음 타가 오면 새로 건다
+  private slowToken = 0;
+  private hitSlow(): void {
+    const m = this.config.motion;
+    const token = ++this.slowToken;
+    this.clock.setSlowMotion(m.hitSlowScale);
+    void this.clock.waitReal(m.hitSlowTime).then(() => {
+      if (token === this.slowToken) this.clock.setSlowMotion(1);
+    });
+  }
+
   //맞는 순간. 스파크·역경직·카메라·소리·현황판·피해 숫자
   //total: 흐트러짐을 판정할 전체 피해 (타수가 있으면 마지막 타에만 넘긴다, §12.2)
-  private impact(contact: THREE.Vector3, target: PaperDoll, dir: number, damage: number, clash: boolean, events: readonly BattleEvent[], total = damage): void {
+  //sparks: 불꽃을 낼지. 받아내기는 그림에 이펙트가 없어 불꽃을 내지 않는다 (§12.3)
+  private impact(contact: THREE.Vector3, target: PaperDoll, dir: number, damage: number, clash: boolean, events: readonly BattleEvent[], total = damage, sparks = true): void {
     const s = this.config.shake;
     const h = this.config.hitStop;
     const heavy = total >= this.config.motion.heavyDamage;
-    this.sparks.burst(contact, dir, clash, 10);
+    if (sparks) this.sparks.burst(contact, dir, clash, 10);
+    if (damage > 0) this.hitSlow();
     const seconds = clash && damage <= 0 ? h.clashSeconds : Math.min(h.maxSeconds, h.baseSeconds + damage * h.perDamageSeconds);
     this.clock.startHitStop(seconds, h.scale);
     this.rig.impact(damage > 0 ? Math.min(1, damage / s.damageForMaxShake) : s.clashPower, dir);
@@ -823,7 +837,7 @@ export class Stage3D {
     const at = (sec: number) => this.wait(this.clock.waitReal(Math.max(0, start + sec - this.clock.realNow)), epoch);
     const wdir = this.dir(W, L);
     const effect = (id: string) => W.catalog.manifest.effects.find((e) => e.id === id) ?? null;
-    const spawn = (id: string, where: THREE.Vector3, options: { hold?: boolean; order?: number } = {}) => {
+    const spawn = (id: string, where: THREE.Vector3, options: { hold?: boolean; order?: number; roll?: number } = {}) => {
       const data = effect(id);
       const textures = u.effects.get(id);
       return data && textures ? this.effects.spawn(data, textures, where, W.facing, this.clock.realNow, options) : null;
@@ -856,16 +870,38 @@ export class Stage3D {
     W.showFrame(u.art.frames.open);
     this.rig.focus(this.chest(L), this.chest(W), wdir);
 
-    //검집이 닫히는 순간 늦게 베인다. 이펙트는 적 자리에 낸다
-    await at(t.sheathClick);
-    W.showFrame(u.art.frames.closed);
-    spawn(u.art.effects.slash, this.chest(L));
-    this.impact(this.chest(L), L, -wdir, damage, false, events);
-    for (const card of cards) void this.fadeCard(card);
-    const knock = damage > 0 && !L.down ? this.knockback(L, -wdir, damage, damage >= m.heavyDamage, epoch) : Promise.resolve();
-
-    await at(t.water);
-    spawn(u.art.effects.water, this.footOf(L));
+    //검집이 닫히는 순간부터 여러 번 늦게 베인다. 이펙트는 적 자리에 낸다 (§10.2 v2.11)
+    const cuts = u.art.slashes;
+    const parts = splitDamage(damage, cuts.count);
+    const h = this.config.layout.characterHeight;
+    let knock: Promise<void> = Promise.resolve();
+    const beats: { time: number; run: () => void }[] = [{ time: t.water, run: () => void spawn(u.art.effects.water, this.footOf(L)) }];
+    for (let i = 0; i < cuts.count; i++) {
+      const last = i === cuts.count - 1;
+      beats.push({
+        time: t.sheathClick + i * cuts.interval,
+        run: () => {
+          if (i === 0) {
+            W.showFrame(u.art.frames.closed);
+            for (const card of cards) void this.fadeCard(card);
+          }
+          const [ox, oy] = cuts.offset[i % cuts.offset.length] ?? [0, 0];
+          const where = this.chest(L).add(new THREE.Vector3(ox * h * W.facing, oy * h, 0));
+          spawn(u.art.effects.slash, where, { roll: ((cuts.rollDeg[i % cuts.rollDeg.length] ?? 0) * Math.PI) / 180 });
+          const part = parts[i] ?? 0;
+          //베기선 그림이 곧 이펙트라 금속 불꽃은 내지 않는다. 0.08초 간격이라 중간 베기는 조금만 밀린다
+          this.impact(this.chest(L), L, -wdir, part, false, last ? events : [], last ? damage : 0, false);
+          if (L.down) return;
+          if (!last) void this.nudge(L, -wdir, m.hitKnock * cuts.nudgeShare);
+          else if (damage > 0) knock = this.knockback(L, -wdir, damage, damage >= m.heavyDamage, epoch);
+        },
+      });
+    }
+    beats.sort((a, b) => a.time - b.time);
+    for (const beat of beats) {
+      await at(beat.time);
+      beat.run();
+    }
 
     //전장 복귀
     await at(t.restoreEnvironment);
@@ -875,7 +911,8 @@ export class Stage3D {
     await this.wait(knock, epoch);
 
     this.rig.release();
-    await this.wait(all(this.springBack(L) as Promise<void>, this.returnHome(W) as Promise<void>), epoch);
+    const moved = Math.abs(L.root.position.x - L.home.x) > 0.01;
+    await this.wait(all((moved ? this.returnHome(L) : this.springBack(L)) as Promise<void>, this.returnHome(W) as Promise<void>), epoch);
     this.settle(W);
     this.settle(L);
   }
