@@ -1,0 +1,133 @@
+{
+  "canvas": {
+    "width": 1672,
+    "height": 941
+  },
+  "horizonY": 405,
+  "actorSlotZ": 30,
+  "layers": [
+    {
+      "file": "01-sky.png",
+      "z": 0,
+      "draws": [
+        {
+          "source": [
+            0,
+            0,
+            1672,
+            941
+          ],
+          "destination": [
+            0,
+            0,
+            1672,
+            941
+          ]
+        }
+      ]
+    },
+    {
+      "file": "02-distant-city.png",
+      "z": 10,
+      "draws": [
+        {
+          "source": [
+            0,
+            0,
+            836,
+            941
+          ],
+          "destination": [
+            0,
+            0,
+            568.48,
+            639.88
+          ]
+        },
+        {
+          "source": [
+            836,
+            0,
+            836,
+            941
+          ],
+          "destination": [
+            1103.52,
+            0,
+            568.48,
+            639.88
+          ]
+        }
+      ]
+    },
+    {
+      "file": "03-battle-water.png",
+      "z": 20,
+      "draws": [
+        {
+          "source": [
+            0,
+            0,
+            1672,
+            941
+          ],
+          "destination": [
+            0,
+            0,
+            1672,
+            941
+          ]
+        }
+      ]
+    },
+    {
+      "file": "04-foreground-ripples.png",
+      "z": 40,
+      "draws": [
+        {
+          "source": [
+            0,
+            0,
+            1672,
+            941
+          ],
+          "destination": [
+            0,
+            0,
+            1672,
+            941
+          ]
+        }
+      ]
+    }
+  ],
+  "previewActor": {
+    "file": "kyle-reference.png",
+    "visibleHeightRatio": 0.24,
+    "sourceBounds": [
+      297,
+      10,
+      1345,
+      918
+    ],
+    "sourceFootAnchor": [
+      842,
+      915
+    ],
+    "destinationFootAnchor": [
+      435,
+      697
+    ]
+  },
+  "compatibility": {
+    "file": "environment-night-sea-1280x720.png",
+    "width": 1280,
+    "height": 720
+  },
+  "limitations": [
+    "Fixed-camera composition tested, not game-engine integration.",
+    "Layer generation reconstructs forms, not pixel-exact segmentation.",
+    "No water animation or parallax safety margin validated.",
+    "Old animation.json sprite pivots do not apply to the updated ready sprite."
+  ]
+}

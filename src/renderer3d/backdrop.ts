@@ -13,11 +13,16 @@ export class Backdrop {
   readonly fov: number;
   //교전 중에 숨길 층의 재질 (근경)
   readonly combatHidden: THREE.MeshBasicMaterial[] = [];
+  //층 전부를 담는 묶음. 궁극기 전장처럼 통째로 켜고 끈다 (SPEC-005 §10.2)
+  readonly root = new THREE.Group();
+  //층 전부의 재질. 통째로 흐리게 할 때 쓴다
+  private readonly materials: THREE.MeshBasicMaterial[] = [];
 
   constructor(
-    private readonly scene: THREE.Scene,
+    scene: THREE.Scene,
     private readonly config: BackdropConfig,
   ) {
+    scene.add(this.root);
     const cam = config.camera;
     this.fov = cam.fov;
     this.homePosition = new THREE.Vector3(0, cam.height, cam.back);
@@ -34,7 +39,7 @@ export class Backdrop {
     for (const layer of this.config.layers) {
       const image = images.get(layer.file);
       if (!image) continue;
-      const texture = new THREE.Texture(image);
+      const texture = new THREE.Texture(layer.draws.length > 0 ? this.compose(image, layer) : image);
       texture.colorSpace = THREE.SRGBColorSpace;
       texture.anisotropy = 4;
       texture.wrapS = layer.mirrorX ? THREE.MirroredRepeatWrapping : THREE.ClampToEdgeWrapping;
@@ -43,8 +48,32 @@ export class Backdrop {
       const mesh = layer.shape === 'floor' ? this.floor(layer, texture) : this.stand(layer, texture);
       mesh.renderOrder = layer.order;
       if (layer.hideInCombat) this.combatHidden.push(mesh.material as THREE.MeshBasicMaterial);
-      this.scene.add(mesh);
+      this.materials.push(mesh.material as THREE.MeshBasicMaterial);
+      this.root.add(mesh);
     }
+  }
+
+  //원화 일부를 잘라 제자리에 옮겨 그린 한 장을 만든다. 원화 자체는 변형하지 않는다 (밤바다 layout.json)
+  private compose(image: HTMLImageElement, layer: BackdropLayer): HTMLCanvasElement {
+    const [w, h] = this.config.viewport;
+    const canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return canvas;
+    //올린 그림이 줄어 있을 수 있어 원본 좌표를 실제 크기 비율로 맞춘다
+    const r = image.naturalWidth > 0 ? image.naturalWidth / w : 1;
+    for (const d of layer.draws) {
+      const [sx, sy, sw, sh] = d.source;
+      ctx.drawImage(image, sx * r, sy * r, sw * r, sh * r, ...d.destination);
+    }
+    return canvas;
+  }
+
+  //층 전부의 투명도. 근경 흐림과 곱하지 않고 그대로 쓴다
+  setOpacity(value: number): void {
+    this.root.visible = value > 0.001;
+    for (const m of this.materials) m.opacity = value;
   }
 
   //기준 카메라 화면의 한 점(정규 좌표)에서 쏜 선이 z 평면과 만나는 곳

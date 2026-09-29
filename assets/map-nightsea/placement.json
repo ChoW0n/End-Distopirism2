@@ -1,0 +1,40 @@
+{
+  "id": "nightsea-v2",
+  "name": "밤바다",
+  "_comment": "카일 궁극기 전장 밤바다 리메이크 v2 (드라이브 2026-09-29). 4층 모두 1672x941 같은 원점이고, 먼 도시 층만 layout.json 의 draws(좌우 절반 0.68 배)로 합친다. 궁극기 동안만 전투 맵 위에 덮는다 (SPEC-005 §10.2)",
+  "coordinateSystem": "정규화 좌표 · 좌상단 원점 · x는 화면 너비, y는 화면 높이 기준",
+  "viewport": [1672, 941],
+  "drawOrder": ["sky", "city", "water", "actors", "ripples"],
+  "horizonY": 0.43,
+  "characterHeightRatio": 0.24,
+  "footYRatio": 0.741,
+  "layers": [
+    { "id": "sky", "file": "01-sky.png", "x": 0, "y": 0, "width": 1, "height": 1 },
+    {
+      "id": "city",
+      "file": "02-distant-city.png",
+      "x": 0,
+      "y": 0,
+      "width": 1,
+      "height": 1,
+      "draws": [
+        { "source": [0, 0, 836, 941], "destination": [0, 0, 568.48, 639.88] },
+        { "source": [836, 0, 836, 941], "destination": [1103.52, 0, 568.48, 639.88] }
+      ]
+    },
+    { "id": "water", "file": "03-battle-water.png", "x": 0, "y": 0, "width": 1, "height": 1 },
+    { "id": "ripples", "file": "04-foreground-ripples.png", "x": 0, "y": 0, "width": 1, "height": 1 }
+  ],
+  "projection": {
+    "note": "발 697/941 = 0.741, 키 0.24 로 제3 수문 v4 와 같은 구도라 기준 카메라도 v4 값을 쓴다. 수평선(0.43)은 이 카메라에서 깊이 약 8.8 이다. 하늘은 멀리 세우고, 먼 도시는 수평선 깊이에 세운다. 수면·잔물결은 바닥 판에 비추고, 잔물결은 인형 위에 그린다(납품 z40)",
+    "camera": { "back": 10.208, "height": 5.51, "lookAtHeight": 2.008, "fov": 38, "aspect": 1.7768 },
+    "standSpread": 4,
+    "scaleAnchor": [0.5, 0.43],
+    "layers": {
+      "sky": { "shape": "stand", "depth": 60, "scale": 1.0, "mirrorOutsideX": true, "order": -12 },
+      "city": { "shape": "stand", "depth": 9, "scale": 1.0, "mirrorOutsideX": true, "order": -11 },
+      "water": { "shape": "floor", "near": -14, "far": 9, "halfWidth": 120, "mirrorOutsideX": true, "mirrorOutsideY": true, "order": -10 },
+      "ripples": { "shape": "floor", "near": -14, "far": 9, "halfWidth": 120, "mirrorOutsideX": true, "mirrorOutsideY": true, "order": 40 }
+    }
+  }
+}

@@ -89,7 +89,10 @@ export class PaperDoll {
   }
 
   //카드 슬롯의 장 목록. 선딜레이·충돌·궤적 순이다
+  //궁극기 장이 있으면 겨루기(선딜레이·교착)는 준비 장 하나로 한다. 한 방은 무대의 궁극기 시간표가 맡는다 (SPEC-005 §9.4)
   skillFrames(slot: 'S1' | 'S2' | 'S3' | 'ULT'): string[] {
+    const ult = slot === 'ULT' ? this.catalog.frameSequence('ULT') : [];
+    if (ult.length > 0) return [ult[0] as string];
     const seq = this.catalog.frameSequence(slot === 'ULT' ? 'S3' : slot);
     return seq.length > 0 ? seq : [this.poseFrame('idle')];
   }

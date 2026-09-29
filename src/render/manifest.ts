@@ -24,6 +24,10 @@ export interface FrameData {
   bladeTip: Point | null;
   tipSource: string;
   bbox: [number, number, number, number];
+  //전용기 연속 장의 넘김 시간(ms). 없으면 null 이고 무대가 궤적 시간을 나눠 쓴다 (SPEC-005 §9.4)
+  ms: number | null;
+  //궤적 중에 한 번 더 부딪히는 장 (SPEC-005 §9.4)
+  impact: boolean;
 }
 
 //이펙트 한 컷
@@ -235,6 +239,8 @@ function parseFrame(raw: unknown, index: number): FrameData {
     bladeTip: optionalPoint(source['bladeTip'], `${path}.bladeTip`),
     tipSource: str(source, 'tipSource', path),
     bbox: bbox as [number, number, number, number],
+    ms: source['ms'] === undefined ? null : num(source, 'ms', path),
+    impact: source['impact'] === true,
   };
 }
 
@@ -498,8 +504,9 @@ export class SpriteCatalog {
 
   //전용기 자리에 해당하는 프레임 순서를 낸다. 파일 이름의 skillN 을 그대로 읽는다
   //v2.0 §1 의 프레임 수(S1 2장 · S2 2장 · S3 3장)와 매니페스트가 일치한다
-  frameSequence(slot: 'S1' | 'S2' | 'S3'): string[] {
-    const marker = `skill${slot[1]}`;
+  //궁극기는 이름에 -ult- 가 든 장이다. 없으면 빈 목록 (SPEC-005 §9.4)
+  frameSequence(slot: 'S1' | 'S2' | 'S3' | 'ULT'): string[] {
+    const marker = slot === 'ULT' ? '-ult-' : `skill${slot[1]}`;
     return this.manifest.frames.filter((f) => f.id.includes(marker)).map((f) => f.id);
   }
 }

@@ -11,13 +11,14 @@ import { createSeededRng, type Rng } from '../domain/rng.js';
 import type { BattleEvent, Side } from '../domain/types.js';
 import { toStageSteps } from '../render/exchange.js';
 import type { SpriteCatalog } from '../render/manifest.js';
+import { parseUltimateArt, type UltimateArt } from '../render/ultimate.js';
 import type { UiData } from '../ui/data.js';
 import { OrderInput, type InputMember } from '../ui/input.js';
 import { loadCharacter, loadIndex, loadUi } from '../renderer/assets.js';
 import { BattleHud, CommandPanel } from '../renderer/command-panel.js';
 import { SynthSound } from '../renderer/sound.js';
 import { parseBackdropConfig, parseStage3dConfig, type BackdropConfig, type BattleSetup, type Stage3dConfig } from './config.js';
-import { Stage3D, type RosterEntry } from './stage.js';
+import { Stage3D, type RosterEntry, type UltimateBundle } from './stage.js';
 
 const view = document.getElementById('view') as HTMLCanvasElement | null;
 const ASSETS = view?.dataset['assets'] ?? '../assets';
@@ -47,6 +48,7 @@ interface Boot {
   backdropImages: Map<string, HTMLImageElement>;
   sprites: Map<string, SpriteCatalog>;
   frames: Map<string, HTMLImageElement>;
+  ultimates: Map<string, UltimateBundle>;
   missing: string[];
 }
 
@@ -69,11 +71,33 @@ async function boot(progress: (text: string, ratio: number) => void): Promise<Bo
     }),
   );
 
+  //궁극기 시간표가 있는 캐릭터 (assets/index.json 의 ultimates). 없는 파일을 찔러 404 를 내지 않는다 (SPEC-004 §12)
+  const index = (await json(`${ASSETS}/index.json`)) as Record<string, unknown>;
+  const ultimateIds = Array.isArray(index['ultimates']) ? (index['ultimates'] as unknown[]).filter((id): id is string => typeof id === 'string') : [];
+  const arts = new Map<string, { art: UltimateArt; environment: BackdropConfig | null }>();
+  await Promise.all(
+    ultimateIds
+      .filter((id) => sprites.has(id))
+      .map(async (id) => {
+        const art = parseUltimateArt(await json(`${ASSETS}/${id}/ultimate.json`));
+        const environment = art.environment ? parseBackdropConfig(await json(`${ASSETS}/${art.environment}/placement.json`)) : null;
+        arts.set(id, { art, environment });
+      }),
+  );
+
   //받을 파일 목록. 진행률을 보여 준다 (SPEC-004 §12)
   const jobs: { key: string; url: string }[] = [];
   for (const layer of backdrop.layers) jobs.push({ key: `${mapDir}/${layer.file}`, url: `${ASSETS}/${mapDir}/${layer.file}` });
   for (const [id, sprite] of sprites) {
     for (const frame of sprite.manifest.frames) jobs.push({ key: `${id}/${frame.file}`, url: `${ASSETS}/${id}/${frame.file}` });
+  }
+  //궁극기 이펙트 장·컷신·고유 전장 층
+  for (const [id, { art, environment }] of arts) {
+    const effectIds = new Set(Object.values(art.effects));
+    const files = new Set<string>([art.cutscene.foreground, art.cutscene.line]);
+    for (const effect of sprites.get(id)?.manifest.effects ?? []) if (effectIds.has(effect.id)) for (const f of effect.frames) files.add(f.file);
+    for (const file of files) jobs.push({ key: `${id}/${file}`, url: `${ASSETS}/${id}/${file}` });
+    if (art.environment && environment) for (const layer of environment.layers) jobs.push({ key: `${art.environment}/${layer.file}`, url: `${ASSETS}/${art.environment}/${layer.file}` });
   }
   let done = 0;
   const loaded = new Map<string, HTMLImageElement>();
@@ -94,7 +118,22 @@ async function boot(progress: (text: string, ratio: number) => void): Promise<Bo
     const found = loaded.get(`${mapDir}/${layer.file}`);
     if (found) backdropImages.set(layer.file, found);
   }
-  return { catalog, ui, stage, backdrop, backdropImages, sprites, frames: loaded, missing };
+  const ultimates = new Map<string, UltimateBundle>();
+  for (const [id, { art, environment }] of arts) {
+    const envImages = new Map<string, HTMLImageElement>();
+    if (art.environment && environment) {
+      for (const layer of environment.layers) {
+        const found = loaded.get(`${art.environment}/${layer.file}`);
+        if (found) envImages.set(layer.file, found);
+      }
+    }
+    ultimates.set(id, {
+      art,
+      environment: environment ? { config: environment, images: envImages } : null,
+      image: (file) => loaded.get(`${id}/${file}`) ?? null,
+    });
+  }
+  return { catalog, ui, stage, backdrop, backdropImages, sprites, frames: loaded, ultimates, missing };
 }
 
 //전투 한 판을 들고 있는 통. 재시작하면 통째로 갈아 끼운다
@@ -212,6 +251,7 @@ async function main(): Promise<void> {
       return { slot: skill.slot, name: skill.name, frontPower: skill.frontPower, backPower: skill.backPower };
     },
     sound,
+    loaded.ultimates,
   );
   window.addEventListener('resize', () => stage.resize());
 

@@ -152,12 +152,22 @@ export interface BackdropLayer {
   order: number;
   //교전 중에는 숨긴다 (근경. SPEC-005 §9.5.1)
   hideInCombat: boolean;
+  //원화 일부를 잘라 다른 자리에 옮겨 그린 뒤 층으로 쓴다 (밤바다 먼 도시, SPEC-005 §10.2). 비어 있으면 원화 그대로
+  draws: BackdropDraw[];
+}
+
+//원화에서 잘라 올 곳과 놓을 곳 (픽셀, 원화 좌표)
+export interface BackdropDraw {
+  source: [number, number, number, number];
+  destination: [number, number, number, number];
 }
 
 //기준 카메라와 배경 층들
 export interface BackdropConfig {
   //화면 왼쪽 위에 적는 장소 이름. 없으면 빈 문자열
   name: string;
+  //원화 합성 크기(픽셀). draws 로 층을 합칠 때 쓴다
+  viewport: [number, number];
   camera: { back: number; height: number; lookAtHeight: number; fov: number; aspect: number };
   standSpread: number;
   scaleAnchor: [number, number];
@@ -274,8 +284,28 @@ export function parseBackdropConfig(raw: unknown): BackdropConfig {
       mirrorY: spec['mirrorOutsideY'] === true,
       order: n('order', shape === 'floor' ? -10 : -20),
       hideInCombat: spec['hideInCombat'] === true,
+      draws: parseDraws(where['draws'], id),
     });
   }
   const name = typeof root['name'] === 'string' ? (root['name'] as string) : '';
-  return { name, camera, standSpread: spread, scaleAnchor: [anchor[0] as number, anchor[1] as number], layers };
+  const viewport = root['viewport'];
+  const size: [number, number] =
+    Array.isArray(viewport) && viewport.length === 2 && viewport.every((v) => typeof v === 'number') ? [viewport[0] as number, viewport[1] as number] : [1672, 941];
+  return { name, viewport: size, camera, standSpread: spread, scaleAnchor: [anchor[0] as number, anchor[1] as number], layers };
+}
+
+//숫자 4개 묶음
+function rect4(value: unknown, path: string): [number, number, number, number] {
+  if (!Array.isArray(value) || value.length !== 4 || value.some((v) => typeof v !== 'number')) throw new Stage3dConfigError(`${path} 가 숫자 4개가 아니다`);
+  return value as [number, number, number, number];
+}
+
+//층 하나의 옮겨 그리기 목록. 없으면 빈 목록
+function parseDraws(value: unknown, id: string): BackdropDraw[] {
+  if (value === undefined) return [];
+  if (!Array.isArray(value)) throw new Stage3dConfigError(`placement.layers.${id}.draws 가 목록이 아니다`);
+  return value.map((raw, i) => {
+    const d = obj(raw, `placement.layers.${id}.draws[${i}]`);
+    return { source: rect4(d['source'], `${id}.draws[${i}].source`), destination: rect4(d['destination'], `${id}.draws[${i}].destination`) };
+  });
 }

@@ -1,0 +1,32 @@
+{
+  "_comment": "카일 궁극기 연출 시간표 (SPEC-005 §10.2). 드라이브 납품 '발도술 · 밤물 · 지연 피격' 의 animation.json 과 README 시각을 옮겼다. 시각은 한 방 시작부터 실제 시간(초)",
+  "character": "kyle",
+  "environment": "map-nightsea",
+  "frames": { "ready": "14-ult-ready", "open": "14-ult-post-open", "closed": "14-ult-post-closed" },
+  "effects": { "pool": "ult-night-pool", "slash": "ult-slash", "water": "ult-water" },
+  "cutscene": {
+    "foreground": "ult/closeup.png",
+    "line": "ult/cut-line.png",
+    "size": [1280, 720],
+    "zoomFrom": 1.0,
+    "zoomTo": 1.06,
+    "lineY": 0.5,
+    "lineWipe": 0.08,
+    "fade": 0.08
+  },
+  "timeline": {
+    "poolIn": 0.15,
+    "swapEnvironment": 0.15,
+    "cutsceneStart": 0.6,
+    "cutLine": 1.6,
+    "cutsceneEnd": 2.1,
+    "appearBehind": 2.1,
+    "sheathClick": 2.35,
+    "water": 2.4,
+    "effectsEnd": 3.3,
+    "restoreEnvironment": 3.5,
+    "restoreFade": 0.5,
+    "end": 4.0
+  },
+  "behindGap": 1.1
+}

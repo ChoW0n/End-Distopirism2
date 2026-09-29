@@ -7,12 +7,15 @@ import * as THREE from 'three';
 import type { BattleEvent, CardFace, Side, SkillSlot } from '../domain/types.js';
 import type { ClashRound, FlipView, StageStep, StepCallout } from '../render/exchange.js';
 import type { SpriteCatalog } from '../render/manifest.js';
+import type { UltimateArt } from '../render/ultimate.js';
 import type { SoundPlayer } from '../renderer/sound.js';
 import { Backdrop } from './backdrop.js';
 import { CameraRig } from './camera.js';
 import { FlipCard } from './card.js';
 import { all, Clock, ease } from './clock.js';
 import type { BackdropConfig, Stage3dConfig } from './config.js';
+import { CutsceneOverlay } from './cutscene.js';
+import { EffectLayer, effectTextures } from './effects.js';
 import { frameTexture, PaperDoll } from './doll.js';
 import { Overlay, type ScreenPoint, type Selection3d } from './overlay.js';
 import { SparkField } from './sparks.js';
@@ -56,6 +59,27 @@ export interface StageSkill {
   backPower: number;
 }
 
+//궁극기 연출에 쓸 것 (SPEC-005 §10.2). 시간표와 고유 전장, 이펙트·컷신 그림
+export interface UltimateBundle {
+  art: UltimateArt;
+  environment: { config: BackdropConfig; images: Map<string, HTMLImageElement> } | null;
+  //캐릭터 폴더 안 파일 이름으로 그림을 찾는다 (이펙트 장·컷신)
+  image: (file: string) => HTMLImageElement | null;
+}
+
+//무대가 준비해 둔 궁극기 한 벌
+interface UltimateStage {
+  art: UltimateArt;
+  environment: Backdrop | null;
+  //고유 전장 흐림 손잡이
+  fade: { v: number; backdrop: Backdrop | null };
+  //이펙트 id → 장 텍스처
+  effects: Map<string, THREE.Texture[]>;
+  background: HTMLCanvasElement | null;
+  foreground: HTMLImageElement | null;
+  line: HTMLImageElement | null;
+}
+
 //카드 테두리 진영 색. 이름표·결과 알림의 진영 색과 같다 (SPEC-004 §11)
 const CARD_TINT = { ally: '#6f9bbd', enemy: '#b3262b' } as const;
 
@@ -81,6 +105,11 @@ export class Stage3D {
   private readonly worldPerPixel = new Map<string, number>();
   //머리 위 카드와 그 주인 인형
   private readonly cards = new Map<FlipCard, PaperDoll>();
+  //궁극기 이펙트·컷신 (SPEC-005 §10.2)
+  private readonly effects: EffectLayer;
+  private readonly cutscene: CutsceneOverlay;
+  //캐릭터 id → 궁극기 한 벌
+  private readonly ultimates = new Map<string, UltimateStage>();
   //교전 중에 숨길 근경 재질과 그 투명도 손잡이
   private readonly foreground: THREE.MeshBasicMaterial[];
   private readonly foregroundFade = {
@@ -105,6 +134,7 @@ export class Stage3D {
     private readonly frameImages: (characterId: string, file: string) => HTMLImageElement | null,
     private readonly skillInfo: (skillId: number) => StageSkill,
     private readonly sound: SoundPlayer,
+    ultimates: Map<string, UltimateBundle> = new Map(),
   ) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -117,7 +147,38 @@ export class Stage3D {
     this.rig = new CameraRig(this.camera, backdrop.homePosition, backdrop.homeLookAt, backdrop.fov, config.camera, config.shake);
     this.sparks = new SparkField(this.scene, config.sparks);
     this.overlay = new Overlay(host);
+    this.effects = new EffectLayer(this.scene, config.layout.characterHeight);
+    this.cutscene = new CutsceneOverlay(host);
+    for (const [characterId, bundle] of ultimates) this.prepareUltimate(characterId, bundle);
     this.resize();
+  }
+
+  //궁극기 한 벌을 미리 세운다. 고유 전장은 숨겨 두고, 컷신 배경은 전장 층을 합쳐 한 장으로 만든다
+  private prepareUltimate(characterId: string, bundle: UltimateBundle): void {
+    const catalog = this.sprites.get(characterId);
+    if (!catalog) return;
+    let environment: Backdrop | null = null;
+    let background: HTMLCanvasElement | null = null;
+    if (bundle.environment) {
+      environment = new Backdrop(this.scene, bundle.environment.config);
+      environment.build(bundle.environment.images);
+      environment.setOpacity(0);
+      background = composeBackdrop(bundle.environment.config, bundle.environment.images);
+    }
+    const effects = new Map<string, THREE.Texture[]>();
+    for (const id of Object.values(bundle.art.effects)) {
+      const effect = catalog.manifest.effects.find((e) => e.id === id);
+      if (effect) effects.set(id, effectTextures(effect.frames.map((f) => bundle.image(f.file))));
+    }
+    this.ultimates.set(characterId, {
+      art: bundle.art,
+      environment,
+      fade: { v: 0, backdrop: environment },
+      effects,
+      background,
+      foreground: bundle.image(bundle.art.cutscene.foreground),
+      line: bundle.image(bundle.art.cutscene.line),
+    });
   }
 
   //카드 슬롯. 인형 장 고르기에 쓴다
@@ -168,6 +229,9 @@ export class Stage3D {
     this.overlay.clear();
     for (const card of this.cards.keys()) card.dispose();
     this.cards.clear();
+    this.effects.clear();
+    this.cutscene.clear();
+    for (const u of this.ultimates.values()) u.environment?.setOpacity(0);
     for (const actor of this.actors.values()) this.scene.remove(actor.doll.root);
     this.actors.clear();
 
@@ -326,10 +390,23 @@ export class Stage3D {
   }
 
   //충돌 장 뒤로 남은 장을 넘긴다. 첫 장을 peakShare 만큼 붙잡는다
-  private async trail(d: PaperDoll, frames: readonly string[], epoch: number): Promise<void> {
+  //장에 시간(ms)이 있으면 그 시간대로 넘기고, 부딪히는 장(impact)이 오면 한 번 더 부딪힌다 (§9.4)
+  private async trail(d: PaperDoll, frames: readonly string[], epoch: number, beat?: () => void): Promise<void> {
     const rest = frames.slice(2);
     if (rest.length === 0) return;
     const m = this.config.motion;
+    const timed = frames.slice(1).every((id) => d.catalog.frame(id).ms !== null);
+    if (timed) {
+      await this.wait(this.clock.waitGame((d.catalog.frame(frames[1] as string).ms ?? 0) / 1000), epoch);
+      for (const f of rest) {
+        if (d.down) return;
+        d.showFrame(f);
+        const data = d.catalog.frame(f);
+        if (data.impact) beat?.();
+        await this.wait(this.clock.waitGame((data.ms ?? 0) / 1000), epoch);
+      }
+      return;
+    }
     const peak = m.strikeTrailTime * m.strikeTrailPeakShare;
     const step = (m.strikeTrailTime - peak) / rest.length;
     await this.wait(this.clock.waitGame(peak), epoch);
@@ -391,6 +468,17 @@ export class Stage3D {
       ),
       epoch,
     );
+  }
+
+  //궤적 중 한 번 더 부딪힘. 피해 없이 스파크·짧은 역경직·흔들림 (§9.4)
+  private beat(from: PaperDoll, to: PaperDoll, dir: number): () => void {
+    return () => {
+      const contact = this.chest(from).lerp(this.chest(to), this.config.sparks.contactBias);
+      this.sparks.burst(contact, dir, true, 8);
+      this.clock.startHitStop(this.config.hitStop.clashSeconds, this.config.hitStop.scale);
+      this.rig.impact(this.config.shake.clashPower, dir);
+      this.sound.play('hit');
+    };
   }
 
   //맞는 순간. 스파크·역경직·카메라·소리·현황판·피해 숫자
@@ -516,8 +604,14 @@ export class Stage3D {
     this.showCallouts(step.callouts, [step.attackerId]);
     await this.wait(this.clock.waitReal(c.holdTime), epoch);
     await this.wait(run as Promise<void>, epoch);
-    //⑥ 슬로우가 풀리고 남은 거리를 달린다
     this.clock.setSlowMotion(1);
+    //궁극기면 ⑥⑦ 대신 궁극기 시간표 (§10.2)
+    const ultimate = this.ultimateFor(step.attackerId, step.skillId);
+    if (ultimate) {
+      await this.playUltimate(ultimate, a, d, step.damage, step.events, [card], epoch);
+      return;
+    }
+    //⑥ 슬로우가 풀리고 남은 거리를 달린다
     await this.wait(this.dash(a, toX, toZ, m.dashTime * (1 - c.approachShare)), epoch);
     this.rig.focus(this.chest(a), this.chest(d), dir);
 
@@ -526,7 +620,7 @@ export class Stage3D {
     const contact = this.chest(a).lerp(this.chest(d), this.config.sparks.contactBias);
     this.impact(contact, d, dir, step.damage, false, step.events);
     void this.fadeCard(card);
-    const trail = this.trail(a, frames, epoch);
+    const trail = this.trail(a, frames, epoch, this.beat(a, d, dir));
     const jobs: Promise<unknown>[] = [this.clock.tween(a.visual.position, 'x', 0, m.knockTime)];
     if (step.damage > 0 && !d.down) jobs.push(this.knockback(d, dir, step.damage, step.damage >= m.heavyDamage, epoch));
     await this.wait(all(...(jobs as Promise<void>[])), epoch);
@@ -569,7 +663,7 @@ export class Stage3D {
 
       //② 달려가며 슬로우 (다시 뒤집기면 제자리에서 슬로우만)
       this.clock.setSlowMotion(c.slowScale);
-      const run = engaged ? null : all(this.approach(A, ax, midZ), this.approach(D, dx, midZ));
+      const run = engaged ? null : all(this.approach(A, ax, midZ) as Promise<void>, this.approach(D, dx, midZ) as Promise<void>);
       if (engaged) {
         A.setPose('guard');
         D.setPose('guard');
@@ -625,6 +719,12 @@ export class Stage3D {
       const L = this.actor(f.loserId).doll;
       const wdir = this.dir(W, L);
       const fw = W.skillFrames(this.slotOf(f.winnerSkillId));
+      //궁극기로 이겼으면 한 방을 궁극기 시간표로 바꾼다 (§10.2)
+      const ultimate = this.ultimateFor(f.winnerId, f.winnerSkillId);
+      if (ultimate) {
+        await this.playUltimate(ultimate, W, L, f.damage, step.events, [cardA, cardD], epoch);
+        return;
+      }
       L.setPose('guard');
       await this.wait(this.dash(W, L.root.position.x - wdir * m.contactGap, L.root.position.z, engaged ? m.reengageTime : m.dashTime), epoch);
       this.rig.focus(this.chest(W), this.chest(L), wdir);
@@ -633,7 +733,7 @@ export class Stage3D {
       this.impact(contact, L, wdir, f.damage, false, step.events);
       void this.fadeCard(cardA);
       void this.fadeCard(cardD);
-      const trail = this.trail(W, fw, epoch);
+      const trail = this.trail(W, fw, epoch, this.beat(W, L, wdir));
       const jobs: Promise<void>[] = [this.clock.tween(W.visual.position, 'x', 0, m.knockTime)];
       if (f.damage > 0 && !L.down) jobs.push(this.knockback(L, wdir, f.damage, f.damage >= m.heavyDamage, epoch));
       await this.wait(all(jobs), epoch);
@@ -658,6 +758,87 @@ export class Stage3D {
     if (!d.down) d.setPose('idle');
   }
 
+  //── 궁극기 (§10.2) ──
+
+  //이 사람이 이 카드로 궁극기 시간표를 돌리는지. 그림이 없으면 보통 한 방으로 친다
+  //남의 그림을 빌려 선 사람(artAlias)은 그 그림 주인의 궁극기를 쓰지 않는다 (§9.4 · §10.2)
+  private ultimateFor(combatantId: string, skillId: number): UltimateStage | null {
+    if (this.slotOf(skillId) !== 'ULT') return null;
+    const a = this.actors.get(combatantId);
+    if (!a || a.entry.artId !== a.entry.characterId) return null;
+    return this.ultimates.get(a.entry.characterId) ?? null;
+  }
+
+  //발 자리 (월드)
+  private footOf(d: PaperDoll): THREE.Vector3 {
+    return new THREE.Vector3(d.root.position.x + d.visual.position.x * d.root.scale.x, 0.02, d.root.position.z + 0.05);
+  }
+
+  //준비 → 전장 교체 → 컷신 → 적 뒤편 → 납도·지연 피격 → 전장 복귀. 시각은 실제 시간
+  private async playUltimate(u: UltimateStage, W: PaperDoll, L: PaperDoll, damage: number, events: readonly BattleEvent[], cards: readonly (FlipCard | null)[], epoch: number): Promise<void> {
+    const t = u.art.timeline;
+    const m = this.config.motion;
+    const start = this.clock.realNow;
+    const at = (sec: number) => this.wait(this.clock.waitReal(Math.max(0, start + sec - this.clock.realNow)), epoch);
+    const wdir = this.dir(W, L);
+    const effect = (id: string) => W.catalog.manifest.effects.find((e) => e.id === id) ?? null;
+    const spawn = (id: string, where: THREE.Vector3, options: { hold?: boolean; order?: number } = {}) => {
+      const data = effect(id);
+      const textures = u.effects.get(id);
+      return data && textures ? this.effects.spawn(data, textures, where, W.facing, this.clock.realNow, options) : null;
+    };
+
+    //0 준비 장 + 발밑 밤물
+    W.showFrame(u.art.frames.ready);
+    this.rig.focus(this.chest(W), this.chest(L), wdir);
+    const pool = spawn(u.art.effects.pool, this.footOf(W), { hold: true, order: 9 });
+    if (pool) {
+      pool.material.opacity = 0;
+      this.effects.fade(pool, 1, t.poolIn, this.clock.realNow);
+    }
+
+    //고유 전장으로 순간 교체
+    await at(t.swapEnvironment);
+    u.fade.v = 1;
+    u.environment?.setOpacity(1);
+
+    //컷신
+    await at(t.cutsceneStart);
+    this.cutscene.play(u.art.cutscene, { background: u.background, foreground: u.foreground, line: u.line }, this.clock.realNow, t.cutsceneEnd - t.cutsceneStart, t.cutLine - t.cutsceneStart);
+
+    //컷신이 걷히면 적 뒤편에 납도 직전 장으로 서 있다
+    await at(t.appearBehind);
+    this.effects.fade(pool, 0, 0.1, this.clock.realNow);
+    W.root.position.x = L.root.position.x + wdir * u.art.behindGap;
+    W.root.position.z = L.root.position.z;
+    W.visual.position.set(0, 0, 0);
+    W.showFrame(u.art.frames.open);
+    this.rig.focus(this.chest(L), this.chest(W), wdir);
+
+    //검집이 닫히는 순간 늦게 베인다. 이펙트는 적 자리에 낸다
+    await at(t.sheathClick);
+    W.showFrame(u.art.frames.closed);
+    spawn(u.art.effects.slash, this.chest(L));
+    this.impact(this.chest(L), L, -wdir, damage, false, events);
+    for (const card of cards) void this.fadeCard(card);
+    const knock = damage > 0 && !L.down ? this.knockback(L, -wdir, damage, damage >= m.heavyDamage, epoch) : Promise.resolve();
+
+    await at(t.water);
+    spawn(u.art.effects.water, this.footOf(L));
+
+    //전장 복귀
+    await at(t.restoreEnvironment);
+    void this.clock.tweenReal(u.fade, 'v', 0, t.restoreFade);
+    await at(t.end);
+    u.environment?.setOpacity(0);
+    await this.wait(knock, epoch);
+
+    this.rig.release();
+    await this.wait(all(this.springBack(L) as Promise<void>, this.returnHome(W) as Promise<void>), epoch);
+    this.settle(W);
+    this.settle(L);
+  }
+
   //── 매 프레임 ──
 
   //시간 → 몸짓·스파크(게임) → 카메라(실제) → 판 세우기 → 겹층 → 그리기
@@ -668,6 +849,9 @@ export class Stage3D {
     this.rig.write(realDt, this.clock.realNow);
     for (const a of this.actors.values()) a.doll.faceCamera(this.camera);
     for (const [card, owner] of this.cards) card.update(this.cardAnchor(owner), this.camera);
+    this.effects.update(this.clock.realNow, this.camera);
+    this.cutscene.update(this.clock.realNow);
+    for (const u of this.ultimates.values()) if (u.fade.v < 1 && u.fade.v > 0) u.environment?.setOpacity(u.fade.v);
     this.overlay.update(
       (id) => this.headPoint(id, 0),
       (id) => this.actors.get(id)?.doll.down ?? false,
@@ -724,4 +908,29 @@ export class Stage3D {
 function stepEvents(step: Exclude<StageStep, { kind: 'state' }>): BattleEvent[] {
   if (step.kind === 'oneSided') return step.events;
   return [...step.rounds.flatMap((r) => r.events), ...step.events];
+}
+
+//고유 전장 층을 그리는 순서대로 한 장에 합친다. 궁극기 컷신 배경이다 (SPEC-005 §10.2)
+function composeBackdrop(config: BackdropConfig, images: Map<string, HTMLImageElement>): HTMLCanvasElement {
+  const [w, h] = config.viewport;
+  const canvas = document.createElement('canvas');
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return canvas;
+  for (const layer of [...config.layers].sort((a, b) => a.order - b.order)) {
+    const image = images.get(layer.file);
+    if (!image) continue;
+    const r = image.naturalWidth > 0 ? image.naturalWidth / w : 1;
+    if (layer.draws.length > 0) {
+      for (const d of layer.draws) {
+        const [sx, sy, sw, sh] = d.source;
+        ctx.drawImage(image, sx * r, sy * r, sw * r, sh * r, ...d.destination);
+      }
+    } else {
+      const [x, y, rw, rh] = layer.rect;
+      ctx.drawImage(image, x * w, y * h, rw * w, rh * h);
+    }
+  }
+  return canvas;
 }

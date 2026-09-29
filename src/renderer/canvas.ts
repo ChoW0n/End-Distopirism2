@@ -4,6 +4,7 @@
 //어댑터가 순서를 정하고 여기가 시간을 가진다 — 컷신은 타임라인 장벽으로 다룬다 (SPEC-003 §5.3).
 //히트스톱·슬로모도 여기 시계에만 걸린다. 도메인 결과에는 아무 영향이 없다 (SPEC-005 §5)
 
+import type { CardFace } from '../domain/types.js';
 import type { CameraCommand } from '../camera/director.js';
 import { CutsceneDirector, type CutscenePose, type LayerTransform } from '../render/cutscene.js';
 import { MeshCutscene } from '../render/cutscene-mesh.js';
@@ -211,7 +212,6 @@ const PULL_FOLLOW = 10;
 //카드가 머리 위에서 도는 시간과 바퀴 수 (2D 비교 화면)
 const CARD_SPIN_SEC = 0.32;
 const CARD_SPIN_TURNS = 2;
-const COIN_STAGGER_SEC = 0.045;
 const POP_SEC = 0.12;
 const SPARK_SEC = 0.32;
 //결과 띠를 미룰 때 다시 볼 간격
