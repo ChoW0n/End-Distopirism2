@@ -83,7 +83,7 @@ interface Actor {
   bars: Record<'hp' | 'mentality', { shown: number; lag: number; target: number; tweenSec: number }>;
   //제자리 기준 좌표를 발에서의 거리로 들고 있다. 달려가도 머리 위에 붙어 따라간다
   barBox: Record<'hp' | 'mentality', { rel: Point; width: number; height: number } | null>;
-  coins: { rolls: boolean[]; at: Point; size: number; t: number; broken: number | null; brokenT: number } | null;
+  card: { face: CardFace; power: number; at: Point; size: number; t: number } | null;
   power: { value: number; at: Point; size: number; t: number; result: 'win' | 'lose' | 'tie' | null; resultT: number } | null;
   banner: { text: string; at: Point; size: number; sec: number; t: number; facing: 1 | -1 } | null;
   //맞고 몸이 번쩍이는 남은 시간
@@ -208,7 +208,9 @@ const SHAKE_PX = 16;
 const CAMERA_FOLLOW = 7;
 //합 라운드 뒤 카메라가 빠졌다 돌아오는 속도. 따라가기보다 빨라야 벌어지는 순간이 보인다
 const PULL_FOLLOW = 10;
-const COIN_FLIP_SEC = 0.2;
+//카드가 머리 위에서 도는 시간과 바퀴 수 (2D 비교 화면)
+const CARD_SPIN_SEC = 0.32;
+const CARD_SPIN_TURNS = 2;
 const COIN_STAGGER_SEC = 0.045;
 const POP_SEC = 0.12;
 const SPARK_SEC = 0.32;
@@ -346,7 +348,7 @@ export class CanvasRenderer {
           mentality: { shown: 1, lag: 1, target: 1, tweenSec: 0.5 },
         },
         barBox: { hp: null, mentality: null },
-        coins: null,
+        card: null,
         power: null,
         banner: null,
         hurt: 0,
@@ -538,7 +540,7 @@ export class CanvasRenderer {
         const actor = this.actors.get(command.combatantId);
         if (!actor || actor.down !== null) return 0;
         actor.target = { ...actor.home };
-        actor.coins = null;
+        actor.card = null;
         actor.power = null;
         actor.slides = [];
         actor.drift = 0;
@@ -610,22 +612,12 @@ export class CanvasRenderer {
         return 0;
       }
 
-      case 'coinToss': {
+      case 'cardFlip': {
         const actor = this.actors.get(command.combatantId);
         if (actor) {
-          actor.coins = { rolls: [...command.rolls], at: { ...command.at }, size: command.size, t: 0, broken: null, brokenT: 0 };
+          actor.card = { face: command.face, power: command.power, at: { ...command.at }, size: command.size, t: 0 };
           if (actor.power) actor.power = null;
-          this.sound.play('coin');
-        }
-        return 0;
-      }
-
-      case 'coinBreak': {
-        const actor = this.actors.get(command.combatantId);
-        if (actor?.coins) {
-          actor.coins.broken = command.coinsLeft;
-          actor.coins.brokenT = 0;
-          this.sound.play('coinBreak');
+          this.sound.play('flip');
         }
         return 0;
       }
@@ -727,7 +719,7 @@ export class CanvasRenderer {
         actor.target = null;
         actor.float = null;
         actor.trail = null;
-        actor.coins = null;
+        actor.card = null;
         actor.power = null;
         actor.banner = null;
         actor.chips = null;
@@ -1096,9 +1088,11 @@ export class CanvasRenderer {
       else bar.lag = bar.shown;
     }
 
-    if (actor.coins) {
-      actor.coins.t += dt;
-      if (actor.coins.broken !== null) actor.coins.brokenT += dt;
+    if (actor.card) {
+      const before = actor.card.t;
+      actor.card.t += dt;
+      //도는 게 끝나고 면이 드러나는 순간 '띵'
+      if (before < CARD_SPIN_SEC && actor.card.t >= CARD_SPIN_SEC) this.sound.play('reveal');
     }
     if (actor.power) {
       actor.power.t += dt;
@@ -1382,7 +1376,7 @@ export class CanvasRenderer {
       ctx.globalAlpha = this.presence(actor) ** 2;
       this.drawBars(actor, nowSec);
       this.drawChips(actor, nowSec);
-      this.drawCoins(actor, nowSec);
+      this.drawCard(actor, nowSec);
       this.drawPower(actor, nowSec);
       this.drawBanner(actor, nowSec);
       ctx.restore();
@@ -1802,8 +1796,8 @@ export class CanvasRenderer {
   //체력바 위 이름표. 진영 색이고 적은 앞에 표시가 붙는다 (SPEC-004 §11)
   private drawName(actor: Actor, nowSec: number): void {
     const box = actor.barBox.hp;
-    //코인이 머리 위에 떠 있는 동안은 이름표를 걷는다. 같은 자리라 겹친다. 진영은 발밑 고리가 계속 보인다
-    if (!actor.label || !box || actor.coins) return;
+    //카드가 머리 위에 떠 있는 동안은 이름표를 걷는다. 같은 자리라 겹친다. 진영은 발밑 고리가 계속 보인다
+    if (!actor.label || !box || actor.card) return;
     const side = this.hud.side;
     const gap = side.nameGap * this.placeholderHeight;
     const { at, scale } = this.overHead(actor, { x: actor.home.x + box.rel.x, y: actor.home.y + box.rel.y - gap }, nowSec, true);
@@ -1874,58 +1868,35 @@ export class CanvasRenderer {
     });
   }
 
-  //머리 위 코인 한 줄. 하나씩 차례로 뒤집혀 앞면(금)·뒷면(검정)을 보인다
-  private drawCoins(actor: Actor, nowSec: number): void {
-    const coins = actor.coins;
-    if (!coins) return;
-    const { at, scale } = this.overHead(actor, coins.at, nowSec, false);
-    const size = coins.size * scale;
-    const gap = size * 0.28;
-    const total = coins.rolls.length * size + (coins.rolls.length - 1) * gap;
+  //머리 위 카드 한 장. 가로로 돌다가 한 면으로 멈춘다. 앞면은 밝은 색, 뒷면은 회색이다 (임시 도형, SPEC-005 §11)
+  private drawCard(actor: Actor, nowSec: number): void {
+    const card = actor.card;
+    if (!card) return;
+    const { at, scale } = this.overHead(actor, card.at, nowSec, false);
+    const h = card.size * scale * 1.4;
+    const w = h * 0.7;
     const ctx = this.ctx;
-
-    coins.rolls.forEach((heads, i) => {
-      const x = at.x - total / 2 + size / 2 + i * (size + gap);
-      const start = i * COIN_STAGGER_SEC;
-      const k = Math.max(0, Math.min(1, (coins.t - start) / COIN_FLIP_SEC));
-      //뒤집는 동안은 세로로 납작해졌다가 결과 면으로 펴진다
-      const squash = k < 1 ? Math.abs(Math.cos(k * Math.PI * 2)) : 1;
-      const lift = k < 1 ? Math.sin(k * Math.PI) * size * 0.9 : 0;
-      const shown = k < 0.5 ? null : heads;
-
-      //깨진 코인은 쪼개지며 떨어진다
-      let alpha = 1;
-      let drop = 0;
-      if (coins.broken !== null && i >= coins.broken) {
-        const b = Math.min(1, coins.brokenT / 0.35);
-        alpha = 1 - b;
-        drop = b * size * 0.8;
-      }
-      if (alpha <= 0) return;
-
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      ctx.translate(x, at.y - lift + drop);
-      ctx.scale(1, Math.max(0.08, squash));
-      ctx.beginPath();
-      ctx.arc(0, 0, size / 2, 0, Math.PI * 2);
-      ctx.fillStyle = shown === null ? '#8a7b5a' : shown ? '#e3b447' : '#2b2622';
-      ctx.fill();
-      ctx.lineWidth = Math.max(1, size * 0.1);
-      ctx.strokeStyle = shown === false ? '#6b5f55' : '#fff0c4';
-      ctx.stroke();
-      if (coins.broken !== null && i >= coins.broken) {
-        //금 간 선
-        ctx.strokeStyle = '#1a1512';
-        ctx.lineWidth = Math.max(1, size * 0.08);
-        ctx.beginPath();
-        ctx.moveTo(-size * 0.3, -size * 0.35);
-        ctx.lineTo(size * 0.05, 0);
-        ctx.lineTo(-size * 0.1, size * 0.35);
-        ctx.stroke();
-      }
-      ctx.restore();
-    });
+    const k = Math.min(1, card.t / CARD_SPIN_SEC);
+    //도는 동안은 앞·뒤가 번갈아 보이고, 끝나면 나온 면으로 선다
+    const angle = k < 1 ? k * Math.PI * 2 * CARD_SPIN_TURNS : 0;
+    const squash = Math.abs(Math.cos(angle));
+    const showsFront = k < 1 ? Math.cos(angle) >= 0 : card.face === 'front';
+    ctx.save();
+    ctx.translate(at.x, at.y);
+    ctx.scale(Math.max(0.06, squash), 1);
+    ctx.fillStyle = showsFront ? '#e8d9b0' : '#5d5a56';
+    ctx.strokeStyle = showsFront ? '#b0822f' : '#2e2c2a';
+    ctx.lineWidth = Math.max(1, w * 0.07);
+    ctx.fillRect(-w / 2, -h / 2, w, h);
+    ctx.strokeRect(-w / 2, -h / 2, w, h);
+    if (k >= 1) {
+      ctx.fillStyle = showsFront ? '#2a1d0c' : '#cfcac2';
+      ctx.font = `700 ${Math.round(h * 0.42)}px system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(String(card.power), 0, 0);
+    }
+    ctx.restore();
   }
 
   //위력 숫자. 떠오를 때 튀어나오고, 결과가 나면 이긴 쪽은 커지고 진 쪽은 흔들리며 꺼진다

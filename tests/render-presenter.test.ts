@@ -10,7 +10,7 @@ import { loadCharacterAssets } from '../src/platform/node-manifest.js';
 import { Stage, type StagePlacement } from '../src/render/stage.js';
 import { SpriteCatalog } from '../src/render/manifest.js';
 import { BattlePresenter, type RenderCommand } from '../src/render/presenter.js';
-import { alwaysFailRng, catalog, skillOf } from './helpers.js';
+import { alwaysBackRng, catalog, skillOf } from './helpers.js';
 import type { BattleEvent } from '../src/domain/types.js';
 import type { CombatantInit } from '../src/domain/combatant.js';
 
@@ -56,7 +56,7 @@ function makeBattle(enemySkillId = S1) {
   const allies: CombatantInit[] = [{ id: 'a1', characterId: 'incinerator', side: 'ally' }];
   const enemies: CombatantInit[] = [{ id: 'e1', characterId: 'incinerator', side: 'enemy' }];
   return new Battle(catalog, allies, enemies, {
-    rng: alwaysFailRng,
+    rng: alwaysBackRng,
     enemyAi: new ScriptedAi(enemySkillId),
   });
 }
@@ -135,17 +135,18 @@ describe('교전이 시작되면 전용기 동작이 나간다', () => {
     expect(poses).toEqual([s3[1], s3[2], s3[1]]);
   });
 
-  it('다음 라운드 코인이 굴러가면 둘 다 준비 자세로 돌아온다', () => {
-    const events = resolveTurn(makeBattle(S1), S2);
+  //같은 카드끼리 늘 뒷면이면 위력이 같아 교착 → 다시 뒤집는다 (SPEC-001 v3.0 §3)
+  it('교착 뒤 카드를 다시 뒤집으면 둘 다 준비 자세로 돌아온다', () => {
+    const events = resolveTurn(makeBattle(S1), S1);
     const presenter = makePresenter();
     const firstResult = events.findIndex((e) => e.type === 'clashRoundWin' || e.type === 'deadlock');
-    const nextCoin = events.findIndex((e, i) => i > firstResult && e.type === 'coinRolled');
-    expect(nextCoin).toBeGreaterThan(firstResult);
+    const nextFlip = events.findIndex((e, i) => i > firstResult && e.type === 'cardFlipped');
+    expect(nextFlip).toBeGreaterThan(firstResult);
 
-    presenter.consume(events.slice(0, nextCoin));
-    const commands = presenter.consume([events[nextCoin]!]);
+    presenter.consume(events.slice(0, nextFlip));
+    const commands = presenter.consume([events[nextFlip]!]);
 
-    expect(framesFor(commands, 'a1')).toEqual([[sprites.frameSequence('S2')[0]]]);
+    expect(framesFor(commands, 'a1')).toEqual([[sprites.frameSequence('S1')[0]]]);
     expect(framesFor(commands, 'e1')).toEqual([[sprites.frameSequence('S1')[0]]]);
   });
 
@@ -398,7 +399,7 @@ describe('에셋이 캐릭터마다 따로 들어온다', () => {
     const allies: CombatantInit[] = [{ id: 'a1', characterId: 'incinerator', side: 'ally' }];
     const enemies: CombatantInit[] = [{ id: 'e1', characterId: 'helper', side: 'enemy' }];
     const battle = new Battle(catalog, allies, enemies, {
-      rng: alwaysFailRng,
+      rng: alwaysBackRng,
       enemyAi: new ScriptedAi(skillOf('helper', 'S1')),
     });
 

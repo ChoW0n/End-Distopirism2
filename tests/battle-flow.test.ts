@@ -4,7 +4,7 @@ import { describe, expect, it } from 'vitest';
 import { Battle, BattleFlowError } from '../src/domain/battle.js';
 import { RandomEnemyAi } from '../src/domain/ai.js';
 import { createSeededRng } from '../src/domain/rng.js';
-import { alwaysFailRng, catalog, skillOf } from './helpers.js';
+import { alwaysBackRng, catalog, skillOf } from './helpers.js';
 
 import type { CombatantInit } from '../src/domain/combatant.js';
 
@@ -21,28 +21,18 @@ const enemies: CombatantInit[] = [
 
 //기본 전투 하나를 만든다
 function makeBattle() {
-  return new Battle(catalog, allies, enemies, { rng: alwaysFailRng, enemyAi: new RandomEnemyAi() });
+  return new Battle(catalog, allies, enemies, { rng: alwaysBackRng, enemyAi: new RandomEnemyAi() });
 }
 
 describe('턴 진행', () => {
-  it('턴을 열면 코인이 회복되고 입력 대기로 넘어간다', () => {
+  it('턴을 열면 입력 대기로 넘어간다. 코인 회복은 없다 (SPEC-001 v3.0)', () => {
     const battle = makeBattle();
     const events = battle.startTurn();
 
     expect(battle.turn).toBe(1);
     expect(battle.phase).toBe('awaitingOrders');
-    expect(events.filter((e) => e.type === 'coinRestored')).toHaveLength(2);
-    expect(battle.combatant('a1').coin).toBe(5);
-  });
-
-  it('다음 턴 코인 보정치가 회복에 반영되고 한 번 쓰면 사라진다', () => {
-    const battle = makeBattle();
-    const main = battle.combatant('a1');
-    main.nextTurnCoinModifier = 2;
-
-    battle.startTurn();
-    expect(main.coin).toBe(7);
-    expect(main.nextTurnCoinModifier).toBe(0);
+    expect(events.map((e) => e.type)).not.toContain('coinRestored');
+    expect('coin' in battle.combatant('a1')).toBe(false);
   });
 
   it('단계를 건너뛰면 막는다', () => {

@@ -83,7 +83,7 @@ export interface SideData {
 
 //합 한 번의 박자와 모양 (SPEC-005 §2)
 export interface ClashFxData {
-  coinSec: number;
+  cardSec: number;
   powerSec: number;
   resultSec: number;
   recoilWinner: number;
@@ -91,7 +91,7 @@ export interface ClashFxData {
   recoilSec: number;
   sparkSize: number;
   //머리 위 코인 한 개 지름
-  coinSize: number;
+  cardSize: number;
   //위력 숫자 글자 크기와 자리 (캐릭터 앞쪽 가슴 높이)
   powerSize: number;
   powerOffsetX: number;
@@ -280,7 +280,7 @@ export interface ResultData {
 
 //합성 소리 이름. 렌더러가 명령을 실행하는 순간 낸다 (SPEC-005 §7.5)
 export const SOUND_CUES = [
-  'dash', 'coin', 'clash', 'clashTie', 'coinBreak', 'swing', 'hit', 'hitHeavy', 'guard', 'down', 'ultimate', 'result',
+  'dash', 'flip', 'clash', 'clashTie', 'reveal', 'swing', 'hit', 'hitHeavy', 'guard', 'down', 'ultimate', 'result',
 ] as const;
 export type SoundCue = (typeof SOUND_CUES)[number];
 export interface SoundData {
@@ -445,8 +445,8 @@ export function parseUiData(raw: unknown): UiData {
       rowStagger: num(side, 'rowStagger', 'side'),
     },
     clash: numbers('clash', [
-      'coinSec', 'powerSec', 'resultSec', 'recoilWinner', 'recoilLoser', 'recoilSec', 'sparkSize',
-      'coinSize', 'powerSize', 'powerOffsetX', 'powerOffsetY', 'contactHeight',
+      'cardSec', 'powerSec', 'resultSec', 'recoilWinner', 'recoilLoser', 'recoilSec', 'sparkSize',
+      'cardSize', 'powerSize', 'powerOffsetX', 'powerOffsetY', 'contactHeight',
     ] as const),
     hitStop: numbers('hitStop', ['clashSec', 'baseSec', 'perDamageSec', 'maxSec', 'slowScale', 'slowSec'] as const),
     damageText: numbers('damageText', ['rise', 'sec', 'heavyDamage', 'height', 'size'] as const),

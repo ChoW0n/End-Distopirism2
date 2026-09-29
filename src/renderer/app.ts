@@ -75,7 +75,7 @@ class Session {
       }));
 
     this.battle = new Battle(boot.catalog, roster('ally'), roster('enemy'), { rng, enemyAi: this.ai });
-    const resolver = new ClashResolver(boot.catalog, rng, { alliesOf: (c) => this.battle.sideOf(c.side) });
+    const resolver = new ClashResolver(boot.catalog, rng);
     this.aiContext = { catalog: boot.catalog, resolver, rng };
 
     this.placements = this.layout(groundY, height, boot.ui.side.rowStagger);
@@ -131,7 +131,7 @@ class Session {
     return this.battle
       .sideOf('ally')
       .filter((c) => !c.isDefeated)
-      .map((c) => ({ id: c.id, characterId: c.base.id, deck: [...c.deck], maxCoin: c.base.maxCoin, name: c.base.name }));
+      .map((c) => ({ id: c.id, characterId: c.base.id, deck: [...c.deck], name: c.base.name }));
   }
 
   //입력 단계에 넘길 살아 있는 적

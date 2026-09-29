@@ -2,8 +2,9 @@
 //3D 무대는 걸음 하나를 타임라인 하나로 재생한다. 유니티 어댑터도 같은 규칙으로 PresentationCue 를 만든다
 //
 //여기는 그림을 모른다. three.js·DOM 은 renderer3d 만 안다
+//v3.0 (D-23): 코인 대신 카드를 뒤집는다. 뒤집기 한 번 = 라운드 하나. 위력이 같으면 다시 뒤집는다
 
-import type { BattleEvent } from '../domain/types.js';
+import type { BattleEvent, CardFace } from '../domain/types.js';
 
 //아군 머리 위에 띄울 결과 한 줄 (SPEC-005 §8.10)
 export interface StepCallout {
@@ -15,20 +16,34 @@ export interface StepCallout {
   reason: string;
 }
 
-//합 한 라운드. 이긴 쪽이 있거나 교착이다
+//카드 한 장을 뒤집은 결과. 머리 위 카드가 이 면으로 멈춘다 (SPEC-005 §11)
+export interface FlipView {
+  combatantId: string;
+  skillId: number;
+  face: CardFace;
+  power: number;
+  //앞면이 나올 확률이었던 값
+  chance: number;
+}
+
+//합 한 라운드 = 양쪽이 카드를 한 번 뒤집은 것. 이긴 쪽이 있거나 교착(다시 뒤집기)이다
 export type ClashRound =
   | {
       type: 'win';
+      attackerFlip: FlipView;
+      defenderFlip: FlipView;
       winnerId: string;
       loserId: string;
       winnerPower: number;
       loserPower: number;
-      //이 라운드에 난 이벤트. 부딪히는 순간 현황판에 적용한다
+      //이 라운드에 난 이벤트. 비교가 끝나는 순간 현황판에 적용한다
       events: BattleEvent[];
       callouts: StepCallout[];
     }
   | {
       type: 'deadlock';
+      attackerFlip: FlipView;
+      defenderFlip: FlipView;
       power: number;
       events: BattleEvent[];
       callouts: StepCallout[];
@@ -50,8 +65,9 @@ export type StageStep =
       attackerId: string;
       targetId: string;
       skillId: number;
+      //공격자 카드를 뒤집은 결과. 드러난 위력이 곧 이 공격의 위력이다
+      flip: FlipView;
       power: number;
-      successCount: number;
       damage: number;
       defeated: boolean;
       callouts: StepCallout[];
@@ -74,6 +90,11 @@ export type StageStep =
 //누가 아군인지 알려 주는 통로. 결과 알림은 아군에게만 붙는다
 export interface ExchangeContext {
   isPlayerSide(combatantId: string): boolean;
+}
+
+//면 이름. 알림 글에 쓴다
+export function faceLabel(face: CardFace): string {
+  return face === 'front' ? '앞' : '뒤';
 }
 
 //이벤트 목록을 걸음으로 묶는다
@@ -108,18 +129,19 @@ function findEnd(events: readonly BattleEvent[], from: number, type: 'oneSidedEn
   return events.length - 1;
 }
 
-//일방 공격 한 건. 위력은 공격자 damageCalculated, 피해는 대상 damageApplied 의 합이다
+//cardFlipped 이벤트를 뒤집기 결과로 옮긴다
+function toFlip(event: Extract<BattleEvent, { type: 'cardFlipped' }>): FlipView {
+  return { combatantId: event.combatantId, skillId: event.skillId, face: event.face, power: event.power, chance: event.chance };
+}
+
+//일방 공격 한 건. 위력은 공격자가 뒤집은 카드, 피해는 대상 damageApplied 의 합이다
 function oneSidedStep(group: BattleEvent[], context: ExchangeContext): StageStep {
   const start = group[0] as Extract<BattleEvent, { type: 'oneSidedStart' }>;
-  let power = 0;
-  let successCount = 0;
+  let flip: FlipView = { combatantId: start.attackerId, skillId: start.skillId, face: 'back', power: 0, chance: 0 };
   let damage = 0;
   let defeated = false;
   for (const event of group) {
-    if (event.type === 'damageCalculated' && event.combatantId === start.attackerId) {
-      power = event.damage;
-      successCount = event.successCount;
-    }
+    if (event.type === 'cardFlipped' && event.combatantId === start.attackerId) flip = toFlip(event);
     if (event.type === 'damageApplied' && event.combatantId === start.targetId) damage += event.damage;
     if (event.type === 'defeated' && event.combatantId === start.targetId) defeated = true;
   }
@@ -127,8 +149,8 @@ function oneSidedStep(group: BattleEvent[], context: ExchangeContext): StageStep
   if (context.isPlayerSide(start.attackerId)) {
     callouts.push(
       damage > 0
-        ? { combatantId: start.attackerId, success: true, title: '공격 성공', reason: `피해 ${damage}` }
-        : { combatantId: start.attackerId, success: false, title: '빗나감', reason: `코인 앞면 ${successCount}` },
+        ? { combatantId: start.attackerId, success: true, title: '공격 성공', reason: `${faceLabel(flip.face)} ${flip.power} · 피해 ${damage}` }
+        : { combatantId: start.attackerId, success: false, title: '빗나감', reason: `${faceLabel(flip.face)} ${flip.power} · 피해 없음` },
     );
   }
   return {
@@ -136,22 +158,25 @@ function oneSidedStep(group: BattleEvent[], context: ExchangeContext): StageStep
     attackerId: start.attackerId,
     targetId: start.targetId,
     skillId: start.skillId,
-    power,
-    successCount,
+    flip,
+    power: flip.power,
     damage,
     defeated,
     callouts,
-    events: group.filter((e) => e.type !== 'oneSidedStart' && e.type !== 'oneSidedEnd'),
+    events: group.filter((e) => e.type !== 'oneSidedStart' && e.type !== 'oneSidedEnd' && e.type !== 'cardFlipped'),
   };
 }
 
-//합 한 건. coinRolled 두 개가 새 라운드를 연다. 라운드 판정 뒤에 난 이벤트는 그 라운드에 붙는다
+//합 한 건. cardFlipped 두 개가 새 라운드를 연다. 라운드 판정 뒤에 난 이벤트는 그 라운드에 붙는다
 function clashStep(group: BattleEvent[], context: ExchangeContext): StageStep {
   const start = group[0] as Extract<BattleEvent, { type: 'clashStart' }>;
   const rounds: ClashRound[] = [];
   //마지막 라운드 판정 뒤의 이벤트. 마무리 한 방에 붙는다
   let tail: BattleEvent[] = [];
   let current: ClashRound | null = null;
+  //이번 라운드에 뒤집은 두 장. 판정이 오면 라운드가 된다
+  let attackerFlip: FlipView | null = null;
+  let defenderFlip: FlipView | null = null;
   //새 라운드를 연다. 라운드 사이에 끼어 있던 이벤트는 앞 라운드(없으면 이 라운드)에 붙여 잃지 않는다
   const openRound = (round: ClashRound): void => {
     const previous = rounds[rounds.length - 1];
@@ -160,41 +185,58 @@ function clashStep(group: BattleEvent[], context: ExchangeContext): StageStep {
     tail = [];
     rounds.push(round);
   };
+  const blank = (id: string, skillId: number): FlipView => ({ combatantId: id, skillId, face: 'back', power: 0, chance: 0 });
 
   for (const event of group.slice(1)) {
     if (event.type === 'clashEnd') continue;
+    if (event.type === 'cardFlipped') {
+      if (event.combatantId === start.attackerId) attackerFlip = toFlip(event);
+      else defenderFlip = toFlip(event);
+      current = null;
+      continue;
+    }
+    if (event.type === 'damageCalculated') continue;
+    const flips = {
+      attackerFlip: attackerFlip ?? blank(start.attackerId, start.attackerSkillId),
+      defenderFlip: defenderFlip ?? blank(start.defenderId, start.defenderSkillId),
+    };
     if (event.type === 'clashRoundWin') {
       current = {
         type: 'win',
+        ...flips,
         winnerId: event.winnerId,
         loserId: event.loserId,
         winnerPower: event.winnerDamage,
         loserPower: event.loserDamage,
         events: [event],
-        callouts: roundCallouts(start.attackerId, start.defenderId, event.winnerId, event.winnerDamage, event.loserDamage, context),
+        callouts: roundCallouts(start, flips.attackerFlip, flips.defenderFlip, event.winnerId, context),
       };
       openRound(current);
       continue;
     }
     if (event.type === 'deadlock') {
-      const power = lastPower(group, rounds.length, start.attackerId);
+      const power = flips.attackerFlip.power;
       current = {
         type: 'deadlock',
+        ...flips,
         power,
         events: [event],
-        callouts: [start.attackerId, start.defenderId]
-          .filter((id) => context.isPlayerSide(id))
-          .map((id) => ({ combatantId: id, success: false, title: '교착', reason: `위력 ${power} = ${power}` })),
+        callouts: [flips.attackerFlip, flips.defenderFlip]
+          .filter((f) => context.isPlayerSide(f.combatantId))
+          .map((mine) => {
+            const other = mine === flips.attackerFlip ? flips.defenderFlip : flips.attackerFlip;
+            return {
+              combatantId: mine.combatantId,
+              success: false,
+              title: '교착',
+              reason: `${faceLabel(mine.face)} ${mine.power} = ${faceLabel(other.face)} ${other.power} · 다시 뒤집기`,
+            };
+          }),
       };
       openRound(current);
       continue;
     }
-    //다음 라운드의 코인 굴림이 오기 전까지는 앞 라운드의 뒷일이다
-    if (event.type === 'coinRolled' || event.type === 'damageCalculated') {
-      current = null;
-      continue;
-    }
-    //판정 바로 뒤의 코인·정신력은 그 라운드 몫이다. 다른 이벤트가 끼면 거기서부터는 마무리 몫이다
+    //판정 바로 뒤의 정신력·교착 한도는 그 라운드 몫이다. 다른 이벤트가 끼면 거기서부터는 마무리 몫이다
     if (current && isRoundAftermath(event)) {
       current.events.push(event);
       continue;
@@ -233,39 +275,30 @@ function clashStep(group: BattleEvent[], context: ExchangeContext): StageStep {
   };
 }
 
-//라운드 판정에 바로 따라오는 이벤트. 코인 잃음·정신력·교착 한도
+//라운드 판정에 바로 따라오는 이벤트. 정신력·교착 한도
 function isRoundAftermath(event: BattleEvent): boolean {
-  return event.type === 'coinLost' || event.type === 'mentalityChanged' || event.type === 'deadlockLimit';
+  return event.type === 'mentalityChanged' || event.type === 'deadlockLimit';
 }
 
-//교착 라운드의 위력. 바로 앞 damageCalculated 중 공격자 값이다
-function lastPower(group: BattleEvent[], roundIndex: number, attackerId: string): number {
-  let seen = -1;
-  let power = 0;
-  for (const event of group) {
-    if (event.type === 'clashRoundWin' || event.type === 'deadlock') seen += 1;
-    if (seen >= roundIndex) break;
-    if (event.type === 'damageCalculated' && event.combatantId === attackerId) power = event.damage;
-  }
-  return power;
-}
-
-//합 라운드 결과 알림. 아군 쪽 것만 만든다
+//합 라운드 결과 알림. 아군 쪽 것만 만든다. 드러난 면과 위력을 적는다
 function roundCallouts(
-  attackerId: string,
-  defenderId: string,
+  start: Extract<BattleEvent, { type: 'clashStart' }>,
+  attackerFlip: FlipView,
+  defenderFlip: FlipView,
   winnerId: string,
-  winnerPower: number,
-  loserPower: number,
   context: ExchangeContext,
 ): StepCallout[] {
   const out: StepCallout[] = [];
-  for (const id of [attackerId, defenderId]) {
+  for (const id of [start.attackerId, start.defenderId]) {
     if (!context.isPlayerSide(id)) continue;
+    const mine = id === start.attackerId ? attackerFlip : defenderFlip;
+    const other = id === start.attackerId ? defenderFlip : attackerFlip;
+    const me = `${faceLabel(mine.face)} ${mine.power}`;
+    const them = `${faceLabel(other.face)} ${other.power}`;
     out.push(
       id === winnerId
-        ? { combatantId: id, success: true, title: '합 승리', reason: `위력 ${winnerPower} > ${loserPower}` }
-        : { combatantId: id, success: false, title: '합 패배', reason: `위력 열세 ${loserPower} < ${winnerPower}` },
+        ? { combatantId: id, success: true, title: '합 승리', reason: `${me} > ${them}` }
+        : { combatantId: id, success: false, title: '합 패배', reason: `${me} < ${them}` },
     );
   }
   return out;

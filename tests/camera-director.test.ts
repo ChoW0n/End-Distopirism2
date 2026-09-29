@@ -30,7 +30,7 @@ function runBattle(seed: number): BattleEvent[][] {
   const rng = createSeededRng(seed);
   const ai = new WeightedEnemyAi();
   const battle = new Battle(catalog, makeRoster('ally'), makeRoster('enemy'), { rng, enemyAi: ai });
-  const resolver = new ClashResolver(catalog, rng, { alliesOf: (c) => battle.sideOf(c.side) });
+  const resolver = new ClashResolver(catalog, rng);
   const context = { catalog, resolver, rng };
 
   const batches: BattleEvent[][] = [];

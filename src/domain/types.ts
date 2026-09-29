@@ -13,12 +13,20 @@ export type Attribute = 'attack' | 'defense' | 'support';
 //전용기 자리. ULT 는 궁극기라 어느 자리에도 속하지 않는다
 export type SkillSlot = 'S1' | 'S2' | 'S3' | 'ULT';
 
-//카드 원형. 변동폭(최대/최소) 구간을 나타내는 분류값
+//카드 원형. 앞/뒤 위력 비 구간을 나타내는 분류값 (v3.0 §8)
 export type SkillArchetype = '안정' | '표준' | '도박' | '유틸';
+
+//카드 뒤집기 규칙 (v3.0 §2). 앞면 확률에 정신력·체력이 얼마씩 먹는지와 확률의 바닥·천장
+export interface CardFlipRules {
+  mentalityWeight: number;
+  hpWeight: number;
+  chanceFloor: number;
+  chanceCeiling: number;
+}
 
 //전투 전역 규칙 수치
 export interface BattleRules {
-  coinBaseProbability: number;
+  cardFlip: CardFlipRules;
   mentalityMax: number;
   mentalityOnClashWin: number;
   mentalityOnClashLose: number;
@@ -29,9 +37,8 @@ export interface BattleRules {
   confusionPenalty: number;
   levelDiffStep: number;
   deadlockLimit: number;
-  //일방 공격은 겨룬 게 아니라서 기본값이 둘 다 false 다 (SPEC §4.7)
+  //일방 공격은 겨룬 게 아니라서 기본값이 false 다 (SPEC §4.7)
   oneSidedGivesMentality: boolean;
-  oneSidedConsumesCoin: boolean;
   //속성 합이 이 값에 닿으면 궁극기가 준비된다 (v2.0 §3.1)
   ultimateThreshold: number;
   ultimateSkillId: number;
@@ -44,7 +51,6 @@ export interface CharacterData {
   maxHp: number;
   atkLevel: number;
   defLevel: number;
-  maxCoin: number;
   mentality: number;
   role: string;
   //이 캐릭터의 전용기 3종. 카드 풀을 공유하지 않는다 (v2.0 §1)
@@ -57,8 +63,7 @@ export type SkillTiming =
   | 'beforeDamage'
   | 'beforeDamageCalc'
   | 'onTakeDamage'
-  | 'onClashEnd'
-  | 'onCoinSuccess+onDamageCalc';
+  | 'onClashEnd';
 
 //체력이 임계치 미만이면 즉시 처형
 export interface ExecuteEffect {
@@ -70,13 +75,6 @@ export interface ExecuteEffect {
 export interface MentalityEffect {
   type: 'mentality';
   percentOfCurrent: number;
-}
-
-//내 체력을 대가로 지불하고 추가 피해를 얻는다
-export interface SelfHpCostEffect {
-  type: 'selfHpCost';
-  amount: number;
-  bonusDamagePerCoin: number;
 }
 
 //상태이상 부여
@@ -99,29 +97,12 @@ export interface NullifyDamageEffect {
   type: 'nullifyDamage';
 }
 
-//다음 턴 코인 회복량을 증감시킨다
-export interface NextTurnCoinEffect {
-  type: 'nextTurnCoin';
-  target: 'allies';
-  amount: number;
-}
-
-//성공 코인 1개당 공격레벨이 오르고 추가 피해도 붙는다
-export interface AtkBonusPerCoinEffect {
-  type: 'atkBonusPerCoin';
-  amount: number;
-  bonusDamagePerCoin: number;
-}
-
 export type SkillEffectBody =
   | ExecuteEffect
   | MentalityEffect
-  | SelfHpCostEffect
   | ApplyStatusEffect
   | DamageModifierEffect
-  | NullifyDamageEffect
-  | NextTurnCoinEffect
-  | AtkBonusPerCoinEffect;
+  | NullifyDamageEffect;
 
 //승패에 따라 갈리는 효과 묶음. always 는 승패와 무관하게 발동한다
 export interface SkillEffect {
@@ -140,8 +121,11 @@ export interface SkillData {
   slot: SkillSlot;
   //합 승리 시 올라가는 속성. 궁극기는 올리는 속성이 없다
   attribute: Attribute | null;
-  baseDamage: number;
-  coinPower: number;
+  //앞면·뒷면 위력. 뒤집어서 드러난 면의 위력으로 겨룬다 (v3.0 §1)
+  frontPower: number;
+  backPower: number;
+  //앞면이 나올 확률의 최소·최대. 정신력·체력이 가득이면 최대, 바닥이면 최소 (v3.0 §2)
+  frontChance: [number, number];
   archetype: SkillArchetype;
   maxInDeck: number;
   //수치가 아직 정해지지 않은 카드. AI 가 고르지 않는다 (v2.0 §3.2)
@@ -155,7 +139,7 @@ export interface SkillData {
 export interface StatusEffectData {
   id: StatusId;
   name: string;
-  timing: 'onTurnStart' | 'onCoinRoll' | 'onDamageCalc';
+  timing: 'onTurnStart' | 'onCardFlip' | 'onDamageCalc';
   effect: {
     hpPercentDamage?: number;
     of?: 'maxHp';
@@ -198,20 +182,21 @@ export type MentalityReason =
   | 'skill'
   | 'turnRegen';
 
+//카드의 어느 면이 나왔는지
+export type CardFace = 'front' | 'back';
+
 //도메인이 내보내는 이벤트. 렌더러는 이것만 구독한다
 export type BattleEvent =
   | { type: 'turnStart'; turn: number }
-  | { type: 'coinRestored'; combatantId: string; coin: number }
   | { type: 'enemyTargeted'; enemyId: string; targetId: string }
   | { type: 'clashStart'; attackerId: string; defenderId: string; attackerSkillId: number; defenderSkillId: number }
   | { type: 'oneSidedStart'; attackerId: string; targetId: string; skillId: number }
   | { type: 'oneSidedEnd'; attackerId: string; targetId: string }
-  | { type: 'coinRolled'; combatantId: string; rolls: boolean[]; successCount: number; probability: number }
-  | { type: 'damageCalculated'; combatantId: string; damage: number; successCount: number; levelBonus: number }
+  | { type: 'cardFlipped'; combatantId: string; skillId: number; face: CardFace; power: number; chance: number }
+  | { type: 'damageCalculated'; combatantId: string; damage: number; power: number; levelBonus: number }
   | { type: 'clashRoundWin'; winnerId: string; loserId: string; winnerDamage: number; loserDamage: number }
   | { type: 'deadlock'; attackerId: string; defenderId: string; count: number }
   | { type: 'deadlockLimit'; attackerId: string; defenderId: string }
-  | { type: 'coinLost'; combatantId: string; coin: number }
   | { type: 'mentalityChanged'; combatantId: string; delta: number; mentality: number; reason: MentalityReason }
   | { type: 'damageApplied'; combatantId: string; damage: number; hp: number }
   | { type: 'damageNullified'; combatantId: string; skillId: number }

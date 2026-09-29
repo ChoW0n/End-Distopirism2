@@ -14,7 +14,6 @@ export interface InputMember {
   characterId: string;
   //쓸 수 있는 카드. 궁극기는 손에 들어왔을 때만 있다
   deck: readonly number[];
-  maxCoin: number;
 }
 
 //카드 한 장에 보이는 것 (§10.2)
@@ -23,9 +22,9 @@ export interface CardView {
   name: string;
   slot: SkillSlot;
   attribute: string | null;
-  //피해 범위. 레벨차 보너스는 대상마다 달라서 뺀다
-  minDamage: number;
-  maxDamage: number;
+  //앞면·뒷면 위력 (SPEC-001 v3.0 §1). 레벨차 보너스는 대상마다 달라서 뺀다
+  frontPower: number;
+  backPower: number;
   text: string;
 }
 
@@ -37,15 +36,15 @@ const ATTRIBUTE_LABEL: Record<Attribute, string> = {
 };
 
 //카드 한 장을 화면에 보일 모양으로 푼다
-export function cardView(catalog: BattleCatalog, skillId: number, maxCoin: number): CardView {
+export function cardView(catalog: BattleCatalog, skillId: number): CardView {
   const skill = catalog.skill(skillId);
   return {
     skillId,
     name: skill.name,
     slot: skill.slot,
     attribute: skill.attribute ? ATTRIBUTE_LABEL[skill.attribute] : null,
-    minDamage: skill.baseDamage,
-    maxDamage: skill.baseDamage + skill.coinPower * maxCoin,
+    frontPower: skill.frontPower,
+    backPower: skill.backPower,
     text: skill.text,
   };
 }

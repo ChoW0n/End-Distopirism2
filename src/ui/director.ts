@@ -8,7 +8,7 @@
 
 import type { BattleCatalog } from '../domain/data.js';
 import type { Rng } from '../domain/rng.js';
-import type { BattleEvent, StatusId } from '../domain/types.js';
+import type { BattleEvent, CardFace, StatusId } from '../domain/types.js';
 import type { Point } from '../render/manifest.js';
 import type { Stage, StagePlacement } from '../render/stage.js';
 import { DashPlanner } from './dash.js';
@@ -77,10 +77,8 @@ export type UiCommand =
   //── 아래는 SPEC-005 전투 연출 ──
   //쓴 스킬 이름. 머리 위 상대 쪽에 잠깐 뜬다
   | { type: 'skillBanner'; combatantId: string; text: string; at: Point; size: number; sec: number; facing: 1 | -1 }
-  //머리 위 코인이 뒤집힌다. rolls 는 이번 라운드 앞면 여부
-  | { type: 'coinToss'; combatantId: string; rolls: boolean[]; at: Point; size: number }
-  //진 쪽 코인 하나가 깨진다
-  | { type: 'coinBreak'; combatantId: string; coinsLeft: number }
+  //머리 위 카드가 돌다가 한 면으로 멈춘다 (SPEC-001 v3.0, SPEC-005 §11). 뒷면은 회색
+  | { type: 'cardFlip'; combatantId: string; face: CardFace; power: number; at: Point; size: number }
   //이번 라운드 위력. 상대 쪽 가슴 높이에 뜬다
   | { type: 'clashPower'; combatantId: string; value: number; at: Point; size: number }
   //맞부딪힘. 접점에 불꽃, 양쪽 반동. 진 쪽이 더 밀린다. 교착이면 winnerId 가 null
@@ -147,11 +145,11 @@ interface ActiveClash {
 
 //진행 중인 교전 하나. 라운드 박자를 세는 데 쓴다
 interface ActiveEngagement {
-  //합이면 2명, 일방이면 1명이 코인을 굴린다
+  //합이면 2명, 일방이면 1명이 카드를 뒤집는다
   rollers: number;
   attackerId: string;
   targetId: string;
-  coinsSeen: number;
+  flipsSeen: number;
   powersSeen: number;
   //지금까지 이긴 쪽. 일방 공격은 공격자. 이 사람의 피해는 자기 대가다 (SPEC-005 §7.3)
   winnerId: string | null;
@@ -214,7 +212,7 @@ export class UiDirector {
             rollers: 2,
             attackerId: event.attackerId,
             targetId: event.defenderId,
-            coinsSeen: 0,
+            flipsSeen: 0,
             powersSeen: 0,
             winnerId: null,
           };
@@ -229,7 +227,7 @@ export class UiDirector {
             rollers: 1,
             attackerId: event.attackerId,
             targetId: event.targetId,
-            coinsSeen: 0,
+            flipsSeen: 0,
             powersSeen: 0,
             winnerId: event.attackerId,
           };
@@ -242,16 +240,14 @@ export class UiDirector {
           }
           break;
 
-        //코인은 양쪽이 다 굴린 뒤에 한 박자 쉰다
-        case 'coinRolled':
-          this.pushCoins(commands, event.combatantId, event.rolls);
-          if (this.engagement && ++this.engagement.coinsSeen % this.engagement.rollers === 0) {
-            commands.push({ type: 'beat', sec: this.data.clash.coinSec });
+        //카드는 양쪽이 다 뒤집은 뒤에 한 박자 쉰다
+        case 'cardFlipped':
+          this.pushCard(commands, event.combatantId, event.face, event.power);
+          if (this.engagement && ++this.engagement.flipsSeen % this.engagement.rollers === 0) {
+            commands.push({ type: 'beat', sec: this.data.clash.cardSec });
           }
-          break;
-
-        case 'damageCalculated':
-          this.pushPower(commands, event.combatantId, event.damage);
+          //드러난 면의 위력이 곧 겨루는 위력이다. 양쪽이 다 드러난 뒤에 한 박자 (SPEC-001 v3.0 §3)
+          this.pushPower(commands, event.combatantId, event.power);
           if (this.engagement && ++this.engagement.powersSeen % this.engagement.rollers === 0) {
             commands.push({ type: 'beat', sec: this.data.clash.powerSec });
           }
@@ -260,10 +256,6 @@ export class UiDirector {
         case 'clashRoundWin':
           if (this.engagement) this.engagement.winnerId = event.winnerId;
           this.pushClashResult(commands, event.winnerId);
-          break;
-
-        case 'coinLost':
-          commands.push({ type: 'coinBreak', combatantId: event.combatantId, coinsLeft: event.coin });
           break;
 
         case 'deadlock':
@@ -575,17 +567,18 @@ export class UiDirector {
     });
   }
 
-  //머리 위 코인 한 줄. 바 묶음 바로 위다
-  private pushCoins(commands: UiCommand[], combatantId: string, rolls: boolean[]): void {
+  //머리 위 카드 한 장. 바 묶음 바로 위다
+  private pushCard(commands: UiCommand[], combatantId: string, face: CardFace, power: number): void {
     if (!this.hasBody(combatantId)) return;
     const height = this.heightOf(combatantId);
-    const size = this.data.clash.coinSize * height;
+    const size = this.data.clash.cardSize * height;
     //바는 제자리 기준으로 잡혀 있다. 달려간 만큼 옮겨서 캐릭터 머리 위에 붙인다
     const shift = this.shiftOf(combatantId);
     commands.push({
-      type: 'coinToss',
+      type: 'cardFlip',
       combatantId,
-      rolls: [...rolls],
+      face,
+      power,
       at: {
         x: this.whereIs(combatantId).x,
         y: this.barTop(combatantId) + shift.y - this.data.bar.gap * height - size / 2,

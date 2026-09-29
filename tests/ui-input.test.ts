@@ -10,8 +10,8 @@ const INCINERATOR = catalog.deckFor('incinerator');
 function makeInput() {
   return new OrderInput(
     [
-      { id: 'a1', characterId: 'helper', deck: HELPER, maxCoin: 3 },
-      { id: 'a2', characterId: 'incinerator', deck: INCINERATOR, maxCoin: 4 },
+      { id: 'a1', characterId: 'helper', deck: HELPER },
+      { id: 'a2', characterId: 'incinerator', deck: INCINERATOR },
     ],
     ['e1', 'e2'],
     new Map([
@@ -78,11 +78,11 @@ describe('§10.1 합 안내', () => {
 });
 
 describe('§10.2 카드', () => {
-  it('피해 범위는 기본 피해 ~ 기본 + 코인위력 × 코인 수', () => {
+  it('카드에는 앞 위력과 뒷 위력이 보인다 (SPEC-001 v3.0 §1)', () => {
     const skill = catalog.skill(skillOf('helper', 'S2'));
-    const view = cardView(catalog, skill.id, 3);
-    expect(view.minDamage).toBe(skill.baseDamage);
-    expect(view.maxDamage).toBe(skill.baseDamage + skill.coinPower * 3);
+    const view = cardView(catalog, skill.id);
+    expect(view.frontPower).toBe(skill.frontPower);
+    expect(view.backPower).toBe(skill.backPower);
     expect(view.attribute).toBe('방어');
     expect(view.slot).toBe('S2');
   });

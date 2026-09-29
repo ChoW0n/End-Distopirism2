@@ -58,7 +58,7 @@ describe('계층 규칙', () => {
   it('도메인에 전투 수치가 박혀 있지 않다', () => {
     for (const file of filesIn(join(src, 'domain'))) {
       //0.6(코인 확률) · 100(정신력 상한) 같은 값은 battle-data.json 에서 온다
-      expect(file.text).not.toMatch(/coinBaseProbability\s*=\s*[\d.]/);
+      expect(file.text).not.toMatch(/chanceCeiling\s*=\s*[\d.]/);
       expect(file.text).not.toMatch(/mentalityMax\s*=\s*\d/);
     }
   });

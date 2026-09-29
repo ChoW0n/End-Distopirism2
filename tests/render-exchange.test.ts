@@ -61,7 +61,7 @@ function carried(steps: StageStep[]): BattleEvent[] {
 }
 
 //현황판을 바꾸는 이벤트. 하나도 빠지거나 두 번 들어가면 안 된다
-const STATEFUL = new Set(['damageApplied', 'mentalityChanged', 'defeated', 'coinLost', 'statusApplied', 'statusTicked', 'executed']);
+const STATEFUL = new Set(['damageApplied', 'mentalityChanged', 'defeated', 'statusApplied', 'statusTicked', 'executed']);
 
 describe('교환 묶기', () => {
   const seeds = [1, 2, 3, 4, 5, 6, 7, 8];
@@ -109,7 +109,8 @@ describe('교환 묶기', () => {
     expect(seen).toBeGreaterThan(0);
   });
 
-  it('합 라운드 알림은 위력 비교를 쓴다', () => {
+  it('합 라운드 알림은 드러난 면과 위력을 비교한다 (SPEC-001 v3.0)', () => {
+    const face = (f: 'front' | 'back'): string => (f === 'front' ? '앞' : '뒤');
     for (const seed of seeds) {
       for (const events of playOut(seed)) {
         for (const step of toStageSteps(events, context)) {
@@ -117,8 +118,14 @@ describe('교환 묶기', () => {
           for (const round of step.rounds) {
             if (round.type !== 'win') continue;
             for (const c of round.callouts) {
-              if (c.combatantId === round.winnerId) expect(c).toMatchObject({ success: true, title: '합 승리', reason: `위력 ${round.winnerPower} > ${round.loserPower}` });
-              else expect(c).toMatchObject({ success: false, title: '합 패배', reason: `위력 열세 ${round.loserPower} < ${round.winnerPower}` });
+              const mine = c.combatantId === step.attackerId ? round.attackerFlip : round.defenderFlip;
+              const other = c.combatantId === step.attackerId ? round.defenderFlip : round.attackerFlip;
+              const me = `${face(mine.face)} ${mine.power}`;
+              const them = `${face(other.face)} ${other.power}`;
+              if (c.combatantId === round.winnerId) expect(c).toMatchObject({ success: true, title: '합 승리', reason: `${me} > ${them}` });
+              else expect(c).toMatchObject({ success: false, title: '합 패배', reason: `${me} < ${them}` });
+              //드러난 위력이 곧 비교 위력이다
+              expect([round.winnerPower, round.loserPower].sort()).toEqual([mine.power, other.power].sort());
             }
           }
         }

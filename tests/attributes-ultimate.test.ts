@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { Battle } from '../src/domain/battle.js';
 import { WeightedEnemyAi, type EnemyAi } from '../src/domain/ai.js';
-import { alwaysFailRng, catalog, makeCombatant, makeResolver, skillOf } from './helpers.js';
+import { alwaysBackRng, catalog, makeCombatant, makeResolver, skillOf } from './helpers.js';
 import type { Combatant, CombatantInit } from '../src/domain/combatant.js';
 
 const S1 = skillOf('main', 'S1');
@@ -33,7 +33,7 @@ function makeBattle(enemySkillId: number) {
   const allies: CombatantInit[] = [{ id: 'a1', characterId: 'main', side: 'ally' }];
   const enemies: CombatantInit[] = [{ id: 'e1', characterId: 'main', side: 'enemy' }];
   return new Battle(catalog, allies, enemies, {
-    rng: alwaysFailRng,
+    rng: alwaysBackRng,
     enemyAi: new ScriptedAi('a1', enemySkillId),
   });
 }
@@ -42,7 +42,7 @@ function makeBattle(enemySkillId: number) {
 function runClash(attackerSkillId: number, defenderSkillId: number) {
   const attacker = makeCombatant('a', 'main', 'ally');
   const defender = makeCombatant('b', 'main', 'enemy');
-  const resolver = makeResolver(alwaysFailRng, [attacker, defender]);
+  const resolver = makeResolver(alwaysBackRng, [attacker, defender]);
   const events = resolver.resolve(attacker, attackerSkillId, defender, defenderSkillId);
   return { attacker, defender, events };
 }
@@ -69,11 +69,11 @@ describe('§2 속성 누적', () => {
     expect(runClash(S3, S1).attacker.attributes.support).toBe(1);
   });
 
-  it('재대결을 여러 번 해도 속성은 합당 1회다', () => {
-    //메인 캐릭터 코인 5개라 패자가 5번 져야 합이 끝난다
+  it('판정은 합당 한 번이고 속성도 합당 1회다 (SPEC-001 v3.0 §3)', () => {
+    //코인 방식은 패자가 코인을 다 잃을 때까지 재대결했다. 카드는 한 번 뒤집어 끝난다
     const { attacker, events } = runClash(S2, S1);
 
-    expect(events.filter((e) => e.type === 'clashRoundWin').length).toBeGreaterThan(1);
+    expect(events.filter((e) => e.type === 'clashRoundWin')).toHaveLength(1);
     expect(events.filter((e) => e.type === 'attributeGained')).toHaveLength(1);
     expect(attacker.attributeTotal).toBe(1);
   });
@@ -81,7 +81,7 @@ describe('§2 속성 누적', () => {
   it('일방 공격도 속성이 오른다 (D-11 개정)', () => {
     const attacker = makeCombatant('a', 'main', 'ally');
     const target = makeCombatant('b', 'main', 'enemy');
-    const resolver = makeResolver(alwaysFailRng, [attacker, target]);
+    const resolver = makeResolver(alwaysBackRng, [attacker, target]);
 
     const events = resolver.resolveOneSided(attacker, S2, target);
 
@@ -221,7 +221,7 @@ describe('§3.2 궁극기 임시 수치', () => {
 
     const target = makeCombatant('t', 'main', 'ally');
     const ai = new WeightedEnemyAi();
-    const context = { catalog, resolver: makeResolver(alwaysFailRng, [enemy, target]), rng: alwaysFailRng };
+    const context = { catalog, resolver: makeResolver(alwaysBackRng, [enemy, target]), rng: alwaysBackRng };
 
     let picked = 0;
     for (let i = 0; i < 200; i += 1) {

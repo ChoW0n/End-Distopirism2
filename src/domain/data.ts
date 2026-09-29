@@ -100,21 +100,7 @@ const TIMINGS = [
   'beforeDamageCalc',
   'onTakeDamage',
   'onClashEnd',
-  'onCoinSuccess+onDamageCalc',
 ] as const;
-
-//"successCount*2" 같은 식을 계수 2로 바꾼다. 문자열을 실행하지 않고 패턴만 읽는다
-function parseCoinCoefficient(value: unknown, path: string): number {
-  if (value === undefined) return 0;
-  if (typeof value !== 'string') {
-    throw new BattleDataError(`${path} 가 문자열이 아니다`);
-  }
-  const matched = /^successCount\s*\*\s*(\d+(?:\.\d+)?)$/.exec(value.trim());
-  if (!matched?.[1]) {
-    throw new BattleDataError(`${path} 를 해석할 수 없다: ${value}`);
-  }
-  return Number(matched[1]);
-}
 
 //카드 효과 한 덩어리를 해석한다
 function parseEffectBody(raw: unknown, path: string): SkillEffectBody {
@@ -126,12 +112,6 @@ function parseEffectBody(raw: unknown, path: string): SkillEffectBody {
       return { type, hpThresholdPercent: num(source, 'hpThresholdPercent', path) };
     case 'mentality':
       return { type, percentOfCurrent: num(source, 'percentOfCurrent', path) };
-    case 'selfHpCost':
-      return {
-        type,
-        amount: num(source, 'amount', path),
-        bonusDamagePerCoin: parseCoinCoefficient(source['thenBonusDamage'], `${path}.thenBonusDamage`),
-      };
     case 'applyStatus':
       return {
         type,
@@ -147,18 +127,6 @@ function parseEffectBody(raw: unknown, path: string): SkillEffectBody {
       };
     case 'nullifyDamage':
       return { type };
-    case 'nextTurnCoin':
-      return {
-        type,
-        target: literal(source, 'target', ['allies'] as const, path),
-        amount: num(source, 'amount', path),
-      };
-    case 'atkBonusPerCoin':
-      return {
-        type,
-        amount: num(source, 'amount', path),
-        bonusDamagePerCoin: parseCoinCoefficient(source['thenBonusDamage'], `${path}.thenBonusDamage`),
-      };
     default:
       throw new BattleDataError(`${path}.type 을 알 수 없다: ${type}`);
   }
@@ -179,8 +147,14 @@ function parseEffect(raw: unknown, path: string): SkillEffect {
 //전역 규칙 수치를 읽는다
 function parseRules(raw: unknown): BattleRules {
   const source = obj(raw, 'rules');
+  const flip = obj(source['cardFlip'], 'rules.cardFlip');
   return {
-    coinBaseProbability: num(source, 'coinBaseProbability', 'rules'),
+    cardFlip: {
+      mentalityWeight: num(flip, 'mentalityWeight', 'rules.cardFlip'),
+      hpWeight: num(flip, 'hpWeight', 'rules.cardFlip'),
+      chanceFloor: num(flip, 'chanceFloor', 'rules.cardFlip'),
+      chanceCeiling: num(flip, 'chanceCeiling', 'rules.cardFlip'),
+    },
     mentalityMax: num(source, 'mentalityMax', 'rules'),
     mentalityOnClashWin: num(source, 'mentalityOnClashWin', 'rules'),
     mentalityOnClashLose: num(source, 'mentalityOnClashLose', 'rules'),
@@ -192,7 +166,6 @@ function parseRules(raw: unknown): BattleRules {
     levelDiffStep: num(source, 'levelDiffStep', 'rules'),
     deadlockLimit: num(source, 'deadlockLimit', 'rules'),
     oneSidedGivesMentality: bool(source, 'oneSidedGivesMentality', 'rules'),
-    oneSidedConsumesCoin: bool(source, 'oneSidedConsumesCoin', 'rules'),
     ultimateThreshold: num(source, 'ultimateThreshold', 'rules'),
     ultimateSkillId: num(source, 'ultimateSkillId', 'rules'),
   };
@@ -234,11 +207,20 @@ function parseCharacter(raw: unknown, index: number): CharacterData {
     maxHp: num(source, 'maxHp', path),
     atkLevel: num(source, 'atkLevel', path),
     defLevel: num(source, 'defLevel', path),
-    maxCoin: num(source, 'maxCoin', path),
     mentality: num(source, 'mentality', path),
     role: str(source, 'role', path),
     skills: numArray(source, 'skills', path),
   };
+}
+
+//앞면 확률 [최소, 최대] 를 읽는다. 0~1 사이이고 최소가 최대보다 크지 않아야 한다
+function chancePair(source: Json, path: string): [number, number] {
+  const pair = numArray(source, 'frontChance', path);
+  const [low, high] = pair;
+  if (pair.length !== 2 || low === undefined || high === undefined || low < 0 || high > 1 || low > high) {
+    throw new BattleDataError(`${path}.frontChance 는 [최소, 최대] (0~1) 여야 한다`);
+  }
+  return [low, high];
 }
 
 //전용기 한 종을 읽는다
@@ -251,8 +233,9 @@ function parseSkill(raw: unknown, index: number): SkillData {
     character: source['character'] === null ? null : str(source, 'character', path),
     slot: literal<SkillSlot>(source, 'slot', SLOTS, path),
     attribute: source['attribute'] === null ? null : literal<Attribute>(source, 'attribute', ATTRIBUTES, path),
-    baseDamage: num(source, 'baseDamage', path),
-    coinPower: num(source, 'coinPower', path),
+    frontPower: num(source, 'frontPower', path),
+    backPower: num(source, 'backPower', path),
+    frontChance: chancePair(source, path),
     archetype: literal<SkillArchetype>(source, 'archetype', ARCHETYPES, path),
     maxInDeck: num(source, 'maxInDeck', path),
     tbd: source['tbd'] === true,
@@ -285,7 +268,7 @@ function parseStatusEffect(raw: unknown, index: number): StatusEffectData {
   return {
     id: literal<StatusId>(source, 'id', STATUS_IDS, path),
     name: str(source, 'name', path),
-    timing: literal(source, 'timing', ['onTurnStart', 'onCoinRoll', 'onDamageCalc'] as const, path),
+    timing: literal(source, 'timing', ['onTurnStart', 'onCardFlip', 'onDamageCalc'] as const, path),
     effect: parsed,
     defaultTurns: num(source, 'defaultTurns', path),
     stackable: source['stackable'] === true,
@@ -316,6 +299,16 @@ export function parseBattleData(raw: unknown): BattleData {
   for (const character of data.characters) {
     if (characterIds.has(character.id)) throw new BattleDataError(`캐릭터 id 가 중복된다: ${character.id}`);
     characterIds.add(character.id);
+  }
+
+  //앞 위력은 뒷 위력보다 작을 수 없고, 앞면 확률은 규칙의 바닥·천장 안에 있어야 한다 (v3.0 §1·§2)
+  const flip = data.rules.cardFlip;
+  for (const skill of data.skills) {
+    if (skill.frontPower < skill.backPower) throw new BattleDataError(`「${skill.name}」 앞 위력이 뒷 위력보다 작다`);
+    const [low, high] = skill.frontChance;
+    if (low < flip.chanceFloor || high > flip.chanceCeiling) {
+      throw new BattleDataError(`「${skill.name}」 앞면 확률 ${low}~${high} 가 ${flip.chanceFloor}~${flip.chanceCeiling} 밖이다`);
+    }
   }
 
   //전용기는 주인 캐릭터만 쓴다. 덱을 캐릭터에서 뽑아내므로 여기서 어긋나면 전투가 못 선다

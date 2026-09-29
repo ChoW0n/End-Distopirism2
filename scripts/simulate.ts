@@ -84,7 +84,7 @@ interface Pending {
 //이벤트 흐름을 사람이 읽을 수 있는 줄로 바꾼다. 전체 JSON 을 쏟아내지 않는다
 class BattleLogger {
   private pending: Pending | null = null;
-  private lastSuccess = new Map<string, number>();
+  private lastFace = new Map<string, string>();
   private turn = 0;
 
   constructor(
@@ -151,8 +151,8 @@ class BattleLogger {
         };
         return;
 
-      case 'coinRolled':
-        this.lastSuccess.set(event.combatantId, event.successCount);
+      case 'cardFlipped':
+        this.lastFace.set(event.combatantId, event.face === 'front' ? `앞 ${event.power}` : `뒤 ${event.power}`);
         return;
 
       case 'clashRoundWin':
@@ -229,7 +229,7 @@ class BattleLogger {
 
     const loserId = pending.winnerId === pending.attackerId ? pending.defenderId : pending.attackerId;
     const final = pending.damages.find((d) => d.id === loserId);
-    const success = this.lastSuccess.get(pending.winnerId) ?? 0;
+    const face = this.lastFace.get(pending.winnerId) ?? '';
     const notes = pending.notes.length > 0 ? `  [${pending.notes.join(' ')}]` : '';
 
     const head =
@@ -238,8 +238,8 @@ class BattleLogger {
         : `[일방] ${attacker}(${pending.attackerSkill}) → ${defender}`;
 
     const tail = final
-      ? ` / 코인 ${success}성공 / 피해 ${final.damage} → ${this.name(loserId)} HP ${final.hp}/${this.battle.combatant(loserId).base.maxHp}`
-      : ` / 코인 ${success}성공 / 피해 없음`;
+      ? ` / ${face} / 피해 ${final.damage} → ${this.name(loserId)} HP ${final.hp}/${this.battle.combatant(loserId).base.maxHp}`
+      : ` / ${face} / 피해 없음`;
 
     this.print(head + tail + notes);
   }
@@ -260,7 +260,7 @@ function runBattle(
   });
 
   //아군도 같은 AI 로 둔다. 지금은 밸런스 관찰이 목적이라 전용 AI 가 필요 없다
-  const resolver = new ClashResolver(catalog, rng, { alliesOf: (c) => battle.sideOf(c.side) });
+  const resolver = new ClashResolver(catalog, rng);
   const aiContext: EnemyAiContext = { catalog, resolver, rng };
 
   const labels = makeLabels(battle);

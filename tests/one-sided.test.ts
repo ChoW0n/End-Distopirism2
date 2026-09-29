@@ -4,7 +4,7 @@
 import { describe, expect, it } from 'vitest';
 import { Battle, type Engagement } from '../src/domain/battle.js';
 import { WeightedEnemyAi, type EnemyAi } from '../src/domain/ai.js';
-import { alwaysFailRng, catalog, makeCombatant, makeResolver, skillOf } from './helpers.js';
+import { alwaysBackRng, catalog, makeCombatant, makeResolver, skillOf } from './helpers.js';
 import type { Combatant, CombatantInit } from '../src/domain/combatant.js';
 
 const MAIN_S1 = skillOf('main', 'S1');
@@ -43,7 +43,7 @@ function makeBattle(targets: Record<string, string>, ai: EnemyAi = new ScriptedA
     characterId: 'main',
     side: 'enemy' as const,
   }));
-  return new Battle(catalog, allies, enemies, { rng: alwaysFailRng, enemyAi: ai });
+  return new Battle(catalog, allies, enemies, { rng: alwaysBackRng, enemyAi: ai });
 }
 
 //교전 종류별 개수를 센다
@@ -117,7 +117,7 @@ describe('§4.7 일방 공격', () => {
     const attacker = makeCombatant('a', 'main', 'ally');
     const target = makeCombatant('b', 'main', 'enemy');
     attacker.mentality = 50;
-    const resolver = makeResolver(alwaysFailRng, [attacker, target]);
+    const resolver = makeResolver(alwaysBackRng, [attacker, target]);
 
     resolver.resolveOneSided(attacker, MAIN_S1, target);
 
@@ -125,22 +125,23 @@ describe('§4.7 일방 공격', () => {
     expect(target.hp).toBeLessThan(target.base.maxHp);
   });
 
-  it('맞는 쪽 코인이 줄지 않는다', () => {
+  it('공격자만 카드를 뒤집는다. 맞는 쪽은 카드를 내지 않는다 (SPEC-001 v3.0 §4)', () => {
     const attacker = makeCombatant('a', 'main', 'ally');
     const target = makeCombatant('b', 'main', 'enemy');
-    const resolver = makeResolver(alwaysFailRng, [attacker, target]);
+    const resolver = makeResolver(alwaysBackRng, [attacker, target]);
 
     const events = resolver.resolveOneSided(attacker, MAIN_S1, target);
 
-    expect(target.coin).toBe(target.base.maxCoin);
-    expect(events.some((e) => e.type === 'coinLost')).toBe(false);
+    const flips = events.filter((e) => e.type === 'cardFlipped');
+    expect(flips).toHaveLength(1);
+    expect(flips[0]).toMatchObject({ combatantId: 'a', face: 'back', power: catalog.skill(MAIN_S1).backPower });
   });
 
   it('교착이 생기지 않는다', () => {
     //합이었다면 같은 카드끼리 붙어 교착 3회로 끝났을 조합이다
     const attacker = makeCombatant('a', 'main', 'ally');
     const target = makeCombatant('b', 'main', 'enemy');
-    const resolver = makeResolver(alwaysFailRng, [attacker, target]);
+    const resolver = makeResolver(alwaysBackRng, [attacker, target]);
 
     const events = resolver.resolveOneSided(attacker, MAIN_S1, target);
 
@@ -152,7 +153,7 @@ describe('§4.7 일방 공격', () => {
     //맞는 쪽은 자기 타겟을 때리는 중이라 무엇을 들고 있든 피해가 그대로 들어간다
     const attacker = makeCombatant('a', 'main', 'ally');
     const target = makeCombatant('b', 'main', 'enemy');
-    const resolver = makeResolver(alwaysFailRng, [attacker, target]);
+    const resolver = makeResolver(alwaysBackRng, [attacker, target]);
 
     const events = resolver.resolveOneSided(attacker, MAIN_S2, target);
 

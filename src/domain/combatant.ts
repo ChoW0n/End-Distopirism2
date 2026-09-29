@@ -1,5 +1,5 @@
 //전투에 참가한 캐릭터 한 명의 실시간 상태를 들고 있는다
-//체력·정신력·코인·상태이상만 관리하고 전투 규칙 판정은 하지 않는다
+//체력·정신력·상태이상만 관리하고 전투 규칙 판정은 하지 않는다
 
 import type { Attribute, BattleRules, CharacterData, Side, StatusId } from './types.js';
 
@@ -20,9 +20,6 @@ export interface CombatantInit {
 export class Combatant {
   hp: number;
   mentality: number;
-  coin: number;
-  //다음 턴 코인 회복 보정치
-  nextTurnCoinModifier = 0;
   readonly statuses: ActiveStatus[] = [];
   //누적 속성 3종. 합 승리로만 오른다 (v2.0 §2)
   readonly attributes: Record<Attribute, number> = { attack: 0, defense: 0, support: 0 };
@@ -40,7 +37,6 @@ export class Combatant {
   ) {
     this.hp = base.maxHp;
     this.mentality = base.mentality;
-    this.coin = base.maxCoin;
     this.deck = [...deck];
   }
 
@@ -133,17 +129,5 @@ export class Combatant {
     const before = this.mentality;
     this.mentality = Math.max(0, Math.min(rules.mentalityMax, before + delta));
     return this.mentality - before;
-  }
-
-  //코인을 1개 잃는다
-  loseCoin(): void {
-    this.coin = Math.max(0, this.coin - 1);
-  }
-
-  //턴 시작 코인 회복. 보정치를 더한 뒤 보정치는 소모된다
-  restoreCoin(): number {
-    this.coin = Math.max(0, this.base.maxCoin + this.nextTurnCoinModifier);
-    this.nextTurnCoinModifier = 0;
-    return this.coin;
   }
 }

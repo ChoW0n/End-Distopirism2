@@ -1,7 +1,7 @@
 //적의 타겟과 카드를 고른다. SPEC §13 의 가중 랜덤 규칙을 구현한 것
 //가중치 수치는 전부 battle-data.json 의 enemyAi 블록에서 온다
 
-import type { ClashResolver } from './clash.js';
+import { frontChanceOf, type ClashResolver } from './clash.js';
 import type { Combatant } from './combatant.js';
 import type { BattleCatalog } from './data.js';
 
@@ -153,9 +153,11 @@ export class WeightedEnemyAi implements EnemyAi {
 
     const { catalog } = context;
     const opponent = engagement.target;
-    const probability = catalog.rules.coinBaseProbability;
-    const expect = (skill: SkillData): number =>
-      skill.baseDamage + opponent.base.maxCoin * probability * skill.coinPower;
+    //상대의 지금 정신력·체력으로 앞면 확률을 셈해 기대 위력을 낸다 (v3.0 §2)
+    const expect = (skill: SkillData): number => {
+      const chance = frontChanceOf(catalog.rules, skill, opponent.mentality, opponent.hp, opponent.base.maxHp);
+      return chance * skill.frontPower + (1 - chance) * skill.backPower;
+    };
 
     if (engagement.opponentSkillId !== null) {
       return expect(catalog.skill(engagement.opponentSkillId)) / enemy.hp;

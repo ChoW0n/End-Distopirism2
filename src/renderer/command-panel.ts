@@ -126,12 +126,12 @@ export class CommandPanel {
 
     this.cards.replaceChildren(
       ...(current ? current.deck : []).map((skillId, i) => {
-        const view = cardView(this.catalog, skillId, current?.maxCoin ?? 0);
+        const view = cardView(this.catalog, skillId);
         const button = el('button', view.slot === 'ULT' ? 'card ult' : 'card');
         button.type = 'button';
         const top = el('div', 'top');
         top.append(el('span', 'slot', `${i + 1}. ${view.name}`), el('span', 'attr', view.attribute ?? '궁극기'));
-        const dmg = el('div', 'dmg', `${view.minDamage}~${view.maxDamage}`);
+        const dmg = el('div', 'dmg', `앞 ${view.frontPower} · 뒤 ${view.backPower}`);
         dmg.append(el('small', '', ' 위력'));
         button.append(top, dmg, el('p', '', view.text));
         button.disabled = !target;

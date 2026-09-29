@@ -35,15 +35,17 @@ export class SynthSound implements SoundPlayer {
   constructor(private readonly data: SoundData) {
     this.recipes = {
       dash: (a, o, t) => this.whoosh(a, o, t, 700, 2600, 0.24),
-      coin: (a, o, t) => {
+      //카드가 머리 위에서 돈다
+      flip: (a, o, t) => {
         this.ping(a, o, t, 2500, 0.07, 0.5);
         this.ping(a, o, t + 0.02, 3700, 0.05, 0.3);
       },
       clash: (a, o, t) => this.metal(a, o, t, 1, 0.55),
       clashTie: (a, o, t) => this.metal(a, o, t, 0.8, 0.35),
-      coinBreak: (a, o, t) => {
-        this.burst(a, o, t, 'bandpass', 3200, 0.12, 0.8);
-        this.drop(a, o, t, 1800, 500, 0.14, 'triangle', 0.4);
+      //카드 면이 드러나는 '띵!'. 맑은 종소리 두 겹
+      reveal: (a, o, t) => {
+        this.ping(a, o, t, 1760, 0.45, 0.9);
+        this.ping(a, o, t, 3520, 0.3, 0.35);
       },
       swing: (a, o, t) => this.whoosh(a, o, t, 400, 1800, 0.2),
       hit: (a, o, t) => {

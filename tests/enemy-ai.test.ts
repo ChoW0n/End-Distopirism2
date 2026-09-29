@@ -12,7 +12,7 @@ import {
   type EnemyEngagement,
 } from '../src/domain/ai.js';
 import { createSeededRng } from '../src/domain/rng.js';
-import { alwaysFailRng, catalog, makeCombatant, makeResolver, skillOf } from './helpers.js';
+import { alwaysBackRng, catalog, makeCombatant, makeResolver, skillOf } from './helpers.js';
 import type { Combatant } from '../src/domain/combatant.js';
 import type { Rng } from '../src/domain/rng.js';
 
@@ -85,7 +85,7 @@ describe('§13.2 정신력 계수', () => {
     enemy.mentality = 55;
     enemy.applyStatus('confusion', 1, false);
 
-    const resolver = makeResolver(alwaysFailRng, [enemy]);
+    const resolver = makeResolver(alwaysBackRng, [enemy]);
     //55 - 20 = 35 라 정신력 위험 구간에 들어간다
     expect(resolver.effectiveMentality(enemy)).toBe(35);
     expect(resolver.effectiveMentality(enemy)).toBeLessThanOrEqual(

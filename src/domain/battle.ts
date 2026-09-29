@@ -3,7 +3,7 @@
 //여기서는 상태 전이와 규칙 적용만 하고 결과는 이벤트로만 내보낸다
 
 import { WeightedEnemyAi, type EnemyAi, type EnemyAiContext } from './ai.js';
-import { ClashResolver, type ClashContext } from './clash.js';
+import { ClashResolver } from './clash.js';
 import { Combatant, type CombatantInit } from './combatant.js';
 import { BattleCatalog, BattleDataError } from './data.js';
 import { systemRng, type Rng } from './rng.js';
@@ -74,10 +74,7 @@ export class Battle {
       this.combatantsById.set(init.id, combatant);
     }
 
-    const context: ClashContext = {
-      alliesOf: (combatant) => this.sideOf(combatant.side),
-    };
-    this.resolver = new ClashResolver(catalog, this.rng, context);
+    this.resolver = new ClashResolver(catalog, this.rng);
     this.aiContext = { catalog, resolver: this.resolver, rng: this.rng };
   }
 
@@ -113,7 +110,7 @@ export class Battle {
     return this.sideOf(side).filter((c) => !c.isDefeated);
   }
 
-  //턴을 연다. 코인 회복 → 지속 상태이상 → 적 타겟 선택 순이다
+  //턴을 연다. 궁극기 카드 → 지속 상태이상 → 적 타겟 선택 순이다 (코인 회복은 v3.0 에서 없어졌다)
   startTurn(): BattleEvent[] {
     this.expectPhase('turnStart');
     this.turn += 1;
@@ -121,8 +118,6 @@ export class Battle {
 
     for (const combatant of this.combatants) {
       if (combatant.isDefeated) continue;
-      const coin = combatant.restoreCoin();
-      events.push({ type: 'coinRestored', combatantId: combatant.id, coin });
 
       //지난 턴 종료에 조건을 채운 캐릭터에게 궁극기 카드가 들어온다 (v2.0 §3.1)
       if (combatant.ultimatePending) {

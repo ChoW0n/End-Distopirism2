@@ -111,7 +111,7 @@ class Session {
     const roster = (side: Side, ids: readonly string[]) =>
       ids.map((characterId, i) => ({ id: `${side === 'ally' ? 'a' : 'e'}${i + 1}`, characterId, side }));
     this.battle = new Battle(catalog, roster('ally', setup.ally), roster('enemy', setup.enemy), { rng, enemyAi: this.ai });
-    const resolver = new ClashResolver(catalog, rng, { alliesOf: (c) => this.battle.sideOf(c.side) });
+    const resolver = new ClashResolver(catalog, rng);
     this.aiContext = { catalog, resolver, rng };
   }
 
@@ -138,7 +138,7 @@ class Session {
     return this.battle
       .sideOf('ally')
       .filter((c) => !c.isDefeated)
-      .map((c) => ({ id: c.id, characterId: c.base.id, deck: [...c.deck], maxCoin: c.base.maxCoin, name: c.base.name }));
+      .map((c) => ({ id: c.id, characterId: c.base.id, deck: [...c.deck], name: c.base.name }));
   }
 
   inputEnemies(): { id: string; name: string }[] {

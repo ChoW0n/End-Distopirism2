@@ -119,8 +119,8 @@ export class BattlePresenter {
           this.exchange(commands, null);
           break;
 
-        //다음 라운드 코인이 굴러가면 둘 다 준비 자세로 돌아온다
-        case 'coinRolled':
+        //다음 라운드 카드를 뒤집으면 둘 다 준비 자세로 돌아온다
+        case 'cardFlipped':
           this.backToReady(commands);
           break;
 

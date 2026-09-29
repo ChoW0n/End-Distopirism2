@@ -1,4 +1,4 @@
-//합(클래시) 한 판을 실행한다. SPEC §4 의 수치 규칙과 §6 의 타이밍 순서가 전부 여기 들어 있다
+//합(클래시) 한 판을 실행한다. 카드를 뒤집어 드러난 위력으로 겨룬다 (SPEC-001 v3.0 개정 D-23)
 //상태를 바꾸고 무슨 일이 있었는지를 이벤트 목록으로 내보낸다. 렌더러는 건드리지 않는다
 
 import type { BattleCatalog } from './data.js';
@@ -6,22 +6,20 @@ import type { Combatant } from './combatant.js';
 import type { Rng } from './rng.js';
 import type {
   BattleEvent,
+  BattleRules,
+  CardFace,
   MentalityReason,
   SkillData,
   SkillEffectBody,
   StatusId,
 } from './types.js';
 
-//합을 실행하는 데 필요한 바깥 정보. 사기 진작이 아군 전체를 건드려서 진영 조회가 필요하다
-export interface ClashContext {
-  alliesOf(combatant: Combatant): Combatant[];
-}
-
-//코인을 굴린 결과
-interface CoinRoll {
-  rolls: boolean[];
-  successCount: number;
-  probability: number;
+//카드를 뒤집은 결과
+export interface CardFlip {
+  face: CardFace;
+  power: number;
+  //앞면이 나올 확률이었던 값
+  chance: number;
 }
 
 //교전이 끝났을 때의 승패 정보. 교착 3회로 끝나면 승자가 없어서 null 이 된다
@@ -32,7 +30,18 @@ interface ClashOutcome {
   //일방 공격은 맞는 쪽이 카드를 내지 않아서 없다 (SPEC §4.7)
   loserSkill: SkillData | null;
   damage: number;
-  successCount: number;
+}
+
+//앞면이 나올 확률. 정신력·체력 비의 가중 평균으로 카드 최소~최대 사이를 고르고, 규칙의 바닥·천장 밖으로 못 나간다 (v3.0 §2)
+export function frontChanceOf(rules: BattleRules, skill: SkillData, mentality: number, hp: number, maxHp: number): number {
+  const flip = rules.cardFlip;
+  const mentalityRatio = mentality / rules.mentalityMax;
+  const hpRatio = maxHp > 0 ? hp / maxHp : 0;
+  const weightSum = flip.mentalityWeight + flip.hpWeight;
+  const state = weightSum > 0 ? (flip.mentalityWeight * mentalityRatio + flip.hpWeight * hpRatio) / weightSum : 0;
+  const [low, high] = skill.frontChance;
+  const chance = low + (high - low) * Math.max(0, Math.min(1, state));
+  return Math.max(flip.chanceFloor, Math.min(flip.chanceCeiling, chance));
 }
 
 //효과 덩어리가 원하는 종류인지 확인하고 맞을 때만 돌려준다
@@ -56,7 +65,6 @@ export class ClashResolver {
   constructor(
     private readonly catalog: BattleCatalog,
     private readonly rng: Rng,
-    private readonly context: ClashContext,
   ) {}
 
   //혼란을 반영한 실효 정신력. 실제 수치는 깎지 않고 계산할 때만 낮춘다
@@ -65,10 +73,9 @@ export class ClashResolver {
     return Math.max(0, combatant.mentality - penalty);
   }
 
-  //코인 1개가 성공할 확률. 정신력 100 이면 0.6, 0 이면 0 이다
-  coinProbability(combatant: Combatant): number {
-    const rules = this.catalog.rules;
-    return rules.coinBaseProbability * (this.effectiveMentality(combatant) / rules.mentalityMax);
+  //앞면이 나올 확률. 정신력·체력이 가득이면 카드 최대, 바닥이면 카드 최소다 (v3.0 §2)
+  frontChance(combatant: Combatant, skill: SkillData): number {
+    return frontChanceOf(this.catalog.rules, skill, this.effectiveMentality(combatant), combatant.hp, combatant.base.maxHp);
   }
 
   //방어력감소를 반영한 실효 방어레벨
@@ -85,29 +92,17 @@ export class ClashResolver {
     return Math.floor((attackLevel - defenseLevel) / step);
   }
 
-  //코인을 하나씩 독립적으로 굴려 성공 개수를 센다
-  rollCoins(combatant: Combatant): CoinRoll {
-    const probability = this.coinProbability(combatant);
-    const rolls: boolean[] = [];
-    for (let i = 0; i < combatant.coin; i += 1) {
-      rolls.push(this.rng.next() < probability);
-    }
-    return { rolls, successCount: rolls.filter(Boolean).length, probability };
+  //카드를 한 번 뒤집는다. 드러난 면의 위력이 이 교전의 위력이다
+  flipCard(combatant: Combatant, skill: SkillData): CardFlip {
+    const chance = this.frontChance(combatant, skill);
+    const face: CardFace = this.rng.next() < chance ? 'front' : 'back';
+    return { face, power: face === 'front' ? skill.frontPower : skill.backPower, chance };
   }
 
-  //합에서 겨룰 피해량을 낸다. 기본피해 + 성공코인×코인위력 + 레벨차보너스에 독을 반영한다
-  calculateDamage(
-    attacker: Combatant,
-    defender: Combatant,
-    skill: SkillData,
-    successCount: number,
-  ): { damage: number; levelBonus: number } {
-    //화염 공격은 성공 코인 1개당 공격레벨을 올린다
-    const flame = bodyOfType(skill.effect?.always, 'atkBonusPerCoin');
-    const attackLevel = attacker.base.atkLevel + (flame ? successCount * flame.amount : 0);
-    const levelBonus = this.levelDiffBonus(attackLevel, this.effectiveDefLevel(defender));
-
-    let damage = skill.baseDamage + successCount * skill.coinPower + levelBonus;
+  //이긴 쪽이 넣을 피해. 드러난 위력 + 레벨차 보너스에 독을 반영한다 (v3.0 §3)
+  calculateDamage(attacker: Combatant, defender: Combatant, power: number): { damage: number; levelBonus: number } {
+    const levelBonus = this.levelDiffBonus(attacker.base.atkLevel, this.effectiveDefLevel(defender));
+    let damage = power + levelBonus;
 
     //독은 주는 쪽을 깎고 받는 쪽을 늘린다
     const poison = this.catalog.status('poison').effect;
@@ -145,42 +140,14 @@ export class ClashResolver {
     let outcome: ClashOutcome | null = null;
 
     for (;;) {
-      const attackerRoll = this.rollCoins(attacker);
-      const defenderRoll = this.rollCoins(defender);
-      events.push({
-        type: 'coinRolled',
-        combatantId: attacker.id,
-        rolls: attackerRoll.rolls,
-        successCount: attackerRoll.successCount,
-        probability: attackerRoll.probability,
-      });
-      events.push({
-        type: 'coinRolled',
-        combatantId: defender.id,
-        rolls: defenderRoll.rolls,
-        successCount: defenderRoll.successCount,
-        probability: defenderRoll.probability,
-      });
+      //양쪽이 카드를 뒤집는다. 드러난 위력끼리 겨룬다 (v3.0 §3)
+      const attackerFlip = this.flipCard(attacker, attackerSkill);
+      const defenderFlip = this.flipCard(defender, defenderSkill);
+      this.pushFlip(attacker, attackerSkill, attackerFlip, events);
+      this.pushFlip(defender, defenderSkill, defenderFlip, events);
 
-      const attackerHit = this.calculateDamage(attacker, defender, attackerSkill, attackerRoll.successCount);
-      const defenderHit = this.calculateDamage(defender, attacker, defenderSkill, defenderRoll.successCount);
-      events.push({
-        type: 'damageCalculated',
-        combatantId: attacker.id,
-        damage: attackerHit.damage,
-        successCount: attackerRoll.successCount,
-        levelBonus: attackerHit.levelBonus,
-      });
-      events.push({
-        type: 'damageCalculated',
-        combatantId: defender.id,
-        damage: defenderHit.damage,
-        successCount: defenderRoll.successCount,
-        levelBonus: defenderHit.levelBonus,
-      });
-
-      //동점은 승패가 아니라 교착이다. 여기가 원본의 2분기 버그를 고친 지점이다
-      if (attackerHit.damage === defenderHit.damage) {
+      //위력이 같으면 교착. 다시 뒤집는다. 한도에 닿으면 피해 없이 끝난다
+      if (attackerFlip.power === defenderFlip.power) {
         deadlockCount += 1;
         events.push({ type: 'deadlock', attackerId: attacker.id, defenderId: defender.id, count: deadlockCount });
         if (deadlockCount >= this.catalog.rules.deadlockLimit) {
@@ -192,44 +159,45 @@ export class ClashResolver {
         continue;
       }
 
-      const attackerWon = attackerHit.damage > defenderHit.damage;
+      const attackerWon = attackerFlip.power > defenderFlip.power;
       const winner = attackerWon ? attacker : defender;
       const loser = attackerWon ? defender : attacker;
-      const winnerHit = attackerWon ? attackerHit : defenderHit;
-      const winnerRoll = attackerWon ? attackerRoll : defenderRoll;
-
+      const winnerFlip = attackerWon ? attackerFlip : defenderFlip;
+      const loserFlip = attackerWon ? defenderFlip : attackerFlip;
+      const hit = this.calculateDamage(winner, loser, winnerFlip.power);
+      events.push({
+        type: 'damageCalculated',
+        combatantId: winner.id,
+        damage: hit.damage,
+        power: winnerFlip.power,
+        levelBonus: hit.levelBonus,
+      });
       events.push({
         type: 'clashRoundWin',
         winnerId: winner.id,
         loserId: loser.id,
-        winnerDamage: winnerHit.damage,
-        loserDamage: attackerWon ? defenderHit.damage : attackerHit.damage,
+        winnerDamage: winnerFlip.power,
+        loserDamage: loserFlip.power,
       });
 
-      loser.loseCoin();
-      events.push({ type: 'coinLost', combatantId: loser.id, coin: loser.coin });
       this.changeMentality(winner, this.catalog.rules.mentalityOnClashWin, 'clashWin', events);
       //지면 흔들린다. 합에서 진 만큼 정신력이 깎인다 (D-21)
       this.changeMentality(loser, this.catalog.rules.mentalityOnClashLose, 'clashLose', events);
 
-      //패자의 코인이 떨어지면 합이 끝나고 승자가 피해를 넣는다
-      if (loser.coin <= 0) {
-        outcome = {
-          winner,
-          loser,
-          winnerSkill: attackerWon ? attackerSkill : defenderSkill,
-          loserSkill: attackerWon ? defenderSkill : attackerSkill,
-          damage: winnerHit.damage,
-          successCount: winnerRoll.successCount,
-        };
-        break;
-      }
+      outcome = {
+        winner,
+        loser,
+        winnerSkill: attackerWon ? attackerSkill : defenderSkill,
+        loserSkill: attackerWon ? defenderSkill : attackerSkill,
+        damage: hit.damage,
+      };
+      break;
     }
 
     if (outcome) {
       this.applyOutcome(outcome, events);
       this.applyClashEndEffects(outcome, events);
-      //겨뤄서 이긴 경우에만 속성이 오른다. 재대결을 몇 번 했든 합당 1회다 (v2.0 §2.1)
+      //겨뤄서 이긴 경우에만 속성이 오른다. 다시 뒤집기를 몇 번 했든 합당 1회다 (v2.0 §2.1)
       this.grantAttribute(outcome.winner, outcome.winnerSkill, events);
     }
 
@@ -252,8 +220,8 @@ export class ClashResolver {
     this.tickBleed(combatant, events);
   }
 
-  //일방 공격. 겨룰 상대가 없으니 자동 승리로 보고 그대로 때린다 (SPEC §4.7)
-  //코인 차감과 정신력 회복은 겨뤘을 때만 나오므로 여기서는 기본적으로 일어나지 않는다
+  //일방 공격. 겨룰 상대가 없으니 공격자만 카드를 뒤집어 드러난 위력으로 때린다 (SPEC §4.7, v3.0 §4)
+  //정신력 회복은 겨뤘을 때만 나오므로 여기서는 기본적으로 일어나지 않는다
   resolveOneSided(attacker: Combatant, skillId: number, target: Combatant): BattleEvent[] {
     const events: BattleEvent[] = [];
     const skill = this.catalog.skill(skillId);
@@ -261,28 +229,18 @@ export class ClashResolver {
 
     events.push({ type: 'oneSidedStart', attackerId: attacker.id, targetId: target.id, skillId });
 
-    const roll = this.rollCoins(attacker);
-    events.push({
-      type: 'coinRolled',
-      combatantId: attacker.id,
-      rolls: roll.rolls,
-      successCount: roll.successCount,
-      probability: roll.probability,
-    });
+    const flip = this.flipCard(attacker, skill);
+    this.pushFlip(attacker, skill, flip, events);
 
-    const hit = this.calculateDamage(attacker, target, skill, roll.successCount);
+    const hit = this.calculateDamage(attacker, target, flip.power);
     events.push({
       type: 'damageCalculated',
       combatantId: attacker.id,
       damage: hit.damage,
-      successCount: roll.successCount,
+      power: flip.power,
       levelBonus: hit.levelBonus,
     });
 
-    if (rules.oneSidedConsumesCoin) {
-      target.loseCoin();
-      events.push({ type: 'coinLost', combatantId: target.id, coin: target.coin });
-    }
     if (rules.oneSidedGivesMentality) {
       this.changeMentality(attacker, rules.mentalityOnClashWin, 'clashWin', events);
     }
@@ -293,7 +251,6 @@ export class ClashResolver {
       winnerSkill: skill,
       loserSkill: null,
       damage: hit.damage,
-      successCount: roll.successCount,
     };
     this.applyOutcome(outcome, events);
     this.applyClashEndEffect(attacker, target, skill, 'win', events);
@@ -321,7 +278,7 @@ export class ClashResolver {
 
   //합의 최종 피해를 확정해서 넣는다. §6 의 타이밍 순서대로 효과를 얹는다
   private applyOutcome(outcome: ClashOutcome, events: BattleEvent[]): void {
-    const { winner, loser, winnerSkill, loserSkill, successCount } = outcome;
+    const { loser, winnerSkill, loserSkill } = outcome;
     let damage = outcome.damage;
 
     //강력한 한 방 — 이기면 내 피해가 늘고, 지면 상대 피해가 더 크게 늘어난다
@@ -329,19 +286,6 @@ export class ClashResolver {
     if (winnerModifier?.target === 'self') damage += winnerModifier.amount;
     const loserModifier = loserSkill && bodyOfType(effectBody(loserSkill, 'lose'), 'damageModifier');
     if (loserModifier && loserModifier.target === 'opponent') damage += loserModifier.amount;
-
-    //무모한 일격 — 내 체력을 먼저 지불하고 그만큼 추가 피해를 얻는다
-    const cost = bodyOfType(effectBody(winnerSkill, 'win'), 'selfHpCost');
-    if (cost) {
-      const paid = winner.takeDamage(cost.amount);
-      events.push({ type: 'damageApplied', combatantId: winner.id, damage: paid, hp: winner.hp });
-      damage += successCount * cost.bonusDamagePerCoin;
-      this.checkDefeat(winner, events);
-    }
-
-    //화염 공격 — 성공 코인 수만큼 피해가 더 붙는다
-    const flame = bodyOfType(winnerSkill.effect?.always, 'atkBonusPerCoin');
-    if (flame) damage += successCount * flame.bonusDamagePerCoin;
 
     //방어 태세 — 패배한 쪽이 냈으면 피해를 통째로 막는다
     if (loserSkill && bodyOfType(effectBody(loserSkill, 'lose'), 'nullifyDamage')) {
@@ -398,14 +342,6 @@ export class ClashResolver {
     if (body.type === 'applyStatus') {
       const target = body.target === 'self' ? owner : opponent;
       this.applyStatus(target, body.status, body.turns, events);
-      return;
-    }
-
-    //사기 진작 — 진영 전체의 다음 턴 코인 회복량을 바꾼다
-    if (body.type === 'nextTurnCoin') {
-      for (const ally of this.context.alliesOf(owner)) {
-        ally.nextTurnCoinModifier += body.amount;
-      }
     }
   }
 
@@ -434,6 +370,18 @@ export class ClashResolver {
     if (combatant.mentality >= this.catalog.rules.confusionThreshold) return;
     if (combatant.hasStatus('confusion')) return;
     this.applyStatus(combatant, 'confusion', this.catalog.status('confusion').defaultTurns, events);
+  }
+
+  //뒤집은 결과를 이벤트로 남긴다
+  private pushFlip(combatant: Combatant, skill: SkillData, flip: CardFlip, events: BattleEvent[]): void {
+    events.push({
+      type: 'cardFlipped',
+      combatantId: combatant.id,
+      skillId: skill.id,
+      face: flip.face,
+      power: flip.power,
+      chance: flip.chance,
+    });
   }
 
   //정신력을 바꾸고 실제로 움직였을 때만 이벤트를 남긴다

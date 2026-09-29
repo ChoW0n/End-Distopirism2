@@ -12,7 +12,7 @@ import { loadUiData } from '../src/platform/node-ui.js';
 import { Stage, type StagePlacement } from '../src/render/stage.js';
 import { DashPlanner } from '../src/ui/dash.js';
 import { UiDirector, type UiCommand } from '../src/ui/director.js';
-import { alwaysFailRng, catalog, skillOf } from './helpers.js';
+import { alwaysBackRng, catalog, skillOf } from './helpers.js';
 import type { CombatantInit } from '../src/domain/combatant.js';
 import type { BattleEvent } from '../src/domain/types.js';
 
@@ -52,7 +52,7 @@ class ScriptedAi implements EnemyAi {
 function makeBattle(enemySkillId = S1) {
   const allies: CombatantInit[] = [{ id: 'a1', characterId: 'incinerator', side: 'ally' }];
   const enemies: CombatantInit[] = [{ id: 'e1', characterId: 'incinerator', side: 'enemy' }];
-  return new Battle(catalog, allies, enemies, { rng: alwaysFailRng, enemyAi: new ScriptedAi(enemySkillId) });
+  return new Battle(catalog, allies, enemies, { rng: alwaysBackRng, enemyAi: new ScriptedAi(enemySkillId) });
 }
 
 function makeDirector(seed = 1) {
@@ -439,31 +439,31 @@ describe('일방 공격도 상대 쪽으로 달려간다', () => {
 describe('SPEC-005 합 한 번의 연출', () => {
   //합 한 라운드를 손으로 짠다. 도메인 실측 순서 그대로다 (SPEC-005 §2)
   const round: BattleEvent[] = [
-    { type: 'coinRolled', combatantId: 'a1', rolls: [true, false, true], successCount: 2, probability: 0.6 },
-    { type: 'coinRolled', combatantId: 'e1', rolls: [false, false], successCount: 0, probability: 0.6 },
-    { type: 'damageCalculated', combatantId: 'a1', damage: 15, successCount: 2, levelBonus: 0 },
-    { type: 'damageCalculated', combatantId: 'e1', damage: 9, successCount: 0, levelBonus: 0 },
+    { type: 'cardFlipped', combatantId: 'a1', skillId: S2, face: 'front', power: 15, chance: 0.8 },
+    { type: 'cardFlipped', combatantId: 'e1', skillId: S1, face: 'back', power: 9, chance: 0.8 },
+    { type: 'damageCalculated', combatantId: 'a1', damage: 15, power: 15, levelBonus: 0 },
     { type: 'clashRoundWin', winnerId: 'a1', loserId: 'e1', winnerDamage: 15, loserDamage: 9 },
-    { type: 'coinLost', combatantId: 'e1', coin: 1 },
   ];
   const start = { type: 'clashStart', attackerId: 'a1', defenderId: 'e1', attackerSkillId: S2, defenderSkillId: S1 } as const;
 
-  it('양쪽 코인이 다 뒤집힌 뒤에 한 박자 쉰다', () => {
+  it('양쪽 카드가 다 드러난 뒤에 한 박자 쉰다 (SPEC-001 v3.0)', () => {
     const commands = makeDirector().consume([start, ...round]);
     const types = commands.map((c) => c.type);
-    const tosses = types.flatMap((t, i) => (t === 'coinToss' ? [i] : []));
-    expect(tosses).toHaveLength(2);
-    //두 번째 코인 바로 뒤에 코인 박자가 온다. 첫 번째 뒤에는 없다
-    expect(commands[tosses[1]! + 1]).toEqual({ type: 'beat', sec: uiData.clash.coinSec });
-    expect(commands[tosses[0]! + 1]!.type).toBe('coinToss');
+    const flips = types.flatMap((t, i) => (t === 'cardFlip' ? [i] : []));
+    expect(flips).toHaveLength(2);
+    //두 번째 카드 바로 뒤에 카드 박자가 온다. 첫 번째 뒤에는 없다
+    expect(commands[flips[1]! + 1]).toEqual({ type: 'beat', sec: uiData.clash.cardSec });
+    expect(commands[flips[0]! + 1]!.type).not.toBe('beat');
+    expect(pick(commands, 'cardFlip').find((c) => c.combatantId === 'e1')).toMatchObject({ face: 'back', power: 9 });
   });
 
-  it('일방 공격은 코인이 한 번만 굴러도 박자가 온다', () => {
+  it('일방 공격은 카드가 한 장만 뒤집혀도 박자가 온다', () => {
     const commands = makeDirector().consume([
       { type: 'oneSidedStart', attackerId: 'a1', targetId: 'e1', skillId: S2 },
-      { type: 'coinRolled', combatantId: 'a1', rolls: [true], successCount: 1, probability: 0.6 },
+      { type: 'cardFlipped', combatantId: 'a1', skillId: S2, face: 'front', power: 19, chance: 0.8 },
     ]);
-    expect(commands.at(-1)).toEqual({ type: 'beat', sec: uiData.clash.coinSec });
+    expect(commands.map((c) => c.type)).toContain('beat');
+    expect(pick(commands, 'beat').some((b) => b.sec === uiData.clash.cardSec)).toBe(true);
   });
 
   it('위력 숫자는 각자 등 뒤에 뜬다 — 가운데서 겹치지 않는다', () => {
@@ -520,11 +520,6 @@ describe('SPEC-005 합 한 번의 연출', () => {
     const [first, second] = pick(commands, 'separate')[0]!.moves;
     expect(Math.abs(first!.dx)).toBeCloseTo(Math.abs(second!.dx));
     expect(Math.abs(first!.dx)).toBeGreaterThan(0);
-  });
-
-  it('진 쪽 코인이 깨진다', () => {
-    const breaks = pick(makeDirector().consume([start, ...round]), 'coinBreak');
-    expect(breaks).toEqual([{ type: 'coinBreak', combatantId: 'e1', coinsLeft: 1 }]);
   });
 
   it('스킬 이름 띠는 데이터의 스킬 이름을 쓰고 양쪽에 뜬다', () => {
@@ -593,17 +588,16 @@ describe('SPEC-005 §5 에셋 없는 캐릭터도 정보는 뜬다', () => {
     combatants: () => [...mixed.keys()],
   };
 
-  it('코인·위력·바가 나온다', () => {
+  it('카드·위력·바가 나온다', () => {
     const director = new UiDirector(catalog, stage, mixedContext, uiData, createSeededRng(1));
     const commands = [
       ...director.consume([{ type: 'turnStart', turn: 1 }]),
       ...director.consume([
         { type: 'clashStart', attackerId: 'a1', defenderId: 'e1', attackerSkillId: S2, defenderSkillId: S1 },
-        { type: 'coinRolled', combatantId: 'e1', rolls: [true], successCount: 1, probability: 0.6 },
-        { type: 'damageCalculated', combatantId: 'e1', damage: 9, successCount: 1, levelBonus: 0 },
+        { type: 'cardFlipped', combatantId: 'e1', skillId: S1, face: 'front', power: 9, chance: 0.8 },
       ]),
     ];
-    expect(pick(commands, 'coinToss').some((c) => c.combatantId === 'e1')).toBe(true);
+    expect(pick(commands, 'cardFlip').some((c) => c.combatantId === 'e1')).toBe(true);
     expect(pick(commands, 'clashPower').some((c) => c.combatantId === 'e1')).toBe(true);
     expect(pick(commands, 'bar').some((c) => c.combatantId === 'e1')).toBe(true);
   });
