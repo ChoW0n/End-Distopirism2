@@ -74,3 +74,20 @@ describe('SPEC-005 §11.4 카드 뒤집기 수치', () => {
     expect(1 - c.approachShare).toBeGreaterThan(0);
   });
 });
+
+describe('SPEC-004 §2.2.1 발밑 바 · SPEC-005 §12 v2.13 날아가기', () => {
+  const config = parseStage3dConfig(JSON.parse(readFileSync(resolve(here, '../assets/ui/stage3d.json'), 'utf8')));
+
+  it('발밑 바 수치를 읽는다 (원작 0.5초 보간 · 쓰러지면 1초 흐림)', () => {
+    expect(config.footBar).toEqual({ widthRatio: 0.55, minWidth: 56, hpHeight: 6, mtHeight: 4, gap: 2, tween: 0.5, downFade: 1.0 });
+  });
+
+  it('맞으면 크게 날아가고, 다시 붙을 때는 돌진 속도로 달려간다', () => {
+    const m = config.motion;
+    expect(m.hitKnock).toBe(2.4);
+    expect(m.knockBase).toBe(2.6);
+    expect(m.knockMax).toBe(5.0);
+    //한 타 거리를 다시 붙는 데 걸리는 시간이 0.25초를 넘지 않는다
+    expect(Math.max(m.followTime, (m.hitKnock + m.contactGap) / m.followSpeed)).toBeLessThanOrEqual(0.25);
+  });
+});

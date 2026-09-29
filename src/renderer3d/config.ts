@@ -49,6 +49,19 @@ export interface MotionConfig {
   //피격 슬로우 (SPEC-005 §12.1 v2.11). 게임 시간 배율과 실제 시간
   hitSlowScale: number;
   hitSlowTime: number;
+  //다시 붙는 돌진 속도 (월드/초, SPEC-005 §12.1 v2.13)
+  followSpeed: number;
+}
+
+//발밑 체력·정신력 바 (SPEC-004 §2.2.1)
+export interface FootBarConfig {
+  widthRatio: number;
+  minWidth: number;
+  hpHeight: number;
+  mtHeight: number;
+  gap: number;
+  tween: number;
+  downFade: number;
 }
 
 export interface CameraConfig {
@@ -140,6 +153,7 @@ export interface Stage3dConfig {
   sparks: SparkConfig;
   callout: CalloutConfig;
   cardFlip: CardFlipConfig;
+  footBar: FootBarConfig;
 }
 
 //배경 층 한 장 (SPEC-005 §8.8)
@@ -222,7 +236,7 @@ export function parseStage3dConfig(raw: unknown): Stage3dConfig {
       'knockPerDamage', 'knockMax', 'staggerDrop', 'staggerHold', 'lingerAfterHit', 'strikeTrailTime',
       'strikeTrailPeakShare', 'settleTime', 'settleAmplitude', 'settlePeriod', 'returnTime', 'clashWinnerRecoil',
       'clashPush', 'deadlockPush', 'reengageTime', 'roundRest', 'downTime', 'downSink', 'downOpacity', 'heavyDamage',
-      'bystanderFade', 'foregroundFade', 'readyHold', 'followTime', 'hitKnock', 'parryLunge', 'hitSlowScale', 'hitSlowTime',
+      'bystanderFade', 'foregroundFade', 'readyHold', 'followTime', 'hitKnock', 'parryLunge', 'hitSlowScale', 'hitSlowTime', 'followSpeed',
     ]),
     camera: numbers<CameraConfig>(root['camera'], 'camera', ['focusSizeGain', 'focusHeight', 'panYawDeg', 'dutchDeg', 'fovZoom', 'followTime', 'returnFollowTime']),
     shake: numbers<ShakeConfig>(root['shake'], 'shake', [
@@ -238,6 +252,7 @@ export function parseStage3dConfig(raw: unknown): Stage3dConfig {
     cardFlip: numbers<CardFlipConfig>(root['cardFlip'], 'cardFlip', [
       'slowScale', 'approachShare', 'spinTime', 'spinTurns', 'revealPop', 'holdTime', 'height', 'headLift', 'fadeTime',
     ]),
+    footBar: numbers<FootBarConfig>(root['footBar'], 'footBar', ['widthRatio', 'minWidth', 'hpHeight', 'mtHeight', 'gap', 'tween', 'downFade']),
   };
 }
 

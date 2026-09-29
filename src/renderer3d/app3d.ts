@@ -16,7 +16,7 @@ import { parseUltimateArt, type UltimateArt } from '../render/ultimate.js';
 import type { UiData } from '../ui/data.js';
 import { OrderInput, type InputMember } from '../ui/input.js';
 import { loadCharacter, loadIndex, loadUi } from '../renderer/assets.js';
-import { BattleHud, CommandPanel } from '../renderer/command-panel.js';
+import { CommandPanel } from '../renderer/command-panel.js';
 import { SynthSound } from '../renderer/sound.js';
 import { parseBackdropConfig, parseStage3dConfig, type BackdropConfig, type BattleSetup, type Stage3dConfig } from './config.js';
 import { Stage3D, type RosterEntry, type UltimateBundle } from './stage.js';
@@ -308,12 +308,6 @@ async function main(): Promise<void> {
     },
     go: () => submit(),
   });
-  const hud = new BattleHud(
-    document.getElementById('hud-ally') as HTMLElement,
-    document.getElementById('hud-enemy') as HTMLElement,
-    loaded.ui.side,
-    { hp: loaded.ui.bar.hpColor, mentality: loaded.ui.bar.mentalityColor },
-  );
 
   //시연 한 바퀴. 아군 첫 캐릭터가 S1 → S2 → S3 → 궁극기로 합에서 이긴다 (SPEC-005 §13)
   const startShowcase = (): void => {
@@ -505,7 +499,6 @@ async function main(): Promise<void> {
         restSec = 0.5;
       }
     }
-    hud.update(stage.snapshot());
     requestAnimationFrame(loop);
   };
 

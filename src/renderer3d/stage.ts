@@ -146,7 +146,7 @@ export class Stage3D {
     this.camera = new THREE.PerspectiveCamera(backdrop.fov, canvas.width / canvas.height, 0.1, 300);
     this.rig = new CameraRig(this.camera, backdrop.homePosition, backdrop.homeLookAt, backdrop.fov, config.camera, config.shake);
     this.sparks = new SparkField(this.scene, config.sparks);
-    this.overlay = new Overlay(host);
+    this.overlay = new Overlay(host, config.footBar);
     this.effects = new EffectLayer(this.scene, config.layout.characterHeight);
     this.cutscene = new CutsceneOverlay(host);
     for (const [characterId, bundle] of ultimates) this.prepareUltimate(characterId, bundle);
@@ -442,17 +442,12 @@ export class Stage3D {
     for (let k = 0; k < segments.length; k++) {
       const segment = segments[k] as string[];
       const last = k === segments.length - 1;
-      //앞 타에 밀린 자리로 따라간다
+      //날아간 자리로 처음처럼 돌진 장으로 달려가 붙는다 (§12.1 v2.13)
       if (k > 0 && !L.down) {
         const toX = this.worldX(L) - dir * m.contactGap;
-        await this.wait(
-          all(
-            this.clock.tween(W.root.position, 'x', toX, m.followTime, ease.outQuad),
-            this.clock.tween(W.root.position, 'z', L.root.position.z, m.followTime),
-            this.clock.tween(W.visual.position, 'x', 0, m.followTime),
-          ),
-          epoch,
-        );
+        const time = Math.max(m.followTime, Math.abs(toX - this.worldX(W)) / m.followSpeed);
+        this.rig.focus(this.chest(W), this.chest(L), dir);
+        await this.wait(this.dash(W, toX, L.root.position.z, time) as Promise<void>, epoch);
         this.rig.focus(this.chest(W), this.chest(L), dir);
       }
       if (parry && k === 0) {
@@ -476,6 +471,9 @@ export class Stage3D {
         if (!last) jobs.push(this.nudge(L, dir), this.clock.tween(L.visual.position, 'x', 0, m.knockTime));
         else if (damage > 0) jobs.push(this.knockback(L, dir, damage, damage >= m.heavyDamage, epoch));
       }
+      //날아가는 쪽까지 카메라가 둘을 잡는다
+      const fly = last ? Math.min(m.knockMax, m.knockBase + damage * m.knockPerDamage) : m.hitKnock;
+      if (!L.down) this.rig.focus(this.chest(W), this.chest(L).add(new THREE.Vector3(dir * fly, 0, 0)), dir);
       await this.wait(all(jobs), epoch);
     }
     await this.wait(this.clock.waitReal(m.lingerAfterHit), epoch);
@@ -934,6 +932,8 @@ export class Stage3D {
     const rect = this.canvas.getBoundingClientRect();
     this.sparks.step(gameDt, this.camera, rect.width, rect.height);
     this.rig.write(realDt, this.clock.realNow);
+    //겹층(이름표·발밑 바)이 이번 프레임 카메라로 투영하게 행렬을 먼저 맞춘다. 안 하면 한 프레임 늦게 따라온다
+    this.camera.updateMatrixWorld();
     for (const a of this.actors.values()) a.doll.faceCamera(this.camera);
     for (const [card, owner] of this.cards) card.update(this.cardAnchor(owner), this.camera);
     this.effects.update(this.clock.realNow, this.camera);
@@ -944,8 +944,24 @@ export class Stage3D {
       (id) => this.actors.get(id)?.doll.down ?? false,
       this.clock.realNow,
       this.config.callout.headOffset * 0.06,
+      (id) => this.footPoint(id),
+      (id) => {
+        const a = this.actors.get(id);
+        return a ? { hp: a.hp, maxHp: a.entry.maxHp, mentality: a.mentality, maxMentality: a.entry.maxMentality } : null;
+      },
     );
     this.renderer.render(this.scene, this.camera);
+  }
+
+  //발 화면 좌표 (0~1). 발밑 바가 여기 붙는다 (SPEC-004 §2.2.1). 숨은 인형은 null
+  private footPoint(id: string): ScreenPoint {
+    const a = this.actors.get(id);
+    if (!a || a.doll.hidden) return null;
+    //인형 뿌리는 카메라 회전을 따라 돌아 있어서 안쪽(visual)의 밀림이 월드 x 로만 가지 않는다. 발(판 원점)의 실제 월드 자리를 쓴다
+    a.doll.root.updateMatrixWorld(true);
+    const p = a.doll.visual.getWorldPosition(new THREE.Vector3()).project(this.camera);
+    if (p.z > 1) return null;
+    return { x: (p.x + 1) / 2, y: (1 - p.y) / 2 };
   }
 
   //머리 위 화면 좌표 (0~1). lift 는 캐릭터 키 비율로 더 올린다
