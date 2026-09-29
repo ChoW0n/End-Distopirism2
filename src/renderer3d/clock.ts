@@ -52,12 +52,16 @@ interface RealWait {
 export class Clock {
   //게임 시간 배율. 역경직 때 거의 0 이 된다
   private timeScale = 1;
+  //역경직이 없을 때의 배율. 카드 뒤집기 슬로우가 이 값을 낮춘다 (SPEC-005 §11)
+  private baseScale = 1;
+  //실제 시간 트윈. 슬로우·역경직에도 제 속도로 흐른다 (카드 회전)
+  private realTweens: Tween[] = [];
   //지금까지 흐른 실제 시간
   private real = 0;
   private tweens: Tween[] = [];
   private gameWaits: GameWait[] = [];
   private realWaits: RealWait[] = [];
-  private hitStop = { active: false, until: 0, restore: 1, scale: 0.02 };
+  private hitStop = { active: false, until: 0, scale: 0.02 };
 
   get realNow(): number {
     return this.real;
@@ -72,10 +76,15 @@ export class Clock {
     this.timeScale = value;
   }
 
+  //슬로우를 걸거나 푼다. 역경직 중이면 역경직이 끝난 뒤에 이 배율로 돌아간다
+  setSlowMotion(scale: number): void {
+    this.baseScale = scale;
+    if (!this.hitStop.active) this.applyTimeScale(scale);
+  }
+
   //역경직. 겹치면 끝나는 시각만 늘린다
   startHitStop(seconds: number, scale: number): void {
     if (seconds <= 0) return;
-    if (!this.hitStop.active) this.hitStop.restore = this.timeScale;
     this.hitStop.until = Math.max(this.hitStop.until, this.real + seconds);
     this.hitStop.active = true;
     this.hitStop.scale = scale;
@@ -102,6 +111,21 @@ export class Clock {
     );
   }
 
+  //실제 시간 트윈. 같은 속성의 앞 트윈을 끊는다
+  tweenReal(target: object, key: string, to: number, dur: number, fn: Ease = ease.outQuad): Promise<void> {
+    const record = target as Record<string, number>;
+    this.realTweens = this.realTweens.filter((t) => {
+      if (t.target === record && t.key === key) {
+        t.done();
+        return false;
+      }
+      return true;
+    });
+    return new Promise((done) =>
+      this.realTweens.push({ target: record, key, from: record[key] ?? 0, to, dur: Math.max(1e-4, dur), t: 0, fn, done }),
+    );
+  }
+
   waitGame(seconds: number): Promise<void> {
     return new Promise((done) => this.gameWaits.push({ left: seconds, done }));
   }
@@ -121,7 +145,16 @@ export class Clock {
     }
     if (this.hitStop.active && this.real >= this.hitStop.until) {
       this.hitStop.active = false;
-      this.applyTimeScale(this.hitStop.restore);
+      this.applyTimeScale(this.baseScale);
+    }
+    for (const t of [...this.realTweens]) {
+      t.t += realDt;
+      const k = Math.min(1, t.t / t.dur);
+      t.target[t.key] = t.from + (t.to - t.from) * t.fn(k);
+      if (k >= 1) {
+        this.realTweens.splice(this.realTweens.indexOf(t), 1);
+        t.done();
+      }
     }
     const gameDt = realDt * this.timeScale;
     for (const t of [...this.tweens]) {
@@ -146,12 +179,15 @@ export class Clock {
   //전부 끊는다. 재시작할 때 쓴다
   clear(): void {
     for (const t of this.tweens) t.done();
+    for (const t of this.realTweens) t.done();
     for (const w of this.gameWaits) w.done();
     for (const w of this.realWaits) w.done();
     this.tweens = [];
+    this.realTweens = [];
     this.gameWaits = [];
     this.realWaits = [];
     this.hitStop.active = false;
+    this.baseScale = 1;
     this.applyTimeScale(1);
   }
 }

@@ -4,12 +4,13 @@
 //쓰는 곳 규칙: 카메라는 CameraRig.write, 시간 배율은 Clock 안에서만 쓴다
 
 import * as THREE from 'three';
-import type { BattleEvent, Side, SkillSlot } from '../domain/types.js';
-import type { ClashRound, StageStep, StepCallout } from '../render/exchange.js';
+import type { BattleEvent, CardFace, Side, SkillSlot } from '../domain/types.js';
+import type { ClashRound, FlipView, StageStep, StepCallout } from '../render/exchange.js';
 import type { SpriteCatalog } from '../render/manifest.js';
 import type { SoundPlayer } from '../renderer/sound.js';
 import { Backdrop } from './backdrop.js';
 import { CameraRig } from './camera.js';
+import { FlipCard } from './card.js';
 import { all, Clock, ease } from './clock.js';
 import type { BackdropConfig, Stage3dConfig } from './config.js';
 import { frameTexture, PaperDoll } from './doll.js';
@@ -47,6 +48,17 @@ interface Actor {
   mentality: number;
 }
 
+//카드에 적을 스킬 정보 (SPEC-005 §11)
+export interface StageSkill {
+  slot: SkillSlot;
+  name: string;
+  frontPower: number;
+  backPower: number;
+}
+
+//카드 테두리 진영 색. 이름표·결과 알림의 진영 색과 같다 (SPEC-004 §11)
+const CARD_TINT = { ally: '#6f9bbd', enemy: '#b3262b' } as const;
+
 //재시작하면 도는 타임라인을 끊는다
 class Aborted extends Error {}
 
@@ -67,6 +79,8 @@ export class Stage3D {
   //캐릭터별 장 텍스처. 재시작해도 다시 만들지 않는다
   private readonly textures = new Map<string, Map<string, THREE.Texture>>();
   private readonly worldPerPixel = new Map<string, number>();
+  //머리 위 카드와 그 주인 인형
+  private readonly cards = new Map<FlipCard, PaperDoll>();
   //교전 중에 숨길 근경 재질과 그 투명도 손잡이
   private readonly foreground: THREE.MeshBasicMaterial[];
   private readonly foregroundFade = {
@@ -89,7 +103,7 @@ export class Stage3D {
     backdropImages: Map<string, HTMLImageElement>,
     private readonly sprites: Map<string, SpriteCatalog>,
     private readonly frameImages: (characterId: string, file: string) => HTMLImageElement | null,
-    private readonly slotOf: (skillId: number) => SkillSlot,
+    private readonly skillInfo: (skillId: number) => StageSkill,
     private readonly sound: SoundPlayer,
   ) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -104,6 +118,11 @@ export class Stage3D {
     this.sparks = new SparkField(this.scene, config.sparks);
     this.overlay = new Overlay(host);
     this.resize();
+  }
+
+  //카드 슬롯. 인형 장 고르기에 쓴다
+  private slotOf(skillId: number): SkillSlot {
+    return this.skillInfo(skillId).slot;
   }
 
   //캔버스가 보이는 크기에 그리기 버퍼를 맞춘다
@@ -147,6 +166,8 @@ export class Stage3D {
     this.clock.clear();
     this.sparks.clear();
     this.overlay.clear();
+    for (const card of this.cards.keys()) card.dispose();
+    this.cards.clear();
     for (const actor of this.actors.values()) this.scene.remove(actor.doll.root);
     this.actors.clear();
 
@@ -397,24 +418,114 @@ export class Stage3D {
     }
   }
 
-  //── 걸음 재생 (§9.3) ──
+  //── 카드 뒤집기 (SPEC-005 §11) ──
+
+  //머리 위 카드를 만든다. 진영 색 테두리
+  private makeCard(owner: PaperDoll, flip: FlipView): FlipCard {
+    const info = this.skillInfo(flip.skillId);
+    const side = this.actor(flip.combatantId).entry.side;
+    const card = new FlipCard(
+      { name: info.name, slot: info.slot, frontPower: info.frontPower, backPower: info.backPower, tint: side === 'ally' ? CARD_TINT.ally : CARD_TINT.enemy },
+      this.config.cardFlip.height,
+    );
+    this.scene.add(card.root);
+    this.cards.set(card, owner);
+    return card;
+  }
+
+  //카드가 뜨는 자리. 머리 위 headLift 만큼, 카드 가운데가 오게 한다
+  private cardAnchor(d: PaperDoll): THREE.Vector3 {
+    const c = this.config.cardFlip;
+    const h = this.config.layout.characterHeight;
+    return new THREE.Vector3(
+      d.root.position.x + d.visual.position.x * d.root.scale.x,
+      h * 1.05 + d.visual.position.y + c.headLift + c.height / 2,
+      d.root.position.z,
+    );
+  }
+
+  //③④ 카드를 돌리다 나온 면으로 멈춘다. 멈추는 순간 '띵' 과 함께 한 번 튄다. 실제 시간이라 슬로우에 느려지지 않는다
+  private async revealCards(pairs: readonly { card: FlipCard; face: CardFace }[], epoch: number): Promise<void> {
+    const c = this.config.cardFlip;
+    this.sound.play('flip');
+    const spins: Promise<void>[] = [];
+    for (const { card, face } of pairs) {
+      card.state.spin = 0;
+      card.state.dim = 0;
+      card.state.opacity = 1;
+      void this.clock.tweenReal(card.state, 'scale', 1, c.spinTime * 0.25, ease.outBack);
+      spins.push(this.clock.tweenReal(card.state, 'spin', FlipCard.restAngle(face, c.spinTurns), c.spinTime, ease.outCubic));
+    }
+    await this.wait(all(spins), epoch);
+    this.sound.play('reveal');
+    for (const { card } of pairs) card.state.scale = 1.3;
+    await this.wait(all(pairs.map(({ card }) => this.clock.tweenReal(card.state, 'scale', 1, c.revealPop, ease.outQuad))), epoch);
+  }
+
+  //⑤ 진 쪽 카드는 어두워지며 작아진다
+  private dimCard(card: FlipCard): void {
+    const c = this.config.cardFlip;
+    void this.clock.tweenReal(card.state, 'dim', 1, c.holdTime * 0.5);
+    void this.clock.tweenReal(card.state, 'scale', 0.8, c.holdTime * 0.5);
+  }
+
+  //카드를 흐리게 지우고 장면에서 뺀다
+  private async fadeCard(card: FlipCard | null): Promise<void> {
+    if (!card) return;
+    await this.clock.tweenReal(card.state, 'opacity', 0, this.config.cardFlip.fadeTime);
+    this.cards.delete(card);
+    card.dispose();
+  }
+
+  //② 슬로우 동안 목표 쪽으로 다가간다. 게임 시간 몫을 슬로우 배율로 맞춰 카드가 멈출 때쯤 도착한다
+  private approach(d: PaperDoll, toX: number, toZ: number): Promise<unknown> {
+    const c = this.config.cardFlip;
+    const gameSec = (c.spinTime + c.revealPop + c.holdTime) * c.slowScale;
+    d.setPose('dash');
+    this.sound.play('dash');
+    const x = d.root.position.x + (toX - d.root.position.x) * c.approachShare;
+    const z = d.root.position.z + (toZ - d.root.position.z) * c.approachShare;
+    return all(
+      this.clock.tween(d.root.position, 'x', x, gameSec, ease.linear),
+      this.clock.tween(d.root.position, 'z', z, gameSec, ease.linear),
+      this.clock.tween(d.visual.position, 'x', 0, gameSec),
+    );
+  }
+
+  //── 걸음 재생 (§9.3 · §11) ──
 
   private async playOneSided(step: Extract<StageStep, { kind: 'oneSided' }>, epoch: number): Promise<void> {
     const a = this.actor(step.attackerId).doll;
     const d = this.actor(step.targetId).doll;
     const m = this.config.motion;
+    const c = this.config.cardFlip;
     const dir = this.dir(a, d);
     const frames = a.skillFrames(this.slotOf(step.skillId));
+    const toX = d.root.position.x - dir * m.contactGap;
+    const toZ = d.root.position.z;
 
+    //① 초점 · 선딜레이
     this.rig.focus(this.chest(a), this.chest(d), dir);
     await this.wait(this.windup(a, frames[0] as string, dir), epoch);
-    this.showCallouts(step.callouts, [step.attackerId]);
-    await this.wait(this.dash(a, d.root.position.x - dir * m.contactGap, d.root.position.z, m.dashTime), epoch);
-    this.rig.focus(this.chest(a), this.chest(d), dir);
-    await this.wait(this.strike(a, (frames[1] ?? frames[0]) as string, dir), epoch);
 
+    //② 달려가며 슬로우 → ③④ 카드 회전·띵 → ⑤ 비교
+    const card = this.makeCard(a, step.flip);
+    this.clock.setSlowMotion(c.slowScale);
+    const run = this.approach(a, toX, toZ);
+    await this.wait(this.revealCards([{ card, face: step.flip.face }], epoch), epoch);
+    this.showCallouts(step.callouts, [step.attackerId]);
+    await this.wait(this.clock.waitReal(c.holdTime), epoch);
+    await this.wait(run as Promise<void>, epoch);
+    //⑥ 슬로우가 풀리고 남은 거리를 달린다
+    this.clock.setSlowMotion(1);
+    await this.wait(this.dash(a, toX, toZ, m.dashTime * (1 - c.approachShare)), epoch);
+    this.rig.focus(this.chest(a), this.chest(d), dir);
+
+    //⑦ 한 방
+    await this.wait(this.strike(a, (frames[1] ?? frames[0]) as string, dir), epoch);
     const contact = this.chest(a).lerp(this.chest(d), this.config.sparks.contactBias);
     this.impact(contact, d, dir, step.damage, false, step.events);
+    void this.fadeCard(card);
     const trail = this.trail(a, frames, epoch);
     const jobs: Promise<unknown>[] = [this.clock.tween(a.visual.position, 'x', 0, m.knockTime)];
     if (step.damage > 0 && !d.down) jobs.push(this.knockback(d, dir, step.damage, step.damage >= m.heavyDamage, epoch));
@@ -432,10 +543,12 @@ export class Stage3D {
     const A = this.actor(step.attackerId).doll;
     const D = this.actor(step.defenderId).doll;
     const m = this.config.motion;
+    const c = this.config.cardFlip;
     const dir = this.dir(A, D);
     const fa = A.skillFrames(this.slotOf(step.attackerSkillId));
     const fd = D.skillFrames(this.slotOf(step.defenderSkillId));
 
+    //① 초점 · 둘 다 선딜레이
     this.rig.focus(this.chest(A), this.chest(D), dir);
     await this.wait(all(this.windup(A, fa[0] as string, dir), this.windup(D, fd[0] as string, -dir)), epoch);
 
@@ -445,48 +558,81 @@ export class Stage3D {
     const ax = midX - (dir * m.contactGap) / 2;
     const dx = midX + (dir * m.contactGap) / 2;
 
-    for (let i = 0; i < step.rounds.length; i++) {
-      const round = step.rounds[i] as ClashRound;
+    let cardA: FlipCard | null = null;
+    let cardD: FlipCard | null = null;
+    //교착이면 붙은 채로 다시 뒤집는다. 처음 한 번만 달려서 다가간다
+    let engaged = false;
+
+    for (const round of step.rounds as ClashRound[]) {
+      cardA ??= this.makeCard(A, round.attackerFlip);
+      cardD ??= this.makeCard(D, round.defenderFlip);
+
+      //② 달려가며 슬로우 (다시 뒤집기면 제자리에서 슬로우만)
+      this.clock.setSlowMotion(c.slowScale);
+      const run = engaged ? null : all(this.approach(A, ax, midZ), this.approach(D, dx, midZ));
+      if (engaged) {
+        A.setPose('guard');
+        D.setPose('guard');
+      }
+      //③④ 카드 회전·띵
+      await this.wait(
+        this.revealCards(
+          [
+            { card: cardA, face: round.attackerFlip.face },
+            { card: cardD, face: round.defenderFlip.face },
+          ],
+          epoch,
+        ),
+        epoch,
+      );
+
+      //⑤ 비교. 진 쪽 카드가 어두워진다. 아군이면 결과 알림
       this.showCallouts(round.callouts, [step.attackerId, step.defenderId]);
-      const time = i === 0 ? m.dashTime : m.reengageTime;
+      if (round.type === 'win') this.dimCard(round.loserId === step.attackerId ? cardA : cardD);
+      await this.wait(this.clock.waitReal(c.holdTime), epoch);
+      if (run) await this.wait(run as Promise<void>, epoch);
+      this.clock.setSlowMotion(1);
+
+      if (round.type === 'win') {
+        //이긴 라운드는 비교로 끝. 라운드 이벤트(정신력)는 여기서 현황판에 반영한다
+        this.applyAll(round.events);
+        break;
+      }
+
+      //교착 — 서로 맞닿아 튕긴다. 불꽃과 함께 둘 다 조금 밀리고 다시 뒤집는다
+      const time = engaged ? m.reengageTime : m.dashTime * (1 - c.approachShare);
       await this.wait(all(this.dash(A, ax, midZ, time) as Promise<void>, this.dash(D, dx, midZ, time) as Promise<void>), epoch);
       this.rig.focus(this.chest(A), this.chest(D), dir);
       await this.wait(all(this.strike(A, (fa[1] ?? fa[0]) as string, dir), this.strike(D, (fd[1] ?? fd[0]) as string, -dir)), epoch);
-      const contact = this.chest(A).lerp(this.chest(D), 0.5);
-      this.impact(contact, D, dir, 0, true, round.events);
-      this.sound.play(round.type === 'deadlock' ? 'clashTie' : 'clash');
-
-      //진 쪽이 밀린다. 교착이면 둘 다 조금 밀린다
-      const pushes: Promise<void>[] = [];
-      const push = (d: PaperDoll, away: number, distance: number): void => {
+      this.impact(this.chest(A).lerp(this.chest(D), 0.5), D, dir, 0, true, round.events);
+      this.sound.play('clashTie');
+      const push = (d: PaperDoll, away: number): Promise<void>[] => {
         d.setPose('guard');
-        pushes.push(this.clock.tween(d.root.position, 'x', d.root.position.x + away * distance, m.knockTime, ease.outExpo));
-        pushes.push(this.clock.tween(d.visual.position, 'x', 0, m.knockTime));
+        return [
+          this.clock.tween(d.root.position, 'x', d.root.position.x + away * m.deadlockPush, m.knockTime, ease.outExpo),
+          this.clock.tween(d.visual.position, 'x', 0, m.knockTime),
+        ];
       };
-      if (round.type === 'win') {
-        const loser = round.loserId === step.attackerId ? A : D;
-        const winner = loser === A ? D : A;
-        push(loser, loser === A ? -dir : dir, m.clashPush);
-        pushes.push(this.clock.tween(winner.visual.position, 'x', 0, m.knockTime));
-      } else {
-        push(A, -dir, m.deadlockPush);
-        push(D, dir, m.deadlockPush);
-      }
-      await this.wait(all(pushes), epoch);
+      await this.wait(all(push(A, -dir), push(D, dir)), epoch);
       await this.wait(this.clock.waitGame(m.roundRest), epoch);
+      engaged = true;
     }
 
     const f = step.finisher;
     if (f) {
-      //이긴 쪽이 진 쪽을 친다
+      //⑥⑦ 이긴 쪽이 남은 거리를 달려 진 쪽을 친다. 진 쪽은 막는 장으로 선다
       const W = this.actor(f.winnerId).doll;
       const L = this.actor(f.loserId).doll;
       const wdir = this.dir(W, L);
       const fw = W.skillFrames(this.slotOf(f.winnerSkillId));
-      await this.wait(this.dash(W, L.root.position.x - wdir * m.contactGap, L.root.position.z, m.reengageTime), epoch);
+      L.setPose('guard');
+      await this.wait(this.dash(W, L.root.position.x - wdir * m.contactGap, L.root.position.z, engaged ? m.reengageTime : m.dashTime), epoch);
+      this.rig.focus(this.chest(W), this.chest(L), wdir);
       await this.wait(this.strike(W, (fw[1] ?? fw[0]) as string, wdir), epoch);
       const contact = this.chest(W).lerp(this.chest(L), this.config.sparks.contactBias);
       this.impact(contact, L, wdir, f.damage, false, step.events);
+      void this.fadeCard(cardA);
+      void this.fadeCard(cardD);
       const trail = this.trail(W, fw, epoch);
       const jobs: Promise<void>[] = [this.clock.tween(W.visual.position, 'x', 0, m.knockTime)];
       if (f.damage > 0 && !L.down) jobs.push(this.knockback(L, wdir, f.damage, f.damage >= m.heavyDamage, epoch));
@@ -494,7 +640,10 @@ export class Stage3D {
       await this.wait(this.clock.waitReal(m.lingerAfterHit), epoch);
       await this.wait(trail, epoch);
     } else {
+      //교착 한도로 끝났다. 한 방 없이 돌아간다
       this.applyAll(step.events);
+      void this.fadeCard(cardA);
+      void this.fadeCard(cardD);
       await this.wait(this.clock.waitReal(m.lingerAfterHit), epoch);
     }
 
@@ -518,6 +667,7 @@ export class Stage3D {
     this.sparks.step(gameDt, this.camera, rect.width, rect.height);
     this.rig.write(realDt, this.clock.realNow);
     for (const a of this.actors.values()) a.doll.faceCamera(this.camera);
+    for (const [card, owner] of this.cards) card.update(this.cardAnchor(owner), this.camera);
     this.overlay.update(
       (id) => this.headPoint(id, 0),
       (id) => this.actors.get(id)?.doll.down ?? false,

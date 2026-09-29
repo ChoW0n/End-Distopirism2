@@ -98,7 +98,7 @@
     "coreLife": 0.08,
     "contactBias": 0.7
   },
-  "callout": {
+  "_cardFlip": "SPEC-005 §11 카드 뒤집기. 달려가며 슬로우 → 머리 위 카드 회전 → 띵 → 비교 → 한 방. 시간은 초(회전·비교는 실제 시간)", "cardFlip": { "slowScale": 0.15, "approachShare": 0.55, "spinTime": 0.6, "spinTurns": 3, "revealPop": 0.18, "holdTime": 0.4, "height": 0.9, "headLift": 0.2, "fadeTime": 0.2 }, "callout": {
     "seconds": 1.1,
     "headOffset": 0.35
   }

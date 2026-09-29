@@ -207,7 +207,10 @@ async function main(): Promise<void> {
     loaded.backdropImages,
     loaded.sprites,
     (characterId, file) => loaded.frames.get(`${characterId}/${file}`) ?? null,
-    (skillId) => loaded.catalog.skill(skillId).slot,
+    (skillId) => {
+      const skill = loaded.catalog.skill(skillId);
+      return { slot: skill.slot, name: skill.name, frontPower: skill.frontPower, backPower: skill.backPower };
+    },
     sound,
   );
   window.addEventListener('resize', () => stage.resize());

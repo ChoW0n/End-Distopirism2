@@ -94,6 +94,19 @@ export interface SparkConfig {
   contactBias: number;
 }
 
+//카드 뒤집기 연출 수치 (SPEC-005 §11)
+export interface CardFlipConfig {
+  slowScale: number;
+  approachShare: number;
+  spinTime: number;
+  spinTurns: number;
+  revealPop: number;
+  holdTime: number;
+  height: number;
+  headLift: number;
+  fadeTime: number;
+}
+
 export interface CalloutConfig {
   seconds: number;
   headOffset: number;
@@ -118,6 +131,7 @@ export interface Stage3dConfig {
   hitStop: HitStopConfig;
   sparks: SparkConfig;
   callout: CalloutConfig;
+  cardFlip: CardFlipConfig;
 }
 
 //배경 층 한 장 (SPEC-005 §8.8)
@@ -203,6 +217,9 @@ export function parseStage3dConfig(raw: unknown): Stage3dConfig {
       'coneDeg', 'backShare', 'coreSize', 'coreLife', 'contactBias',
     ]),
     callout: numbers<CalloutConfig>(root['callout'], 'callout', ['seconds', 'headOffset']),
+    cardFlip: numbers<CardFlipConfig>(root['cardFlip'], 'cardFlip', [
+      'slowScale', 'approachShare', 'spinTime', 'spinTurns', 'revealPop', 'holdTime', 'height', 'headLift', 'fadeTime',
+    ]),
   };
 }
 
