@@ -534,15 +534,22 @@ export class Stage3D {
     );
   }
 
-  //피격 슬로우 (§12.1). 역경직이 끝난 뒤 잠깐 게임 시간이 느려진다. 다음 타가 오면 새로 건다
+  //피격 슬로우 (§12.1). 역경직·밀림이 끝난 뒤(after 초, 실제 시간) 잠깐 게임 시간이 느려진다. 다음 타가 오면 새로 건다
   private slowToken = 0;
-  private hitSlow(): void {
+  private hitSlow(after: number): void {
     const m = this.config.motion;
     const token = ++this.slowToken;
-    this.clock.setSlowMotion(m.hitSlowScale);
-    void this.clock.waitReal(m.hitSlowTime).then(() => {
-      if (token === this.slowToken) this.clock.setSlowMotion(1);
-    });
+    this.clock.setSlowMotion(1);
+    void this.clock
+      .waitReal(after)
+      .then(() => {
+        if (token !== this.slowToken) return;
+        this.clock.setSlowMotion(m.hitSlowScale);
+        return this.clock.waitReal(m.hitSlowTime);
+      })
+      .then(() => {
+        if (token === this.slowToken) this.clock.setSlowMotion(1);
+      });
   }
 
   //맞는 순간. 스파크·역경직·카메라·소리·현황판·피해 숫자
@@ -553,9 +560,11 @@ export class Stage3D {
     const h = this.config.hitStop;
     const heavy = total >= this.config.motion.heavyDamage;
     if (sparks) this.sparks.burst(contact, dir, clash, 10);
-    if (damage > 0) this.hitSlow();
+
     const seconds = clash && damage <= 0 ? h.clashSeconds : Math.min(h.maxSeconds, h.baseSeconds + damage * h.perDamageSeconds);
     this.clock.startHitStop(seconds, h.scale);
+    //밀림은 제 속도로 보이고 슬로우는 그 뒤에 건다 (§12.1 v2.12)
+    if (damage > 0) this.hitSlow(seconds + this.config.motion.knockTime);
     this.rig.impact(damage > 0 ? Math.min(1, damage / s.damageForMaxShake) : s.clashPower, dir);
     this.sound.play(damage <= 0 ? 'clash' : heavy ? 'hitHeavy' : 'hit');
     //중간 타는 이벤트가 없어 현황판 체력만 그 타만큼 줄인다. 마지막 타의 이벤트가 규칙 값으로 맞춘다
@@ -791,9 +800,9 @@ export class Stage3D {
       L.setPose('guard');
       await this.wait(this.dash(W, L.root.position.x - wdir * m.contactGap, L.root.position.z, engaged ? m.reengageTime : m.dashTime), epoch);
       this.rig.focus(this.chest(W), this.chest(L), wdir);
-      //받아내기 타에 진 쪽이 파고들 장: 진 쪽 카드의 맞닿는 장 (§12.3)
+      //받아내기 타에 진 쪽이 파고들 장: 진 쪽 카드의 준비 장. 통합 PNG 의 맞닿는 장은 이펙트가 같이 그려져 있다 (§12.3)
       const fl = L.skillFrames(this.slotOf(f.loserId === step.attackerId ? step.attackerSkillId : step.defenderSkillId));
-      await this.wait(this.playHits(W, L, fw, f.damage, step.events, [cardA, cardD], (fl[1] ?? fl[0]) as string, epoch), epoch);
+      await this.wait(this.playHits(W, L, fw, f.damage, step.events, [cardA, cardD], fl[0] as string, epoch), epoch);
     } else {
       //교착 한도로 끝났다. 한 방 없이 돌아간다
       this.applyAll(step.events);
