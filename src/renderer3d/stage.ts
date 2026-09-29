@@ -5,7 +5,7 @@
 
 import * as THREE from 'three';
 import type { BattleEvent, CardFace, Side, SkillSlot } from '../domain/types.js';
-import type { ClashRound, FlipView, StageStep, StepCallout } from '../render/exchange.js';
+import { splitDamage, type ClashRound, type FlipView, type StageStep, type StepCallout } from '../render/exchange.js';
 import type { SpriteCatalog } from '../render/manifest.js';
 import type { UltimateArt } from '../render/ultimate.js';
 import type { SoundPlayer } from '../renderer/sound.js';
@@ -389,32 +389,95 @@ export class Stage3D {
     return this.clock.tween(d.visual.position, 'x', d.toLocalX(dir * this.config.motion.strikeReach), this.config.motion.strikeTime, ease.outBack);
   }
 
-  //충돌 장 뒤로 남은 장을 넘긴다. 첫 장을 peakShare 만큼 붙잡는다
-  //장에 시간(ms)이 있으면 그 시간대로 넘기고, 부딪히는 장(impact)이 오면 한 번 더 부딪힌다 (§9.4)
-  private async trail(d: PaperDoll, frames: readonly string[], epoch: number, beat?: () => void): Promise<void> {
-    const rest = frames.slice(2);
-    if (rest.length === 0) return;
-    const m = this.config.motion;
-    const timed = frames.slice(1).every((id) => d.catalog.frame(id).ms !== null);
-    if (timed) {
-      await this.wait(this.clock.waitGame((d.catalog.frame(frames[1] as string).ms ?? 0) / 1000), epoch);
-      for (const f of rest) {
-        if (d.down) return;
-        d.showFrame(f);
-        const data = d.catalog.frame(f);
-        if (data.impact) beat?.();
-        await this.wait(this.clock.waitGame((data.ms ?? 0) / 1000), epoch);
-      }
-      return;
-    }
-    const peak = m.strikeTrailTime * m.strikeTrailPeakShare;
-    const step = (m.strikeTrailTime - peak) / rest.length;
-    await this.wait(this.clock.waitGame(peak), epoch);
-    for (const f of rest) {
+  //타 나누기 (§12.1). 장 목록을 타 장(impact)마다 끊는다. 타 장이 없으면 둘째 장 하나가 한 타다
+  private hitSegments(d: PaperDoll, frames: readonly string[]): string[][] {
+    const marks = frames.map((id, i) => (d.catalog.frame(id).impact ? i : -1)).filter((i) => i >= 0);
+    if (marks.length === 0) marks.push(frames.length > 1 ? 1 : 0);
+    return marks.map((start, k) => frames.slice(start, marks[k + 1] ?? frames.length));
+  }
+
+  //장 하나를 보이는 시간. 매니페스트 ms 가 있으면 그대로, 없으면 궤적 시간을 나눠 쓴다 (§9.4)
+  private frameSeconds(d: PaperDoll, id: string, count: number): number {
+    const ms = d.catalog.frame(id).ms;
+    return ms !== null ? ms / 1000 : this.config.motion.strikeTrailTime / Math.max(1, count);
+  }
+
+  //한 타의 나머지 장을 넘긴다. 첫 장(타 장)은 이미 보이고 있다
+  private async playSegment(d: PaperDoll, segment: readonly string[], epoch: number): Promise<void> {
+    await this.wait(this.clock.waitGame(this.frameSeconds(d, segment[0] as string, segment.length - 1)), epoch);
+    for (const id of segment.slice(1)) {
       if (d.down) return;
-      d.showFrame(f);
-      await this.wait(this.clock.waitGame(step), epoch);
+      d.showFrame(id);
+      await this.wait(this.clock.waitGame(this.frameSeconds(d, id, segment.length - 1)), epoch);
     }
+  }
+
+  //중간 타에 맞은 쪽이 피격 장으로 밀린다. 자리 자체가 밀려서 때린 쪽이 따라간다 (§12.1)
+  private nudge(d: PaperDoll, dir: number): Promise<void> {
+    const m = this.config.motion;
+    d.setPose('hurt');
+    return this.clock.tween(d.root.position, 'x', d.root.position.x + dir * m.hitKnock, m.knockTime, ease.outExpo);
+  }
+
+  //맞은 쪽의 지금 발 x (월드)
+  private worldX(d: PaperDoll): number {
+    return d.root.position.x + d.visual.position.x * d.root.scale.x;
+  }
+
+  //도착한 뒤의 한 방 전부 (§12). 준비 장 → 타마다 치고·밀리고·따라간다. 마지막 타에 걸음 이벤트를 적용한다
+  //receive: 받아내기 타에 진 쪽이 파고들 장 (합에서만)
+  private async playHits(W: PaperDoll, L: PaperDoll, frames: readonly string[], damage: number, events: readonly BattleEvent[], cards: readonly (FlipCard | null)[], receive: string | null, epoch: number): Promise<void> {
+    const m = this.config.motion;
+    const dir = this.dir(W, L);
+    const segments = this.hitSegments(W, frames);
+    const parts = splitDamage(damage, segments.length);
+    const parry = frames.length > 1 && segments[0]?.[0] === frames[0];
+
+    //준비 장. 받아내기 카드는 준비 장이 곧 첫 타다
+    if (!parry) {
+      W.showFrame(frames[0] as string);
+      await this.wait(this.clock.waitGame(m.readyHold), epoch);
+    }
+    for (let k = 0; k < segments.length; k++) {
+      const segment = segments[k] as string[];
+      const last = k === segments.length - 1;
+      //앞 타에 밀린 자리로 따라간다
+      if (k > 0 && !L.down) {
+        const toX = this.worldX(L) - dir * m.contactGap;
+        await this.wait(
+          all(
+            this.clock.tween(W.root.position, 'x', toX, m.followTime, ease.outQuad),
+            this.clock.tween(W.root.position, 'z', L.root.position.z, m.followTime),
+            this.clock.tween(W.visual.position, 'x', 0, m.followTime),
+          ),
+          epoch,
+        );
+        this.rig.focus(this.chest(W), this.chest(L), dir);
+      }
+      if (parry && k === 0) {
+        //받아내기: 진 쪽이 먼저 파고들어 막는 장에 부딪힌다. 일방이면 막는 장 그대로 밀쳐 들어간다
+        W.showFrame(segment[0] as string);
+        if (receive) {
+          L.showFrame(receive);
+          await this.wait(this.clock.tween(L.visual.position, 'x', L.toLocalX(-dir * m.parryLunge), m.strikeTime, ease.outBack), epoch);
+        } else {
+          await this.wait(this.strike(W, segment[0] as string, dir), epoch);
+        }
+      } else {
+        await this.wait(this.strike(W, segment[0] as string, dir), epoch);
+      }
+      const contact = this.chest(W).lerp(this.chest(L), this.config.sparks.contactBias);
+      const part = parts[k] ?? 0;
+      this.impact(contact, L, dir, part, false, last ? events : [], last ? damage : 0);
+      if (k === 0) for (const card of cards) void this.fadeCard(card);
+      const jobs: Promise<void>[] = [this.clock.tween(W.visual.position, 'x', 0, m.knockTime), this.playSegment(W, segment, epoch)];
+      if (!L.down) {
+        if (!last) jobs.push(this.nudge(L, dir), this.clock.tween(L.visual.position, 'x', 0, m.knockTime));
+        else if (damage > 0) jobs.push(this.knockback(L, dir, damage, damage >= m.heavyDamage, epoch));
+      }
+      await this.wait(all(jobs), epoch);
+    }
+    await this.wait(this.clock.waitReal(m.lingerAfterHit), epoch);
   }
 
   //맞은 쪽이 공격 반대로 밀린다. 기울지 않는다 (§8.9)
@@ -470,27 +533,20 @@ export class Stage3D {
     );
   }
 
-  //궤적 중 한 번 더 부딪힘. 피해 없이 스파크·짧은 역경직·흔들림 (§9.4)
-  private beat(from: PaperDoll, to: PaperDoll, dir: number): () => void {
-    return () => {
-      const contact = this.chest(from).lerp(this.chest(to), this.config.sparks.contactBias);
-      this.sparks.burst(contact, dir, true, 8);
-      this.clock.startHitStop(this.config.hitStop.clashSeconds, this.config.hitStop.scale);
-      this.rig.impact(this.config.shake.clashPower, dir);
-      this.sound.play('hit');
-    };
-  }
-
   //맞는 순간. 스파크·역경직·카메라·소리·현황판·피해 숫자
-  private impact(contact: THREE.Vector3, target: PaperDoll, dir: number, damage: number, clash: boolean, events: readonly BattleEvent[]): void {
+  //total: 흐트러짐을 판정할 전체 피해 (타수가 있으면 마지막 타에만 넘긴다, §12.2)
+  private impact(contact: THREE.Vector3, target: PaperDoll, dir: number, damage: number, clash: boolean, events: readonly BattleEvent[], total = damage): void {
     const s = this.config.shake;
     const h = this.config.hitStop;
-    const heavy = damage >= this.config.motion.heavyDamage;
+    const heavy = total >= this.config.motion.heavyDamage;
     this.sparks.burst(contact, dir, clash, 10);
     const seconds = clash && damage <= 0 ? h.clashSeconds : Math.min(h.maxSeconds, h.baseSeconds + damage * h.perDamageSeconds);
     this.clock.startHitStop(seconds, h.scale);
     this.rig.impact(damage > 0 ? Math.min(1, damage / s.damageForMaxShake) : s.clashPower, dir);
     this.sound.play(damage <= 0 ? 'clash' : heavy ? 'hitHeavy' : 'hit');
+    //중간 타는 이벤트가 없어 현황판 체력만 그 타만큼 줄인다. 마지막 타의 이벤트가 규칙 값으로 맞춘다
+    const actor = this.actors.get(target.combatantId);
+    if (actor && damage > 0 && events.length === 0 && !clash) actor.hp = Math.max(0, actor.hp - damage);
     this.applyAll(events);
     if (damage > 0) {
       this.overlay.number(this.headPoint(target.combatantId, 0.1), String(damage), heavy ? 'heavy' : '');
@@ -594,7 +650,7 @@ export class Stage3D {
 
     //① 초점 · 선딜레이
     this.rig.focus(this.chest(a), this.chest(d), dir);
-    await this.wait(this.windup(a, frames[0] as string, dir), epoch);
+    await this.wait(this.windup(a, a.poseFrame('dash'), dir), epoch);
 
     //② 달려가며 슬로우 → ③④ 카드 회전·띵 → ⑤ 비교
     const card = this.makeCard(a, step.flip);
@@ -615,20 +671,13 @@ export class Stage3D {
     await this.wait(this.dash(a, toX, toZ, m.dashTime * (1 - c.approachShare)), epoch);
     this.rig.focus(this.chest(a), this.chest(d), dir);
 
-    //⑦ 한 방
-    await this.wait(this.strike(a, (frames[1] ?? frames[0]) as string, dir), epoch);
-    const contact = this.chest(a).lerp(this.chest(d), this.config.sparks.contactBias);
-    this.impact(contact, d, dir, step.damage, false, step.events);
-    void this.fadeCard(card);
-    const trail = this.trail(a, frames, epoch, this.beat(a, d, dir));
-    const jobs: Promise<unknown>[] = [this.clock.tween(a.visual.position, 'x', 0, m.knockTime)];
-    if (step.damage > 0 && !d.down) jobs.push(this.knockback(d, dir, step.damage, step.damage >= m.heavyDamage, epoch));
-    await this.wait(all(...(jobs as Promise<void>[])), epoch);
-    await this.wait(this.clock.waitReal(m.lingerAfterHit), epoch);
-    await this.wait(trail, epoch);
+    //⑦ 준비 장 → 타마다 치고 따라간다 (§12)
+    await this.wait(this.playHits(a, d, frames, step.damage, step.events, [card], null, epoch), epoch);
 
     this.rig.release();
-    await this.wait(all(this.springBack(d) as Promise<void>, this.returnHome(a) as Promise<void>), epoch);
+    //여러 타에 밀려난 쪽은 제자리로 걸어 돌아간다
+    const moved = Math.abs(d.root.position.x - d.home.x) > 0.01;
+    await this.wait(all((moved ? this.returnHome(d) : this.springBack(d)) as Promise<void>, this.returnHome(a) as Promise<void>), epoch);
     this.settle(a);
     this.settle(d);
   }
@@ -644,7 +693,7 @@ export class Stage3D {
 
     //① 초점 · 둘 다 선딜레이
     this.rig.focus(this.chest(A), this.chest(D), dir);
-    await this.wait(all(this.windup(A, fa[0] as string, dir), this.windup(D, fd[0] as string, -dir)), epoch);
+    await this.wait(all(this.windup(A, A.poseFrame('dash'), dir), this.windup(D, D.poseFrame('dash'), -dir)), epoch);
 
     //붙는 자리. 가운데에서 서로 contactGap 만큼 떨어진다
     const midX = (A.root.position.x + D.root.position.x) / 2;
@@ -728,17 +777,9 @@ export class Stage3D {
       L.setPose('guard');
       await this.wait(this.dash(W, L.root.position.x - wdir * m.contactGap, L.root.position.z, engaged ? m.reengageTime : m.dashTime), epoch);
       this.rig.focus(this.chest(W), this.chest(L), wdir);
-      await this.wait(this.strike(W, (fw[1] ?? fw[0]) as string, wdir), epoch);
-      const contact = this.chest(W).lerp(this.chest(L), this.config.sparks.contactBias);
-      this.impact(contact, L, wdir, f.damage, false, step.events);
-      void this.fadeCard(cardA);
-      void this.fadeCard(cardD);
-      const trail = this.trail(W, fw, epoch, this.beat(W, L, wdir));
-      const jobs: Promise<void>[] = [this.clock.tween(W.visual.position, 'x', 0, m.knockTime)];
-      if (f.damage > 0 && !L.down) jobs.push(this.knockback(L, wdir, f.damage, f.damage >= m.heavyDamage, epoch));
-      await this.wait(all(jobs), epoch);
-      await this.wait(this.clock.waitReal(m.lingerAfterHit), epoch);
-      await this.wait(trail, epoch);
+      //받아내기 타에 진 쪽이 파고들 장: 진 쪽 카드의 맞닿는 장 (§12.3)
+      const fl = L.skillFrames(this.slotOf(f.loserId === step.attackerId ? step.attackerSkillId : step.defenderSkillId));
+      await this.wait(this.playHits(W, L, fw, f.damage, step.events, [cardA, cardD], (fl[1] ?? fl[0]) as string, epoch), epoch);
     } else {
       //교착 한도로 끝났다. 한 방 없이 돌아간다
       this.applyAll(step.events);

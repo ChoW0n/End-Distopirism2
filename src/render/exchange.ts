@@ -303,3 +303,12 @@ function roundCallouts(
   }
   return out;
 }
+
+//규칙이 낸 피해 한 번을 타 수로 나눈다. 똑같이 나누고 나머지는 마지막 타에 얹는다 (SPEC-005 §12.2)
+export function splitDamage(total: number, hits: number): number[] {
+  const n = Math.max(1, Math.floor(hits));
+  const base = Math.floor(total / n);
+  const parts = Array.from({ length: n }, () => base);
+  parts[n - 1] = total - base * (n - 1);
+  return parts;
+}

@@ -108,18 +108,19 @@ def main():
     #전용기 1 물금: 준비 장 + 통합 15장. 01~14 각 60ms, 15 는 160ms
     frames.append(frame('11-skill1-ready', 'frames/02-preload.png', base))
     for i in range(1, 16):
-        frames.append(frame(f'11-skill1-{i:02d}', f's1/{i:02d}.png', base, ms=160 if i == 15 else 60))
+        frames.append(frame(f'11-skill1-{i:02d}', f's1/{i:02d}.png', base, ms=160 if i == 15 else 60, impact=i == 1))
 
     #전용기 2 찌르기: 막기 장에서 찌른다. 01~14 각 70ms, 15 는 120ms
     #막기 장과 같은 그림이라 파일도 같은 것을 가리킨다 (텍스처를 한 번만 만든다)
-    ready = frame('12-skill2-ready', 's2/pose-00-guard.png', base)
+    #받아내기가 1타다 (SPEC-005 §12.3). 준비 장이 곧 타 장
+    ready = frame('12-skill2-ready', 's2/pose-00-guard.png', base, ms=180, impact=True)
     os.remove(os.path.join(ROOT, ready['file']))
     ready['file'] = f'{OUT_DIR}/03-guard.png'
     frames.append(ready)
     for i in range(1, 16):
-        frames.append(frame(f'12-skill2-{i:02d}', f's2/{i:02d}.png', base, ms=120 if i == 15 else 70))
+        frames.append(frame(f'12-skill2-{i:02d}', f's2/{i:02d}.png', base, ms=120 if i == 15 else 70, impact=i == 1))
 
-    #전용기 3: 낮게 진입(준비) → 칼집 쳐내기(맞닿음) → 올려베기 → 내려베기 → 마무리. 대기 01·복귀 39 는 무대가 대기 장으로 한다
+    #전용기 3: 낮게 진입(준비) → 칼집 쳐내기 · 올려베기 · 내려베기 3타 (SPEC-005 §12) → 마무리. 대기 01·복귀 39 는 무대가 대기 장으로 한다
     anim = json.load(open(os.path.join(ROOT, 's3', 'animation.json'), encoding='utf-8'))
     s3_scale = 1 / 1.074
     s3_foot = (900 - 33 * 1.074, 780)
@@ -129,7 +130,7 @@ def main():
             continue
         stem = os.path.basename(f['file'])[:-4]
         frame_id = '13-skill3-ready' if index == 2 else f'13-skill3-{stem}'
-        frames.append(frame(frame_id, f's3/{stem}.png', s3_foot, s3_scale, ms=f['duration_ms'], impact=stem.endswith('upcut-impact') or stem.endswith('downcut-impact')))
+        frames.append(frame(frame_id, f's3/{stem}.png', s3_foot, s3_scale, ms=f['duration_ms'], impact=stem.endswith('-impact')))
 
     #궁극기: 준비 v2(1672x941, 머리 폭 364 → 0.40), 납도 직전(1280x720, 1.0), 납도 마무리 v2 후면(1309x1202, 머리 폭 291 → 0.498)
     frames.append(frame('14-ult-ready', 'ult/ready.png', (822, 916), 145 / 364))

@@ -49,7 +49,12 @@
     "heavyDamage": 25,
     "_hide": "§9.3 구경꾼 숨기기·§9.5.1 근경 숨기기에 걸리는 시간",
     "bystanderFade": 0.15,
-    "foregroundFade": 0.25
+    "foregroundFade": 0.25,
+    "_hits": "SPEC-005 §12 타수. 도착 뒤 준비 장 시간, 다음 타로 따라가는 시간, 마지막이 아닌 타에 밀리는 거리, 받아내기 때 진 쪽이 파고드는 거리",
+    "readyHold": 0.22,
+    "followTime": 0.14,
+    "hitKnock": 0.45,
+    "parryLunge": 0.35
   },
   "camera": {
     "focusSizeGain": 1.08,

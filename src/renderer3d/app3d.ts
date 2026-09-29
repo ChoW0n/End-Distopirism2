@@ -10,6 +10,7 @@ import { BattleCatalog, parseBattleData } from '../domain/data.js';
 import { createSeededRng, type Rng } from '../domain/rng.js';
 import type { BattleEvent, Side } from '../domain/types.js';
 import { toStageSteps } from '../render/exchange.js';
+import { showcaseCycle, type ShowcaseCard } from '../render/showcase.js';
 import type { SpriteCatalog } from '../render/manifest.js';
 import { parseUltimateArt, type UltimateArt } from '../render/ultimate.js';
 import type { UiData } from '../ui/data.js';
@@ -256,13 +257,16 @@ async function main(): Promise<void> {
   window.addEventListener('resize', () => stage.resize());
 
   //턴 진행 단계 (2D 화면과 같다)
-  type Phase = 'waitInput' | 'input' | 'resolving' | 'done';
+  //showcase: 제작 확인용 자동 시연 (SPEC-005 §13)
+  type Phase = 'waitInput' | 'input' | 'resolving' | 'done' | 'showcase';
   let phase: Phase = 'done';
   let session: Session | null = null;
   let input: OrderInput | null = null;
   let enemyTargets = new Map<string, string>();
   let restSec = 0;
   const playing = (): boolean => (modeSelect?.value ?? 'play') === 'play';
+  const showcasing = (): boolean => modeSelect?.value === 'showcase';
+  let showcaseSteps: ReturnType<typeof showcaseCycle> = [];
   const isAlly = (id: string): boolean => session?.battle.combatant(id).side === 'ally';
 
   //이벤트를 걸음으로 묶어 무대에 넘긴다 (§9.2)
@@ -311,10 +315,41 @@ async function main(): Promise<void> {
     { hp: loaded.ui.bar.hpColor, mentality: loaded.ui.bar.mentalityColor },
   );
 
+  //시연 한 바퀴. 아군 첫 캐릭터가 S1 → S2 → S3 → 궁극기로 합에서 이긴다 (SPEC-005 §13)
+  const startShowcase = (): void => {
+    if (!session) return;
+    const ally = session.battle.sideOf('ally')[0];
+    const enemy = session.battle.sideOf('enemy')[0];
+    if (!ally || !enemy) return;
+    const catalog = loaded.catalog;
+    const cards: ShowcaseCard[] = [...catalog.deckFor(ally.base.id), catalog.rules.ultimateSkillId].map((id) => {
+      const skill = catalog.skill(id);
+      return { skillId: skill.id, slot: skill.slot, frontPower: skill.frontPower };
+    });
+    const enemyCard = catalog.skill(catalog.deckFor(enemy.base.id)[0] as number);
+    showcaseSteps = showcaseCycle({
+      allyId: ally.id,
+      enemyId: enemy.id,
+      cards,
+      enemyCard: { skillId: enemyCard.id, backPower: enemyCard.backPower },
+      enemyMaxHp: enemy.base.maxHp,
+    });
+    stage.play(showcaseSteps);
+  };
+
   const restart = (): void => {
     const seed = Number(seedInput.value) || 1;
     session = new Session(loaded.catalog, createSeededRng(seed), loaded.stage.battle);
     stage.reset(session.roster());
+    if (showcasing()) {
+      input = null;
+      phase = 'showcase';
+      status.textContent = '시연 · S1 → S2 → S3 → 궁극기';
+      turnLabel.textContent = '-';
+      panel.idle('제작 확인용 자동 시연 — 아군이 합에서 늘 이긴다');
+      startShowcase();
+      return;
+    }
     restSec = 0;
     input = null;
     status.textContent = playing() ? '전투 중' : `자동 관전 · 시드 ${seed}`;
@@ -433,6 +468,8 @@ async function main(): Promise<void> {
   document.getElementById('restart')?.addEventListener('click', restart);
   modeSelect?.addEventListener('change', () => {
     if (!session) return;
+    //시연으로 들어가거나 나오면 처음부터 다시 한다
+    if (showcasing() || phase === 'showcase') return restart();
     if (!playing() && (phase === 'input' || phase === 'waitInput')) {
       input = null;
       showTargets(false);
@@ -456,6 +493,7 @@ async function main(): Promise<void> {
     last = now;
     stage.tick(deltaSec);
     if (session && phase === 'waitInput' && stage.idle) beginInput();
+    if (session && phase === 'showcase' && stage.idle) startShowcase();
     if (session && phase === 'resolving' && stage.idle) {
       restSec -= deltaSec;
       if (restSec <= 0) {

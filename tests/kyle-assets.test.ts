@@ -41,13 +41,27 @@ describe('카일 매니페스트', () => {
     expect(seq.slice(1).map((id) => kyle?.frame(id).ms)).toEqual([...Array(14).fill(70), 120]);
   });
 
-  it('전용기 3 은 낮게 진입 → 칼집 쳐내기 → 올려베기·내려베기, 두 번 더 부딪힌다', () => {
+  //타 장 수는 SPEC-001 [D-22] 타수 표와 같다 (SPEC-005 §12.1)
+  it.each([
+    ['S1', ['11-skill1-01']],
+    ['S2', ['12-skill2-ready', '12-skill2-01']],
+    ['S3', ['13-skill3-03-parry-impact', '13-skill3-08-upcut-impact', '13-skill3-22-downcut-impact']],
+  ] as const)('%s 타 장이 타수만큼 있다', (slot, hits) => {
+    const seq = kyle?.frameSequence(slot) ?? [];
+    expect(seq.filter((id) => kyle?.frame(id).impact)).toEqual(hits);
+  });
+
+  it('전용기 2 는 받아내기(준비 장)가 첫 타다', () => {
+    expect(kyle?.frame('12-skill2-ready').impact).toBe(true);
+    expect(kyle?.frame('11-skill1-ready').impact).toBe(false);
+    expect(kyle?.frame('13-skill3-ready').impact).toBe(false);
+  });
+
+  it('전용기 3 은 낮게 진입 → 칼집 쳐내기 → 올려베기·내려베기', () => {
     const seq = kyle?.frameSequence('S3') ?? [];
     expect(seq[0]).toBe('13-skill3-ready');
     expect(seq[1]).toBe('13-skill3-03-parry-impact');
     expect(seq.at(-1)).toBe('13-skill3-38-follow-through');
-    const impacts = seq.filter((id) => kyle?.frame(id).impact);
-    expect(impacts).toEqual(['13-skill3-08-upcut-impact', '13-skill3-22-downcut-impact']);
     //납품 animation.json 시간 합 (대기 01·복귀 39 를 뺀 03~38)
     const total = seq.slice(1).reduce((sum, id) => sum + (kyle?.frame(id).ms ?? 0), 0);
     expect(total).toBe(3170 - 380 - 70 - 450);

@@ -41,6 +41,11 @@ export interface MotionConfig {
   //교전에 끼지 않은 인형·근경이 흐려져 사라지는 시간 (SPEC-005 §9.3·§9.5.1)
   bystanderFade: number;
   foregroundFade: number;
+  //타수 (SPEC-005 §12). 도착 뒤 준비 장 시간·따라가는 시간·중간 타 밀림·받아내기 파고듦
+  readyHold: number;
+  followTime: number;
+  hitKnock: number;
+  parryLunge: number;
 }
 
 export interface CameraConfig {
@@ -214,7 +219,7 @@ export function parseStage3dConfig(raw: unknown): Stage3dConfig {
       'knockPerDamage', 'knockMax', 'staggerDrop', 'staggerHold', 'lingerAfterHit', 'strikeTrailTime',
       'strikeTrailPeakShare', 'settleTime', 'settleAmplitude', 'settlePeriod', 'returnTime', 'clashWinnerRecoil',
       'clashPush', 'deadlockPush', 'reengageTime', 'roundRest', 'downTime', 'downSink', 'downOpacity', 'heavyDamage',
-      'bystanderFade', 'foregroundFade',
+      'bystanderFade', 'foregroundFade', 'readyHold', 'followTime', 'hitKnock', 'parryLunge',
     ]),
     camera: numbers<CameraConfig>(root['camera'], 'camera', ['focusSizeGain', 'focusHeight', 'panYawDeg', 'dutchDeg', 'fovZoom', 'followTime', 'returnFollowTime']),
     shake: numbers<ShakeConfig>(root['shake'], 'shake', [
