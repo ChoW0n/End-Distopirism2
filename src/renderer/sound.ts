@@ -92,8 +92,23 @@ export class SynthSound implements SoundPlayer {
       this.master.connect(this.audio.destination);
       this.noise = noiseBuffer(this.audio);
     }
-    if (this.audio.state === 'suspended') void this.audio.resume();
+    //아이폰은 무음 스위치가 켜져 있으면 웹 소리를 끈다. 게임 소리는 재생 소리로 분류해 스위치와 상관없이 낸다
+    const session = (globalThis.navigator as { audioSession?: { type: string } } | undefined)?.audioSession;
+    if (session) session.type = 'playback';
+    if (this.audio.state !== 'running') {
+      void this.audio.resume().catch(() => undefined);
+      //사용자 입력 안에서 빈 소리를 한 번 내야 풀리는 브라우저가 있다 (아이폰 사파리)
+      const silent = this.audio.createBufferSource();
+      silent.buffer = this.audio.createBuffer(1, 1, 22050);
+      silent.connect(this.audio.destination);
+      silent.start(0);
+    }
     this.decodePending();
+  }
+
+  //소리가 실제로 나는 상태인지. 잠겨 있으면 화면에 눌러 켜라고 알린다
+  get running(): boolean {
+    return this.audio?.state === 'running';
   }
 
   //녹음 소리를 받아 둔다 (WAV 바이트). 소리가 열려 있으면 바로 푼다

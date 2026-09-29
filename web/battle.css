@@ -123,6 +123,7 @@ button {
 }
 button:hover { background: #983030; }
 .panel .check { gap: 4px; }
+.sound-hint { color: #c9a24a; }
 .dev { display: inline-flex; }
 .dev summary { cursor: pointer; color: #8a8278; }
 .dev[open] { gap: 10px; align-items: center; }

@@ -238,8 +238,8 @@ async function main(): Promise<void> {
     sound.unlock();
     sound.setMuted(soundToggle ? !soundToggle.checked : false);
   };
-  window.addEventListener('pointerdown', unlock);
-  window.addEventListener('keydown', unlock);
+  //소리 잠금은 사용자 입력 안에서만 풀린다. 터치 기기는 손을 뗄 때 풀리므로 여러 입력에 모두 건다
+  for (const type of ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown']) window.addEventListener(type, unlock, { capture: true });
   soundToggle?.addEventListener('change', unlock);
   const renderer = new CanvasRenderer(
     ctx,

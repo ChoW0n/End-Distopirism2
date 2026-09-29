@@ -259,12 +259,19 @@ async function main(): Promise<void> {
   const sound = new SynthSound(loaded.ui.sound);
   for (const [id, data] of loaded.samples) sound.addSample(id, data);
   const soundToggle = document.getElementById('sound') as HTMLInputElement | null;
+  //소리가 잠겨 있는 동안 소리 칸 옆에 눌러 켜라는 안내를 띄운다
+  const soundHint = document.getElementById('sound-hint');
+  const showHint = (): void => {
+    if (soundHint) soundHint.hidden = sound.running || (soundToggle ? !soundToggle.checked : false);
+  };
   const unlock = (): void => {
     sound.unlock();
     sound.setMuted(soundToggle ? !soundToggle.checked : false);
+    window.setTimeout(showHint, 300);
   };
-  window.addEventListener('pointerdown', unlock);
-  window.addEventListener('keydown', unlock);
+  showHint();
+  //소리 잠금은 사용자 입력 안에서만 풀린다. 터치 기기는 손을 뗄 때 풀리므로 여러 입력에 모두 건다
+  for (const type of ['pointerdown', 'pointerup', 'touchend', 'click', 'keydown']) window.addEventListener(type, unlock, { capture: true });
   soundToggle?.addEventListener('change', unlock);
 
   const stage = new Stage3D(
