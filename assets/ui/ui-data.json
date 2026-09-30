@@ -217,22 +217,22 @@
     "bandHeight": 0.2,
     "size": 0.075
   },
-  "_sound": "웹 오디오 합성 자리표시 소리 세기. 0 이면 그 소리를 끈다 (SPEC-005 §7.5)",
+  "_sound": "웹 오디오 합성 자리표시 소리 세기. 0 이면 그 소리를 끈다. v2.15 부터 카드 앞·뒷면(flip·reveal)만 켠다 (SPEC-005 §7.5)",
   "sound": {
     "master": 0.5,
     "gains": {
-      "dash": 0.35,
+      "dash": 0,
       "flip": 0.25,
-      "clash": 0.8,
-      "clashTie": 0.6,
+      "clash": 0,
+      "clashTie": 0,
       "reveal": 0.5,
-      "swing": 0.45,
-      "hit": 0.8,
-      "hitHeavy": 1.0,
-      "guard": 0.6,
-      "down": 0.8,
-      "ultimate": 0.7,
-      "result": 0.6
+      "swing": 0,
+      "hit": 0,
+      "hitHeavy": 0,
+      "guard": 0,
+      "down": 0,
+      "ultimate": 0,
+      "result": 0
     }
   }
 }
