@@ -67,8 +67,8 @@ describe('카일 매니페스트', () => {
     expect(total).toBe(3170 - 380 - 70 - 450);
   });
 
-  it('궁극기 장은 준비·납도 직전·납도 마무리 세 장이다', () => {
-    expect(kyle?.frameSequence('ULT')).toEqual(['14-ult-ready', '14-ult-post-open', '14-ult-post-closed']);
+  it('궁극기 장은 최신본 v2 두 장(준비·납도 마무리)뿐이다 (SPEC-005 §10.2 v2.16)', () => {
+    expect(kyle?.frameSequence('ULT')).toEqual(['14-ult-ready', '14-ult-post-closed']);
   });
 
   it('궁극기 이펙트는 적 자리에 붙는 베기선·물보라와 발밑 밤물이다 (15장 × 60ms)', () => {
@@ -84,6 +84,11 @@ describe('카일 매니페스트', () => {
 
 describe('카일 궁극기 시간표 (SPEC-005 §10.2)', () => {
   const art = parseUltimateArt(readJson('assets/kyle/ultimate.json'));
+
+  it('옛 몸(납도 직전·옛 확대 전경)을 쓰지 않는다 (§10.2 v2.16)', () => {
+    expect(art.frames.open).toBe('14-ult-post-closed');
+    expect(art.cutscene.foreground).toBe('norm/ult-cutscene.png');
+  });
 
   it('납품 README 시각을 그대로 옮긴다', () => {
     expect(art.timeline).toMatchObject({

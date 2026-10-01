@@ -5,7 +5,8 @@
 #  s1/      물금 통합 PNG 15장 + 준비·회수 장 (1280x720, 발 657,659)
 #  s2/      찌르기 통합 PNG 15장 + 막기·대기·회수 장 (1600x720, 발 657,659)
 #  s3/      칼집 쳐내기·올려베기·내려베기 39장 + animation.json (1400x900, 발 900,780, 원본보다 1.074배 크다)
-#  ult/     발도술 준비 v2 · 납도 직전 · 납도 마무리 v2 후면 · 밤물 · 컷신 · 적 피격 베기선·물보라
+#  ult/     발도술 준비 v2 · 납도 마무리 v2 후면 · 밤물 · 컷신 선 · 적 피격 베기선·물보라 (최신본 묶음 2026-09-29)
+#           옛 몸인 납도 직전(post-open)·옛 확대 전경(closeup)은 쓰지 않는다 (SPEC-005 §10.2 v2.16)
 #
 #캔버스마다 크기와 발 자리가 달라서 한 캔버스(1700x720, 발 760,600)에 옮겨 담는다.
 #배율이 다른 장은 머리 폭으로 맞춘다. 대기 장 머리 폭 145px 이 기준이다
@@ -132,10 +133,14 @@ def main():
         frame_id = '13-skill3-ready' if index == 2 else f'13-skill3-{stem}'
         frames.append(frame(frame_id, f's3/{stem}.png', s3_foot, s3_scale, ms=f['duration_ms'], impact=stem.endswith('-impact')))
 
-    #궁극기: 준비 v2(1672x941, 머리 폭 364 → 0.40), 납도 직전(1280x720, 1.0), 납도 마무리 v2 후면(1309x1202, 머리 폭 291 → 0.498)
+    #궁극기: 준비 v2(1672x941, 머리 폭 364 → 0.40), 납도 마무리 v2 후면(1309x1202, 머리 폭 291 → 0.498)
     frames.append(frame('14-ult-ready', 'ult/ready.png', (822, 916), 145 / 364))
-    frames.append(frame('14-ult-post-open', 'ult/post-open.png', (628, 639)))
     frames.append(frame('14-ult-post-closed', 'ult/post-closed.png', (818, 1152), 145 / 291))
+    #컷신 전경. 준비 v2 상반신(머리~손·칼자루)을 16:9 로 자른다. 매니페스트 장이 아니다
+    Image.open(os.path.join(ROOT, 'ult/ready.png')).convert('RGBA').crop((420, 0, 1520, 619)).save(os.path.join(ROOT, OUT_DIR, 'ult-cutscene.png'))
+    old = os.path.join(ROOT, OUT_DIR, '14-ult-post-open.png')
+    if os.path.exists(old):
+        os.remove(old)
 
     #적에게 붙는 궁극기 이펙트. 캐릭터 키(대기 장 576px) 대비 긴 변 비율이 scale 이다 (SPEC-002 §5.5)
     height = 576

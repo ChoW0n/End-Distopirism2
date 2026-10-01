@@ -2036,32 +2036,6 @@
       ]
     },
     {
-      "id": "14-ult-post-open",
-      "file": "norm/14-ult-post-open.png",
-      "scale": 1.0,
-      "scaleMatch": 1.0,
-      "anchor": [
-        760,
-        600
-      ],
-      "headCenter": [
-        776.5,
-        121.0
-      ],
-      "axeHead": null,
-      "bladeTip": [
-        772,
-        30
-      ],
-      "tipSource": "자동 검출(발에서 가장 먼 점)",
-      "bbox": [
-        379,
-        27,
-        1005,
-        604
-      ]
-    },
-    {
       "id": "14-ult-post-closed",
       "file": "norm/14-ult-post-closed.png",
       "scale": 0.4983,
