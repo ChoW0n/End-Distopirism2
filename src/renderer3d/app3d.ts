@@ -12,6 +12,7 @@ import type { BattleEvent, Side } from '../domain/types.js';
 import { toStageSteps } from '../render/exchange.js';
 import { showcaseCycle, type ShowcaseCard } from '../render/showcase.js';
 import type { SpriteCatalog } from '../render/manifest.js';
+import { parseEnvVfx, usedAtlases, type EnvVfx } from '../render/envvfx.js';
 import { parseCharacterSounds, type CharacterSounds } from '../render/sounds.js';
 import { parseUltimateArt, type UltimateArt } from '../render/ultimate.js';
 import type { UiData } from '../ui/data.js';
@@ -20,7 +21,7 @@ import { loadCharacter, loadIndex, loadUi } from '../renderer/assets.js';
 import { CommandPanel } from '../renderer/command-panel.js';
 import { SynthSound } from '../renderer/sound.js';
 import { parseBackdropConfig, parseStage3dConfig, type BackdropConfig, type BattleSetup, type Stage3dConfig } from './config.js';
-import { Stage3D, type RosterEntry, type UltimateBundle } from './stage.js';
+import { Stage3D, type EnvFxBundle, type RosterEntry, type UltimateBundle } from './stage.js';
 
 const view = document.getElementById('view') as HTMLCanvasElement | null;
 const ASSETS = view?.dataset['assets'] ?? '../assets';
@@ -54,6 +55,8 @@ interface Boot {
   //캐릭터 id → 녹음 소리 묶음과 받은 파일 (SPEC-005 §14)
   voices: Map<string, CharacterSounds>;
   samples: Map<string, ArrayBuffer>;
+  //공용 환경 이펙트 (SPEC-005 §16). 데이터를 못 읽으면 null 이고 이펙트 없이 간다
+  envFx: EnvFxBundle | null;
   missing: string[];
 }
 
@@ -113,6 +116,14 @@ async function boot(progress: (text: string, ratio: number) => void): Promise<Bo
       }),
   );
 
+  //공용 환경 이펙트 데이터. 바인딩이 쓰는 아틀라스만 그림 목록에 넣는다
+  let envVfx: EnvVfx | null = null;
+  try {
+    envVfx = parseEnvVfx(await json(`${ASSETS}/env-vfx/metadata/manifest.json`), await json(`${ASSETS}/env-vfx/metadata/camera-presets.json`), await json(`${ASSETS}/env-vfx/bindings.json`));
+  } catch {
+    envVfx = null;
+  }
+
   //받을 파일 목록. 진행률을 보여 준다 (SPEC-004 §12)
   const jobs: { key: string; url: string }[] = [];
   for (const layer of backdrop.layers) jobs.push({ key: `${mapDir}/${layer.file}`, url: `${ASSETS}/${mapDir}/${layer.file}` });
@@ -127,6 +138,7 @@ async function boot(progress: (text: string, ratio: number) => void): Promise<Bo
     for (const file of files) jobs.push({ key: `${id}/${file}`, url: `${ASSETS}/${id}/${file}` });
     if (art.environment && environment) for (const layer of environment.layers) jobs.push({ key: `${art.environment}/${layer.file}`, url: `${ASSETS}/${art.environment}/${layer.file}` });
   }
+  for (const file of envVfx ? usedAtlases(envVfx) : []) jobs.push({ key: `env-vfx/${file}`, url: `${ASSETS}/env-vfx/${file}` });
   let done = 0;
   const loaded = new Map<string, HTMLImageElement>();
   const missing: string[] = [];
@@ -161,7 +173,13 @@ async function boot(progress: (text: string, ratio: number) => void): Promise<Bo
       image: (file) => loaded.get(`${id}/${file}`) ?? null,
     });
   }
-  return { catalog, ui, stage, backdrop, backdropImages, sprites, frames: loaded, ultimates, voices, samples, missing };
+  const envImages = new Map<string, HTMLImageElement>();
+  for (const file of envVfx ? usedAtlases(envVfx) : []) {
+    const found = loaded.get(`env-vfx/${file}`);
+    if (found) envImages.set(file, found);
+  }
+  const envFx = envVfx && envImages.size > 0 ? { vfx: envVfx, images: envImages } : null;
+  return { catalog, ui, stage, backdrop, backdropImages, sprites, frames: loaded, ultimates, voices, samples, envFx, missing };
 }
 
 //전투 한 판을 들고 있는 통. 재시작하면 통째로 갈아 끼운다
@@ -289,6 +307,7 @@ async function main(): Promise<void> {
     sound,
     loaded.ultimates,
     loaded.voices,
+    loaded.envFx,
   );
   window.addEventListener('resize', () => stage.resize());
 
@@ -316,6 +335,8 @@ async function main(): Promise<void> {
   labMotion?.addEventListener('change', applyLab);
   labFlash?.addEventListener('change', applyLab);
   let showcaseSteps: ReturnType<typeof showcaseCycle> = [];
+  //환경 이펙트 검수 중인지
+  let reviewing = false;
   const isAlly = (id: string): boolean => session?.battle.combatant(id).side === 'ally';
 
   //이벤트를 걸음으로 묶어 무대에 넘긴다 (§9.2)
@@ -395,6 +416,16 @@ async function main(): Promise<void> {
     session = new Session(loaded.catalog, createSeededRng(seed), loaded.stage.battle);
     stage.reset(session.roster());
     applyLab();
+    reviewing = modeSelect?.value === 'envfx';
+    //환경 이펙트 검수 (SPEC-005 §16.4). 전투 없이 사건마다 이펙트를 낸다
+    if (reviewing) {
+      input = null;
+      phase = 'done';
+      turnLabel.textContent = '-';
+      panel.idle('공용 환경 이펙트 검수 — 사건마다 한 번씩, 전투 맵과 밤바다에서 돈다');
+      void stage.reviewEnvFx((text) => (status.textContent = `환경 이펙트 · ${text}`));
+      return;
+    }
     if (showcasing()) {
       input = null;
       phase = 'showcase';
@@ -525,7 +556,7 @@ async function main(): Promise<void> {
   modeSelect?.addEventListener('change', () => {
     if (!session) return;
     //시연으로 들어가거나 나오면 처음부터 다시 한다
-    if (showcasing() || phase === 'showcase') return restart();
+    if (showcasing() || phase === 'showcase' || modeSelect?.value === 'envfx' || reviewing) return restart();
     if (!playing() && (phase === 'input' || phase === 'waitInput')) {
       input = null;
       showTargets(false);

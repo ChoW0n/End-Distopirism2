@@ -36,5 +36,7 @@
       "water": { "shape": "floor", "near": -14, "far": 9, "halfWidth": 120, "mirrorOutsideX": true, "mirrorOutsideY": true, "order": -10 },
       "ripples": { "shape": "floor", "near": -14, "far": 9, "halfWidth": 120, "mirrorOutsideX": true, "mirrorOutsideY": true, "order": 40 }
     }
-  }
+  },
+  "_surface": "지형 재질·환경 이펙트 곱할 색·균열색 (SPEC-005 §16.2)",
+  "surface": {"kind": "water", "tint": "#9aa6b8", "crack": "#1b2230"}
 }

@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import type { BattleEvent, CardFace, Side, SkillSlot } from '../domain/types.js';
 import { splitDamage, type ClashRound, type FlipView, type StageStep, type StepCallout } from '../render/exchange.js';
 import type { SpriteCatalog } from '../render/manifest.js';
+import type { EnvVfx } from '../render/envvfx.js';
 import type { CharacterSounds } from '../render/sounds.js';
 import type { UltimateArt } from '../render/ultimate.js';
 import type { SoundPlayer } from '../renderer/sound.js';
@@ -14,9 +15,9 @@ import { Backdrop } from './backdrop.js';
 import { CameraRig } from './camera.js';
 import { FlipCard } from './card.js';
 import { all, Clock, ease } from './clock.js';
-import type { BackdropConfig, Stage3dConfig } from './config.js';
+import type { BackdropConfig, Stage3dConfig, SurfaceConfig } from './config.js';
 import { CutsceneOverlay } from './cutscene.js';
-import { DustField } from './dust.js';
+import { EnvFxLayer } from './envfx.js';
 import { EffectLayer, effectTextures } from './effects.js';
 import { frameTexture, PaperDoll } from './doll.js';
 import { Overlay, type ScreenPoint, type Selection3d, type UltimateGauge } from './overlay.js';
@@ -80,6 +81,14 @@ interface UltimateStage {
   background: HTMLCanvasElement | null;
   foreground: HTMLImageElement | null;
   line: HTMLImageElement | null;
+  //고유 전장 지형. 깔린 동안 환경 이펙트가 이 지형을 따른다 (SPEC-005 §16.2)
+  surface: SurfaceConfig | null;
+}
+
+//공용 환경 이펙트 묶음 (SPEC-005 §16). 데이터와 받은 아틀라스
+export interface EnvFxBundle {
+  vfx: EnvVfx;
+  images: Map<string, HTMLImageElement>;
 }
 
 //카드 테두리 진영 색. 이름표·결과 알림의 진영 색과 같다 (SPEC-004 §11)
@@ -116,8 +125,12 @@ export class Stage3D {
   private readonly overlay: Overlay;
   //전투 배경. 실험 모드에서 타격 순간 밝기를 누른다
   private readonly backdrop: Backdrop;
-  //바닥 먼지 (실험 모드 D05)
-  private readonly dust: DustField;
+  //공용 환경 이펙트 (§16). 없으면 내지 않는다
+  private readonly envFx: { vfx: EnvVfx; layer: EnvFxLayer } | null;
+  //전투 맵 지형과 지금 깔린 고유 전장 지형
+  private readonly mapSurface: SurfaceConfig;
+  private envSurface: SurfaceConfig | null = null;
+  private envSerial = 0;
   //연출 실험 모드 (SPEC-005 §15). null 이면 끈다
   private lab: LabOptions | null = null;
   //배속. 소리를 앞당겨 예약할 때 실제 시간으로 바꾸는 데 쓴다
@@ -179,6 +192,7 @@ export class Stage3D {
     ultimates: Map<string, UltimateBundle> = new Map(),
     //그림 주인 캐릭터 id → 녹음 소리 묶음 (SPEC-005 §14)
     private readonly voices: Map<string, CharacterSounds> = new Map(),
+    envFx: EnvFxBundle | null = null,
   ) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -191,7 +205,8 @@ export class Stage3D {
     this.camera = new THREE.PerspectiveCamera(backdrop.fov, canvas.width / canvas.height, 0.1, 300);
     this.rig = new CameraRig(this.camera, backdrop.homePosition, backdrop.homeLookAt, backdrop.fov, config.camera, config.shake);
     this.sparks = new SparkField(this.scene, config.sparks);
-    this.dust = new DustField(this.scene, config.layout.characterHeight);
+    this.mapSurface = backdropConfig.surface;
+    this.envFx = envFx ? { vfx: envFx.vfx, layer: new EnvFxLayer(this.scene, envFx.vfx, envFx.images, config.layout.characterHeight) } : null;
     this.overlay = new Overlay(host, config.footBar);
     this.effects = new EffectLayer(this.scene, config.layout.characterHeight);
     this.cutscene = new CutsceneOverlay(host);
@@ -207,6 +222,7 @@ export class Stage3D {
       if (texture) this.renderer.initTexture(texture);
     };
     for (const characterId of this.sprites.keys()) for (const texture of this.texturesOf(characterId)?.values() ?? []) upload(texture);
+    for (const t of this.envFx?.layer.allTextures ?? []) upload(t);
     for (const u of this.ultimates.values()) {
       for (const list of u.effects.values()) list.forEach(upload);
       u.environment?.root.traverse((node) => {
@@ -241,6 +257,7 @@ export class Stage3D {
       background,
       foreground: bundle.image(bundle.art.cutscene.foreground),
       line: bundle.image(bundle.art.cutscene.line),
+      surface: bundle.environment?.config.surface ?? null,
     });
   }
 
@@ -289,7 +306,8 @@ export class Stage3D {
     this.running = false;
     this.clock.clear();
     this.sparks.clear();
-    this.dust.clear();
+    this.envFx?.layer.clear();
+    this.envSurface = null;
     this.dimToken += 1;
     this.dimKnob.v = 1;
     this.scene.background = new THREE.Color(0x0e0c0b);
@@ -443,11 +461,14 @@ export class Stage3D {
   private dash(d: PaperDoll, toX: number, toZ: number, time: number): Promise<unknown> {
     d.setPose('dash');
     this.dashSound(d);
+    //박차고 나가는 발 뒤에 먼지, 도착해 서는 앞발에 먼지 (§16.3)
+    const dir = Math.sign(toX - d.root.position.x) || d.facing;
+    this.envEvent('dashStart', d, dir);
     return all(
       this.clock.tween(d.root.position, 'x', toX, time, ease.inQuad),
       this.clock.tween(d.root.position, 'z', toZ, time, ease.inQuad),
       this.clock.tween(d.visual.position, 'x', 0, time),
-    );
+    ).then(() => this.envEvent('brake', d, dir));
   }
 
   //앞으로 내딛는 충돌 장
@@ -523,10 +544,12 @@ export class Stage3D {
         const time = Math.max(m.followTime, Math.abs(toX - this.worldX(W)) / m.followSpeed);
         W.setPose('dash');
         this.dashSound(W);
+        this.envEvent('dashStart', W, dir);
         await this.wait(
           all(this.clock.tween(W.root.position, 'x', toX, time, ease.inOutQuad), this.clock.tween(W.root.position, 'z', L.root.position.z, time, ease.inOutQuad)),
           epoch,
         );
+        this.envEvent('brake', W, dir);
       }
       //실험 모드: 여러 타의 마지막 타 앞에서 한 번 멈춘다 (짧게–짧게–멈춤–강하게, §15)
       if (lab && last && k > 0) await this.wait(this.clock.waitGame(lab.finalBeatPause), epoch);
@@ -555,6 +578,7 @@ export class Stage3D {
       const part = parts[k] ?? 0;
       //받아내기도 금속 스파크는 낸다. 그림에 없는 베기 이펙트는 붙이지 않는다 (§12.3 v2.17)
       this.impact(contact, L, dir, part, false, last ? events : [], last ? damage : 0, true, last ? 'heavy' : 'light');
+      if (last && damage > 0) this.envEvent('finalHit', L, dir, contact);
       if (k === 0) for (const card of cards) void this.fadeCard(card);
       //실험 모드: 마지막 타는 때린 쪽이 타 장을 더 붙잡는다. 맞은 쪽은 바로 날아간다 (비대칭 홀드 C09)
       const decay = lab && last ? this.clock.waitGame(lab.attackerHold).then(() => this.playSegment(W, segment, epoch)) : this.playSegment(W, segment, epoch);
@@ -584,11 +608,9 @@ export class Stage3D {
       ),
       epoch,
     );
-    //실험 모드: 날아가 멈춘 발밑에 바닥 먼지 (D05)
-    if (this.lab) {
-      const dust = this.config.lab.dust;
-      this.dust.burst(this.footOf(d), dir, dust.count, dust.life, dust.size, dust.spread);
-    }
+    //날아가 멈춘 발밑에 바닥 먼지. 크게 맞아 주저앉으면 바닥 균열 (§16.3)
+    this.envEvent('knockLand', d, dir, null, heavy);
+    if (heavy) this.envEvent('heavyLand', d, dir);
     if (heavy) await this.wait(this.clock.waitGame(m.staggerHold), epoch);
   }
 
@@ -621,6 +643,7 @@ export class Stage3D {
     d.down = true;
     d.setPose('hurt');
     this.sound.play('down');
+    this.envEvent('down', d, 1);
     await this.wait(
       all(
         this.clock.tween(d.visual.position, 'y', -m.downSink, m.downTime, ease.outCubic),
@@ -628,6 +651,61 @@ export class Stage3D {
       ),
       epoch,
     );
+  }
+
+  //── 공용 환경 이펙트 (§16) ──
+
+  //환경 이펙트 검수 (§16.4). 바인딩의 사건을 하나씩 무대 가운데에 내고, 전투 맵과 고유 전장(밤바다)에서 한 바퀴씩 돈다
+  //label 로 지금 사건 이름을 알린다. 재시작하면 멈춘다
+  async reviewEnvFx(label: (text: string) => void): Promise<void> {
+    const fx = this.envFx;
+    const actors = [...this.actors.values()];
+    const a = actors.find((x) => x.entry.side === 'ally')?.doll;
+    const b = actors.find((x) => x.entry.side === 'enemy')?.doll;
+    if (!fx || !a || !b) return;
+    const epoch = this.epoch;
+    const maps: (UltimateStage | null)[] = [null, ...[...this.ultimates.values()].filter((u) => u.environment)];
+    try {
+      for (;;) {
+        for (const u of maps) {
+          for (const x of this.ultimates.values()) x.environment?.setOpacity(x === u ? 1 : 0);
+          this.envSurface = u?.surface ?? null;
+          for (const name of fx.vfx.events.keys()) {
+            const ok = fx.vfx.events.get(name)?.surfaces.includes(this.surface.kind) ?? false;
+            label(`${this.surface.kind} · ${name}${ok ? '' : ' (이 지형에서는 안 냄)'}`);
+            this.rig.focus(this.chest(a), this.chest(b), 1);
+            this.envEvent(name, b, 1, this.chest(a).lerp(this.chest(b), 0.5), name === 'knockLand');
+            await this.wait(this.clock.waitReal(1.3), epoch);
+          }
+        }
+      }
+    } catch {
+      //재시작
+    } finally {
+      for (const x of this.ultimates.values()) x.environment?.setOpacity(0);
+      this.envSurface = null;
+    }
+  }
+
+  //지금 무대 지형. 고유 전장이 깔려 있으면 그 지형
+  private get surface(): SurfaceConfig {
+    return this.envSurface ?? this.mapSurface;
+  }
+
+  //사건 하나의 환경 이펙트. 지형이 맞을 때만 내고, 카메라는 이 사건에 한 번만 요청한다
+  private envEvent(name: string, d: PaperDoll | null, dir: number, contact: THREE.Vector3 | null = null, heavy = false): void {
+    const fx = this.envFx;
+    const b = fx?.vfx.events.get(name);
+    if (!fx || !b) return;
+    const surface = this.surface;
+    if (!b.surfaces.includes(surface.kind)) return;
+    for (const sp of b.spawns) {
+      const at =
+        sp.anchor === 'contact' ? (contact ?? (d ? this.chest(d) : null)) : sp.anchor === 'chest' ? (d ? this.chest(d) : contact) : d ? this.footOf(d) : contact;
+      if (at) fx.layer.spawn(sp, at, dir, surface.tint, surface.crack);
+    }
+    const preset = fx.vfx.camera.presets.get(heavy && b.heavyCamera ? b.heavyCamera : b.camera);
+    if (preset && preset.duration > 0) this.rig.envImpulse(`${name}:${++this.envSerial}`, preset.amplitude, preset.duration / 1000, preset.zoom, dir, this.clock.realNow, fx.vfx.camera.cap);
   }
 
   //── 녹음 소리 (§14) ──
@@ -791,6 +869,7 @@ export class Stage3D {
     const gameSec = (c.spinTime + c.revealPop + c.holdTime) * c.slowScale;
     d.setPose('dash');
     this.dashSound(d);
+    this.envEvent('dashStart', d, Math.sign(toX - d.root.position.x) || d.facing);
     const x = d.root.position.x + (toX - d.root.position.x) * c.approachShare;
     const z = d.root.position.z + (toZ - d.root.position.z) * c.approachShare;
     return all(
@@ -912,6 +991,7 @@ export class Stage3D {
       this.rig.focus(this.chest(A), this.chest(D), dir);
       await this.wait(all(this.strike(A, (fa[1] ?? fa[0]) as string, dir), this.strike(D, (fd[1] ?? fd[0]) as string, -dir)), epoch);
       this.impact(this.chest(A).lerp(this.chest(D), 0.5), D, dir, 0, true, round.events);
+      this.envEvent('deadlock', null, dir, this.chest(A).lerp(this.chest(D), 0.5));
       this.sound.play('clashTie');
       const push = (d: PaperDoll, away: number): Promise<void>[] => {
         d.setPose('guard');
@@ -997,6 +1077,7 @@ export class Stage3D {
     W.showFrame(u.art.frames.ready);
     const ultVoice = (key: string, at?: THREE.Vector3) => this.voice(W, this.voiceOf(W)?.ultimate[key] ?? null, at ? { at } : {});
     ultVoice('start');
+    this.envEvent('ultStart', W, wdir);
     this.rig.focus(this.chest(W), this.chest(L), wdir);
     const pool = spawn(u.art.effects.pool, this.footOf(W), { hold: true, order: 9 });
     if (pool) {
@@ -1007,6 +1088,7 @@ export class Stage3D {
     //고유 전장으로 순간 교체
     await at(t.swapEnvironment);
     u.fade.v = 1;
+    this.envSurface = u.surface;
     u.environment?.setOpacity(1);
 
     //컷신
@@ -1076,6 +1158,7 @@ export class Stage3D {
           const part = parts[i] ?? 0;
           //베기선 그림이 곧 이펙트라 금속 불꽃은 내지 않는다. 0.08초 간격이라 중간 베기는 조금만 밀린다
           this.impact(this.chest(L), L, -wdir, part, false, last ? events : [], last ? damage : 0, false, last ? 'climax' : 'light');
+          if (last) this.envEvent('ultPayoff', L, -wdir);
           if (L.down) return;
           if (!last) void this.nudge(L, -wdir, m.hitKnock * cuts.nudgeShare);
           else if (damage > 0) knock = this.knockback(L, -wdir, damage, damage >= m.heavyDamage, epoch);
@@ -1091,6 +1174,7 @@ export class Stage3D {
     //전장 복귀
     await at(t.restoreEnvironment);
     void this.clock.tweenReal(u.fade, 'v', 0, t.restoreFade);
+    this.envSurface = null;
     await at(t.end);
     u.environment?.setOpacity(0);
     await this.wait(knock, epoch);
@@ -1109,7 +1193,7 @@ export class Stage3D {
     const gameDt = this.clock.step(realDt);
     const rect = this.canvas.getBoundingClientRect();
     this.sparks.step(gameDt, this.camera, rect.width, rect.height);
-    this.dust.step(gameDt);
+    this.envFx?.layer.update(gameDt, this.camera);
     //실험 모드: 대기 장만 발을 고정한 채 아주 작게 숨쉰다 (§15 A05). 사람마다 박자를 조금 어긋낸다
     if (this.lab) {
       const b = this.config.lab.breath;
@@ -1197,6 +1281,7 @@ export class Stage3D {
   //연출 실험 모드를 켜고 끈다 (SPEC-005 §15)
   setLab(options: LabOptions | null): void {
     this.lab = options ? { ...options } : null;
+    this.rig.envMuted = this.lab?.reducedMotion ?? false;
     if (!this.lab) for (const a of this.actors.values()) a.doll.breath = 0;
   }
 

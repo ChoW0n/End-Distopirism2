@@ -48,6 +48,11 @@ export class CameraRig {
   private fovKick = 0;
   private fovKickVel = 0;
   private readonly probe = new THREE.PerspectiveCamera();
+  //환경 이펙트 카메라 요청 (SPEC-005 §16.1). 사건 하나에 한 번, 가장 센 것 하나만 돈다
+  private env: { start: number; amplitude: number; duration: number; zoom: number; dir: number } | null = null;
+  private readonly envSeen: string[] = [];
+  //흔들림 줄이기면 환경 카메라 요청을 버린다
+  envMuted = false;
 
   constructor(
     readonly camera: THREE.PerspectiveCamera,
@@ -117,6 +122,20 @@ export class CameraRig {
     this.fovKickVel -= s.fovPunch * (0.5 + power) * omega;
   }
 
+  //환경 이펙트 카메라 요청. amplitude 는 화면 높이 비율, duration 은 초. 같은 사건 id 는 한 번만 받는다
+  envImpulse(eventId: string, amplitude: number, duration: number, zoom: number, dir: number, realNow: number, cap: number): void {
+    if (this.envMuted || duration <= 0 || this.envSeen.includes(eventId)) return;
+    this.envSeen.push(eventId);
+    if (this.envSeen.length > 64) this.envSeen.shift();
+    const amp = Math.min(cap, amplitude);
+    //지금 도는 요청이 더 세면 그대로 둔다
+    if (this.env) {
+      const left = Math.max(0, 1 - (realNow - this.env.start) / this.env.duration);
+      if (this.env.amplitude * left * left >= amp) return;
+    }
+    this.env = { start: realNow, amplitude: amp, duration, zoom, dir: Math.sign(dir) || 1 };
+  }
+
   //카메라를 쓰는 유일한 곳. 실제 시간으로 흐른다
   write(dt: number, realNow: number): void {
     if (dt <= 0) return;
@@ -153,9 +172,23 @@ export class CameraRig {
       this.fovKick += this.fovKickVel * h;
     }
 
-    this.camera.position.copy(this.pos).add(off.applyQuaternion(this.quat)).add(this.kick);
+    //환경 이펙트 요청: 힘 방향으로 한 번 밀린 뒤 (1 - t/길이)² 로 기준 자리에 돌아온다. 앞 프레임에 쌓지 않는다
+    let envFov = 1;
+    const envOff = new THREE.Vector3();
+    if (this.env) {
+      const k = (realNow - this.env.start) / this.env.duration;
+      if (k >= 1) this.env = null;
+      else {
+        const env = (1 - k) * (1 - k);
+        const height = 2 * Math.max(1, Math.abs(this.pos.z)) * Math.tan((this.fov * DEG) / 2);
+        envOff.set(this.env.dir * 0.9, -0.45, 0).normalize().multiplyScalar(this.env.amplitude * height * env).applyQuaternion(this.quat);
+        envFov = 1 - this.env.zoom * env;
+      }
+    }
+
+    this.camera.position.copy(this.pos).add(off.applyQuaternion(this.quat)).add(this.kick).add(envOff);
     this.camera.quaternion.copy(this.quat).multiply(new THREE.Quaternion().setFromEuler(ang));
-    this.camera.fov = Math.min(170, Math.max(5, this.fov + this.fovKick));
+    this.camera.fov = Math.min(170, Math.max(5, (this.fov + this.fovKick) * envFov));
     this.camera.updateProjectionMatrix();
   }
 }

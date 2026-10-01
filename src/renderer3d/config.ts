@@ -159,8 +159,6 @@ export interface LabConfig {
   impactFrame: { seconds: number };
   //대기 숨쉬기: 세로 배율 진폭 · 주기(초) (A05)
   breath: { amplitude: number; period: number };
-  //접지 먼지: 개수 · 수명(초) · 크기(캐릭터 키 비율) · 퍼짐(캐릭터 키 비율) (D05)
-  dust: { count: number; life: number; size: number; spread: number };
   //소리 좌우 폭 (H08)
   pan: { width: number };
   //연타 소리 세기 (H06)
@@ -221,6 +219,17 @@ export interface BackdropConfig {
   standSpread: number;
   scaleAnchor: [number, number];
   layers: BackdropLayer[];
+  //지형 재질·환경 이펙트 색 (SPEC-005 §16.2). 없으면 콘크리트·중간 회색
+  surface: SurfaceConfig;
+}
+
+//맵 지형. 환경 이펙트가 낼지 말지와 색을 정한다
+export interface SurfaceConfig {
+  kind: string;
+  //multiply_rgb 스프라이트에 곱할 색
+  tint: string;
+  //균열(alpha_silhouette)을 칠할 색
+  crack: string;
 }
 
 export class Stage3dConfigError extends Error {
@@ -342,7 +351,16 @@ export function parseBackdropConfig(raw: unknown): BackdropConfig {
   const viewport = root['viewport'];
   const size: [number, number] =
     Array.isArray(viewport) && viewport.length === 2 && viewport.every((v) => typeof v === 'number') ? [viewport[0] as number, viewport[1] as number] : [1672, 941];
-  return { name, viewport: size, camera, standSpread: spread, scaleAnchor: [anchor[0] as number, anchor[1] as number], layers };
+  const sf = root['surface'];
+  const surface: SurfaceConfig =
+    typeof sf === 'object' && sf !== null && !Array.isArray(sf)
+      ? {
+          kind: String((sf as Json)['kind'] ?? 'concrete'),
+          tint: String((sf as Json)['tint'] ?? '#909090'),
+          crack: String((sf as Json)['crack'] ?? '#262626'),
+        }
+      : { kind: 'concrete', tint: '#909090', crack: '#262626' };
+  return { name, viewport: size, camera, standSpread: spread, scaleAnchor: [anchor[0] as number, anchor[1] as number], layers, surface };
 }
 
 //숫자 4개 묶음
@@ -376,7 +394,6 @@ function parseLab(raw: unknown): LabConfig {
     dim: numbers<LabConfig['dim']>(o['dim'], 'lab.dim', ['level', 'in', 'hold', 'out']),
     impactFrame: numbers<LabConfig['impactFrame']>(o['impactFrame'], 'lab.impactFrame', ['seconds']),
     breath: numbers<LabConfig['breath']>(o['breath'], 'lab.breath', ['amplitude', 'period']),
-    dust: numbers<LabConfig['dust']>(o['dust'], 'lab.dust', ['count', 'life', 'size', 'spread']),
     pan: numbers<LabConfig['pan']>(o['pan'], 'lab.pan', ['width']),
     voiceGain: numbers<LabConfig['voiceGain']>(o['voiceGain'], 'lab.voiceGain', ['intermediate', 'final']),
     ultimate,

@@ -28,5 +28,7 @@
       "upper": { "shape": "stand", "depth": -4, "scale": 1.0, "order": 50, "hideInCombat": true },
       "lower": { "shape": "stand", "depth": -4, "scale": 1.0, "order": 51, "hideInCombat": true }
     }
-  }
+  },
+  "_surface": "지형 재질·환경 이펙트 곱할 색·균열색 (SPEC-005 §16.2)",
+  "surface": {"kind": "concrete", "tint": "#e6ddcf", "crack": "#2a2520"}
 }

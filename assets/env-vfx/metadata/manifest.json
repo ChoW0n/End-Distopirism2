@@ -1,0 +1,6499 @@
+{
+  "version": "1.0",
+  "units": "pixels and milliseconds",
+  "rgba": "straight alpha; original pixels preserved",
+  "blend": "normal alpha",
+  "sprite_count": 128,
+  "sprites": [
+    {
+      "id": "A_01_01",
+      "file": "sprites/A_debris/A_01_01.png",
+      "category": "debris",
+      "row": 1,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "16종 무채색 파편 VFX 시트.png",
+      "source_crop_xyxy": [
+        0,
+        0,
+        317,
+        321
+      ],
+      "source_anchor_px": [
+        164,
+        185
+      ],
+      "paste_offset_px": [
+        92,
+        71
+      ],
+      "atlas": "atlases/A_debris.png",
+      "atlas_rect_xywh": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        153,
+        146,
+        360,
+        366
+      ]
+    },
+    {
+      "id": "A_01_02",
+      "file": "sprites/A_debris/A_01_02.png",
+      "category": "debris",
+      "row": 1,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "16종 무채색 파편 VFX 시트.png",
+      "source_crop_xyxy": [
+        317,
+        0,
+        628,
+        321
+      ],
+      "source_anchor_px": [
+        470,
+        177
+      ],
+      "paste_offset_px": [
+        103,
+        79
+      ],
+      "atlas": "atlases/A_debris.png",
+      "atlas_rect_xywh": [
+        512,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        143,
+        128,
+        369,
+        384
+      ]
+    },
+    {
+      "id": "A_01_03",
+      "file": "sprites/A_debris/A_01_03.png",
+      "category": "debris",
+      "row": 1,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "16종 무채색 파편 VFX 시트.png",
+      "source_crop_xyxy": [
+        628,
+        0,
+        933,
+        321
+      ],
+      "source_anchor_px": [
+        780,
+        191
+      ],
+      "paste_offset_px": [
+        104,
+        65
+      ],
+      "atlas": "atlases/A_debris.png",
+      "atlas_rect_xywh": [
+        1024,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        120,
+        167,
+        393,
+        345
+      ]
+    },
+    {
+      "id": "A_01_04",
+      "file": "sprites/A_debris/A_01_04.png",
+      "category": "debris",
+      "row": 1,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "16종 무채색 파편 VFX 시트.png",
+      "source_crop_xyxy": [
+        933,
+        0,
+        1254,
+        321
+      ],
+      "source_anchor_px": [
+        1093,
+        187
+      ],
+      "paste_offset_px": [
+        96,
+        69
+      ],
+      "atlas": "atlases/A_debris.png",
+      "atlas_rect_xywh": [
+        1536,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        131,
+        169,
+        382,
+        343
+      ]
+    },
+    {
+      "id": "A_02_01",
+      "file": "sprites/A_debris/A_02_01.png",
+      "category": "debris",
+      "row": 2,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "16종 무채색 파편 VFX 시트.png",
+      "source_crop_xyxy": [
+        0,
+        321,
+        317,
+        622
+      ],
+      "source_anchor_px": [
+        166,
+        467
+      ],
+      "paste_offset_px": [
+        90,
+        110
+      ],
+      "atlas": "atlases/A_debris.png",
+      "atlas_rect_xywh": [
+        0,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        187,
+        127,
+        325,
+        385
+      ]
+    },
+    {
+      "id": "A_02_02",
+      "file": "sprites/A_debris/A_02_02.png",
+      "category": "debris",
+      "row": 2,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "16종 무채색 파편 VFX 시트.png",
+      "source_crop_xyxy": [
+        317,
+        321,
+        628,
+        622
+      ],
+      "source_anchor_px": [
+        470,
+        476
+      ],
+      "paste_offset_px": [
+        103,
+        101
+      ],
+      "atlas": "atlases/A_debris.png",
+      "atlas_rect_xywh": [
+        512,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        132,
+        143,
+        380,
+        370
+      ]
+    },
+    {
+      "id": "A_02_03",
+      "file": "sprites/A_debris/A_02_03.png",
+      "category": "debris",
+      "row": 2,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "16종 무채색 파편 VFX 시트.png",
+      "source_crop_xyxy": [
+        628,
+        321,
+        933,
+        622
+      ],
+      "source_anchor_px": [
+        791,
+        474
+      ],
+      "paste_offset_px": [
+        93,
+        103
+      ],
+      "atlas": "atlases/A_debris.png",
+      "atlas_rect_xywh": [
+        1024,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        149,
+        142,
+        363,
+        370
+      ]
+    },
+    {
+      "id": "A_02_04",
+      "file": "sprites/A_debris/A_02_04.png",
+      "category": "debris",
+      "row": 2,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "16종 무채색 파편 VFX 시트.png",
+      "source_crop_xyxy": [
+        933,
+        321,
+        1254,
+        622
+      ],
+      "source_anchor_px": [
+        1078,
+        477
+      ],
+      "paste_offset_px": [
+        111,
+        100
+      ],
+      "atlas": "atlases/A_debris.png",
+      "atlas_rect_xywh": [
+        1536,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        155,
+        152,
+        357,
+        361
+      ]
+    },
+    {
+      "id": "A_03_01",
+      "file": "sprites/A_debris/A_03_01.png",
+      "category": "debris",
+      "row": 3,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "16종 무채색 파편 VFX 시트.png",
+      "source_crop_xyxy": [
+        0,
+        622,
+        317,
+        913
+      ],
+      "source_anchor_px": [
+        163,
+        778
+      ],
+      "paste_offset_px": [
+        93,
+        100
+      ],
+      "atlas": "atlases/A_debris.png",
+      "atlas_rect_xywh": [
+        0,
+        1024,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        173,
+        179,
+        340,
+        333
+      ]
+    },
+    {
+      "id": "A_03_02",
+      "file": "sprites/A_debris/A_03_02.png",
+      "category": "debris",
+      "row": 3,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "16종 무채색 파편 VFX 시트.png",
+      "source_crop_xyxy": [
+        317,
+        622,
+        628,
+        913
+      ],
+      "source_anchor_px": [
+        482,
+        770
+      ],
+      "paste_offset_px": [
+        91,
+        108
+      ],
+      "atlas": "atlases/A_debris.png",
+      "atlas_rect_xywh": [
+        512,
+        1024,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        145,
+        136,
+        368,
+        376
+      ]
+    },
+    {
+      "id": "A_03_03",
+      "file": "sprites/A_debris/A_03_03.png",
+      "category": "debris",
+      "row": 3,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "16종 무채색 파편 VFX 시트.png",
+      "source_crop_xyxy": [
+        628,
+        622,
+        933,
+        913
+      ],
+      "source_anchor_px": [
+        786,
+        771
+      ],
+      "paste_offset_px": [
+        98,
+        107
+      ],
+      "atlas": "atlases/A_debris.png",
+      "atlas_rect_xywh": [
+        1024,
+        1024,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        129,
+        156,
+        384,
+        357
+      ]
+    },
+    {
+      "id": "A_03_04",
+      "file": "sprites/A_debris/A_03_04.png",
+      "category": "debris",
+      "row": 3,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "16종 무채색 파편 VFX 시트.png",
+      "source_crop_xyxy": [
+        933,
+        622,
+        1254,
+        913
+      ],
+      "source_anchor_px": [
+        1095,
+        773
+      ],
+      "paste_offset_px": [
+        94,
+        105
+      ],
+      "atlas": "atlases/A_debris.png",
+      "atlas_rect_xywh": [
+        1536,
+        1024,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        158,
+        132,
+        355,
+        381
+      ]
+    },
+    {
+      "id": "A_04_01",
+      "file": "sprites/A_debris/A_04_01.png",
+      "category": "debris",
+      "row": 4,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "16종 무채색 파편 VFX 시트.png",
+      "source_crop_xyxy": [
+        0,
+        913,
+        317,
+        1254
+      ],
+      "source_anchor_px": [
+        166,
+        1062
+      ],
+      "paste_offset_px": [
+        90,
+        107
+      ],
+      "atlas": "atlases/A_debris.png",
+      "atlas_rect_xywh": [
+        0,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        130,
+        127,
+        382,
+        385
+      ]
+    },
+    {
+      "id": "A_04_02",
+      "file": "sprites/A_debris/A_04_02.png",
+      "category": "debris",
+      "row": 4,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "16종 무채색 파편 VFX 시트.png",
+      "source_crop_xyxy": [
+        317,
+        913,
+        628,
+        1254
+      ],
+      "source_anchor_px": [
+        477,
+        1073
+      ],
+      "paste_offset_px": [
+        96,
+        96
+      ],
+      "atlas": "atlases/A_debris.png",
+      "atlas_rect_xywh": [
+        512,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        121,
+        141,
+        391,
+        371
+      ]
+    },
+    {
+      "id": "A_04_03",
+      "file": "sprites/A_debris/A_04_03.png",
+      "category": "debris",
+      "row": 4,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "16종 무채색 파편 VFX 시트.png",
+      "source_crop_xyxy": [
+        628,
+        913,
+        933,
+        1254
+      ],
+      "source_anchor_px": [
+        777,
+        1064
+      ],
+      "paste_offset_px": [
+        107,
+        105
+      ],
+      "atlas": "atlases/A_debris.png",
+      "atlas_rect_xywh": [
+        1024,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        183,
+        120,
+        330,
+        392
+      ]
+    },
+    {
+      "id": "A_04_04",
+      "file": "sprites/A_debris/A_04_04.png",
+      "category": "debris",
+      "row": 4,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "16종 무채색 파편 VFX 시트.png",
+      "source_crop_xyxy": [
+        933,
+        913,
+        1254,
+        1254
+      ],
+      "source_anchor_px": [
+        1082,
+        1081
+      ],
+      "paste_offset_px": [
+        107,
+        88
+      ],
+      "atlas": "atlases/A_debris.png",
+      "atlas_rect_xywh": [
+        1536,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        123,
+        144,
+        390,
+        368
+      ]
+    },
+    {
+      "id": "B_01_01",
+      "file": "sprites/B_cracks/B_01_01.png",
+      "category": "cracks",
+      "row": 1,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "균열 데칼 16종 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        0,
+        0,
+        332,
+        312
+      ],
+      "source_anchor_px": [
+        157,
+        170
+      ],
+      "paste_offset_px": [
+        99,
+        86
+      ],
+      "atlas": "atlases/B_cracks.png",
+      "atlas_rect_xywh": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "alpha_silhouette",
+      "visible_bounds_xyxy": [
+        154,
+        145,
+        359,
+        368
+      ]
+    },
+    {
+      "id": "B_01_02",
+      "file": "sprites/B_cracks/B_01_02.png",
+      "category": "cracks",
+      "row": 1,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "균열 데칼 16종 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        332,
+        0,
+        628,
+        312
+      ],
+      "source_anchor_px": [
+        477,
+        155
+      ],
+      "paste_offset_px": [
+        111,
+        101
+      ],
+      "atlas": "atlases/B_cracks.png",
+      "atlas_rect_xywh": [
+        512,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "alpha_silhouette",
+      "visible_bounds_xyxy": [
+        122,
+        118,
+        390,
+        395
+      ]
+    },
+    {
+      "id": "B_01_03",
+      "file": "sprites/B_cracks/B_01_03.png",
+      "category": "cracks",
+      "row": 1,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "균열 데칼 16종 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        628,
+        0,
+        956,
+        312
+      ],
+      "source_anchor_px": [
+        784,
+        169
+      ],
+      "paste_offset_px": [
+        100,
+        87
+      ],
+      "atlas": "atlases/B_cracks.png",
+      "atlas_rect_xywh": [
+        1024,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "alpha_silhouette",
+      "visible_bounds_xyxy": [
+        118,
+        133,
+        394,
+        380
+      ]
+    },
+    {
+      "id": "B_01_04",
+      "file": "sprites/B_cracks/B_01_04.png",
+      "category": "cracks",
+      "row": 1,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "균열 데칼 16종 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        956,
+        0,
+        1254,
+        312
+      ],
+      "source_anchor_px": [
+        1098,
+        163
+      ],
+      "paste_offset_px": [
+        114,
+        93
+      ],
+      "atlas": "atlases/B_cracks.png",
+      "atlas_rect_xywh": [
+        1536,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "alpha_silhouette",
+      "visible_bounds_xyxy": [
+        143,
+        119,
+        370,
+        393
+      ]
+    },
+    {
+      "id": "B_02_01",
+      "file": "sprites/B_cracks/B_02_01.png",
+      "category": "cracks",
+      "row": 2,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "균열 데칼 16종 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        0,
+        312,
+        332,
+        627
+      ],
+      "source_anchor_px": [
+        171,
+        468
+      ],
+      "paste_offset_px": [
+        85,
+        100
+      ],
+      "atlas": "atlases/B_cracks.png",
+      "atlas_rect_xywh": [
+        0,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "alpha_silhouette",
+      "visible_bounds_xyxy": [
+        101,
+        192,
+        412,
+        321
+      ]
+    },
+    {
+      "id": "B_02_02",
+      "file": "sprites/B_cracks/B_02_02.png",
+      "category": "cracks",
+      "row": 2,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "균열 데칼 16종 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        332,
+        312,
+        628,
+        627
+      ],
+      "source_anchor_px": [
+        476,
+        470
+      ],
+      "paste_offset_px": [
+        112,
+        98
+      ],
+      "atlas": "atlases/B_cracks.png",
+      "atlas_rect_xywh": [
+        512,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "alpha_silhouette",
+      "visible_bounds_xyxy": [
+        197,
+        110,
+        315,
+        403
+      ]
+    },
+    {
+      "id": "B_02_03",
+      "file": "sprites/B_cracks/B_02_03.png",
+      "category": "cracks",
+      "row": 2,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "균열 데칼 16종 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        628,
+        312,
+        956,
+        627
+      ],
+      "source_anchor_px": [
+        788,
+        473
+      ],
+      "paste_offset_px": [
+        96,
+        95
+      ],
+      "atlas": "atlases/B_cracks.png",
+      "atlas_rect_xywh": [
+        1024,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "alpha_silhouette",
+      "visible_bounds_xyxy": [
+        123,
+        115,
+        390,
+        397
+      ]
+    },
+    {
+      "id": "B_02_04",
+      "file": "sprites/B_cracks/B_02_04.png",
+      "category": "cracks",
+      "row": 2,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "균열 데칼 16종 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        956,
+        312,
+        1254,
+        627
+      ],
+      "source_anchor_px": [
+        1099,
+        475
+      ],
+      "paste_offset_px": [
+        113,
+        93
+      ],
+      "atlas": "atlases/B_cracks.png",
+      "atlas_rect_xywh": [
+        1536,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "alpha_silhouette",
+      "visible_bounds_xyxy": [
+        123,
+        126,
+        390,
+        387
+      ]
+    },
+    {
+      "id": "B_03_01",
+      "file": "sprites/B_cracks/B_03_01.png",
+      "category": "cracks",
+      "row": 3,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "균열 데칼 16종 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        0,
+        627,
+        332,
+        926
+      ],
+      "source_anchor_px": [
+        171,
+        776
+      ],
+      "paste_offset_px": [
+        85,
+        107
+      ],
+      "atlas": "atlases/B_cracks.png",
+      "atlas_rect_xywh": [
+        0,
+        1024,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "alpha_silhouette",
+      "visible_bounds_xyxy": [
+        149,
+        118,
+        364,
+        395
+      ]
+    },
+    {
+      "id": "B_03_02",
+      "file": "sprites/B_cracks/B_03_02.png",
+      "category": "cracks",
+      "row": 3,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "균열 데칼 16종 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        332,
+        627,
+        628,
+        926
+      ],
+      "source_anchor_px": [
+        473,
+        776
+      ],
+      "paste_offset_px": [
+        115,
+        107
+      ],
+      "atlas": "atlases/B_cracks.png",
+      "atlas_rect_xywh": [
+        512,
+        1024,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "alpha_silhouette",
+      "visible_bounds_xyxy": [
+        120,
+        132,
+        393,
+        381
+      ]
+    },
+    {
+      "id": "B_03_03",
+      "file": "sprites/B_cracks/B_03_03.png",
+      "category": "cracks",
+      "row": 3,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "균열 데칼 16종 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        628,
+        627,
+        956,
+        926
+      ],
+      "source_anchor_px": [
+        800,
+        785
+      ],
+      "paste_offset_px": [
+        84,
+        98
+      ],
+      "atlas": "atlases/B_cracks.png",
+      "atlas_rect_xywh": [
+        1024,
+        1024,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "alpha_silhouette",
+      "visible_bounds_xyxy": [
+        109,
+        160,
+        403,
+        352
+      ]
+    },
+    {
+      "id": "B_03_04",
+      "file": "sprites/B_cracks/B_03_04.png",
+      "category": "cracks",
+      "row": 3,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "균열 데칼 16종 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        956,
+        627,
+        1254,
+        926
+      ],
+      "source_anchor_px": [
+        1106,
+        785
+      ],
+      "paste_offset_px": [
+        106,
+        98
+      ],
+      "atlas": "atlases/B_cracks.png",
+      "atlas_rect_xywh": [
+        1536,
+        1024,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "alpha_silhouette",
+      "visible_bounds_xyxy": [
+        182,
+        121,
+        331,
+        391
+      ]
+    },
+    {
+      "id": "B_04_01",
+      "file": "sprites/B_cracks/B_04_01.png",
+      "category": "cracks",
+      "row": 4,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "균열 데칼 16종 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        0,
+        926,
+        332,
+        1254
+      ],
+      "source_anchor_px": [
+        160,
+        1079
+      ],
+      "paste_offset_px": [
+        96,
+        103
+      ],
+      "atlas": "atlases/B_cracks.png",
+      "atlas_rect_xywh": [
+        0,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "alpha_silhouette",
+      "visible_bounds_xyxy": [
+        139,
+        137,
+        373,
+        376
+      ]
+    },
+    {
+      "id": "B_04_02",
+      "file": "sprites/B_cracks/B_04_02.png",
+      "category": "cracks",
+      "row": 4,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "균열 데칼 16종 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        332,
+        926,
+        628,
+        1254
+      ],
+      "source_anchor_px": [
+        476,
+        1075
+      ],
+      "paste_offset_px": [
+        112,
+        107
+      ],
+      "atlas": "atlases/B_cracks.png",
+      "atlas_rect_xywh": [
+        512,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "alpha_silhouette",
+      "visible_bounds_xyxy": [
+        123,
+        113,
+        389,
+        400
+      ]
+    },
+    {
+      "id": "B_04_03",
+      "file": "sprites/B_cracks/B_04_03.png",
+      "category": "cracks",
+      "row": 4,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "균열 데칼 16종 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        628,
+        926,
+        956,
+        1254
+      ],
+      "source_anchor_px": [
+        790,
+        1085
+      ],
+      "paste_offset_px": [
+        94,
+        97
+      ],
+      "atlas": "atlases/B_cracks.png",
+      "atlas_rect_xywh": [
+        1024,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "alpha_silhouette",
+      "visible_bounds_xyxy": [
+        116,
+        126,
+        396,
+        387
+      ]
+    },
+    {
+      "id": "B_04_04",
+      "file": "sprites/B_cracks/B_04_04.png",
+      "category": "cracks",
+      "row": 4,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "균열 데칼 16종 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        956,
+        926,
+        1254,
+        1254
+      ],
+      "source_anchor_px": [
+        1102,
+        1070
+      ],
+      "paste_offset_px": [
+        110,
+        112
+      ],
+      "atlas": "atlases/B_cracks.png",
+      "atlas_rect_xywh": [
+        1536,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "alpha_silhouette",
+      "visible_bounds_xyxy": [
+        126,
+        134,
+        386,
+        379
+      ]
+    },
+    {
+      "id": "C_01_01",
+      "file": "sprites/C_clusters/C_01_01.png",
+      "category": "clusters",
+      "row": 1,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "중성 회색 공중 파편 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        0,
+        0,
+        320,
+        325
+      ],
+      "source_anchor_px": [
+        165,
+        177
+      ],
+      "paste_offset_px": [
+        91,
+        79
+      ],
+      "atlas": "atlases/C_clusters.png",
+      "atlas_rect_xywh": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        137,
+        145,
+        375,
+        368
+      ]
+    },
+    {
+      "id": "C_01_02",
+      "file": "sprites/C_clusters/C_01_02.png",
+      "category": "clusters",
+      "row": 1,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "중성 회색 공중 파편 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        320,
+        0,
+        654,
+        325
+      ],
+      "source_anchor_px": [
+        491,
+        170
+      ],
+      "paste_offset_px": [
+        85,
+        86
+      ],
+      "atlas": "atlases/C_clusters.png",
+      "atlas_rect_xywh": [
+        512,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        107,
+        145,
+        405,
+        368
+      ]
+    },
+    {
+      "id": "C_01_03",
+      "file": "sprites/C_clusters/C_01_03.png",
+      "category": "clusters",
+      "row": 1,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "중성 회색 공중 파편 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        654,
+        0,
+        932,
+        325
+      ],
+      "source_anchor_px": [
+        795,
+        167
+      ],
+      "paste_offset_px": [
+        115,
+        89
+      ],
+      "atlas": "atlases/C_clusters.png",
+      "atlas_rect_xywh": [
+        1024,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        181,
+        115,
+        331,
+        398
+      ]
+    },
+    {
+      "id": "C_01_04",
+      "file": "sprites/C_clusters/C_01_04.png",
+      "category": "clusters",
+      "row": 1,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "중성 회색 공중 파편 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        932,
+        0,
+        1254,
+        325
+      ],
+      "source_anchor_px": [
+        1117,
+        166
+      ],
+      "paste_offset_px": [
+        71,
+        90
+      ],
+      "atlas": "atlases/C_clusters.png",
+      "atlas_rect_xywh": [
+        1536,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        153,
+        118,
+        360,
+        394
+      ]
+    },
+    {
+      "id": "C_02_01",
+      "file": "sprites/C_clusters/C_02_01.png",
+      "category": "clusters",
+      "row": 2,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "중성 회색 공중 파편 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        0,
+        325,
+        320,
+        636
+      ],
+      "source_anchor_px": [
+        158,
+        478
+      ],
+      "paste_offset_px": [
+        98,
+        103
+      ],
+      "atlas": "atlases/C_clusters.png",
+      "atlas_rect_xywh": [
+        0,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        132,
+        164,
+        380,
+        349
+      ]
+    },
+    {
+      "id": "C_02_02",
+      "file": "sprites/C_clusters/C_02_02.png",
+      "category": "clusters",
+      "row": 2,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "중성 회색 공중 파편 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        320,
+        325,
+        654,
+        636
+      ],
+      "source_anchor_px": [
+        481,
+        495
+      ],
+      "paste_offset_px": [
+        95,
+        86
+      ],
+      "atlas": "atlases/C_clusters.png",
+      "atlas_rect_xywh": [
+        512,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        124,
+        153,
+        388,
+        360
+      ]
+    },
+    {
+      "id": "C_02_03",
+      "file": "sprites/C_clusters/C_02_03.png",
+      "category": "clusters",
+      "row": 2,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "중성 회색 공중 파편 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        654,
+        325,
+        932,
+        636
+      ],
+      "source_anchor_px": [
+        799,
+        479
+      ],
+      "paste_offset_px": [
+        111,
+        102
+      ],
+      "atlas": "atlases/C_clusters.png",
+      "atlas_rect_xywh": [
+        1024,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        151,
+        124,
+        361,
+        389
+      ]
+    },
+    {
+      "id": "C_02_04",
+      "file": "sprites/C_clusters/C_02_04.png",
+      "category": "clusters",
+      "row": 2,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "중성 회색 공중 파편 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        932,
+        325,
+        1254,
+        636
+      ],
+      "source_anchor_px": [
+        1098,
+        479
+      ],
+      "paste_offset_px": [
+        90,
+        102
+      ],
+      "atlas": "atlases/C_clusters.png",
+      "atlas_rect_xywh": [
+        1536,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        152,
+        118,
+        361,
+        394
+      ]
+    },
+    {
+      "id": "C_03_01",
+      "file": "sprites/C_clusters/C_03_01.png",
+      "category": "clusters",
+      "row": 3,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "중성 회색 공중 파편 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        0,
+        636,
+        320,
+        924
+      ],
+      "source_anchor_px": [
+        164,
+        773
+      ],
+      "paste_offset_px": [
+        92,
+        119
+      ],
+      "atlas": "atlases/C_clusters.png",
+      "atlas_rect_xywh": [
+        0,
+        1024,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        137,
+        138,
+        376,
+        375
+      ]
+    },
+    {
+      "id": "C_03_02",
+      "file": "sprites/C_clusters/C_03_02.png",
+      "category": "clusters",
+      "row": 3,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "중성 회색 공중 파편 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        320,
+        636,
+        654,
+        924
+      ],
+      "source_anchor_px": [
+        478,
+        788
+      ],
+      "paste_offset_px": [
+        98,
+        104
+      ],
+      "atlas": "atlases/C_clusters.png",
+      "atlas_rect_xywh": [
+        512,
+        1024,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        146,
+        136,
+        367,
+        377
+      ]
+    },
+    {
+      "id": "C_03_03",
+      "file": "sprites/C_clusters/C_03_03.png",
+      "category": "clusters",
+      "row": 3,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "중성 회색 공중 파편 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        654,
+        636,
+        932,
+        924
+      ],
+      "source_anchor_px": [
+        787,
+        777
+      ],
+      "paste_offset_px": [
+        123,
+        115
+      ],
+      "atlas": "atlases/C_clusters.png",
+      "atlas_rect_xywh": [
+        1024,
+        1024,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        138,
+        141,
+        375,
+        372
+      ]
+    },
+    {
+      "id": "C_03_04",
+      "file": "sprites/C_clusters/C_03_04.png",
+      "category": "clusters",
+      "row": 3,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "중성 회색 공중 파편 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        932,
+        636,
+        1254,
+        924
+      ],
+      "source_anchor_px": [
+        1097,
+        781
+      ],
+      "paste_offset_px": [
+        91,
+        111
+      ],
+      "atlas": "atlases/C_clusters.png",
+      "atlas_rect_xywh": [
+        1536,
+        1024,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        145,
+        151,
+        368,
+        361
+      ]
+    },
+    {
+      "id": "C_04_01",
+      "file": "sprites/C_clusters/C_04_01.png",
+      "category": "clusters",
+      "row": 4,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "중성 회색 공중 파편 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        0,
+        924,
+        320,
+        1254
+      ],
+      "source_anchor_px": [
+        165,
+        1092
+      ],
+      "paste_offset_px": [
+        91,
+        88
+      ],
+      "atlas": "atlases/C_clusters.png",
+      "atlas_rect_xywh": [
+        0,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        120,
+        154,
+        393,
+        359
+      ]
+    },
+    {
+      "id": "C_04_02",
+      "file": "sprites/C_clusters/C_04_02.png",
+      "category": "clusters",
+      "row": 4,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "중성 회색 공중 파편 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        320,
+        924,
+        654,
+        1254
+      ],
+      "source_anchor_px": [
+        483,
+        1081
+      ],
+      "paste_offset_px": [
+        93,
+        99
+      ],
+      "atlas": "atlases/C_clusters.png",
+      "atlas_rect_xywh": [
+        512,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        111,
+        154,
+        401,
+        358
+      ]
+    },
+    {
+      "id": "C_04_03",
+      "file": "sprites/C_clusters/C_04_03.png",
+      "category": "clusters",
+      "row": 4,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "중성 회색 공중 파편 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        654,
+        924,
+        932,
+        1254
+      ],
+      "source_anchor_px": [
+        796,
+        1084
+      ],
+      "paste_offset_px": [
+        114,
+        96
+      ],
+      "atlas": "atlases/C_clusters.png",
+      "atlas_rect_xywh": [
+        1024,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        168,
+        111,
+        344,
+        401
+      ]
+    },
+    {
+      "id": "C_04_04",
+      "file": "sprites/C_clusters/C_04_04.png",
+      "category": "clusters",
+      "row": 4,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "중성 회색 공중 파편 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        932,
+        924,
+        1254,
+        1254
+      ],
+      "source_anchor_px": [
+        1090,
+        1085
+      ],
+      "paste_offset_px": [
+        98,
+        95
+      ],
+      "atlas": "atlases/C_clusters.png",
+      "atlas_rect_xywh": [
+        1536,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        123,
+        130,
+        389,
+        383
+      ]
+    },
+    {
+      "id": "D_01_01",
+      "file": "sprites/D_dust/D_01_01.png",
+      "category": "dust",
+      "row": 1,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        400
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.21875
+      ],
+      "source_file": "4×4 회색 먼지 애니메이션 시트.png",
+      "source_crop_xyxy": [
+        0,
+        0,
+        286,
+        313
+      ],
+      "source_anchor_px": [
+        157,
+        289
+      ],
+      "paste_offset_px": [
+        99,
+        111
+      ],
+      "atlas": "atlases/D_dust.png",
+      "atlas_rect_xywh": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        179,
+        295,
+        346,
+        405
+      ]
+    },
+    {
+      "id": "D_01_02",
+      "file": "sprites/D_dust/D_01_02.png",
+      "category": "dust",
+      "row": 1,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        400
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.21875
+      ],
+      "source_file": "4×4 회색 먼지 애니메이션 시트.png",
+      "source_crop_xyxy": [
+        286,
+        0,
+        630,
+        313
+      ],
+      "source_anchor_px": [
+        466,
+        294
+      ],
+      "paste_offset_px": [
+        76,
+        106
+      ],
+      "atlas": "atlases/D_dust.png",
+      "atlas_rect_xywh": [
+        512,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        148,
+        249,
+        402,
+        402
+      ]
+    },
+    {
+      "id": "D_01_03",
+      "file": "sprites/D_dust/D_01_03.png",
+      "category": "dust",
+      "row": 1,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        400
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.21875
+      ],
+      "source_file": "4×4 회색 먼지 애니메이션 시트.png",
+      "source_crop_xyxy": [
+        630,
+        0,
+        974,
+        313
+      ],
+      "source_anchor_px": [
+        788,
+        294
+      ],
+      "paste_offset_px": [
+        98,
+        106
+      ],
+      "atlas": "atlases/D_dust.png",
+      "atlas_rect_xywh": [
+        1024,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        128,
+        178,
+        401,
+        400
+      ]
+    },
+    {
+      "id": "D_01_04",
+      "file": "sprites/D_dust/D_01_04.png",
+      "category": "dust",
+      "row": 1,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        400
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.21875
+      ],
+      "source_file": "4×4 회색 먼지 애니메이션 시트.png",
+      "source_crop_xyxy": [
+        974,
+        0,
+        1254,
+        313
+      ],
+      "source_anchor_px": [
+        1099,
+        294
+      ],
+      "paste_offset_px": [
+        131,
+        106
+      ],
+      "atlas": "atlases/D_dust.png",
+      "atlas_rect_xywh": [
+        1536,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        178,
+        196,
+        373,
+        393
+      ]
+    },
+    {
+      "id": "D_02_01",
+      "file": "sprites/D_dust/D_02_01.png",
+      "category": "dust",
+      "row": 2,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        400
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.21875
+      ],
+      "source_file": "4×4 회색 먼지 애니메이션 시트.png",
+      "source_crop_xyxy": [
+        0,
+        313,
+        286,
+        643
+      ],
+      "source_anchor_px": [
+        155,
+        600
+      ],
+      "paste_offset_px": [
+        101,
+        113
+      ],
+      "atlas": "atlases/D_dust.png",
+      "atlas_rect_xywh": [
+        0,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        168,
+        326,
+        355,
+        407
+      ]
+    },
+    {
+      "id": "D_02_02",
+      "file": "sprites/D_dust/D_02_02.png",
+      "category": "dust",
+      "row": 2,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        400
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.21875
+      ],
+      "source_file": "4×4 회색 먼지 애니메이션 시트.png",
+      "source_crop_xyxy": [
+        286,
+        313,
+        630,
+        643
+      ],
+      "source_anchor_px": [
+        466,
+        600
+      ],
+      "paste_offset_px": [
+        76,
+        113
+      ],
+      "atlas": "atlases/D_dust.png",
+      "atlas_rect_xywh": [
+        512,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        107,
+        266,
+        395,
+        408
+      ]
+    },
+    {
+      "id": "D_02_03",
+      "file": "sprites/D_dust/D_02_03.png",
+      "category": "dust",
+      "row": 2,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        400
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.21875
+      ],
+      "source_file": "4×4 회색 먼지 애니메이션 시트.png",
+      "source_crop_xyxy": [
+        630,
+        313,
+        974,
+        643
+      ],
+      "source_anchor_px": [
+        790,
+        600
+      ],
+      "paste_offset_px": [
+        96,
+        113
+      ],
+      "atlas": "atlases/D_dust.png",
+      "atlas_rect_xywh": [
+        1024,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        110,
+        276,
+        436,
+        406
+      ]
+    },
+    {
+      "id": "D_02_04",
+      "file": "sprites/D_dust/D_02_04.png",
+      "category": "dust",
+      "row": 2,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        400
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.21875
+      ],
+      "source_file": "4×4 회색 먼지 애니메이션 시트.png",
+      "source_crop_xyxy": [
+        974,
+        313,
+        1254,
+        643
+      ],
+      "source_anchor_px": [
+        1104,
+        600
+      ],
+      "paste_offset_px": [
+        126,
+        113
+      ],
+      "atlas": "atlases/D_dust.png",
+      "atlas_rect_xywh": [
+        1536,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        131,
+        296,
+        376,
+        398
+      ]
+    },
+    {
+      "id": "D_03_01",
+      "file": "sprites/D_dust/D_03_01.png",
+      "category": "dust",
+      "row": 3,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        128,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.25,
+        0.5
+      ],
+      "source_file": "4×4 회색 먼지 애니메이션 시트.png",
+      "source_crop_xyxy": [
+        0,
+        643,
+        286,
+        900
+      ],
+      "source_anchor_px": [
+        66,
+        790
+      ],
+      "paste_offset_px": [
+        62,
+        109
+      ],
+      "atlas": "atlases/D_dust.png",
+      "atlas_rect_xywh": [
+        0,
+        1024,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        123,
+        147,
+        318,
+        349
+      ]
+    },
+    {
+      "id": "D_03_02",
+      "file": "sprites/D_dust/D_03_02.png",
+      "category": "dust",
+      "row": 3,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        128,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.25,
+        0.5
+      ],
+      "source_file": "4×4 회색 먼지 애니메이션 시트.png",
+      "source_crop_xyxy": [
+        286,
+        643,
+        630,
+        900
+      ],
+      "source_anchor_px": [
+        322,
+        790
+      ],
+      "paste_offset_px": [
+        92,
+        109
+      ],
+      "atlas": "atlases/D_dust.png",
+      "atlas_rect_xywh": [
+        512,
+        1024,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        131,
+        169,
+        423,
+        326
+      ]
+    },
+    {
+      "id": "D_03_03",
+      "file": "sprites/D_dust/D_03_03.png",
+      "category": "dust",
+      "row": 3,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        128,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.25,
+        0.5
+      ],
+      "source_file": "4×4 회색 먼지 애니메이션 시트.png",
+      "source_crop_xyxy": [
+        630,
+        643,
+        974,
+        900
+      ],
+      "source_anchor_px": [
+        650,
+        790
+      ],
+      "paste_offset_px": [
+        108,
+        109
+      ],
+      "atlas": "atlases/D_dust.png",
+      "atlas_rect_xywh": [
+        1024,
+        1024,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        148,
+        179,
+        420,
+        333
+      ]
+    },
+    {
+      "id": "D_03_04",
+      "file": "sprites/D_dust/D_03_04.png",
+      "category": "dust",
+      "row": 3,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        128,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.25,
+        0.5
+      ],
+      "source_file": "4×4 회색 먼지 애니메이션 시트.png",
+      "source_crop_xyxy": [
+        974,
+        643,
+        1254,
+        900
+      ],
+      "source_anchor_px": [
+        974,
+        790
+      ],
+      "paste_offset_px": [
+        128,
+        109
+      ],
+      "atlas": "atlases/D_dust.png",
+      "atlas_rect_xywh": [
+        1536,
+        1024,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        147,
+        205,
+        376,
+        297
+      ]
+    },
+    {
+      "id": "D_04_01",
+      "file": "sprites/D_dust/D_04_01.png",
+      "category": "dust",
+      "row": 4,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        96
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.8125
+      ],
+      "source_file": "4×4 회색 먼지 애니메이션 시트.png",
+      "source_crop_xyxy": [
+        0,
+        900,
+        286,
+        1254
+      ],
+      "source_anchor_px": [
+        160,
+        930
+      ],
+      "paste_offset_px": [
+        96,
+        66
+      ],
+      "atlas": "atlases/D_dust.png",
+      "atlas_rect_xywh": [
+        0,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        206,
+        84,
+        299,
+        375
+      ]
+    },
+    {
+      "id": "D_04_02",
+      "file": "sprites/D_dust/D_04_02.png",
+      "category": "dust",
+      "row": 4,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        96
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.8125
+      ],
+      "source_file": "4×4 회색 먼지 애니메이션 시트.png",
+      "source_crop_xyxy": [
+        286,
+        900,
+        630,
+        1254
+      ],
+      "source_anchor_px": [
+        468,
+        930
+      ],
+      "paste_offset_px": [
+        74,
+        66
+      ],
+      "atlas": "atlases/D_dust.png",
+      "atlas_rect_xywh": [
+        512,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        176,
+        82,
+        362,
+        377
+      ]
+    },
+    {
+      "id": "D_04_03",
+      "file": "sprites/D_dust/D_04_03.png",
+      "category": "dust",
+      "row": 4,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        96
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.8125
+      ],
+      "source_file": "4×4 회색 먼지 애니메이션 시트.png",
+      "source_crop_xyxy": [
+        630,
+        900,
+        974,
+        1254
+      ],
+      "source_anchor_px": [
+        785,
+        930
+      ],
+      "paste_offset_px": [
+        101,
+        66
+      ],
+      "atlas": "atlases/D_dust.png",
+      "atlas_rect_xywh": [
+        1024,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        206,
+        94,
+        343,
+        364
+      ]
+    },
+    {
+      "id": "D_04_04",
+      "file": "sprites/D_dust/D_04_04.png",
+      "category": "dust",
+      "row": 4,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        96
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.8125
+      ],
+      "source_file": "4×4 회색 먼지 애니메이션 시트.png",
+      "source_crop_xyxy": [
+        974,
+        900,
+        1254,
+        1254
+      ],
+      "source_anchor_px": [
+        1100,
+        930
+      ],
+      "paste_offset_px": [
+        130,
+        66
+      ],
+      "atlas": "atlases/D_dust.png",
+      "atlas_rect_xywh": [
+        1536,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        227,
+        107,
+        329,
+        369
+      ]
+    },
+    {
+      "id": "E_01_01",
+      "file": "sprites/E_breakup/E_01_01.png",
+      "category": "breakup",
+      "row": 1,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 파편 분해 애니메이션 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        0,
+        0,
+        320,
+        337
+      ],
+      "source_anchor_px": [
+        160,
+        180
+      ],
+      "paste_offset_px": [
+        96,
+        76
+      ],
+      "atlas": "atlases/E_breakup.png",
+      "atlas_rect_xywh": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        173,
+        164,
+        362,
+        366
+      ]
+    },
+    {
+      "id": "E_01_02",
+      "file": "sprites/E_breakup/E_01_02.png",
+      "category": "breakup",
+      "row": 1,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 파편 분해 애니메이션 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        320,
+        0,
+        618,
+        337
+      ],
+      "source_anchor_px": [
+        470,
+        180
+      ],
+      "paste_offset_px": [
+        106,
+        76
+      ],
+      "atlas": "atlases/E_breakup.png",
+      "atlas_rect_xywh": [
+        512,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        161,
+        159,
+        363,
+        366
+      ]
+    },
+    {
+      "id": "E_01_03",
+      "file": "sprites/E_breakup/E_01_03.png",
+      "category": "breakup",
+      "row": 1,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 파편 분해 애니메이션 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        618,
+        0,
+        932,
+        337
+      ],
+      "source_anchor_px": [
+        780,
+        180
+      ],
+      "paste_offset_px": [
+        94,
+        76
+      ],
+      "atlas": "atlases/E_breakup.png",
+      "atlas_rect_xywh": [
+        1024,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        139,
+        135,
+        381,
+        377
+      ]
+    },
+    {
+      "id": "E_01_04",
+      "file": "sprites/E_breakup/E_01_04.png",
+      "category": "breakup",
+      "row": 1,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 파편 분해 애니메이션 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        932,
+        0,
+        1254,
+        337
+      ],
+      "source_anchor_px": [
+        1090,
+        180
+      ],
+      "paste_offset_px": [
+        98,
+        76
+      ],
+      "atlas": "atlases/E_breakup.png",
+      "atlas_rect_xywh": [
+        1536,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        134,
+        173,
+        389,
+        369
+      ]
+    },
+    {
+      "id": "E_02_01",
+      "file": "sprites/E_breakup/E_02_01.png",
+      "category": "breakup",
+      "row": 2,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 파편 분해 애니메이션 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        0,
+        337,
+        320,
+        640
+      ],
+      "source_anchor_px": [
+        160,
+        490
+      ],
+      "paste_offset_px": [
+        96,
+        103
+      ],
+      "atlas": "atlases/E_breakup.png",
+      "atlas_rect_xywh": [
+        0,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        154,
+        162,
+        372,
+        367
+      ]
+    },
+    {
+      "id": "E_02_02",
+      "file": "sprites/E_breakup/E_02_02.png",
+      "category": "breakup",
+      "row": 2,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 파편 분해 애니메이션 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        320,
+        337,
+        618,
+        640
+      ],
+      "source_anchor_px": [
+        470,
+        490
+      ],
+      "paste_offset_px": [
+        106,
+        103
+      ],
+      "atlas": "atlases/E_breakup.png",
+      "atlas_rect_xywh": [
+        512,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        154,
+        153,
+        371,
+        355
+      ]
+    },
+    {
+      "id": "E_02_03",
+      "file": "sprites/E_breakup/E_02_03.png",
+      "category": "breakup",
+      "row": 2,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 파편 분해 애니메이션 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        618,
+        337,
+        932,
+        640
+      ],
+      "source_anchor_px": [
+        780,
+        490
+      ],
+      "paste_offset_px": [
+        94,
+        103
+      ],
+      "atlas": "atlases/E_breakup.png",
+      "atlas_rect_xywh": [
+        1024,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        136,
+        140,
+        386,
+        366
+      ]
+    },
+    {
+      "id": "E_02_04",
+      "file": "sprites/E_breakup/E_02_04.png",
+      "category": "breakup",
+      "row": 2,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 파편 분해 애니메이션 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        932,
+        337,
+        1254,
+        640
+      ],
+      "source_anchor_px": [
+        1090,
+        490
+      ],
+      "paste_offset_px": [
+        98,
+        103
+      ],
+      "atlas": "atlases/E_breakup.png",
+      "atlas_rect_xywh": [
+        1536,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        137,
+        163,
+        389,
+        377
+      ]
+    },
+    {
+      "id": "E_03_01",
+      "file": "sprites/E_breakup/E_03_01.png",
+      "category": "breakup",
+      "row": 3,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 파편 분해 애니메이션 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        0,
+        640,
+        320,
+        941
+      ],
+      "source_anchor_px": [
+        160,
+        790
+      ],
+      "paste_offset_px": [
+        96,
+        106
+      ],
+      "atlas": "atlases/E_breakup.png",
+      "atlas_rect_xywh": [
+        0,
+        1024,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        151,
+        165,
+        372,
+        367
+      ]
+    },
+    {
+      "id": "E_03_02",
+      "file": "sprites/E_breakup/E_03_02.png",
+      "category": "breakup",
+      "row": 3,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 파편 분해 애니메이션 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        320,
+        640,
+        618,
+        941
+      ],
+      "source_anchor_px": [
+        470,
+        790
+      ],
+      "paste_offset_px": [
+        106,
+        106
+      ],
+      "atlas": "atlases/E_breakup.png",
+      "atlas_rect_xywh": [
+        512,
+        1024,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        150,
+        142,
+        371,
+        371
+      ]
+    },
+    {
+      "id": "E_03_03",
+      "file": "sprites/E_breakup/E_03_03.png",
+      "category": "breakup",
+      "row": 3,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 파편 분해 애니메이션 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        618,
+        640,
+        932,
+        941
+      ],
+      "source_anchor_px": [
+        780,
+        790
+      ],
+      "paste_offset_px": [
+        94,
+        106
+      ],
+      "atlas": "atlases/E_breakup.png",
+      "atlas_rect_xywh": [
+        1024,
+        1024,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        147,
+        135,
+        385,
+        369
+      ]
+    },
+    {
+      "id": "E_03_04",
+      "file": "sprites/E_breakup/E_03_04.png",
+      "category": "breakup",
+      "row": 3,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 파편 분해 애니메이션 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        932,
+        640,
+        1254,
+        941
+      ],
+      "source_anchor_px": [
+        1090,
+        790
+      ],
+      "paste_offset_px": [
+        98,
+        106
+      ],
+      "atlas": "atlases/E_breakup.png",
+      "atlas_rect_xywh": [
+        1536,
+        1024,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        120,
+        236,
+        393,
+        379
+      ]
+    },
+    {
+      "id": "E_04_01",
+      "file": "sprites/E_breakup/E_04_01.png",
+      "category": "breakup",
+      "row": 4,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 파편 분해 애니메이션 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        0,
+        941,
+        320,
+        1254
+      ],
+      "source_anchor_px": [
+        160,
+        1090
+      ],
+      "paste_offset_px": [
+        96,
+        107
+      ],
+      "atlas": "atlases/E_breakup.png",
+      "atlas_rect_xywh": [
+        0,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        149,
+        177,
+        371,
+        359
+      ]
+    },
+    {
+      "id": "E_04_02",
+      "file": "sprites/E_breakup/E_04_02.png",
+      "category": "breakup",
+      "row": 4,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 파편 분해 애니메이션 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        320,
+        941,
+        618,
+        1254
+      ],
+      "source_anchor_px": [
+        470,
+        1090
+      ],
+      "paste_offset_px": [
+        106,
+        107
+      ],
+      "atlas": "atlases/E_breakup.png",
+      "atlas_rect_xywh": [
+        512,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        161,
+        145,
+        351,
+        370
+      ]
+    },
+    {
+      "id": "E_04_03",
+      "file": "sprites/E_breakup/E_04_03.png",
+      "category": "breakup",
+      "row": 4,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 파편 분해 애니메이션 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        618,
+        941,
+        932,
+        1254
+      ],
+      "source_anchor_px": [
+        780,
+        1090
+      ],
+      "paste_offset_px": [
+        94,
+        107
+      ],
+      "atlas": "atlases/E_breakup.png",
+      "atlas_rect_xywh": [
+        1024,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        128,
+        135,
+        382,
+        371
+      ]
+    },
+    {
+      "id": "E_04_04",
+      "file": "sprites/E_breakup/E_04_04.png",
+      "category": "breakup",
+      "row": 4,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 파편 분해 애니메이션 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        932,
+        941,
+        1254,
+        1254
+      ],
+      "source_anchor_px": [
+        1090,
+        1090
+      ],
+      "paste_offset_px": [
+        98,
+        107
+      ],
+      "atlas": "atlases/E_breakup.png",
+      "atlas_rect_xywh": [
+        1536,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        125,
+        163,
+        392,
+        375
+      ]
+    },
+    {
+      "id": "F_01_01",
+      "file": "sprites/F_pressure/F_01_01.png",
+      "category": "pressure",
+      "row": 1,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "무채색 공기 압력 VFX 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        0,
+        0,
+        309,
+        283
+      ],
+      "source_anchor_px": [
+        159,
+        186
+      ],
+      "paste_offset_px": [
+        97,
+        70
+      ],
+      "atlas": "atlases/F_pressure.png",
+      "atlas_rect_xywh": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        156,
+        221,
+        357,
+        280
+      ]
+    },
+    {
+      "id": "F_01_02",
+      "file": "sprites/F_pressure/F_01_02.png",
+      "category": "pressure",
+      "row": 1,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "무채색 공기 압력 VFX 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        309,
+        0,
+        623,
+        283
+      ],
+      "source_anchor_px": [
+        470,
+        186
+      ],
+      "paste_offset_px": [
+        95,
+        70
+      ],
+      "atlas": "atlases/F_pressure.png",
+      "atlas_rect_xywh": [
+        512,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        112,
+        214,
+        395,
+        300
+      ]
+    },
+    {
+      "id": "F_01_03",
+      "file": "sprites/F_pressure/F_01_03.png",
+      "category": "pressure",
+      "row": 1,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "무채색 공기 압력 VFX 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        623,
+        0,
+        943,
+        283
+      ],
+      "source_anchor_px": [
+        783,
+        186
+      ],
+      "paste_offset_px": [
+        96,
+        70
+      ],
+      "atlas": "atlases/F_pressure.png",
+      "atlas_rect_xywh": [
+        1024,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        110,
+        206,
+        403,
+        307
+      ]
+    },
+    {
+      "id": "F_01_04",
+      "file": "sprites/F_pressure/F_01_04.png",
+      "category": "pressure",
+      "row": 1,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "무채색 공기 압력 VFX 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        943,
+        0,
+        1254,
+        283
+      ],
+      "source_anchor_px": [
+        1096,
+        186
+      ],
+      "paste_offset_px": [
+        103,
+        70
+      ],
+      "atlas": "atlases/F_pressure.png",
+      "atlas_rect_xywh": [
+        1536,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        117,
+        218,
+        391,
+        306
+      ]
+    },
+    {
+      "id": "F_02_01",
+      "file": "sprites/F_pressure/F_02_01.png",
+      "category": "pressure",
+      "row": 2,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "무채색 공기 압력 VFX 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        0,
+        283,
+        309,
+        621
+      ],
+      "source_anchor_px": [
+        159,
+        474
+      ],
+      "paste_offset_px": [
+        97,
+        65
+      ],
+      "atlas": "atlases/F_pressure.png",
+      "atlas_rect_xywh": [
+        0,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        173,
+        170,
+        344,
+        334
+      ]
+    },
+    {
+      "id": "F_02_02",
+      "file": "sprites/F_pressure/F_02_02.png",
+      "category": "pressure",
+      "row": 2,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "무채색 공기 압력 VFX 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        309,
+        283,
+        623,
+        621
+      ],
+      "source_anchor_px": [
+        470,
+        474
+      ],
+      "paste_offset_px": [
+        95,
+        65
+      ],
+      "atlas": "atlases/F_pressure.png",
+      "atlas_rect_xywh": [
+        512,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        128,
+        120,
+        386,
+        370
+      ]
+    },
+    {
+      "id": "F_02_03",
+      "file": "sprites/F_pressure/F_02_03.png",
+      "category": "pressure",
+      "row": 2,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "무채색 공기 압력 VFX 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        623,
+        283,
+        943,
+        621
+      ],
+      "source_anchor_px": [
+        783,
+        474
+      ],
+      "paste_offset_px": [
+        96,
+        65
+      ],
+      "atlas": "atlases/F_pressure.png",
+      "atlas_rect_xywh": [
+        1024,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        118,
+        112,
+        395,
+        375
+      ]
+    },
+    {
+      "id": "F_02_04",
+      "file": "sprites/F_pressure/F_02_04.png",
+      "category": "pressure",
+      "row": 2,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "무채색 공기 압력 VFX 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        943,
+        283,
+        1254,
+        621
+      ],
+      "source_anchor_px": [
+        1096,
+        474
+      ],
+      "paste_offset_px": [
+        103,
+        65
+      ],
+      "atlas": "atlases/F_pressure.png",
+      "atlas_rect_xywh": [
+        1536,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        141,
+        114,
+        384,
+        385
+      ]
+    },
+    {
+      "id": "F_03_01",
+      "file": "sprites/F_pressure/F_03_01.png",
+      "category": "pressure",
+      "row": 3,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        400
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.21875
+      ],
+      "source_file": "무채색 공기 압력 VFX 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        0,
+        621,
+        309,
+        949
+      ],
+      "source_anchor_px": [
+        159,
+        886
+      ],
+      "paste_offset_px": [
+        97,
+        135
+      ],
+      "atlas": "atlases/F_pressure.png",
+      "atlas_rect_xywh": [
+        0,
+        1024,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        183,
+        245,
+        346,
+        413
+      ]
+    },
+    {
+      "id": "F_03_02",
+      "file": "sprites/F_pressure/F_03_02.png",
+      "category": "pressure",
+      "row": 3,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        400
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.21875
+      ],
+      "source_file": "무채색 공기 압력 VFX 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        309,
+        621,
+        623,
+        949
+      ],
+      "source_anchor_px": [
+        470,
+        907
+      ],
+      "paste_offset_px": [
+        95,
+        114
+      ],
+      "atlas": "atlases/F_pressure.png",
+      "atlas_rect_xywh": [
+        512,
+        1024,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        132,
+        132,
+        379,
+        411
+      ]
+    },
+    {
+      "id": "F_03_03",
+      "file": "sprites/F_pressure/F_03_03.png",
+      "category": "pressure",
+      "row": 3,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        400
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.21875
+      ],
+      "source_file": "무채색 공기 압력 VFX 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        623,
+        621,
+        943,
+        949
+      ],
+      "source_anchor_px": [
+        783,
+        921
+      ],
+      "paste_offset_px": [
+        96,
+        100
+      ],
+      "atlas": "atlases/F_pressure.png",
+      "atlas_rect_xywh": [
+        1024,
+        1024,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        135,
+        118,
+        372,
+        409
+      ]
+    },
+    {
+      "id": "F_03_04",
+      "file": "sprites/F_pressure/F_03_04.png",
+      "category": "pressure",
+      "row": 3,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        400
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.21875
+      ],
+      "source_file": "무채색 공기 압력 VFX 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        943,
+        621,
+        1254,
+        949
+      ],
+      "source_anchor_px": [
+        1096,
+        921
+      ],
+      "paste_offset_px": [
+        103,
+        100
+      ],
+      "atlas": "atlases/F_pressure.png",
+      "atlas_rect_xywh": [
+        1536,
+        1024,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        143,
+        156,
+        348,
+        385
+      ]
+    },
+    {
+      "id": "F_04_01",
+      "file": "sprites/F_pressure/F_04_01.png",
+      "category": "pressure",
+      "row": 4,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "무채색 공기 압력 VFX 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        0,
+        949,
+        309,
+        1254
+      ],
+      "source_anchor_px": [
+        159,
+        1090
+      ],
+      "paste_offset_px": [
+        97,
+        115
+      ],
+      "atlas": "atlases/F_pressure.png",
+      "atlas_rect_xywh": [
+        0,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        135,
+        133,
+        389,
+        379
+      ]
+    },
+    {
+      "id": "F_04_02",
+      "file": "sprites/F_pressure/F_04_02.png",
+      "category": "pressure",
+      "row": 4,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "무채색 공기 압력 VFX 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        309,
+        949,
+        623,
+        1254
+      ],
+      "source_anchor_px": [
+        470,
+        1090
+      ],
+      "paste_offset_px": [
+        95,
+        115
+      ],
+      "atlas": "atlases/F_pressure.png",
+      "atlas_rect_xywh": [
+        512,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        158,
+        133,
+        368,
+        375
+      ]
+    },
+    {
+      "id": "F_04_03",
+      "file": "sprites/F_pressure/F_04_03.png",
+      "category": "pressure",
+      "row": 4,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "무채색 공기 압력 VFX 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        623,
+        949,
+        943,
+        1254
+      ],
+      "source_anchor_px": [
+        783,
+        1090
+      ],
+      "paste_offset_px": [
+        96,
+        115
+      ],
+      "atlas": "atlases/F_pressure.png",
+      "atlas_rect_xywh": [
+        1024,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        165,
+        168,
+        337,
+        344
+      ]
+    },
+    {
+      "id": "F_04_04",
+      "file": "sprites/F_pressure/F_04_04.png",
+      "category": "pressure",
+      "row": 4,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "무채색 공기 압력 VFX 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        943,
+        949,
+        1254,
+        1254
+      ],
+      "source_anchor_px": [
+        1096,
+        1090
+      ],
+      "paste_offset_px": [
+        103,
+        115
+      ],
+      "atlas": "atlases/F_pressure.png",
+      "atlas_rect_xywh": [
+        1536,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        176,
+        157,
+        353,
+        356
+      ]
+    },
+    {
+      "id": "G_01_01",
+      "file": "sprites/G_residue/G_01_01.png",
+      "category": "residue",
+      "row": 1,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "잔해 후유 입자 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        0,
+        0,
+        313,
+        302
+      ],
+      "source_anchor_px": [
+        164,
+        189
+      ],
+      "paste_offset_px": [
+        92,
+        67
+      ],
+      "atlas": "atlases/G_residue.png",
+      "atlas_rect_xywh": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        147,
+        186,
+        365,
+        326
+      ]
+    },
+    {
+      "id": "G_01_02",
+      "file": "sprites/G_residue/G_01_02.png",
+      "category": "residue",
+      "row": 1,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "잔해 후유 입자 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        313,
+        0,
+        633,
+        302
+      ],
+      "source_anchor_px": [
+        474,
+        174
+      ],
+      "paste_offset_px": [
+        95,
+        82
+      ],
+      "atlas": "atlases/G_residue.png",
+      "atlas_rect_xywh": [
+        512,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        141,
+        170,
+        371,
+        342
+      ]
+    },
+    {
+      "id": "G_01_03",
+      "file": "sprites/G_residue/G_01_03.png",
+      "category": "residue",
+      "row": 1,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "잔해 후유 입자 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        633,
+        0,
+        938,
+        302
+      ],
+      "source_anchor_px": [
+        786,
+        195
+      ],
+      "paste_offset_px": [
+        103,
+        61
+      ],
+      "atlas": "atlases/G_residue.png",
+      "atlas_rect_xywh": [
+        1024,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        142,
+        189,
+        371,
+        323
+      ]
+    },
+    {
+      "id": "G_01_04",
+      "file": "sprites/G_residue/G_01_04.png",
+      "category": "residue",
+      "row": 1,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "잔해 후유 입자 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        938,
+        0,
+        1254,
+        302
+      ],
+      "source_anchor_px": [
+        1096,
+        191
+      ],
+      "paste_offset_px": [
+        98,
+        65
+      ],
+      "atlas": "atlases/G_residue.png",
+      "atlas_rect_xywh": [
+        1536,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        136,
+        178,
+        377,
+        335
+      ]
+    },
+    {
+      "id": "G_02_01",
+      "file": "sprites/G_residue/G_02_01.png",
+      "category": "residue",
+      "row": 2,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "잔해 후유 입자 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        0,
+        302,
+        313,
+        652
+      ],
+      "source_anchor_px": [
+        158,
+        473
+      ],
+      "paste_offset_px": [
+        98,
+        85
+      ],
+      "atlas": "atlases/G_residue.png",
+      "atlas_rect_xywh": [
+        0,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        201,
+        118,
+        312,
+        394
+      ]
+    },
+    {
+      "id": "G_02_02",
+      "file": "sprites/G_residue/G_02_02.png",
+      "category": "residue",
+      "row": 2,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "잔해 후유 입자 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        313,
+        302,
+        633,
+        652
+      ],
+      "source_anchor_px": [
+        473,
+        480
+      ],
+      "paste_offset_px": [
+        96,
+        78
+      ],
+      "atlas": "atlases/G_residue.png",
+      "atlas_rect_xywh": [
+        512,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        157,
+        132,
+        356,
+        380
+      ]
+    },
+    {
+      "id": "G_02_03",
+      "file": "sprites/G_residue/G_02_03.png",
+      "category": "residue",
+      "row": 2,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "잔해 후유 입자 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        633,
+        302,
+        938,
+        652
+      ],
+      "source_anchor_px": [
+        779,
+        485
+      ],
+      "paste_offset_px": [
+        110,
+        73
+      ],
+      "atlas": "atlases/G_residue.png",
+      "atlas_rect_xywh": [
+        1024,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        149,
+        132,
+        364,
+        381
+      ]
+    },
+    {
+      "id": "G_02_04",
+      "file": "sprites/G_residue/G_02_04.png",
+      "category": "residue",
+      "row": 2,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "잔해 후유 입자 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        938,
+        302,
+        1254,
+        652
+      ],
+      "source_anchor_px": [
+        1100,
+        486
+      ],
+      "paste_offset_px": [
+        94,
+        72
+      ],
+      "atlas": "atlases/G_residue.png",
+      "atlas_rect_xywh": [
+        1536,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        196,
+        123,
+        317,
+        389
+      ]
+    },
+    {
+      "id": "G_03_01",
+      "file": "sprites/G_residue/G_03_01.png",
+      "category": "residue",
+      "row": 3,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "잔해 후유 입자 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        0,
+        652,
+        313,
+        938
+      ],
+      "source_anchor_px": [
+        162,
+        785
+      ],
+      "paste_offset_px": [
+        94,
+        123
+      ],
+      "atlas": "atlases/G_residue.png",
+      "atlas_rect_xywh": [
+        0,
+        1024,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        156,
+        157,
+        356,
+        356
+      ]
+    },
+    {
+      "id": "G_03_02",
+      "file": "sprites/G_residue/G_03_02.png",
+      "category": "residue",
+      "row": 3,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "잔해 후유 입자 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        313,
+        652,
+        633,
+        938
+      ],
+      "source_anchor_px": [
+        476,
+        818
+      ],
+      "paste_offset_px": [
+        93,
+        90
+      ],
+      "atlas": "atlases/G_residue.png",
+      "atlas_rect_xywh": [
+        512,
+        1024,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        133,
+        188,
+        379,
+        324
+      ]
+    },
+    {
+      "id": "G_03_03",
+      "file": "sprites/G_residue/G_03_03.png",
+      "category": "residue",
+      "row": 3,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "잔해 후유 입자 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        633,
+        652,
+        938,
+        938
+      ],
+      "source_anchor_px": [
+        783,
+        799
+      ],
+      "paste_offset_px": [
+        106,
+        109
+      ],
+      "atlas": "atlases/G_residue.png",
+      "atlas_rect_xywh": [
+        1024,
+        1024,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        138,
+        167,
+        374,
+        346
+      ]
+    },
+    {
+      "id": "G_03_04",
+      "file": "sprites/G_residue/G_03_04.png",
+      "category": "residue",
+      "row": 3,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "잔해 후유 입자 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        938,
+        652,
+        1254,
+        938
+      ],
+      "source_anchor_px": [
+        1092,
+        803
+      ],
+      "paste_offset_px": [
+        102,
+        105
+      ],
+      "atlas": "atlases/G_residue.png",
+      "atlas_rect_xywh": [
+        1536,
+        1024,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        150,
+        177,
+        363,
+        335
+      ]
+    },
+    {
+      "id": "G_04_01",
+      "file": "sprites/G_residue/G_04_01.png",
+      "category": "residue",
+      "row": 4,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "잔해 후유 입자 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        0,
+        938,
+        313,
+        1254
+      ],
+      "source_anchor_px": [
+        177,
+        1098
+      ],
+      "paste_offset_px": [
+        79,
+        96
+      ],
+      "atlas": "atlases/G_residue.png",
+      "atlas_rect_xywh": [
+        0,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        174,
+        167,
+        338,
+        346
+      ]
+    },
+    {
+      "id": "G_04_02",
+      "file": "sprites/G_residue/G_04_02.png",
+      "category": "residue",
+      "row": 4,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "잔해 후유 입자 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        313,
+        938,
+        633,
+        1254
+      ],
+      "source_anchor_px": [
+        478,
+        1090
+      ],
+      "paste_offset_px": [
+        91,
+        104
+      ],
+      "atlas": "atlases/G_residue.png",
+      "atlas_rect_xywh": [
+        512,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        133,
+        154,
+        379,
+        358
+      ]
+    },
+    {
+      "id": "G_04_03",
+      "file": "sprites/G_residue/G_04_03.png",
+      "category": "residue",
+      "row": 4,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "잔해 후유 입자 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        633,
+        938,
+        938,
+        1254
+      ],
+      "source_anchor_px": [
+        781,
+        1096
+      ],
+      "paste_offset_px": [
+        108,
+        98
+      ],
+      "atlas": "atlases/G_residue.png",
+      "atlas_rect_xywh": [
+        1024,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        147,
+        160,
+        366,
+        352
+      ]
+    },
+    {
+      "id": "G_04_04",
+      "file": "sprites/G_residue/G_04_04.png",
+      "category": "residue",
+      "row": 4,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "잔해 후유 입자 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        938,
+        938,
+        1254,
+        1254
+      ],
+      "source_anchor_px": [
+        1091,
+        1093
+      ],
+      "paste_offset_px": [
+        103,
+        101
+      ],
+      "atlas": "atlases/G_residue.png",
+      "atlas_rect_xywh": [
+        1536,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        141,
+        152,
+        371,
+        361
+      ]
+    },
+    {
+      "id": "H_01_01",
+      "file": "sprites/H_foreground/H_01_01.png",
+      "category": "foreground",
+      "row": 1,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 전경 파편 오클루전 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        0,
+        0,
+        316,
+        312
+      ],
+      "source_anchor_px": [
+        158,
+        161
+      ],
+      "paste_offset_px": [
+        98,
+        95
+      ],
+      "atlas": "atlases/H_foreground.png",
+      "atlas_rect_xywh": [
+        0,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        124,
+        127,
+        389,
+        386
+      ]
+    },
+    {
+      "id": "H_01_02",
+      "file": "sprites/H_foreground/H_01_02.png",
+      "category": "foreground",
+      "row": 1,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 전경 파편 오클루전 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        316,
+        0,
+        627,
+        312
+      ],
+      "source_anchor_px": [
+        473,
+        162
+      ],
+      "paste_offset_px": [
+        99,
+        94
+      ],
+      "atlas": "atlases/H_foreground.png",
+      "atlas_rect_xywh": [
+        512,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        129,
+        123,
+        383,
+        389
+      ]
+    },
+    {
+      "id": "H_01_03",
+      "file": "sprites/H_foreground/H_01_03.png",
+      "category": "foreground",
+      "row": 1,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 전경 파편 오클루전 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        627,
+        0,
+        943,
+        312
+      ],
+      "source_anchor_px": [
+        784,
+        159
+      ],
+      "paste_offset_px": [
+        99,
+        97
+      ],
+      "atlas": "atlases/H_foreground.png",
+      "atlas_rect_xywh": [
+        1024,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        133,
+        127,
+        380,
+        386
+      ]
+    },
+    {
+      "id": "H_01_04",
+      "file": "sprites/H_foreground/H_01_04.png",
+      "category": "foreground",
+      "row": 1,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 전경 파편 오클루전 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        943,
+        0,
+        1254,
+        312
+      ],
+      "source_anchor_px": [
+        1098,
+        162
+      ],
+      "paste_offset_px": [
+        101,
+        94
+      ],
+      "atlas": "atlases/H_foreground.png",
+      "atlas_rect_xywh": [
+        1536,
+        0,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        129,
+        133,
+        383,
+        380
+      ]
+    },
+    {
+      "id": "H_02_01",
+      "file": "sprites/H_foreground/H_02_01.png",
+      "category": "foreground",
+      "row": 2,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 전경 파편 오클루전 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        0,
+        312,
+        316,
+        629
+      ],
+      "source_anchor_px": [
+        158,
+        470
+      ],
+      "paste_offset_px": [
+        98,
+        98
+      ],
+      "atlas": "atlases/H_foreground.png",
+      "atlas_rect_xywh": [
+        0,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        135,
+        115,
+        377,
+        397
+      ]
+    },
+    {
+      "id": "H_02_02",
+      "file": "sprites/H_foreground/H_02_02.png",
+      "category": "foreground",
+      "row": 2,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 전경 파편 오클루전 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        316,
+        312,
+        627,
+        629
+      ],
+      "source_anchor_px": [
+        472,
+        465
+      ],
+      "paste_offset_px": [
+        100,
+        103
+      ],
+      "atlas": "atlases/H_foreground.png",
+      "atlas_rect_xywh": [
+        512,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        138,
+        124,
+        374,
+        388
+      ]
+    },
+    {
+      "id": "H_02_03",
+      "file": "sprites/H_foreground/H_02_03.png",
+      "category": "foreground",
+      "row": 2,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 전경 파편 오클루전 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        627,
+        312,
+        943,
+        629
+      ],
+      "source_anchor_px": [
+        788,
+        481
+      ],
+      "paste_offset_px": [
+        95,
+        87
+      ],
+      "atlas": "atlases/H_foreground.png",
+      "atlas_rect_xywh": [
+        1024,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        126,
+        155,
+        387,
+        358
+      ]
+    },
+    {
+      "id": "H_02_04",
+      "file": "sprites/H_foreground/H_02_04.png",
+      "category": "foreground",
+      "row": 2,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 전경 파편 오클루전 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        943,
+        312,
+        1254,
+        629
+      ],
+      "source_anchor_px": [
+        1101,
+        470
+      ],
+      "paste_offset_px": [
+        98,
+        98
+      ],
+      "atlas": "atlases/H_foreground.png",
+      "atlas_rect_xywh": [
+        1536,
+        512,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        130,
+        124,
+        382,
+        389
+      ]
+    },
+    {
+      "id": "H_03_01",
+      "file": "sprites/H_foreground/H_03_01.png",
+      "category": "foreground",
+      "row": 3,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 전경 파편 오클루전 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        0,
+        629,
+        316,
+        936
+      ],
+      "source_anchor_px": [
+        158,
+        777
+      ],
+      "paste_offset_px": [
+        98,
+        108
+      ],
+      "atlas": "atlases/H_foreground.png",
+      "atlas_rect_xywh": [
+        0,
+        1024,
+        512,
+        512
+      ],
+      "usage": "screen_edge_only",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        128,
+        126,
+        385,
+        386
+      ]
+    },
+    {
+      "id": "H_03_02",
+      "file": "sprites/H_foreground/H_03_02.png",
+      "category": "foreground",
+      "row": 3,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 전경 파편 오클루전 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        316,
+        629,
+        627,
+        936
+      ],
+      "source_anchor_px": [
+        471,
+        782
+      ],
+      "paste_offset_px": [
+        101,
+        103
+      ],
+      "atlas": "atlases/H_foreground.png",
+      "atlas_rect_xywh": [
+        512,
+        1024,
+        512,
+        512
+      ],
+      "usage": "screen_edge_only",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        126,
+        128,
+        386,
+        385
+      ]
+    },
+    {
+      "id": "H_03_03",
+      "file": "sprites/H_foreground/H_03_03.png",
+      "category": "foreground",
+      "row": 3,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 전경 파편 오클루전 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        627,
+        629,
+        943,
+        936
+      ],
+      "source_anchor_px": [
+        788,
+        841
+      ],
+      "paste_offset_px": [
+        95,
+        44
+      ],
+      "atlas": "atlases/H_foreground.png",
+      "atlas_rect_xywh": [
+        1024,
+        1024,
+        512,
+        512
+      ],
+      "usage": "screen_edge_only",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        124,
+        182,
+        388,
+        330
+      ]
+    },
+    {
+      "id": "H_03_04",
+      "file": "sprites/H_foreground/H_03_04.png",
+      "category": "foreground",
+      "row": 3,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 전경 파편 오클루전 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        943,
+        629,
+        1254,
+        936
+      ],
+      "source_anchor_px": [
+        1097,
+        762
+      ],
+      "paste_offset_px": [
+        102,
+        123
+      ],
+      "atlas": "atlases/H_foreground.png",
+      "atlas_rect_xywh": [
+        1536,
+        1024,
+        512,
+        512
+      ],
+      "usage": "screen_edge_only",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        127,
+        143,
+        386,
+        369
+      ]
+    },
+    {
+      "id": "H_04_01",
+      "file": "sprites/H_foreground/H_04_01.png",
+      "category": "foreground",
+      "row": 4,
+      "column": 1,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 전경 파편 오클루전 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        0,
+        936,
+        316,
+        1254
+      ],
+      "source_anchor_px": [
+        163,
+        1081
+      ],
+      "paste_offset_px": [
+        93,
+        111
+      ],
+      "atlas": "atlases/H_foreground.png",
+      "atlas_rect_xywh": [
+        0,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        129,
+        132,
+        384,
+        380
+      ]
+    },
+    {
+      "id": "H_04_02",
+      "file": "sprites/H_foreground/H_04_02.png",
+      "category": "foreground",
+      "row": 4,
+      "column": 2,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 전경 파편 오클루전 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        316,
+        936,
+        627,
+        1254
+      ],
+      "source_anchor_px": [
+        476,
+        1085
+      ],
+      "paste_offset_px": [
+        96,
+        107
+      ],
+      "atlas": "atlases/H_foreground.png",
+      "atlas_rect_xywh": [
+        512,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        139,
+        128,
+        373,
+        385
+      ]
+    },
+    {
+      "id": "H_04_03",
+      "file": "sprites/H_foreground/H_04_03.png",
+      "category": "foreground",
+      "row": 4,
+      "column": 3,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 전경 파편 오클루전 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        627,
+        936,
+        943,
+        1254
+      ],
+      "source_anchor_px": [
+        782,
+        1087
+      ],
+      "paste_offset_px": [
+        101,
+        105
+      ],
+      "atlas": "atlases/H_foreground.png",
+      "atlas_rect_xywh": [
+        1024,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        128,
+        136,
+        385,
+        376
+      ]
+    },
+    {
+      "id": "H_04_04",
+      "file": "sprites/H_foreground/H_04_04.png",
+      "category": "foreground",
+      "row": 4,
+      "column": 4,
+      "canvas": [
+        512,
+        512
+      ],
+      "pivot_top_left_px": [
+        256,
+        256
+      ],
+      "pivot_unity_normalized": [
+        0.5,
+        0.5
+      ],
+      "source_file": "4x4 전경 파편 오클루전 스프라이트 시트.png",
+      "source_crop_xyxy": [
+        943,
+        936,
+        1254,
+        1254
+      ],
+      "source_anchor_px": [
+        1097,
+        1087
+      ],
+      "paste_offset_px": [
+        102,
+        105
+      ],
+      "atlas": "atlases/H_foreground.png",
+      "atlas_rect_xywh": [
+        1536,
+        1536,
+        512,
+        512
+      ],
+      "usage": "general",
+      "tint_mode": "multiply_rgb",
+      "visible_bounds_xyxy": [
+        126,
+        126,
+        386,
+        387
+      ]
+    }
+  ],
+  "animations": [
+    {
+      "id": "D_contact",
+      "frames": [
+        "D_01_01",
+        "D_01_02",
+        "D_01_03",
+        "D_01_04"
+      ],
+      "durations_ms": [
+        50,
+        80,
+        120,
+        180
+      ],
+      "loop": false,
+      "fade_last_ms": 180,
+      "anchor_kind": "ground"
+    },
+    {
+      "id": "D_ground_spread",
+      "frames": [
+        "D_02_01",
+        "D_02_02",
+        "D_02_03",
+        "D_02_04"
+      ],
+      "durations_ms": [
+        50,
+        80,
+        120,
+        180
+      ],
+      "loop": false,
+      "fade_last_ms": 180,
+      "anchor_kind": "ground"
+    },
+    {
+      "id": "D_wall_burst",
+      "frames": [
+        "D_03_01",
+        "D_03_02",
+        "D_03_03",
+        "D_03_04"
+      ],
+      "durations_ms": [
+        50,
+        80,
+        120,
+        180
+      ],
+      "loop": false,
+      "fade_last_ms": 180,
+      "anchor_kind": "wall"
+    },
+    {
+      "id": "D_falling",
+      "frames": [
+        "D_04_01",
+        "D_04_02",
+        "D_04_03",
+        "D_04_04"
+      ],
+      "durations_ms": [
+        50,
+        80,
+        120,
+        180
+      ],
+      "loop": false,
+      "fade_last_ms": 180,
+      "anchor_kind": "fall_origin"
+    },
+    {
+      "id": "E_cube",
+      "frames": [
+        "E_01_01",
+        "E_01_02",
+        "E_01_03",
+        "E_01_04"
+      ],
+      "durations_ms": [
+        33,
+        50,
+        83,
+        150
+      ],
+      "loop": false,
+      "fade_last_ms": 140,
+      "anchor_kind": "center"
+    },
+    {
+      "id": "E_plate",
+      "frames": [
+        "E_02_01",
+        "E_02_02",
+        "E_02_03",
+        "E_02_04"
+      ],
+      "durations_ms": [
+        33,
+        50,
+        83,
+        150
+      ],
+      "loop": false,
+      "fade_last_ms": 140,
+      "anchor_kind": "center"
+    },
+    {
+      "id": "E_chunk",
+      "frames": [
+        "E_03_01",
+        "E_03_02",
+        "E_03_03",
+        "E_03_04"
+      ],
+      "durations_ms": [
+        33,
+        50,
+        83,
+        150
+      ],
+      "loop": false,
+      "fade_last_ms": 140,
+      "anchor_kind": "center"
+    },
+    {
+      "id": "E_lamina",
+      "frames": [
+        "E_04_01",
+        "E_04_02",
+        "E_04_03",
+        "E_04_04"
+      ],
+      "durations_ms": [
+        33,
+        50,
+        83,
+        150
+      ],
+      "loop": false,
+      "fade_last_ms": 140,
+      "anchor_kind": "center"
+    },
+    {
+      "id": "F_ground_ring",
+      "frames": [
+        "F_01_01",
+        "F_01_02",
+        "F_01_03",
+        "F_01_04"
+      ],
+      "durations_ms": [
+        33,
+        50,
+        83,
+        150
+      ],
+      "loop": false,
+      "fade_last_ms": 140,
+      "anchor_kind": "center"
+    },
+    {
+      "id": "F_front_ring",
+      "frames": [
+        "F_02_01",
+        "F_02_02",
+        "F_02_03",
+        "F_02_04"
+      ],
+      "durations_ms": [
+        33,
+        50,
+        83,
+        150
+      ],
+      "loop": false,
+      "fade_last_ms": 140,
+      "anchor_kind": "center"
+    },
+    {
+      "id": "F_updraft",
+      "frames": [
+        "F_03_01",
+        "F_03_02",
+        "F_03_03",
+        "F_03_04"
+      ],
+      "durations_ms": [
+        33,
+        50,
+        83,
+        150
+      ],
+      "loop": false,
+      "fade_last_ms": 140,
+      "anchor_kind": "ground"
+    },
+    {
+      "id": "F_inward",
+      "frames": [
+        "F_04_01",
+        "F_04_02",
+        "F_04_03",
+        "F_04_04"
+      ],
+      "durations_ms": [
+        33,
+        50,
+        83,
+        150
+      ],
+      "loop": false,
+      "fade_last_ms": 140,
+      "anchor_kind": "center"
+    }
+  ]
+}
