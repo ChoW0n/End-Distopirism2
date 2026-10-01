@@ -90,7 +90,8 @@ GPT가 생성한 프레임은 **캐릭터 크기가 프레임마다 다르다.**
     "tipSource": "자동 검출" | "수동 확정" | "미검출",
     "bbox": [x0, y0, x1, y1],
     "ms": 60,               // (선택) 전용기 연속 장의 넘김 시간. SPEC-005 §9.4 [2026-09-29]
-    "impact": true          // (선택) 궤적 중 한 번 더 부딪히는 장 [2026-09-29]
+    "impact": true,         // (선택) 궤적 중 한 번 더 부딪히는 장 [2026-09-29]
+    "windup": true          // (선택) 다음 타 장 바로 앞의 준비 장. 따라붙은 뒤에 넘긴다 (SPEC-005 §12.1 v2.18) [2026-10-01]
   }],
   "effectsPack": "incinerator-effects-remake-v4",   // 어느 이펙트 팩인지
   "effects": [{ "id", "name", "anchor", "size", "pivot", "scale", "blend", "loop", "frames": [{ "file", "ms" }] }],
