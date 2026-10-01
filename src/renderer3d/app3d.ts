@@ -310,6 +310,16 @@ async function main(): Promise<void> {
     stage.play(toStageSteps(events, { isPlayerSide: isAlly }));
   };
 
+  //발밑 궁극기 칸. 속성 합과 궁극기 카드를 도메인에서 읽는다 (SPEC-004 §2.2.1)
+  const showGauges = (): void => {
+    if (!session) return;
+    const rules = loaded.catalog.rules;
+    for (const c of session.battle.combatants) {
+      const ready = c.ultimatePending || c.deck.includes(rules.ultimateSkillId);
+      stage.setGauge(c.id, c.isDefeated ? null : { filled: Math.min(c.attributeTotal, rules.ultimateThreshold), total: rules.ultimateThreshold, ready });
+    }
+  };
+
   //적이 노리는 대상을 적 이름표 아래에 적는다 (§9.6)
   const showTargets = (on: boolean): void => {
     if (!session) return;
@@ -392,6 +402,7 @@ async function main(): Promise<void> {
     if (!session || session.battle.isFinished) return end();
     const startEvents = session.battle.startTurn();
     feed(startEvents);
+    showGauges();
     turnLabel.textContent = String(session.battle.turn);
     if (session.battle.isFinished) return end();
     enemyTargets = new Map<string, string>();
@@ -432,6 +443,7 @@ async function main(): Promise<void> {
     input = null;
     showTargets(false);
     stage.setSelection({ ally: null, target: null, pickable: [] });
+    showGauges();
     const winner = session.battle.winner;
     status.textContent = winner === 'ally' ? '아군 승' : winner === 'enemy' ? '적 승' : '무승부';
     panel.idle(`${status.textContent} — 재시작을 누르면 다시 한다`);

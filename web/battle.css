@@ -307,3 +307,8 @@ button:hover { background: #983030; }
 .foot3d-row span { position: absolute; left: 100%; margin-left: 4px; font-size: 0.68em; line-height: 1; color: #e8e0d2; text-shadow: 0 1px 2px #000, 0 0 2px #000; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .foot3d-row { position: relative; }
 .foot3d-row.mt span { color: #e0c27a; }
+/* 발밑 궁극기 칸 (SPEC-004 §2.2.1). 속성 합만큼 차고, 카드가 손에 있으면 빛난다 */
+.foot3d-ult { display: flex; gap: 2px; margin-top: 1px; }
+.foot3d-ult i { flex: 1 1 0; height: 3px; background: rgba(0, 0, 0, 0.7); outline: 1px solid rgba(0, 0, 0, 0.85); transition: background 0.3s, box-shadow 0.3s; }
+.foot3d-ult i.on { background: #8a6f35; }
+.foot3d-ult.ready i { background: #f0cf7a; box-shadow: 0 0 5px rgba(240, 207, 122, 0.9); }

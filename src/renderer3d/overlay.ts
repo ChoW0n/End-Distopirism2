@@ -17,6 +17,15 @@ interface Tag {
   hpText: HTMLElement;
   mt: HTMLElement;
   mtText: HTMLElement;
+  //궁극기 칸 (SPEC-004 §2.2.1). 속성 합만큼 찬다
+  ult: HTMLElement;
+}
+
+//궁극기 칸에 적을 값. 칸 수는 문턱값, ready 면 전부 빛난다
+export interface UltimateGauge {
+  filled: number;
+  total: number;
+  ready: boolean;
 }
 
 //발밑 바에 적을 값
@@ -92,14 +101,28 @@ export class Overlay {
       foot.style.transitionDuration = `${this.bar.downFade}s`;
       const hp = this.barRow(this.bar.hpHeight, 'hp');
       const mt = this.barRow(this.bar.mtHeight, 'mt');
-      foot.append(hp.row, mt.row);
+      const ult = el('div', 'foot3d-ult');
+      ult.hidden = true;
+      foot.append(hp.row, mt.row, ult);
       this.root.append(box, foot);
-      this.tags.set(actor.combatantId, { el: box, name, note, foot, hp: hp.fill, hpText: hp.text, mt: mt.fill, mtText: mt.text });
+      this.tags.set(actor.combatantId, { el: box, name, note, foot, hp: hp.fill, hpText: hp.text, mt: mt.fill, mtText: mt.text, ult });
     }
   }
 
   setSelection(selection: Selection3d): void {
     this.selection = selection;
+  }
+
+  //궁극기 칸을 채운다. null 이면 숨긴다
+  setGauge(combatantId: string, gauge: UltimateGauge | null): void {
+    const tag = this.tags.get(combatantId);
+    if (!tag) return;
+    tag.ult.hidden = !gauge || gauge.total <= 0;
+    if (!gauge || gauge.total <= 0) return;
+    //칸 수가 바뀌면 다시 만든다
+    if (tag.ult.children.length !== gauge.total) tag.ult.replaceChildren(...Array.from({ length: gauge.total }, () => el('i', '')));
+    Array.from(tag.ult.children).forEach((pip, i) => pip.classList.toggle('on', gauge.ready || i < gauge.filled));
+    tag.ult.classList.toggle('ready', gauge.ready);
   }
 
   //이름표 아래 한 줄. 적이 노리는 대상 같은 것을 적는다. 빈 문자열이면 지운다

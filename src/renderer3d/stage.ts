@@ -18,7 +18,7 @@ import type { BackdropConfig, Stage3dConfig } from './config.js';
 import { CutsceneOverlay } from './cutscene.js';
 import { EffectLayer, effectTextures } from './effects.js';
 import { frameTexture, PaperDoll } from './doll.js';
-import { Overlay, type ScreenPoint, type Selection3d } from './overlay.js';
+import { Overlay, type ScreenPoint, type Selection3d, type UltimateGauge } from './overlay.js';
 import { SparkField } from './sparks.js';
 
 //무대에 세울 사람 한 명
@@ -1074,6 +1074,11 @@ export class Stage3D {
   //이름표 아래 한 줄 (적이 노리는 대상 등)
   setNote(combatantId: string, text: string): void {
     this.overlay.setNote(combatantId, text);
+  }
+
+  //발밑 궁극기 칸 (SPEC-004 §2.2.1)
+  setGauge(combatantId: string, gauge: UltimateGauge | null): void {
+    this.overlay.setGauge(combatantId, gauge);
   }
 }
 

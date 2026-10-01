@@ -22,7 +22,7 @@
     "levelDiffStep": 4,
     "deadlockLimit": 3,
     "oneSidedGivesMentality": false,
-    "ultimateThreshold": 9,
+    "ultimateThreshold": 3,
     "ultimateSkillId": 2099
   },
 
