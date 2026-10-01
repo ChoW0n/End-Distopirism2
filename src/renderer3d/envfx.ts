@@ -1,6 +1,6 @@
 //공용 환경 이펙트 v1 재생 층 (SPEC-005 §16). 먼지·압력·잔해·균열을 무대에 놓는다
 //판 하나에 장을 갈아 끼운다. 피벗이 발생 지점에 오고, 바닥에 눕히는 균열 말고는 카메라 회전을 그대로 따른다
-//시간은 게임 시간이다. 역경직에 같이 멈춘다
+//시간은 실제 시간이다. 슬로우·역경직에 느려지지 않고 배속 버튼만 따른다. 데이터의 재생 배속을 곱한다 (§16.1 v2.20)
 
 import * as THREE from 'three';
 import type { EnvSpawn, EnvVfx } from '../render/envvfx.js';
@@ -108,10 +108,10 @@ export class EnvFxLayer {
     this.playing.add({ mesh, material, frames, durations, fade: anim ? anim.fadeLast : spawn.fade, t: 0, floor });
   }
 
-  //장 넘기기·흐려지기·카메라 향함. dt 는 게임 초
+  //장 넘기기·흐려지기·카메라 향함. dt 는 실제 초(배속 포함)
   update(dt: number, camera: THREE.Camera): void {
     for (const p of [...this.playing]) {
-      p.t += dt * 1000;
+      p.t += dt * 1000 * this.vfx.playbackRate;
       let t = p.t;
       let index = 0;
       while (index < p.durations.length - 1 && t >= (p.durations[index] ?? 0)) {

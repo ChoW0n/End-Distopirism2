@@ -44,6 +44,10 @@ describe('공용 환경 이펙트 v1', () => {
     expect(usedAtlases(vfx)).toEqual(['atlases/B_cracks.png', 'atlases/D_dust.png', 'atlases/F_pressure.png', 'atlases/G_residue.png']);
   });
 
+  it('재생 배속 2 (사용자 지시 v2.20)', () => {
+    expect(vfx.playbackRate).toBe(2);
+  });
+
   it('없는 그림을 가리키면 멈춘다', () => {
     expect(() => parseEnvVfx(manifest, camera, { events: { x: { surfaces: [], camera: 'none', spawns: [{ play: 'Z_99', anchor: 'foot' }] } } })).toThrow(EnvVfxError);
   });

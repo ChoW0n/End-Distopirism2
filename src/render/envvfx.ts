@@ -64,6 +64,8 @@ export interface EnvVfx {
   animations: Map<string, EnvAnimation>;
   camera: { cap: number; presets: Map<string, EnvCameraPreset> };
   events: Map<string, EnvBinding>;
+  //재생 배속. 장 시간·페이드를 이 값으로 나눈다 (SPEC-005 §16.1 v2.20)
+  playbackRate: number;
 }
 
 export class EnvVfxError extends Error {
@@ -147,7 +149,9 @@ export function parseEnvVfx(manifestRaw: unknown, cameraRaw: unknown, bindingsRa
     if (!Array.isArray(surfaces)) throw new EnvVfxError(`events.${name}.surfaces 가 목록이 아니다`);
     events.set(name, { surfaces: surfaces.map(String), camera, heavyCamera, spawns });
   }
-  return { sprites, animations, camera: { cap, presets }, events };
+  const rate = Number(obj(bindingsRaw, 'bindings')['playbackRate'] ?? 1);
+  if (!(rate > 0)) throw new EnvVfxError('playbackRate 가 0 보다 큰 숫자가 아니다');
+  return { sprites, animations, camera: { cap, presets }, events, playbackRate: rate };
 }
 
 //바인딩이 쓰는 아틀라스 파일만 (안 쓰는 계열은 받지 않는다)

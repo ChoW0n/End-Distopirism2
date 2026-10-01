@@ -1193,7 +1193,7 @@ export class Stage3D {
     const gameDt = this.clock.step(realDt);
     const rect = this.canvas.getBoundingClientRect();
     this.sparks.step(gameDt, this.camera, rect.width, rect.height);
-    this.envFx?.layer.update(gameDt, this.camera);
+    this.envFx?.layer.update(realDt, this.camera);
     //실험 모드: 대기 장만 발을 고정한 채 아주 작게 숨쉰다 (§15 A05). 사람마다 박자를 조금 어긋낸다
     if (this.lab) {
       const b = this.config.lab.breath;
