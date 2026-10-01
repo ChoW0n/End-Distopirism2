@@ -9,6 +9,7 @@ import { ClashResolver } from '../domain/clash.js';
 import { BattleCatalog, parseBattleData } from '../domain/data.js';
 import { createSeededRng, type Rng } from '../domain/rng.js';
 import type { BattleEvent, Side } from '../domain/types.js';
+import { ultimateStage, type GaugeLayout } from '../render/arc-gauge.js';
 import { toStageSteps } from '../render/exchange.js';
 import { showcaseCycle, type ShowcaseCard } from '../render/showcase.js';
 import type { SpriteCatalog } from '../render/manifest.js';
@@ -16,11 +17,12 @@ import { parseEnvVfx, usedAtlases, type EnvVfx } from '../render/envvfx.js';
 import { parseCharacterSounds, type CharacterSounds } from '../render/sounds.js';
 import { parseUltimateArt, type UltimateArt } from '../render/ultimate.js';
 import type { UiData } from '../ui/data.js';
-import { OrderInput, type InputMember } from '../ui/input.js';
+import { cardView, OrderInput, type InputMember } from '../ui/input.js';
 import { loadCharacter, loadIndex, loadUi } from '../renderer/assets.js';
 import { CommandPanel } from '../renderer/command-panel.js';
 import { SynthSound } from '../renderer/sound.js';
 import { parseBackdropConfig, parseStage3dConfig, type BackdropConfig, type BattleSetup, type Stage3dConfig } from './config.js';
+import type { CardPlates } from './card.js';
 import { Stage3D, type EnvFxBundle, type RosterEntry, type UltimateBundle } from './stage.js';
 import { bindFullscreen } from './fullscreen.js';
 
@@ -291,11 +293,26 @@ async function main(): Promise<void> {
     if (loadingText) loadingText.textContent = text;
     if (loadingBar) loadingBar.style.width = `${Math.round(ratio * 100)}%`;
   });
-  //UI 묶음 v1 (SPEC-004 §13.5). 작은 버튼 판이 들어오면 판을 씌운다. 없으면 임시 도형 그대로
+  //UI 묶음 v4 (SPEC-004 §14). 작은 버튼 판이 들어오면 판을 씌운다. 없으면 임시 도형 그대로
   const kit = `${ASSETS}/ui/kit`;
-  const [kitProbe, plateFront, plateBack, ring] = await Promise.all(
-    ['U3_small_default', 'U15_overhead_front', 'U15_overhead_back', 'U13_selection_ring'].map((name) => image(`${kit}/${name}.png`)),
+  const display = loaded.ui.display;
+  const [kitProbe, plateFront, plateBack, markGlyph, insightGlyph, resolveGlyph] = await Promise.all(
+    ['U3_small_default', 'U15_overhead_front', 'U15_overhead_back', 'R_mark', 'R_insight', 'R_resolve'].map((name) => image(`${kit}/${name}.png`)),
   );
+  //카일 완성 카드 K 머리 위 판. cardKit 에 있는 (캐릭터, 기술)만 (§14.8)
+  const completePlates = new Map<string, CardPlates>();
+  await Promise.all(
+    Object.entries(display.cardKit).flatMap(([characterId, names]) =>
+      Object.keys(names).map(async (id) => {
+        const [front, back] = await Promise.all([image(`${kit}/K${id}_overhead_front.png`), image(`${kit}/K${id}_overhead_back.png`)]);
+        if (front && back) completePlates.set(`${characterId}/${id}`, { front, back, complete: true });
+      }),
+    ),
+  );
+  //발밑 반원 게이지 경로 (§14.3). 그림이 없으면 같은 경로를 선으로 그린다
+  const gaugeLayout = await fetch(`${kit}/gauge-layout.json`)
+    .then((r) => (r.ok ? (r.json() as Promise<GaugeLayout>) : null))
+    .catch(() => null);
   if (kitProbe) document.documentElement.classList.add('kit');
   loading?.setAttribute('hidden', '');
   //장소 이름은 맵 데이터가 정한다
@@ -329,16 +346,25 @@ async function main(): Promise<void> {
     loaded.backdropImages,
     loaded.sprites,
     (characterId, file) => loaded.frames.get(`${characterId}/${file}`) ?? null,
-    (skillId) => {
-      const skill = loaded.catalog.skill(skillId);
-      return { slot: skill.slot, name: skill.name, frontPower: skill.frontPower, backPower: skill.backPower };
+    (skillId, characterId) => {
+      const view = cardView(loaded.catalog, skillId, { name: characterId ? display.cardKit[characterId]?.[skillId] : undefined, terms: display.terms });
+      return { slot: view.slot, name: view.name, frontPower: view.frontPower, backPower: view.backPower, attribute: view.trace };
     },
     sound,
     loaded.ultimates,
     loaded.voices,
     loaded.envFx,
   );
-  stage.setKit({ plates: plateFront && plateBack ? { front: plateFront, back: plateBack } : null, ring: ring ?? null });
+  const glyphs: Partial<Record<string, HTMLImageElement>> = {};
+  if (markGlyph) glyphs['attack'] = markGlyph;
+  if (insightGlyph) glyphs['defense'] = insightGlyph;
+  if (resolveGlyph) glyphs['support'] = resolveGlyph;
+  stage.setKit({
+    plates: plateFront && plateBack ? { front: plateFront, back: plateBack } : null,
+    completePlates: (characterId, skillId) => completePlates.get(`${characterId}/${skillId}`) ?? null,
+    glyphs,
+    gauge: gaugeLayout ? { base: kitProbe ? kit : null, layout: gaugeLayout } : null,
+  });
   //UI 가 덮지 않는 구역을 재서 무대에 넘긴다 (SPEC-004 §13.4). 위 띠 아래 ~ 지시판 위가 입력 단계 구역, 위 띠 아래 ~ 홈 인디케이터 위가 교전 구역
   const uiBox = document.getElementById('ui');
   const topBar = document.querySelector('.topbar');
@@ -364,7 +390,8 @@ async function main(): Promise<void> {
 
   //턴 진행 단계 (2D 화면과 같다)
   //showcase: 제작 확인용 자동 시연 (SPEC-005 §13)
-  type Phase = 'waitInput' | 'input' | 'resolving' | 'done' | 'showcase';
+  //turnEnd: 턴 마감을 재생하는 동안. 결행 칸 '다음 턴 대기'가 이때 보인다 (SPEC-004 §14.4)
+  type Phase = 'waitInput' | 'input' | 'resolving' | 'turnEnd' | 'done' | 'showcase';
   let phase: Phase = 'done';
   let session: Session | null = null;
   let input: OrderInput | null = null;
@@ -395,13 +422,13 @@ async function main(): Promise<void> {
     stage.play(toStageSteps(events, { isPlayerSide: isAlly }));
   };
 
-  //발밑 궁극기 칸. 속성 합과 궁극기 카드를 도메인에서 읽는다 (SPEC-004 §2.2.1)
+  //발밑 결행 칸. 흔적 합과 결행 카드·대기 플래그를 도메인에서 읽는다 (SPEC-004 §14.4)
   const showGauges = (): void => {
     if (!session) return;
     const rules = loaded.catalog.rules;
     for (const c of session.battle.combatants) {
-      const ready = c.ultimatePending || c.deck.includes(rules.ultimateSkillId);
-      stage.setGauge(c.id, c.isDefeated ? null : { filled: Math.min(c.attributeTotal, rules.ultimateThreshold), total: rules.ultimateThreshold, ready });
+      const stageOf = ultimateStage(c.deck.includes(rules.ultimateSkillId), c.ultimatePending);
+      stage.setGauge(c.id, c.isDefeated ? null : { charge: Math.min(c.attributeTotal, rules.ultimateThreshold), total: rules.ultimateThreshold, stage: stageOf });
     }
   };
 
@@ -432,14 +459,14 @@ async function main(): Promise<void> {
     let url: string | null = null;
     if (frame && bitmap) {
       const [x0, y0, x1, y1] = frame.bbox;
-      //창 비율 126:103. 폭은 몸 높이의 0.42, 가로 가운데는 발 기준점
+      //창 비율 116:79 (SPEC-004 §14.9 U6). 폭은 몸 높이의 0.42, 가로 가운데는 발 기준점
       const w = Math.min(x1 - x0, (y1 - y0) * 0.42);
-      const h = (w * 103) / 126;
+      const h = (w * 79) / 116;
       const left = Math.max(0, frame.anchor.x - w / 2);
       const canvasEl = document.createElement('canvas');
-      canvasEl.width = 252;
-      canvasEl.height = 206;
-      canvasEl.getContext('2d')?.drawImage(bitmap, left, Math.max(0, y0 - h * 0.04), w, h, 0, 0, 252, 206);
+      canvasEl.width = 232;
+      canvasEl.height = 158;
+      canvasEl.getContext('2d')?.drawImage(bitmap, left, Math.max(0, y0 - h * 0.04), w, h, 0, 0, 232, 158);
       try {
         url = canvasEl.toDataURL('image/png');
       } catch {
@@ -474,7 +501,17 @@ async function main(): Promise<void> {
       refresh();
     },
     go: () => submit(),
-  }, portrait);
+  }, portrait, {
+    //상세 줄 (SPEC-004 §14.6). 확률·흔적은 도메인에서 읽기만 한다
+    display,
+    kit: kitProbe ? kit : null,
+    chance: (allyId, skillId) => (session ? session.battle.frontChance(allyId, skillId) : null),
+    traces: (allyId) => {
+      if (!session) return null;
+      const c = session.battle.combatant(allyId);
+      return { ...c.attributes, threshold: loaded.catalog.rules.ultimateThreshold };
+    },
+  });
 
   //시연 한 바퀴. 아군 첫 캐릭터가 S1 → S2 → S3 → 궁극기로 합에서 이긴다 (SPEC-005 §13)
   const startShowcase = (): void => {
@@ -526,7 +563,7 @@ async function main(): Promise<void> {
     if (showcasing()) {
       input = null;
       phase = 'showcase';
-      status.textContent = labbing() ? '연출 실험 · S1 → S2 → S3 → 궁극기' : '시연 · S1 → S2 → S3 → 궁극기';
+      status.textContent = labbing() ? '연출 실험 · S1 → S2 → S3 → 결행' : '시연 · S1 → S2 → S3 → 결행';
       turnLabel.textContent = '-';
       panel.idle(labbing() ? '조사한 연출 기법을 켠 실험 — 본편에는 아직 없다' : '제작 확인용 자동 시연 — 아군이 합에서 늘 이긴다');
       startShowcase();
@@ -579,7 +616,7 @@ async function main(): Promise<void> {
     stage.setSelection({ ally: null, target: null, pickable: [] });
     feed(session.battle.resolve());
     phase = 'resolving';
-    panel.idle('합 진행 중…');
+    panel.idle('교전 중…');
   };
 
   const end = (): void => {
@@ -717,9 +754,19 @@ async function main(): Promise<void> {
       if (restSec <= 0) {
         if (session.battle.isFinished) end();
         else {
+          //턴 마감을 먼저 재생하고 결행 칸을 다시 읽는다. 다음 턴 카드는 그다음에 들어온다
           feed(session.battle.endTurn());
-          openTurn();
+          showGauges();
+          showStatuses();
+          phase = 'turnEnd';
         }
+        restSec = 0.5;
+      }
+    }
+    if (session && phase === 'turnEnd' && stage.idle) {
+      restSec -= deltaSec;
+      if (restSec <= 0) {
+        openTurn();
         restSec = 0.5;
       }
     }

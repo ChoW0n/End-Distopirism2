@@ -83,7 +83,20 @@ describe('§10.2 카드', () => {
     const view = cardView(catalog, skill.id);
     expect(view.frontPower).toBe(skill.frontPower);
     expect(view.backPower).toBe(skill.backPower);
-    expect(view.attribute).toBe('방어');
+    expect(view.attribute).toBe('통찰');
+    expect(view.trace).toBe('defense');
     expect(view.slot).toBe('S2');
+  });
+
+  it('표시 이름과 용어만 바꾸고 수치는 데이터 그대로다 (SPEC-004 §14.5·§14.6)', () => {
+    const ult = catalog.rules.ultimateSkillId;
+    const skill = catalog.skill(ult);
+    const plain = cardView(catalog, ult, { terms: { 궁극기: '결행', 속성: '흔적' } });
+    expect(plain.name).toBe(skill.name.split('궁극기').join('결행'));
+    expect(plain.text).not.toContain('궁극기');
+    expect(plain.attribute).toBeNull();
+    const kyle = cardView(catalog, ult, { name: '미명', terms: { 궁극기: '결행' } });
+    expect(kyle.name).toBe('미명');
+    expect([kyle.frontPower, kyle.backPower]).toEqual([skill.frontPower, skill.backPower]);
   });
 });

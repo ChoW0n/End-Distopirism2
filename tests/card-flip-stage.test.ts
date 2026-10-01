@@ -75,11 +75,17 @@ describe('SPEC-005 §11.4 카드 뒤집기 수치', () => {
   });
 });
 
-describe('SPEC-004 §2.2.1 발밑 바 · SPEC-005 §12 v2.13 날아가기', () => {
+describe('SPEC-004 §14.3 발밑 게이지 · SPEC-005 §12 v2.13 날아가기', () => {
   const config = parseStage3dConfig(JSON.parse(readFileSync(resolve(here, '../assets/ui/stage3d.json'), 'utf8')));
 
-  it('발밑 바 수치를 읽는다 (원작 0.5초 보간 · 쓰러지면 1초 흐림)', () => {
-    expect(config.footBar).toEqual({ widthRatio: 0.55, minWidth: 140, hpHeight: 12, mtHeight: 8, gap: 3, tween: 0.5, downFade: 1.0 });
+  it('발밑 게이지 수치를 읽는다 (최대 폭 = 그림 320 · 잔상 0.25초 · 쓰러지면 1초 흐림)', () => {
+    const g = config.footGauge;
+    expect(g.maxWidth).toBe(320);
+    expect(g.minWidth).toBeLessThanOrEqual(g.maxWidth);
+    expect(g.lossSeconds).toBeLessThanOrEqual(0.25);
+    expect(g.downFade).toBe(1.0);
+    expect(g.criticalRatio).toBeGreaterThan(0);
+    expect(g.criticalRatio).toBeLessThan(1);
   });
 
   it('맞으면 크게 날아가고, 다시 붙을 때는 돌진 속도로 달려간다', () => {

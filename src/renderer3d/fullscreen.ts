@@ -58,6 +58,7 @@ export function bindFullscreen(target: Element, button: HTMLElement | null): voi
     const on = current() === target;
     button.setAttribute('aria-pressed', String(on));
     button.setAttribute('aria-label', on ? '전체화면 끄기' : '전체화면');
+    button.title = on ? '전체화면 끄기' : '전체화면';
   };
   button.addEventListener('click', () => void toggle(target));
   document.addEventListener('fullscreenchange', show);

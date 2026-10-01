@@ -93,6 +93,11 @@ export class Battle {
     return this.engagements;
   }
 
+  //이 참가자가 이 카드를 지금 뒤집으면 앞면이 나올 확률. 읽기만 하고 상태를 바꾸지 않는다 (SPEC-004 §14.6 상세 줄)
+  frontChance(combatantId: string, skillId: number): number {
+    return this.resolver.frontChance(this.combatant(combatantId), this.catalog.skill(skillId));
+  }
+
   //id 로 참가자를 찾는다. 없으면 던진다
   combatant(id: string): Combatant {
     const found = this.combatantsById.get(id);

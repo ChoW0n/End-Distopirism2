@@ -55,14 +55,16 @@ export interface MotionConfig {
   decayEase: number;
 }
 
-//발밑 체력·정신력 바 (SPEC-004 §2.2.1)
-export interface FootBarConfig {
+//발밑 반원 게이지 (SPEC-004 §14.3). 폭은 UI 기준 단위, 캐릭터 화면 키 비율로 정하고 최소·최대 사이에 가둔다
+export interface FootGaugeConfig {
   widthRatio: number;
   minWidth: number;
-  hpHeight: number;
-  mtHeight: number;
-  gap: number;
-  tween: number;
+  maxWidth: number;
+  //체력 비가 이 이하면 위험 표시
+  criticalRatio: number;
+  //감소 잔상이 남는 시간(초)
+  lossSeconds: number;
+  //쓰러지면 흐려지는 시간(초)
   downFade: number;
 }
 
@@ -186,11 +188,6 @@ export interface LabConfig {
   ultimate: { payoffDelay: number; slashIntervals: number[] };
 }
 
-//고른 아군·대상 적 발밑 선택 고리 U13 (SPEC-004 §13.5). 폭은 캐릭터 키의 비율(월드)
-export interface SelectRingConfig {
-  widthRatio: number;
-}
-
 export interface Stage3dConfig {
   battle: BattleSetup;
   layout: LayoutConfig;
@@ -201,9 +198,8 @@ export interface Stage3dConfig {
   sparks: SparkConfig;
   callout: CalloutConfig;
   cardFlip: CardFlipConfig;
-  footBar: FootBarConfig;
+  footGauge: FootGaugeConfig;
   framing: FramingConfig;
-  selectRing: SelectRingConfig;
   lab: LabConfig;
 }
 
@@ -315,9 +311,8 @@ export function parseStage3dConfig(raw: unknown): Stage3dConfig {
     cardFlip: numbers<CardFlipConfig>(root['cardFlip'], 'cardFlip', [
       'slowScale', 'approachShare', 'spinTime', 'spinTurns', 'revealPop', 'holdTime', 'height', 'headLift', 'fadeTime',
     ]),
-    footBar: numbers<FootBarConfig>(root['footBar'], 'footBar', ['widthRatio', 'minWidth', 'hpHeight', 'mtHeight', 'gap', 'tween', 'downFade']),
+    footGauge: numbers<FootGaugeConfig>(root['footGauge'], 'footGauge', ['widthRatio', 'minWidth', 'maxWidth', 'criticalRatio', 'lossSeconds', 'downFade']),
     framing: numbers<FramingConfig>(root['framing'], 'framing', ['maxZoomOut', 'cover', 'tagMargin', 'footMargin', 'sideMargin', 'bodyHalfWidth', 'headHeight']),
-    selectRing: numbers<SelectRingConfig>(root['selectRing'], 'selectRing', ['widthRatio']),
     lab: parseLab(root['lab']),
   };
 }

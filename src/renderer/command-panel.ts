@@ -4,8 +4,9 @@
 //여기는 그 상태를 버튼으로 보여 주고 누른 것을 돌려줄 뿐이다
 
 import type { BattleCatalog } from '../domain/data.js';
-import { cardView, type InputMember, type OrderInput } from '../ui/input.js';
-import type { SideData } from '../ui/data.js';
+import type { Attribute } from '../domain/types.js';
+import { cardView, type CardView, type InputMember, type OrderInput } from '../ui/input.js';
+import type { DisplayData, SideData } from '../ui/data.js';
 import type { ActorSnapshot } from './canvas.js';
 
 //패널이 부르는 쪽. 누른 것을 앱이 받아 입력 상태에 넣는다
@@ -15,6 +16,33 @@ export interface CommandHandlers {
   card(skillId: number): void;
   go(): void;
 }
+
+//흔적 내역. 속성별 개수와 결행 문턱 (SPEC-004 §14.6)
+export interface TraceCount {
+  attack: number;
+  defense: number;
+  support: number;
+  threshold: number;
+}
+
+//상세 줄·카드 판에 쓰는 것 (SPEC-004 §14.5·§14.6). 2D 화면처럼 없으면 예전 글 카드로 그린다
+export interface PanelDetail {
+  //표시 이름·용어 치환
+  display: DisplayData | null;
+  //UI 묶음 폴더. 있으면 카일 완성 카드 K 판과 흔적 기호를 쓴다
+  kit: string | null;
+  //지금 이 아군이 이 카드를 뒤집으면 앞면이 나올 확률 (도메인 질의)
+  chance(allyId: string, skillId: number): number | null;
+  //이 아군의 흔적 내역
+  traces(allyId: string): TraceCount | null;
+}
+
+//흔적 순서와 기호 그림 (SPEC-004 §14.7)
+const TRACE_ORDER: readonly Attribute[] = ['attack', 'defense', 'support'];
+const TRACE_NAME: Record<Attribute, string> = { attack: '각인', defense: '통찰', support: '결의' };
+const TRACE_FILE: Record<Attribute, string> = { attack: 'R_mark', defense: 'R_insight', support: 'R_resolve' };
+//잠김 이유 (SPEC-004 §14.6)
+const LOCKED_CARD = '먼저 칠 적을 무대에서 고른다';
 
 //패널에 보일 사람 한 명
 export interface PanelMember {
@@ -36,7 +64,12 @@ export class CommandPanel {
   private readonly allies: HTMLElement;
   private readonly enemies: HTMLElement;
   private readonly cards: HTMLElement;
+  private readonly detailLine: HTMLElement | null;
   private readonly goButton: HTMLButtonElement;
+  //교전 시작이 잠겼을 때 누르면 띄울 이유
+  private goLocked = '';
+  //상세 줄 기본 내용. 카드를 가리키다 떼면 이것으로 돌아간다
+  private detailRest: Node[] = [];
 
   //패널 요소를 id 로 잡는다. 버튼 이벤트는 여기서 한 번만 건다
   //portrait: 아군 칸 초상화 창에 넣을 그림 주소 (SPEC-004 §13.5 U6). 없으면 이름만
@@ -45,6 +78,7 @@ export class CommandPanel {
     private readonly side: SideData,
     private readonly handlers: CommandHandlers,
     private readonly portrait: (characterId: string) => string | null = () => null,
+    private readonly detail: PanelDetail | null = null,
   ) {
     const find = (id: string): HTMLElement => {
       const found = document.getElementById(id);
@@ -58,7 +92,69 @@ export class CommandPanel {
     this.enemies = find('cmd-enemies');
     this.cards = find('cmd-cards');
     this.goButton = find('cmd-go') as HTMLButtonElement;
-    this.goButton.addEventListener('click', () => handlers.go());
+    this.detailLine = document.getElementById('cmd-detail');
+    //잠겼으면 막지 않고 이유를 띄운다
+    this.goButton.addEventListener('click', () => {
+      if (this.goButton.getAttribute('aria-disabled') === 'true') this.say(this.goLocked);
+      else handlers.go();
+    });
+  }
+
+  //잠김 이유 같은 짧은 안내를 단계 안내 아래 줄에
+  private say(text: string): void {
+    if (!text) return;
+    this.hint.replaceChildren(el('strong', '', text));
+  }
+
+  //잠금. disabled 대신 aria-disabled 로 두어 눌러도 이유를 띄울 수 있게 한다
+  private lock(button: HTMLButtonElement, locked: boolean): void {
+    button.classList.toggle('locked', locked);
+    button.setAttribute('aria-disabled', String(locked));
+  }
+
+  //상세 줄을 바꾼다. rest 면 기본 내용으로 둔다
+  private showDetail(nodes: readonly (Node | string)[], rest = false): void {
+    if (!this.detailLine) return;
+    this.detailLine.replaceChildren(...nodes);
+    if (rest) this.detailRest = Array.from(this.detailLine.childNodes);
+  }
+
+  //카드 한 장의 표시 모양. 캐릭터 한정 이름·용어 치환을 건다
+  private view(characterId: string, skillId: number): CardView {
+    const display = this.detail?.display;
+    return cardView(this.catalog, skillId, { name: display?.cardKit[characterId]?.[skillId], terms: display?.terms });
+  }
+
+  //흔적 기호 하나
+  private glyph(trace: Attribute): HTMLElement {
+    const icon = el('i', 'trace');
+    icon.dataset['trace'] = trace;
+    if (this.detail?.kit) icon.style.setProperty('--glyph', `url(${this.detail.kit}/${TRACE_FILE[trace]}.png)`);
+    return icon;
+  }
+
+  //앞면 확률 글. 카드마다 같으면 한 값, 다르면 최소~최대 (카드별 값은 카드를 가리키면 나온다)
+  private chanceText(allyId: string, deck: readonly number[]): string {
+    const chances = deck.map((id) => this.detail?.chance(allyId, id) ?? null).filter((p): p is number => p !== null).map((p) => Math.round(p * 100));
+    if (chances.length === 0) return '';
+    const low = Math.min(...chances);
+    const high = Math.max(...chances);
+    return low === high ? `앞면 확률 ${low}%` : `앞면 확률 ${low}~${high}%`;
+  }
+
+  //흔적 내역 줄 조각. 기호 + 이름 + 개수, 끝에 합/문턱
+  private traceNodes(allyId: string): Node[] {
+    const t = this.detail?.traces(allyId);
+    if (!t) return [];
+    const out: Node[] = [];
+    for (const trace of TRACE_ORDER) {
+      const part = el('span', 'trace-count');
+      part.append(this.glyph(trace), `${TRACE_NAME[trace]} ${t[trace]}`);
+      out.push(part);
+    }
+    const total = t.attack + t.defense + t.support;
+    out.push(el('span', 'trace-total', `결행 ${Math.min(total, t.threshold)}/${t.threshold}`));
+    return out;
   }
 
   //입력 단계가 아닐 때. 버튼을 흐리게 하고 지금 무슨 일인지만 적는다
@@ -66,7 +162,9 @@ export class CommandPanel {
     this.root.classList.add('off');
     this.step.textContent = text;
     this.hint.textContent = '';
+    this.showDetail([], true);
     this.goButton.disabled = true;
+    this.lock(this.goButton, true);
   }
 
   //입력 상태를 버튼으로 다시 그린다. 누를 때마다 부른다
@@ -77,7 +175,7 @@ export class CommandPanel {
 
     //지금 할 일 한 줄. 순서는 아군 → 대상 → 카드 (§10.1)
     if (input.ready && !current) {
-      this.step.textContent = '준비 완료 — 합 진행';
+      this.step.textContent = '준비 완료 — 교전 시작';
       this.hint.textContent = '아군 칸을 누르면 그 지시를 다시 한다';
     } else if (!current) {
       this.step.textContent = '① 아군을 고른다';
@@ -98,6 +196,12 @@ export class CommandPanel {
       this.hint.textContent = input.wouldClash(target.id) ? '합이 벌어진다' : '일방 공격이다 (서로 겨루지 않는다)';
     }
 
+    //상세 줄: 지금 아군의 앞면 확률과 흔적 내역 (§14.6)
+    if (current) {
+      const chance = this.chanceText(current.id, current.deck);
+      this.showDetail([...(chance ? [el('span', 'chance', chance)] : []), ...this.traceNodes(current.id)], true);
+    } else this.showDetail([], true);
+
     this.allies.replaceChildren(
       ...allies.map((ally) => {
         const order = input.orderOf(ally.id);
@@ -112,7 +216,7 @@ export class CommandPanel {
           button.prepend(frame);
         }
         const note = order
-          ? `${enemies.find((e) => e.id === order.targetId)?.name ?? '?'} · ${this.catalog.skill(order.skillId).slot}`
+          ? `${enemies.find((e) => e.id === order.targetId)?.name ?? '?'} · ${this.view(ally.characterId, order.skillId).name}`
           : ally.id === input.selectedAlly
             ? '지시 중'
             : '대기';
@@ -136,25 +240,54 @@ export class CommandPanel {
     );
 
     this.cards.replaceChildren(
-      ...(current ? current.deck : []).map((skillId, i) => {
-        const view = cardView(this.catalog, skillId);
-        //슬롯 홈 개수로 판을 고른다 (SPEC-004 §13.5 U2·U16). 지금 아군이 이미 고른 카드는 선택 판
+      ...(current ? current.deck : []).map((skillId) => {
+        const view = this.view(current?.characterId ?? '', skillId);
+        //슬롯 홈 개수로 판을 고른다 (U2·U16). 카일 완성 카드면 K 판 (§14.5). 지금 아군이 이미 고른 카드는 선택 판
         const chosen = current ? input.orderOf(current.id)?.skillId === skillId : false;
-        const button = el('button', `card ${view.slot === 'ULT' ? 'ult' : view.slot.toLowerCase()}${chosen ? ' chosen' : ''}`);
-        button.title = `${view.name} — ${view.text}`;
+        const complete = !!this.detail?.kit && !!current && this.detail.display?.cardKit[current.characterId]?.[skillId] !== undefined;
+        const button = el('button', `card ${view.slot === 'ULT' ? 'ult' : view.slot.toLowerCase()}${chosen ? ' chosen' : ''}${complete ? ' k' : ''}`);
         button.type = 'button';
-        const top = el('div', 'top');
-        top.append(el('span', 'slot', `${i + 1}. ${view.name}`), el('span', 'attr', view.attribute ?? '궁극기'));
-        const dmg = el('div', 'dmg', `앞 ${view.frontPower} · 뒤 ${view.backPower}`);
-        dmg.append(el('small', '', ' 위력'));
-        button.append(top, dmg, el('p', '', view.text));
-        button.disabled = !target;
-        button.addEventListener('click', () => this.handlers.card(skillId));
+        if (complete && this.detail?.kit) {
+          for (const state of ['default', 'selected', 'locked'] as const) button.style.setProperty(`--k-${state}`, `url(${this.detail.kit}/K${skillId}_${state}.png)`);
+        }
+        const kind = view.attribute ?? '결행';
+        //설명은 카드에 얹지 않고 툴팁·접근성 이름·상세 줄로 (§14.5)
+        button.title = `${view.name} (${kind}) — ${view.text}`;
+        button.setAttribute('aria-label', `${view.name}, ${kind}, 앞 ${view.frontPower} 뒤 ${view.backPower}. ${view.text}`);
+        const art = el('span', 'art');
+        if (!complete) art.append(view.trace ? this.glyph(view.trace) : el('i', 'trace ult'));
+        const front = el('span', 'pw front');
+        front.append(el('small', '', '앞'), String(view.frontPower));
+        const back = el('span', 'pw back');
+        back.append(el('small', '', '뒤'), String(view.backPower));
+        button.append(el('span', 'title', view.name), art, front, back, el('span', 'kind', kind));
+        const locked = !target;
+        this.lock(button, locked);
+        //가리키면 그 카드 설명, 떼면 기본 상세 줄
+        const explain = (): void => {
+          const p = current ? this.detail?.chance(current.id, skillId) : null;
+          const parts: (Node | string)[] = [el('strong', '', view.name), ` — ${view.text}`];
+          if (p !== null && p !== undefined) parts.push(el('span', 'chance', ` · 앞면 ${Math.round(p * 100)}%`));
+          this.showDetail(parts);
+        };
+        const rest = (): void => this.showDetail(this.detailRest);
+        button.addEventListener('pointerenter', explain);
+        button.addEventListener('focus', explain);
+        button.addEventListener('pointerleave', rest);
+        button.addEventListener('blur', rest);
+        button.addEventListener('click', () => {
+          if (locked) this.say(LOCKED_CARD);
+          else this.handlers.card(skillId);
+        });
         return button;
       }),
     );
 
-    this.goButton.disabled = !input.ready;
+    //교전 시작. 지시가 다 안 찼으면 잠그고 남은 아군을 이유로
+    const waiting = allies.filter((a) => !input.orderOf(a.id)).map((a) => a.name);
+    this.goLocked = waiting.length > 0 ? `지시가 남은 아군: ${waiting.join(', ')}` : '';
+    this.goButton.disabled = false;
+    this.lock(this.goButton, !input.ready);
   }
 
   //아군·적 칸 하나

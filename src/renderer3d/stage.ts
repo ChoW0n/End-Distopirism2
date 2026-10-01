@@ -22,7 +22,7 @@ import { CutsceneOverlay } from './cutscene.js';
 import { EnvFxLayer } from './envfx.js';
 import { EffectLayer, effectTextures } from './effects.js';
 import { frameTexture, PaperDoll } from './doll.js';
-import { Overlay, type ScreenPoint, type Selection3d, type StatusMark, type UltimateGauge } from './overlay.js';
+import { Overlay, type GaugeKit, type ScreenPoint, type Selection3d, type StatusMark, type UltimateGauge } from './overlay.js';
 import { SparkField } from './sparks.js';
 
 //무대에 세울 사람 한 명
@@ -62,6 +62,8 @@ export interface StageSkill {
   name: string;
   frontPower: number;
   backPower: number;
+  //흔적 종류 (attack·defense·support). 결행은 null
+  attribute: string | null;
 }
 
 //궁극기 연출에 쓸 것 (SPEC-005 §10.2). 시간표와 고유 전장, 이펙트·컷신 그림
@@ -95,13 +97,16 @@ export interface EnvFxBundle {
 
 //카드 테두리 진영 색. 이름표·결과 알림의 진영 색과 같다 (SPEC-004 §11)
 const CARD_TINT = { ally: '#6f9bbd', enemy: '#b3262b' } as const;
-//선택 고리 물들임 (SPEC-004 §13.5 U13 진영 색은 코드). 적은 그림 색 그대로
-const RING_TINT = { ally: 0xa8cde3, enemy: 0xffffff } as const;
-
-//무대가 쓰는 UI 묶음 그림 (SPEC-004 §13.5). 없으면 임시 도형
+//무대가 쓰는 UI 묶음 그림 (SPEC-004 §14). 없으면 임시 도형
 export interface StageKit {
+  //범용 머리 위 카드 판 U15
   plates: CardPlates | null;
-  ring: HTMLImageElement | null;
+  //캐릭터·기술별 완성 카드 판 K (카일). 없으면 null
+  completePlates: (characterId: string, skillId: number) => CardPlates | null;
+  //흔적 기호 R. 속성 → 그림
+  glyphs: Partial<Record<string, HTMLImageElement>>;
+  //발밑 반원 게이지 그림·경로
+  gauge: GaugeKit | null;
 }
 
 //재시작하면 도는 타임라인을 끊는다
@@ -173,11 +178,8 @@ export class Stage3D {
   private readonly worldPerPixel = new Map<string, number>();
   //머리 위 카드와 그 주인 인형
   private readonly cards = new Map<FlipCard, PaperDoll>();
-  //머리 위 카드 판(U15)·선택 고리(U13)
-  private kit: StageKit = { plates: null, ring: null };
-  //고른 아군·대상 적 발밑 고리. 0 = 아군 자리, 1 = 대상 자리
-  private readonly rings: THREE.Mesh[] = [];
-  private selection: Selection3d = { ally: null, target: null, pickable: [] };
+  //머리 위 카드 판(U15·K)·흔적 기호·발밑 게이지 (SPEC-004 §14)
+  private kit: StageKit = { plates: null, completePlates: () => null, glyphs: {}, gauge: null };
   //궁극기 이펙트·컷신 (SPEC-005 §10.2)
   private readonly effects: EffectLayer;
   private readonly cutscene: CutsceneOverlay;
@@ -205,7 +207,8 @@ export class Stage3D {
     backdropImages: Map<string, HTMLImageElement>,
     private readonly sprites: Map<string, SpriteCatalog>,
     private readonly frameImages: (characterId: string, file: string) => HTMLImageElement | null,
-    private readonly skillInfo: (skillId: number) => StageSkill,
+    //characterId 가 있으면 그 캐릭터의 표시 이름 (SPEC-004 §14.5 카일 한정 이름)
+    private readonly skillInfo: (skillId: number, characterId?: string) => StageSkill,
     private readonly sound: SoundPlayer,
     ultimates: Map<string, UltimateBundle> = new Map(),
     //그림 주인 캐릭터 id → 녹음 소리 묶음 (SPEC-005 §14)
@@ -225,7 +228,7 @@ export class Stage3D {
     this.sparks = new SparkField(this.scene, config.sparks);
     this.mapSurface = backdropConfig.surface;
     this.envFx = envFx ? { vfx: envFx.vfx, layer: new EnvFxLayer(this.scene, envFx.vfx, envFx.images, config.layout.characterHeight) } : null;
-    this.overlay = new Overlay(host, config.footBar);
+    this.overlay = new Overlay(host, config.footGauge);
     this.effects = new EffectLayer(this.scene, config.layout.characterHeight);
     this.cutscene = new CutsceneOverlay(host);
     for (const [characterId, bundle] of ultimates) this.prepareUltimate(characterId, bundle);
@@ -887,12 +890,14 @@ export class Stage3D {
 
   //머리 위 카드를 만든다. 진영 색 테두리
   private makeCard(owner: PaperDoll, flip: FlipView): FlipCard {
-    const info = this.skillInfo(flip.skillId);
-    const side = this.actor(flip.combatantId).entry.side;
+    const entry = this.actor(flip.combatantId).entry;
+    const info = this.skillInfo(flip.skillId, entry.characterId);
+    const side = entry.side;
+    const glyph = info.attribute ? (this.kit.glyphs[info.attribute] ?? null) : null;
     const card = new FlipCard(
-      { name: info.name, slot: info.slot, frontPower: info.frontPower, backPower: info.backPower, tint: side === 'ally' ? CARD_TINT.ally : CARD_TINT.enemy },
+      { name: info.name, slot: info.slot, frontPower: info.frontPower, backPower: info.backPower, tint: side === 'ally' ? CARD_TINT.ally : CARD_TINT.enemy, glyph },
       this.config.cardFlip.height,
-      this.kit.plates,
+      this.kit.completePlates(entry.characterId, flip.skillId) ?? this.kit.plates,
     );
     this.scene.add(card.root);
     this.cards.set(card, owner);
@@ -1293,7 +1298,6 @@ export class Stage3D {
     //겹층(이름표·발밑 바)이 이번 프레임 카메라로 투영하게 행렬을 먼저 맞춘다. 안 하면 한 프레임 늦게 따라온다
     this.camera.updateMatrixWorld();
     for (const a of this.actors.values()) a.doll.faceCamera(this.camera);
-    this.placeRings();
     for (const [card, owner] of this.cards) card.update(this.cardAnchor(owner), this.camera);
     this.effects.update(this.clock.realNow, this.camera);
     this.cutscene.update(this.clock.realNow);
@@ -1357,50 +1361,13 @@ export class Stage3D {
   }
 
   setSelection(selection: Selection3d): void {
-    this.selection = selection;
     this.overlay.setSelection(selection);
   }
 
-  //UI 묶음 그림을 받는다. 고리 판을 만들어 둔다 (SPEC-004 §13.5)
+  //UI 묶음 그림을 받는다. 게이지는 다음 reset 부터 붙는다 (SPEC-004 §14)
   setKit(kit: StageKit): void {
     this.kit = kit;
-    for (const r of this.rings) {
-      this.scene.remove(r);
-      (r.material as THREE.MeshBasicMaterial).map?.dispose();
-      (r.material as THREE.Material).dispose();
-      r.geometry.dispose();
-    }
-    this.rings.length = 0;
-    if (!kit.ring) return;
-    const width = this.config.layout.characterHeight * this.config.selectRing.widthRatio;
-    const height = width * (kit.ring.naturalHeight / Math.max(1, kit.ring.naturalWidth));
-    const texture = new THREE.Texture(kit.ring);
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.needsUpdate = true;
-    for (let i = 0; i < 2; i++) {
-      //인형(10~)보다 먼저, 배경(음수)보다 뒤에 그린다. 바닥에 묻히지 않게 깊이는 보지 않는다
-      const material = new THREE.MeshBasicMaterial({ map: texture, transparent: true, depthTest: false, depthWrite: false, fog: false });
-      const ring = new THREE.Mesh(new THREE.PlaneGeometry(width, height), material);
-      ring.renderOrder = 9;
-      ring.visible = false;
-      this.scene.add(ring);
-      this.rings.push(ring);
-    }
-  }
-
-  //고른 사람 발밑에 고리를 붙인다. 고리 가운데 = 발 접지점, 카메라를 본다
-  private placeRings(): void {
-    const ids = [this.selection.ally, this.selection.target];
-    this.rings.forEach((ring, i) => {
-      const id = ids[i] ?? null;
-      const a = id ? this.actors.get(id) : undefined;
-      ring.visible = !!a && !a.doll.down && !a.doll.hidden;
-      if (!a || !ring.visible) return;
-      const d = a.doll;
-      ring.position.set(d.root.position.x + d.visual.position.x * d.root.scale.x, d.root.position.y, d.root.position.z);
-      ring.quaternion.copy(this.camera.quaternion);
-      (ring.material as THREE.MeshBasicMaterial).color.setHex(RING_TINT[a.entry.side]);
-    });
+    this.overlay.setGaugeKit(kit.gauge);
   }
 
   //이름표 오른쪽 상태 아이콘 (SPEC-004 §13.5 U10)
@@ -1422,6 +1389,8 @@ export class Stage3D {
   setLab(options: LabOptions | null): void {
     this.lab = options ? { ...options } : null;
     this.rig.envMuted = this.lab?.reducedMotion ?? false;
+    //감소 잔상도 같이 끈다. 기기 설정(prefers-reduced-motion)도 따른다 (SPEC-004 §14.3)
+    this.overlay.reducedMotion = (this.lab?.reducedMotion ?? false) || (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches);
     if (!this.lab) for (const a of this.actors.values()) a.doll.breath = 0;
   }
 

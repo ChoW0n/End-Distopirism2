@@ -16,36 +16,53 @@ export interface InputMember {
   deck: readonly number[];
 }
 
-//카드 한 장에 보이는 것 (§10.2)
+//카드 한 장에 보이는 것 (§10.2 · SPEC-004 §14.5)
 export interface CardView {
   skillId: number;
+  //표시 이름. 캐릭터 한정 이름이 있으면 그것 (카일 2099 = 미명)
   name: string;
   slot: SkillSlot;
+  //흔적 이름 (각인·통찰·결의). 결행은 null
   attribute: string | null;
+  //흔적 종류. 기호 그림을 고를 때 쓴다
+  trace: Attribute | null;
   //앞면·뒷면 위력 (SPEC-001 v3.0 §1). 레벨차 보너스는 대상마다 달라서 뺀다
   frontPower: number;
   backPower: number;
+  //설명문. 화면 용어로 바꾼 것 (궁극기 → 결행, 속성 → 흔적)
   text: string;
 }
 
-//속성 이름. 카드에 적는 글자다
+//카드를 화면에 보일 때 바꿀 것. name 은 캐릭터 한정 표시 이름, terms 는 설명문 용어 치환표
+export interface CardDisplay {
+  name?: string;
+  terms?: Readonly<Record<string, string>>;
+}
+
+//흔적 이름. 데이터 속성 attack·defense·support 를 화면에서 각인·통찰·결의로 부른다 (SPEC-004 §14.7)
 const ATTRIBUTE_LABEL: Record<Attribute, string> = {
-  attack: '공격',
-  defense: '방어',
-  support: '보조',
+  attack: '각인',
+  defense: '통찰',
+  support: '결의',
 };
 
-//카드 한 장을 화면에 보일 모양으로 푼다
-export function cardView(catalog: BattleCatalog, skillId: number): CardView {
+//글 안의 용어를 치환표대로 바꾼다
+export function displayText(text: string, terms: Readonly<Record<string, string>> = {}): string {
+  return Object.entries(terms).reduce((out, [from, to]) => out.split(from).join(to), text);
+}
+
+//카드 한 장을 화면에 보일 모양으로 푼다. 데이터는 바꾸지 않고 보이는 글만 바꾼다
+export function cardView(catalog: BattleCatalog, skillId: number, display: CardDisplay = {}): CardView {
   const skill = catalog.skill(skillId);
   return {
     skillId,
-    name: skill.name,
+    name: display.name ?? displayText(skill.name, display.terms),
     slot: skill.slot,
     attribute: skill.attribute ? ATTRIBUTE_LABEL[skill.attribute] : null,
+    trace: skill.attribute ?? null,
     frontPower: skill.frontPower,
     backPower: skill.backPower,
-    text: skill.text,
+    text: displayText(skill.text, display.terms),
   };
 }
 

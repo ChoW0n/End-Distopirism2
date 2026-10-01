@@ -288,6 +288,14 @@ export interface SoundData {
   gains: Record<SoundCue, number>;
 }
 
+//화면 표시 글 (SPEC-004 §14.5·§14.6). 데이터 이름·설명은 그대로 두고 보이는 글만 바꾼다
+export interface DisplayData {
+  //용어 치환표 (궁극기 → 결행 등)
+  terms: Record<string, string>;
+  //캐릭터 id → 기술 id → 표시 이름. 여기 있는 기술은 완성 카드 그림 K 를 쓴다
+  cardKit: Record<string, Record<number, string>>;
+}
+
 export interface UiData {
   dash: DashData;
   float: FloatData;
@@ -311,6 +319,7 @@ export interface UiData {
   floatText: FloatTextData;
   result: ResultData;
   sound: SoundData;
+  display: DisplayData;
 }
 
 //수치 파일이 규격과 다를 때 던진다
@@ -493,9 +502,32 @@ export function parseUiData(raw: unknown): UiData {
       },
     },
     result: numbers('result', ['inSec', 'bandHeight', 'size'] as const),
+    display: parseDisplay(source['display']),
     sound: {
       master: num(sound, 'master', 'sound'),
       gains: Object.fromEntries(SOUND_CUES.map((cue) => [cue, num(soundGains, cue, 'sound.gains')])) as Record<SoundCue, number>,
     },
   };
+}
+
+//화면 표시 글을 읽는다. 치환표·이름은 빈 글이면 던진다
+function parseDisplay(raw: unknown): DisplayData {
+  const display = obj(raw, 'display');
+  const words = (value: unknown, path: string): Record<string, string> => {
+    const o = obj(value, path);
+    for (const key of Object.keys(o)) str(o, key, path);
+    return o as Record<string, string>;
+  };
+  const kits = obj(display['cardKit'], 'display.cardKit');
+  const cardKit: Record<string, Record<number, string>> = {};
+  for (const [characterId, names] of Object.entries(kits)) {
+    const table = words(names, `display.cardKit.${characterId}`);
+    cardKit[characterId] = Object.fromEntries(
+      Object.entries(table).map(([id, name]) => {
+        if (!/^\d+$/.test(id)) throw new UiDataError(`display.cardKit.${characterId} 의 키가 기술 id 가 아니다: ${id}`);
+        return [Number(id), name];
+      }),
+    );
+  }
+  return { terms: words(display['terms'], 'display.terms'), cardKit };
 }

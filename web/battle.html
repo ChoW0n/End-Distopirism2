@@ -13,7 +13,7 @@
   <div id="ui" class="ui">
     <!-- 위 띠 y 0~120: 메뉴 · 맵 이름과 단계 안내 · 턴 · 배속·자동·도움말 -->
     <header class="topbar">
-      <button id="menu-open" class="btn-s" type="button" aria-label="메뉴" aria-haspopup="dialog"><span>☰</span></button>
+      <button id="menu-open" class="btn-s" type="button" aria-label="메뉴" title="메뉴" aria-haspopup="dialog"><span>☰</span></button>
       <div class="where">
         <b class="stage-name"></b>
         <span id="cmd-step" class="step">…</span>
@@ -21,11 +21,11 @@
       </div>
       <div class="turn" aria-label="턴"><span id="turn">1</span><small>턴</small></div>
       <div class="top-right">
-        <button id="speed" class="btn-s" type="button" aria-label="배속" aria-pressed="false"><span>×1</span></button>
-        <button id="auto" class="btn-s" type="button" aria-label="자동" aria-pressed="false"><span>자동</span></button>
+        <button id="speed" class="btn-s" type="button" aria-label="배속" title="배속" aria-pressed="false"><span>×1</span></button>
+        <button id="auto" class="btn-s" type="button" aria-label="자동" title="자동" aria-pressed="false"><span>자동</span></button>
         <!-- 게임 화면만 전체화면 (SPEC-004 §13.6). 지원하지 않는 브라우저에서는 숨긴다 -->
-        <button id="fullscreen" class="btn-s" type="button" aria-label="전체화면" aria-pressed="false" hidden><span>⛶</span></button>
-        <button id="help-open" class="btn-s" type="button" aria-label="도움말"><span>?</span></button>
+        <button id="fullscreen" class="btn-s" type="button" aria-label="전체화면" title="전체화면" aria-pressed="false" hidden><span>⛶</span></button>
+        <button id="help-open" class="btn-s" type="button" aria-label="도움말" title="도움말"><span>?</span></button>
       </div>
     </header>
     <!-- 판이 끝났을 때 가운데 배너 U19 (SPEC-004 §13.5) -->
@@ -42,10 +42,11 @@
       <!-- 적 목록은 화면에 두지 않는다. 패널이 요구하는 자리만 남긴다 -->
       <div id="cmd-enemies" class="cmd-enemies" hidden></div>
       <div class="cmd-group cards">
-        <small>카드</small>
+        <!-- 카드 머리글 줄 = 상세 줄. 앞면 확률·흔적 내역·가리킨 카드 설명 (SPEC-004 §14.6) -->
+        <div class="cmd-head"><small>카드</small><span id="cmd-detail" class="detail"></span></div>
         <div id="cmd-cards" class="cmd-cards"></div>
       </div>
-      <button id="cmd-go" class="go" type="button" disabled>합 진행</button>
+      <button id="cmd-go" class="go" type="button" disabled>교전 시작</button>
     </section>
 
     <!-- 메뉴 겹창. 개발 도구는 여기에만 둔다 (SPEC-007 §9.4 규칙 2) -->
@@ -80,11 +81,12 @@
     <div id="help" class="dialog help" role="dialog" aria-labelledby="help-title" hidden>
       <h2 id="help-title">전투 방법</h2>
       <ol>
-        <li><b>아군</b>을 고르고 → 칠 <b>적</b>을 무대에서 누르고 → <b>카드</b>를 고른다. 아군 수만큼 반복.</li>
+        <li><b>아군</b>을 고르고 → 칠 <b>적</b>을 무대에서 누르고 → <b>카드</b>를 고른다. 아군 수만큼 반복한 뒤 <b>교전 시작</b>.</li>
         <li>적 이름표 아래 <span class="enemy-arrow">노림 표지</span>의 이름은 그 적이 노리는 아군이다.
           <b>나를 노리는 적을 같이 노리면 합</b>, 아니면 서로 한 대씩 치는 일방 공격이다.</li>
         <li><b>합</b>: 양쪽 카드가 머리 위에서 뒤집힌다. 앞면이면 높은 위력, 뒷면이면 낮은 위력. 위력이 높은 쪽이 이긴다.</li>
-        <li><b>정신력</b>(발밑 아래쪽 황동색 바)이 높을수록 앞면이 잘 나온다. 합에서 지면 깎이고 이기면 오른다.</li>
+        <li>발밑 반원: 바깥 굵은 <b>붉은 띠</b>가 체력, 안쪽 얇은 <b>푸른 띠</b>가 정신력. 체력·정신력이 높을수록 앞면이 잘 나온다. 합에서 지면 정신력이 깎이고 이기면 오른다.</li>
+        <li>합에서 이기면 카드의 <b>흔적</b>(각인·통찰·결의)이 쌓인다. 발밑 세 칸이 차면 다음 턴에 <b>결행</b> 카드가 들어온다.</li>
         <li>적을 전부 쓰러뜨리면 승리.</li>
       </ol>
       <button id="help-close" class="close" type="button">시작</button>

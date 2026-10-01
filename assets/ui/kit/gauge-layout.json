@@ -1,0 +1,102 @@
+{
+  "version": "4.0.0",
+  "canvas": [
+    320,
+    110
+  ],
+  "anchor": [
+    160,
+    30
+  ],
+  "hp": {
+    "points": [
+      [
+        24,
+        19
+      ],
+      [
+        15,
+        30
+      ],
+      [
+        44,
+        56
+      ],
+      [
+        95,
+        73
+      ],
+      [
+        225,
+        73
+      ],
+      [
+        276,
+        56
+      ],
+      [
+        305,
+        30
+      ],
+      [
+        296,
+        19
+      ]
+    ],
+    "width": 8,
+    "color": "#e65060",
+    "totalLength": 343.84014962943047
+  },
+  "sp": {
+    "points": [
+      [
+        34,
+        61
+      ],
+      [
+        92,
+        83
+      ],
+      [
+        228,
+        83
+      ],
+      [
+        286,
+        61
+      ]
+    ],
+    "width": 4,
+    "color": "#68baff",
+    "totalLength": 260.06449935416657
+  },
+  "pip": {
+    "filePrefix": "U12_ultimate_",
+    "positions": [
+      [
+        114,
+        91
+      ],
+      [
+        146,
+        91
+      ],
+      [
+        178,
+        91
+      ]
+    ],
+    "scale": 0.5
+  },
+  "fill": "arc-length from first point; clamp ratio 0..1",
+  "layerOrder": [
+    "tracks",
+    "loss",
+    "current fills",
+    "frame",
+    "pips",
+    "selection",
+    "critical"
+  ],
+  "noAutoUnlock": true
+}
