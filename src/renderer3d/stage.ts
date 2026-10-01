@@ -5,6 +5,7 @@
 
 import * as THREE from 'three';
 import type { BattleEvent, CardFace, Side, SkillSlot } from '../domain/types.js';
+import { decayDurations } from '../render/decay.js';
 import { splitDamage, type ClashRound, type FlipView, type StageStep, type StepCallout } from '../render/exchange.js';
 import type { SpriteCatalog } from '../render/manifest.js';
 import type { EnvVfx } from '../render/envvfx.js';
@@ -491,13 +492,23 @@ export class Stage3D {
   }
 
   //한 타의 나머지 장을 넘긴다. 첫 장(타 장)은 이미 보이고 있다
-  private async playSegment(d: PaperDoll, segment: readonly string[], epoch: number): Promise<void> {
-    await this.wait(this.clock.waitGame(this.frameSeconds(d, segment[0] as string, segment.length - 1)), epoch);
-    for (const id of segment.slice(1)) {
+  //잔흔 장은 합은 그대로, 처음엔 천천히 사라지다 끝에서 촤라락 지워지게 시간을 다시 나눈다 (§12.5). final 이면 마지막 장(마무리 자세)은 그대로 붙잡는다
+  private async playSegment(d: PaperDoll, segment: readonly string[], epoch: number, final = false): Promise<void> {
+    const count = segment.length - 1;
+    const rest = segment.slice(1);
+    const hold = final && rest.length > 1 ? rest.length - 1 : -1;
+    const decay = decayDurations(
+      rest.filter((_, i) => i !== hold).map((id) => this.frameSeconds(d, id, count)),
+      this.config.motion.decayEase,
+    );
+    await this.wait(this.clock.waitGame(this.frameSeconds(d, segment[0] as string, count)), epoch);
+    let k = 0;
+    for (const [i, id] of rest.entries()) {
       if (d.down) return;
       d.showFrame(id);
       this.frameVoice(d, id);
-      await this.wait(this.clock.waitGame(this.frameSeconds(d, id, segment.length - 1)), epoch);
+      const seconds = i === hold ? this.frameSeconds(d, id, count) : (decay[k++] ?? 0);
+      await this.wait(this.clock.waitGame(seconds), epoch);
     }
   }
 
@@ -581,7 +592,7 @@ export class Stage3D {
       if (last && damage > 0) this.envEvent('finalHit', L, dir, contact);
       if (k === 0) for (const card of cards) void this.fadeCard(card);
       //실험 모드: 마지막 타는 때린 쪽이 타 장을 더 붙잡는다. 맞은 쪽은 바로 날아간다 (비대칭 홀드 C09)
-      const decay = lab && last ? this.clock.waitGame(lab.attackerHold).then(() => this.playSegment(W, segment, epoch)) : this.playSegment(W, segment, epoch);
+      const decay = lab && last ? this.clock.waitGame(lab.attackerHold).then(() => this.playSegment(W, segment, epoch, true)) : this.playSegment(W, segment, epoch, last);
       const jobs: Promise<void>[] = [this.clock.tween(W.visual.position, 'x', 0, m.knockTime), decay];
       if (!L.down) {
         //중간 타는 맞은 쪽만 날아간다. 때린 쪽은 이 타의 남은 장을 제자리에서 다 넘긴 뒤 따라간다 (§12.1 v2.18)

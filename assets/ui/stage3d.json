@@ -54,6 +54,7 @@
     "readyHold": 0.22,
     "followTime": 0.12,
     "followSpeed": 16,
+    "decayEase": 2.0,
     "hitKnock": 2.4,
     "parryLunge": 0.35,
     "hitSlowScale": 0.4,

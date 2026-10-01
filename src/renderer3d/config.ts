@@ -51,6 +51,8 @@ export interface MotionConfig {
   hitSlowTime: number;
   //다시 붙는 돌진 속도 (월드/초, SPEC-005 §12.1 v2.13)
   followSpeed: number;
+  //휘두르기 잔흔 지우기 곡선 세기. 1 이면 납품처럼 고르게, 크면 처음엔 천천히 끝은 촤라락 (SPEC-005 §12.5)
+  decayEase: number;
 }
 
 //발밑 체력·정신력 바 (SPEC-004 §2.2.1)
@@ -273,6 +275,7 @@ export function parseStage3dConfig(raw: unknown): Stage3dConfig {
       'strikeTrailPeakShare', 'settleTime', 'settleAmplitude', 'settlePeriod', 'returnTime', 'clashWinnerRecoil',
       'clashPush', 'deadlockPush', 'reengageTime', 'roundRest', 'downTime', 'downSink', 'downOpacity', 'heavyDamage',
       'bystanderFade', 'foregroundFade', 'readyHold', 'followTime', 'hitKnock', 'parryLunge', 'hitSlowScale', 'hitSlowTime', 'followSpeed',
+      'decayEase',
     ]),
     camera: numbers<CameraConfig>(root['camera'], 'camera', ['focusSizeGain', 'focusHeight', 'panYawDeg', 'dutchDeg', 'fovZoom', 'followTime', 'returnFollowTime']),
     shake: numbers<ShakeConfig>(root['shake'], 'shake', [
