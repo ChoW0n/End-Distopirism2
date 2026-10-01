@@ -1547,7 +1547,8 @@
         941,
         706
       ],
-      "ms": 50
+      "ms": 50,
+      "windup": true
     },
     {
       "id": "13-skill3-22-downcut-impact",

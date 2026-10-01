@@ -28,6 +28,8 @@ export interface FrameData {
   ms: number | null;
   //궤적 중에 한 번 더 부딪히는 장 (SPEC-005 §9.4)
   impact: boolean;
+  //다음 타 장 바로 앞의 준비 장. 무대가 따라붙은 뒤에 넘긴다 (SPEC-005 §12.1 v2.18)
+  windup: boolean;
 }
 
 //이펙트 한 컷
@@ -241,6 +243,7 @@ function parseFrame(raw: unknown, index: number): FrameData {
     bbox: bbox as [number, number, number, number],
     ms: source['ms'] === undefined ? null : num(source, 'ms', path),
     impact: source['impact'] === true,
+    windup: source['windup'] === true,
   };
 }
 

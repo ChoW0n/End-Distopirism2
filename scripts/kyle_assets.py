@@ -70,7 +70,7 @@ def blade_tip(alpha):
 
 
 #장 한 개를 만들어 저장하고 매니페스트 항목을 돌려준다
-def frame(frame_id, src, foot, scale=1.0, ms=None, impact=False):
+def frame(frame_id, src, foot, scale=1.0, ms=None, impact=False, windup=False):
     im = place(src, foot, scale)
     name = f'{OUT_DIR}/{frame_id}.png'
     im.save(os.path.join(ROOT, name))
@@ -92,6 +92,8 @@ def frame(frame_id, src, foot, scale=1.0, ms=None, impact=False):
         entry['ms'] = ms
     if impact:
         entry['impact'] = True
+    if windup:
+        entry['windup'] = True
     return entry
 
 
@@ -131,7 +133,8 @@ def main():
             continue
         stem = os.path.basename(f['file'])[:-4]
         frame_id = '13-skill3-ready' if index == 2 else f'13-skill3-{stem}'
-        frames.append(frame(frame_id, f's3/{stem}.png', s3_foot, s3_scale, ms=f['duration_ms'], impact=stem.endswith('-impact')))
+        #내려베기 블러(smear)는 내려베기 바로 앞의 준비 장이다. 따라붙은 뒤에 넘긴다 (SPEC-005 §12.1 v2.18)
+        frames.append(frame(frame_id, f's3/{stem}.png', s3_foot, s3_scale, ms=f['duration_ms'], impact=stem.endswith('-impact'), windup=stem.endswith('-smear')))
 
     #궁극기: 준비 v2(1672x941, 머리 폭 364 → 0.40), 납도 마무리 v2 후면(1309x1202, 머리 폭 291 → 0.498)
     frames.append(frame('14-ult-ready', 'ult/ready.png', (822, 916), 145 / 364))

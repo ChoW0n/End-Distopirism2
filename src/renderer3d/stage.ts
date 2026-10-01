@@ -499,6 +499,12 @@ export class Stage3D {
     const m = this.config.motion;
     const dir = this.dir(W, L);
     const segments = this.hitSegments(W, frames);
+    //다음 타 준비 장(windup)은 앞 타 끝에서 떼어 다음 타 앞에 붙인다. 따라붙은 뒤에 넘긴다 (§12.1 v2.18)
+    const windups: string[][] = segments.map(() => []);
+    for (let k = 0; k + 1 < segments.length; k++) {
+      const seg = segments[k] as string[];
+      while (seg.length > 1 && W.catalog.frame(seg[seg.length - 1] as string).windup) (windups[k + 1] as string[]).unshift(seg.pop() as string);
+    }
     const parts = splitDamage(damage, segments.length);
     const parry = frames.length > 1 && segments[0]?.[0] === frames[0];
 
@@ -511,12 +517,23 @@ export class Stage3D {
     for (let k = 0; k < segments.length; k++) {
       const segment = segments[k] as string[];
       const last = k === segments.length - 1;
-      //실험 모드: 여러 타의 마지막 타 앞에서 한 번 멈춘다 (짧게–짧게–멈춤–강하게, §15)
-      if (lab && last && k > 0) await this.wait(this.clock.waitGame(lab.finalBeatPause), epoch);
-      //따라붙기가 모자랐으면(쓰러졌다 등) 남은 거리만 장을 바꾸지 않고 붙는다
+      //앞 타 장을 다 넘긴 뒤, 처음 달려갈 때처럼 돌진 장으로 날아간 자리까지 달려 붙는다 (§12.1 v2.18)
       if (k > 0 && !L.down && Math.abs(this.worldX(L) - this.worldX(W)) > m.contactGap * 1.25) {
         const toX = this.worldX(L) - dir * m.contactGap;
-        await this.wait(this.clock.tween(W.root.position, 'x', toX, m.followTime, ease.inOutQuad), epoch);
+        const time = Math.max(m.followTime, Math.abs(toX - this.worldX(W)) / m.followSpeed);
+        W.setPose('dash');
+        this.dashSound(W);
+        await this.wait(
+          all(this.clock.tween(W.root.position, 'x', toX, time, ease.inOutQuad), this.clock.tween(W.root.position, 'z', L.root.position.z, time, ease.inOutQuad)),
+          epoch,
+        );
+      }
+      //실험 모드: 여러 타의 마지막 타 앞에서 한 번 멈춘다 (짧게–짧게–멈춤–강하게, §15)
+      if (lab && last && k > 0) await this.wait(this.clock.waitGame(lab.finalBeatPause), epoch);
+      //다음 타 준비 장. 도착한 뒤 제자리에서 넘긴다
+      for (const id of windups[k] ?? []) {
+        W.showFrame(id);
+        await this.wait(this.clock.waitGame(this.frameSeconds(W, id, segment.length)), epoch);
       }
       //칼 소리: 받아내기는 막는 소리, 나머지는 그 타 장의 소리 (§14). 맞닿는 순간(strikeTime 뒤)에 정점이 오게 미리 예약한다
       const soundId = parry && k === 0 ? (this.voiceOf(W)?.parry ?? null) : (this.voiceOf(W)?.frames[segment[0] as string] ?? null);
@@ -543,19 +560,9 @@ export class Stage3D {
       const decay = lab && last ? this.clock.waitGame(lab.attackerHold).then(() => this.playSegment(W, segment, epoch)) : this.playSegment(W, segment, epoch);
       const jobs: Promise<void>[] = [this.clock.tween(W.visual.position, 'x', 0, m.knockTime), decay];
       if (!L.down) {
-        if (!last) {
-          //날아갈 자리를 알고, 이 타의 남은 장이 넘어가는 동안 그 앞까지 달려 붙는다. 돌진 장으로 갈아 끼우지 않는다 (§12.1 v2.14)
-          const toX = this.worldX(L) + dir * (m.hitKnock - m.contactGap);
-          const remain = segment.reduce((sum, id) => sum + this.frameSeconds(W, id, segment.length - 1), 0);
-          const time = Math.max(m.followTime, remain, Math.abs(toX - this.worldX(W)) / m.followSpeed);
-          this.dashSound(W);
-          jobs.push(
-            this.nudge(L, dir),
-            this.clock.tween(L.visual.position, 'x', 0, m.knockTime),
-            this.clock.tween(W.root.position, 'x', toX, time, ease.inOutQuad),
-            this.clock.tween(W.root.position, 'z', L.root.position.z, time),
-          );
-        } else if (damage > 0) jobs.push(this.knockback(L, dir, damage, damage >= m.heavyDamage, epoch));
+        //중간 타는 맞은 쪽만 날아간다. 때린 쪽은 이 타의 남은 장을 제자리에서 다 넘긴 뒤 따라간다 (§12.1 v2.18)
+        if (!last) jobs.push(this.nudge(L, dir), this.clock.tween(L.visual.position, 'x', 0, m.knockTime));
+        else if (damage > 0) jobs.push(this.knockback(L, dir, damage, damage >= m.heavyDamage, epoch));
       }
       //날아가는 쪽까지 카메라가 둘을 잡는다
       const fly = last ? Math.min(m.knockMax, m.knockBase + damage * m.knockPerDamage) : m.hitKnock;
