@@ -124,6 +124,6 @@
     "breath": { "amplitude": 0.008, "period": 2.4 },
     "pan": { "width": 0.7 },
     "voiceGain": { "intermediate": 0.8, "final": 1.0 },
-    "ultimate": { "payoffDelay": 0.18, "slashIntervals": [0.07, 0.07, 0.22] }
+    "ultimate": { "payoffDelay": 0.12, "slashIntervals": [0.16, 0.16, 0.24] }
   }
 }

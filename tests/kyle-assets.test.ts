@@ -99,9 +99,9 @@ describe('카일 궁극기 시간표 (SPEC-005 §10.2)', () => {
       appearBehind: 2.1,
       sheathClick: 2.35,
       water: 2.4,
-      effectsEnd: 3.3,
-      restoreEnvironment: 3.5,
-      end: 4.0,
+      effectsEnd: 3.95,
+      restoreEnvironment: 4.0,
+      end: 4.5,
     });
     //컷신은 정확히 1.5초
     expect(art.timeline.cutsceneEnd - art.timeline.cutsceneStart).toBeCloseTo(1.5);
@@ -112,9 +112,9 @@ describe('카일 궁극기 시간표 (SPEC-005 §10.2)', () => {
     for (const id of Object.values(art.effects)) expect(kyle?.effect(id)).toBeTruthy();
   });
 
-  it('여러 번 벤다 (v2.11): 4번, 0.08초 간격, 베기선마다 기울기가 다르다', () => {
+  it('여러 번 벤다 (v2.23): 4번, 0.2초 간격, 베기선마다 기울기가 다르다', () => {
     expect(art.slashes.count).toBe(4);
-    expect(art.slashes.interval).toBeCloseTo(0.08);
+    expect(art.slashes.interval).toBeCloseTo(0.2);
     expect(new Set(art.slashes.rollDeg.slice(0, 4)).size).toBe(4);
   });
 
@@ -125,6 +125,14 @@ describe('카일 궁극기 시간표 (SPEC-005 §10.2)', () => {
     for (const [, y] of jolts) expect(y).toBeGreaterThanOrEqual(0);
     expect(new Set(jolts.map((j) => j.join(','))).size).toBe(jolts.length);
     expect(art.slashes.joltTime).toBeLessThan(art.slashes.interval);
+  });
+
+  it('튕김은 좌우를 번갈아 가고, 튕긴 뒤 다음 베기까지 멈춰 있는 시간이 튕김보다 길다 (v2.23)', () => {
+    const xs = art.slashes.jolt.slice(0, art.slashes.count - 1).map(([x]) => Math.sign(x));
+    for (let i = 1; i < xs.length; i++) expect(xs[i]).toBe(-(xs[i - 1] as number));
+    //마지막 큰 밀림(베인 방향 +)의 바로 앞 튕김은 반대쪽이라 방향이 꺾여 보인다
+    expect(xs[xs.length - 1]).toBe(-1);
+    expect(art.slashes.interval - art.slashes.joltTime).toBeGreaterThan(art.slashes.joltTime);
   });
 
   it('튕김이 없으면 제자리, 튕기는 시간이 0 이하면 멈춘다', () => {
