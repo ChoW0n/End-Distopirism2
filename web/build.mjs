@@ -23,6 +23,15 @@ await build({
   minify: true,
   outfile: 'web/battle.js',
 });
+//물금 실시간 VFX 효과 단독 실험 화면 (SPEC-005 §15.1)
+await build({
+  entryPoints: ['src/renderer3d/vfx-lab.ts'],
+  bundle: true,
+  format: 'esm',
+  target: 'es2020',
+  minify: true,
+  outfile: 'web/vfx-lab.js',
+});
 //2D 캔버스 화면은 비교용으로 남긴다 (SPEC-005 §9)
 await build({
   entryPoints: ['src/renderer/app.ts'],
@@ -56,4 +65,12 @@ const page = local(read('web/battle.html'))
   .replace('\n</body>', '');
 mkdirSync('web/share', { recursive: true });
 writeFileSync('web/share/index.html', page);
-console.log('web/domain.js, web/battle.js, web/battle-data.json, web/standalone.html, web/share/index.html');
+//물금 VFX 실험 화면 공유본. 설정은 같은 폴더 assets/kyle/realtime-vfx.json 에서 읽는다
+const lab = read('web/vfx-lab.html')
+  .replace('<!doctype html>\n', '')
+  .replace('<canvas id="view">', '<canvas id="view" data-assets="assets">')
+  .replace('<script type="module" src="vfx-lab.js"></script>', () => `<script type="module">\n${read('web/vfx-lab.js').replace(/<\/script/gi, '<\\/script')}\n</script>`)
+  .replace('<body>\n', '')
+  .replace('\n</body>', '');
+writeFileSync('web/share/vfx-lab.html', lab);
+console.log('web/domain.js, web/battle.js, web/vfx-lab.js, web/battle-data.json, web/standalone.html, web/share/index.html, web/share/vfx-lab.html');

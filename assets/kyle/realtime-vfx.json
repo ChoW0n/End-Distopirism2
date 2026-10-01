@@ -1,0 +1,21 @@
+{
+  "_주석": "SPEC-005 §15.1 물금 실시간 VFX — 효과 단독 실험 화면 전용. 초깃값은 준비물 kyle-s1-vfx-lab.json 그대로. 일반 게임·시연에는 쓰지 않는다. 경로 점은 발 기준 캐릭터 키(H) 배수, 시간은 게임 ms",
+  "schemaVersion": 1,
+  "id": "kyle-s1-mulgeum",
+  "enabledInNormalPlay": false,
+  "bodyIntegration": "blocked-no-clean-body-no-approved-anchors",
+  "timeDomain": "game",
+  "timingMs": { "reveal": 60, "hold": 160, "erase": 780, "bodyAfterHold": 160 },
+  "erase": { "direction": "tail-to-head", "exponent": 2, "edgeFeatherU": 0.025, "staticNoiseAmplitudeU": 0.012, "shrinkWholeMesh": false },
+  "paletteSRGB": { "body": "#081B30", "middle": "#124C68", "edge": "#67B9C9", "core": "#DAEEF0" },
+  "path": {
+    "space": "foot-relative-character-height",
+    "points": [[-0.9, 1.15], [1.1, 1.75], [1.5, 0.1], [0.65, 0.2]],
+    "segments": 64,
+    "maxWidthInCharacterHeights": 0.22
+  },
+  "_widthProfile": "u 에 따른 폭 비율 = sin(πu)^power. 양 끝이 가늘고 가운데가 최대 폭. 시간에 따라 바뀌지 않는다",
+  "widthProfile": { "shape": "sine", "power": 0.7 },
+  "render": { "edgeOpacity": 0.25, "edgeWidthV": 0.18, "seed": 101 },
+  "test": { "backgrounds": ["#101820", "#D9D9D4", "#655344", "#497383"], "playbackRates": [0.25, 0.5, 1, 2], "fps": [30, 60, 120], "sampleTimesMs": [0, 30, 60, 220, 415, 610, 805, 950, 1000, 1160] }
+}

@@ -204,6 +204,7 @@ Desktop.ini
 web/domain.js
 web/battle.js
 web/battle2d.js
+web/vfx-lab.js
 web/battle-data.json
 web/standalone.html
 web/share/
