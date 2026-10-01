@@ -348,6 +348,7 @@ python3 tools/assets/normalize_sprites.py \
 - 커밋 대상은 `assets/<캐릭터>/sprite-manifest.json`(좌표 데이터)과 `tools/assets/` 도구뿐이다. 카일은 `scripts/kyle_assets.py` (§9.7).
 - 정규화된 PNG는 각자 로컬 출력 폴더에 두고, 배포 시 별도 경로로 묶는다.
 - `assets/index.json` 에 매니페스트가 있는 캐릭터 목록을 둔다. 웹 로더는 이 목록만 읽는다 — 없는 캐릭터의 매니페스트를 찔러 404 를 내지 않는다 (SPEC-004 §12). 캐릭터를 반입하면 목록에 한 줄 더한다
+- 공용 환경 이펙트 [2026-10-01]: `assets/env-vfx/` — `atlases/*.png`(커밋 안 함), `metadata/manifest.json`·`camera-presets.json`(납품 그대로 커밋), `bindings.json`(사건 → 이펙트, 우리 데이터). 받은 아틀라스는 납품 `sha256.json` 과 맞춰 본다 (SPEC-005 §16)
 
 ---
 
