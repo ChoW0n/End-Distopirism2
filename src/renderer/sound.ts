@@ -9,7 +9,14 @@ import { SOUND_CUES, type SoundCue, type SoundData } from '../ui/data.js';
 export interface SoundPlayer {
   play(cue: SoundCue): void;
   //녹음 소리 한 번. 없거나 아직 못 풀었으면 false (SPEC-005 §14)
-  playSample?(id: string, gain?: number): boolean;
+  //delay 초 뒤에 튼다(앞당겨 예약하는 쪽이 계산한다). pan 은 -1(왼쪽)~1(오른쪽)
+  playSample?(id: string, gain?: number, options?: SampleOptions): boolean;
+}
+
+//녹음 소리 재생 선택지
+export interface SampleOptions {
+  delay?: number;
+  pan?: number;
 }
 
 //아무 소리도 안 낸다
@@ -130,7 +137,7 @@ export class SynthSound implements SoundPlayer {
   }
 
   //녹음 소리 한 번. 못 내면 false 라 부른 쪽이 합성 소리로 대신한다
-  playSample(id: string, gain = 1): boolean {
+  playSample(id: string, gain = 1, options: SampleOptions = {}): boolean {
     const audio = this.audio;
     const buffer = this.samples.get(id);
     if (!audio || !this.master || !buffer) return false;
@@ -140,8 +147,17 @@ export class SynthSound implements SoundPlayer {
     const out = audio.createGain();
     out.gain.value = gain;
     source.connect(out);
-    out.connect(this.master);
-    source.start(audio.currentTime + 0.005);
+    //좌우 자리 (SPEC-005 §15 H08). 패너가 없는 브라우저는 가운데
+    const pan = Math.max(-1, Math.min(1, options.pan ?? 0));
+    if (pan !== 0 && typeof audio.createStereoPanner === 'function') {
+      const panner = audio.createStereoPanner();
+      panner.pan.value = pan;
+      out.connect(panner);
+      panner.connect(this.master);
+    } else {
+      out.connect(this.master);
+    }
+    source.start(audio.currentTime + 0.005 + Math.max(0, options.delay ?? 0));
     return true;
   }
 

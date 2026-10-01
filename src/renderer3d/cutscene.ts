@@ -20,6 +20,8 @@ export class CutsceneOverlay {
   private readonly canvas: HTMLCanvasElement;
   private readonly ctx: CanvasRenderingContext2D | null;
   private showing: Showing | null = null;
+  //선을 그을 때 화면을 번쩍일지. 섬광 줄이기면 끈다 (SPEC-005 §15)
+  flash = true;
 
   //무대를 담은 요소 위에 캔버스를 깐다. 입력은 막지 않는다
   constructor(host: HTMLElement) {
@@ -93,7 +95,7 @@ export class CutsceneOverlay {
       const y = h * spec.lineY - lh / 2;
       ctx.drawImage(s.line, 0, 0, s.line.naturalWidth * reveal, s.line.naturalHeight, 0, y, w * reveal, lh);
       //그어지는 순간 화면이 한 번 번쩍인다
-      if (lineT < spec.lineWipe * 2) {
+      if (this.flash && lineT < spec.lineWipe * 2) {
         ctx.globalAlpha *= 0.35 * (1 - lineT / (spec.lineWipe * 2));
         ctx.fillStyle = '#dfe8ff';
         ctx.fillRect(0, 0, w, h);

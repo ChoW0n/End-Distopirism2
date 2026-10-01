@@ -1,5 +1,5 @@
 {
-  "_comment": "카일 녹음 소리 (SPEC-005 §14). 드라이브 '카일 전투 사운드 v1'. 파일은 assets/kyle/sound/ 에 받고 커밋하지 않는다. move_step_dry 는 쓰지 않는다 (사용자 지시)",
+  "_comment": "카일 녹음 소리 (SPEC-005 §14). 드라이브 '2026-10-01_카일_전투사운드_v2_dry-walk제외'. 파일은 assets/kyle/sound/ 에 받고 커밋하지 않는다. move_step_dry 는 쓰지 않는다 (사용자 지시). 세기는 납품에서 맞춰 왔으므로 1",
   "character": "kyle",
   "files": {
     "move_dash": "sound/move_dash.wav",
@@ -14,7 +14,20 @@
     "ult_sheath_click": "sound/ult_sheath_click.wav",
     "ult_delayed_waterburst": "sound/ult_delayed_waterburst.wav"
   },
-  "gain": { "move_dash": 0.6 },
+  "gain": {},
+  "_lead": "파일 안 에너지 정점(ms). 재생 시작 = 타격 시각 - 정점 (납품 README · cues.json technical_qa.energy_peak_ms)",
+  "lead": {
+    "s1_slash_water": 63,
+    "s2_guard": 18,
+    "s2_thrust": 38,
+    "s3_upstrike_scabbard": 21,
+    "s3_slash_up": 48,
+    "s3_slash_down": 63,
+    "ult_draw_cut": 33,
+    "ult_sheath_click": 11,
+    "ult_delayed_waterburst": 53,
+    "move_dash": 28
+  },
   "dash": "move_dash",
   "parry": "s2_guard",
   "frames": {

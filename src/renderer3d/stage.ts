@@ -16,6 +16,7 @@ import { FlipCard } from './card.js';
 import { all, Clock, ease } from './clock.js';
 import type { BackdropConfig, Stage3dConfig } from './config.js';
 import { CutsceneOverlay } from './cutscene.js';
+import { DustField } from './dust.js';
 import { EffectLayer, effectTextures } from './effects.js';
 import { frameTexture, PaperDoll } from './doll.js';
 import { Overlay, type ScreenPoint, type Selection3d, type UltimateGauge } from './overlay.js';
@@ -87,6 +88,24 @@ const CARD_TINT = { ally: '#6f9bbd', enemy: '#b3262b' } as const;
 //재시작하면 도는 타임라인을 끊는다
 class Aborted extends Error {}
 
+//타격 무게 단계 (SPEC-005 §15 A08). 중간 타 · 마지막 타 · 궁극기 마지막 베기
+type HitTier = 'light' | 'heavy' | 'climax';
+
+//녹음 소리 재생 선택지. impactIn 은 지금부터 맞닿는 순간까지(초, 실제). at 은 소리가 날 자리
+interface VoiceOptions {
+  impactIn?: number;
+  at?: THREE.Vector3;
+  gain?: number;
+}
+
+//연출 실험 모드 켬 상태 (SPEC-005 §15)
+export interface LabOptions {
+  //흔들림 줄이기: 흔들림·화각 펀치를 끈다
+  reducedMotion: boolean;
+  //섬광 줄이기: 임팩트 프레임·컷신 선 번쩍임을 끈다
+  reducedFlash: boolean;
+}
+
 export class Stage3D {
   private readonly renderer: THREE.WebGLRenderer;
   private readonly scene = new THREE.Scene();
@@ -95,6 +114,28 @@ export class Stage3D {
   private readonly clock = new Clock();
   private readonly sparks: SparkField;
   private readonly overlay: Overlay;
+  //전투 배경. 실험 모드에서 타격 순간 밝기를 누른다
+  private readonly backdrop: Backdrop;
+  //바닥 먼지 (실험 모드 D05)
+  private readonly dust: DustField;
+  //연출 실험 모드 (SPEC-005 §15). null 이면 끈다
+  private lab: LabOptions | null = null;
+  //배속. 소리를 앞당겨 예약할 때 실제 시간으로 바꾸는 데 쓴다
+  private speed = 1;
+  //배경 누르기 세대. 새 누르기가 오면 앞 것의 풀기를 건너뛴다
+  private dimToken = 0;
+  //배경 밝기 손잡이. 전투 배경과 고유 전장을 같이 누른다
+  private readonly dimKnob = {
+    stage: this as Stage3D,
+    value: 1,
+    get v(): number {
+      return this.value;
+    },
+    set v(x: number) {
+      this.value = x;
+      this.stage.applyBrightness(x);
+    },
+  };
   private readonly actors = new Map<string, Actor>();
   private queue: StageStep[] = [];
   private running = false;
@@ -144,11 +185,13 @@ export class Stage3D {
     this.renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
     this.scene.background = new THREE.Color(0x0e0c0b);
     const backdrop = new Backdrop(this.scene, backdropConfig);
+    this.backdrop = backdrop;
     backdrop.build(backdropImages);
     this.foreground = backdrop.combatHidden;
     this.camera = new THREE.PerspectiveCamera(backdrop.fov, canvas.width / canvas.height, 0.1, 300);
     this.rig = new CameraRig(this.camera, backdrop.homePosition, backdrop.homeLookAt, backdrop.fov, config.camera, config.shake);
     this.sparks = new SparkField(this.scene, config.sparks);
+    this.dust = new DustField(this.scene, config.layout.characterHeight);
     this.overlay = new Overlay(host, config.footBar);
     this.effects = new EffectLayer(this.scene, config.layout.characterHeight);
     this.cutscene = new CutsceneOverlay(host);
@@ -246,6 +289,10 @@ export class Stage3D {
     this.running = false;
     this.clock.clear();
     this.sparks.clear();
+    this.dust.clear();
+    this.dimToken += 1;
+    this.dimKnob.v = 1;
+    this.scene.background = new THREE.Color(0x0e0c0b);
     this.overlay.clear();
     for (const card of this.cards.keys()) card.dispose();
     this.cards.clear();
@@ -460,14 +507,21 @@ export class Stage3D {
       W.showFrame(frames[0] as string);
       await this.wait(this.clock.waitGame(m.readyHold), epoch);
     }
+    const lab = this.lab ? this.config.lab : null;
     for (let k = 0; k < segments.length; k++) {
       const segment = segments[k] as string[];
       const last = k === segments.length - 1;
+      //실험 모드: 여러 타의 마지막 타 앞에서 한 번 멈춘다 (짧게–짧게–멈춤–강하게, §15)
+      if (lab && last && k > 0) await this.wait(this.clock.waitGame(lab.finalBeatPause), epoch);
       //따라붙기가 모자랐으면(쓰러졌다 등) 남은 거리만 장을 바꾸지 않고 붙는다
       if (k > 0 && !L.down && Math.abs(this.worldX(L) - this.worldX(W)) > m.contactGap * 1.25) {
         const toX = this.worldX(L) - dir * m.contactGap;
         await this.wait(this.clock.tween(W.root.position, 'x', toX, m.followTime, ease.inOutQuad), epoch);
       }
+      //칼 소리: 받아내기는 막는 소리, 나머지는 그 타 장의 소리 (§14). 맞닿는 순간(strikeTime 뒤)에 정점이 오게 미리 예약한다
+      const soundId = parry && k === 0 ? (this.voiceOf(W)?.parry ?? null) : (this.voiceOf(W)?.frames[segment[0] as string] ?? null);
+      const contactGuess = this.chest(W).lerp(this.chest(L), this.config.sparks.contactBias);
+      this.voice(W, soundId, { impactIn: this.wallSeconds(m.strikeTime), at: contactGuess, gain: lab ? (last ? lab.voiceGain.final : lab.voiceGain.intermediate) : 1 });
       if (parry && k === 0) {
         //받아내기: 진 쪽이 먼저 파고들어 막는 장에 부딪힌다. 일방이면 막는 장 그대로 밀쳐 들어간다
         W.showFrame(segment[0] as string);
@@ -480,14 +534,14 @@ export class Stage3D {
       } else {
         await this.wait(this.strike(W, segment[0] as string, dir), epoch);
       }
-      //칼 소리: 받아내기는 막는 소리, 나머지는 그 타 장의 소리 (§14)
-      if (parry && k === 0) this.voice(W, this.voiceOf(W)?.parry ?? null);
-      else this.frameVoice(W, segment[0] as string);
       const contact = this.chest(W).lerp(this.chest(L), this.config.sparks.contactBias);
       const part = parts[k] ?? 0;
-      this.impact(contact, L, dir, part, false, last ? events : [], last ? damage : 0, !(parry && k === 0));
+      //받아내기도 금속 스파크는 낸다. 그림에 없는 베기 이펙트는 붙이지 않는다 (§12.3 v2.17)
+      this.impact(contact, L, dir, part, false, last ? events : [], last ? damage : 0, true, last ? 'heavy' : 'light');
       if (k === 0) for (const card of cards) void this.fadeCard(card);
-      const jobs: Promise<void>[] = [this.clock.tween(W.visual.position, 'x', 0, m.knockTime), this.playSegment(W, segment, epoch)];
+      //실험 모드: 마지막 타는 때린 쪽이 타 장을 더 붙잡는다. 맞은 쪽은 바로 날아간다 (비대칭 홀드 C09)
+      const decay = lab && last ? this.clock.waitGame(lab.attackerHold).then(() => this.playSegment(W, segment, epoch)) : this.playSegment(W, segment, epoch);
+      const jobs: Promise<void>[] = [this.clock.tween(W.visual.position, 'x', 0, m.knockTime), decay];
       if (!L.down) {
         if (!last) {
           //날아갈 자리를 알고, 이 타의 남은 장이 넘어가는 동안 그 앞까지 달려 붙는다. 돌진 장으로 갈아 끼우지 않는다 (§12.1 v2.14)
@@ -523,6 +577,11 @@ export class Stage3D {
       ),
       epoch,
     );
+    //실험 모드: 날아가 멈춘 발밑에 바닥 먼지 (D05)
+    if (this.lab) {
+      const dust = this.config.lab.dust;
+      this.dust.burst(this.footOf(d), dir, dust.count, dust.life, dust.size, dust.spread);
+    }
     if (heavy) await this.wait(this.clock.waitGame(m.staggerHold), epoch);
   }
 
@@ -572,15 +631,30 @@ export class Stage3D {
   }
 
   //소리 id 하나를 낸다. 없으면 조용히 넘어간다. 녹음이 났으면 true
-  private voice(d: PaperDoll, id: string | null): boolean {
+  //맞닿는 순간을 알면 파일 안 정점(lead)만큼 앞당겨 예약한다 (§14 v2.17). 실험 모드는 소리 자리로 좌우를 준다 (§15 H08)
+  private voice(d: PaperDoll, id: string | null, options: VoiceOptions = {}): boolean {
     const v = this.voiceOf(d);
     if (!v || !id) return false;
-    return this.sound.playSample?.(`${v.character}/${id}`, v.gain[id] ?? 1) ?? false;
+    const lead = (v.lead[id] ?? 0) / 1000;
+    const delay = options.impactIn !== undefined ? Math.max(0, Math.min(0.5, options.impactIn - lead)) : 0;
+    const pan = this.lab && options.at ? this.panOf(options.at) : 0;
+    return this.sound.playSample?.(`${v.character}/${id}`, (v.gain[id] ?? 1) * (options.gain ?? 1), { delay, pan }) ?? false;
   }
 
   //장이 보일 때 그 장에 묶인 소리
-  private frameVoice(d: PaperDoll, frameId: string): void {
-    this.voice(d, this.voiceOf(d)?.frames[frameId] ?? null);
+  private frameVoice(d: PaperDoll, frameId: string, options: VoiceOptions = {}): void {
+    this.voice(d, this.voiceOf(d)?.frames[frameId] ?? null, options);
+  }
+
+  //월드 자리의 화면 좌우 → 소리 좌우 (-폭 ~ 폭)
+  private panOf(at: THREE.Vector3): number {
+    const n = at.clone().project(this.camera);
+    return Math.max(-1, Math.min(1, n.x)) * this.config.lab.pan.width;
+  }
+
+  //게임 시간 → 실제(벽시계) 시간. 지금 시간 배율과 배속을 나눈다
+  private wallSeconds(game: number): number {
+    return game / Math.max(0.05, this.clock.scale) / Math.max(0.1, this.speed);
   }
 
   //돌진 소리. 녹음이 없으면 합성
@@ -609,17 +683,23 @@ export class Stage3D {
   //맞는 순간. 스파크·역경직·카메라·소리·현황판·피해 숫자
   //total: 흐트러짐을 판정할 전체 피해 (타수가 있으면 마지막 타에만 넘긴다, §12.2)
   //sparks: 불꽃을 낼지. 받아내기는 그림에 이펙트가 없어 불꽃을 내지 않는다 (§12.3)
-  private impact(contact: THREE.Vector3, target: PaperDoll, dir: number, damage: number, clash: boolean, events: readonly BattleEvent[], total = damage, sparks = true): void {
+  //tier 는 실험 모드의 타격 무게 단계다 (§15). 실험 모드가 아니면 쓰지 않는다
+  private impact(contact: THREE.Vector3, target: PaperDoll, dir: number, damage: number, clash: boolean, events: readonly BattleEvent[], total = damage, sparks = true, tier: HitTier | null = null): void {
     const s = this.config.shake;
     const h = this.config.hitStop;
     const heavy = total >= this.config.motion.heavyDamage;
     if (sparks) this.sparks.burst(contact, dir, clash, 10);
 
-    const seconds = clash && damage <= 0 ? h.clashSeconds : Math.min(h.maxSeconds, h.baseSeconds + damage * h.perDamageSeconds);
+    const lab = this.lab && tier ? this.config.lab : null;
+    const seconds = lab && tier ? lab.hitStop[tier] : clash && damage <= 0 ? h.clashSeconds : Math.min(h.maxSeconds, h.baseSeconds + damage * h.perDamageSeconds);
     this.clock.startHitStop(seconds, h.scale);
     //밀림은 제 속도로 보이고 슬로우는 그 뒤에 건다 (§12.1 v2.12)
     if (damage > 0) this.hitSlow(seconds + this.config.motion.knockTime);
-    this.rig.impact(damage > 0 ? Math.min(1, damage / s.damageForMaxShake) : s.clashPower, dir);
+    const power = damage > 0 ? Math.min(1, damage / s.damageForMaxShake) : s.clashPower;
+    //실험 모드: 중간 타는 작게, 마지막·궁극기는 크게 (E06·E07). 흔들림 줄이기면 흔들지 않는다
+    if (!(this.lab?.reducedMotion && lab)) this.rig.impact(lab && tier ? power * lab.shake[tier] : power, dir);
+    if (lab && (tier === 'heavy' || tier === 'climax')) void this.dimBackdrop();
+    if (lab && tier === 'climax' && !this.lab?.reducedFlash) void this.impactFrame();
     this.sound.play(damage <= 0 ? 'clash' : heavy ? 'hitHeavy' : 'hit');
     //중간 타는 이벤트가 없어 현황판 체력만 그 타만큼 줄인다. 마지막 타의 이벤트가 규칙 값으로 맞춘다
     const actor = this.actors.get(target.combatantId);
@@ -908,7 +988,7 @@ export class Stage3D {
 
     //0 준비 장 + 발밑 밤물
     W.showFrame(u.art.frames.ready);
-    const ultVoice = (key: string) => this.voice(W, this.voiceOf(W)?.ultimate[key] ?? null);
+    const ultVoice = (key: string, at?: THREE.Vector3) => this.voice(W, this.voiceOf(W)?.ultimate[key] ?? null, at ? { at } : {});
     ultVoice('start');
     this.rig.focus(this.chest(W), this.chest(L), wdir);
     const pool = spawn(u.art.effects.pool, this.footOf(W), { hold: true, order: 9 });
@@ -927,6 +1007,8 @@ export class Stage3D {
     void this.clock.waitReal(t.cutLine - t.cutsceneStart).then(() => {
       if (this.cutscene.active) ultVoice('cutLine');
     });
+    //섬광 줄이기면 선을 그을 때 화면이 번쩍이지 않는다 (§15)
+    this.cutscene.flash = !this.lab?.reducedFlash;
     this.cutscene.play(u.art.cutscene, { background: u.background, foreground: u.foreground, line: u.line }, this.clock.realNow, t.cutsceneEnd - t.cutsceneStart, t.cutLine - t.cutsceneStart);
 
     //컷신이 걷히면 적 뒤편에 납도 직전 장으로 서 있다
@@ -943,21 +1025,40 @@ export class Stage3D {
     const parts = splitDamage(damage, cuts.count);
     const h = this.config.layout.characterHeight;
     let knock: Promise<void> = Promise.resolve();
+    //실험 모드: 납도 소리 → 정적 → 지연 절단(베기선·피해·물보라·소리)이 한 사건으로 온다. 베기 간격은 마지막 앞이 길다 (§15 A10)
+    const lab = this.lab ? this.config.lab.ultimate : null;
+    const payoff = t.sheathClick + (lab ? lab.payoffDelay : 0);
+    const cutTime = (i: number): number => {
+      if (!lab) return t.sheathClick + i * cuts.interval;
+      let time = payoff;
+      for (let j = 0; j < i; j++) time += lab.slashIntervals[Math.min(j, lab.slashIntervals.length - 1)] ?? cuts.interval;
+      return time;
+    };
     const beats: { time: number; run: () => void }[] = [
       {
-        time: t.water,
+        time: lab ? payoff : t.water,
         run: () => {
           spawn(u.art.effects.water, this.footOf(L));
-          ultVoice('water');
+          ultVoice('water', this.chest(L));
         },
       },
     ];
+    if (lab) {
+      beats.push({
+        time: t.sheathClick,
+        run: () => {
+          W.showFrame(u.art.frames.closed);
+          ultVoice('sheathClick', this.chest(W));
+          for (const card of cards) void this.fadeCard(card);
+        },
+      });
+    }
     for (let i = 0; i < cuts.count; i++) {
       const last = i === cuts.count - 1;
       beats.push({
-        time: t.sheathClick + i * cuts.interval,
+        time: cutTime(i),
         run: () => {
-          if (i === 0) {
+          if (i === 0 && !lab) {
             W.showFrame(u.art.frames.closed);
             ultVoice('sheathClick');
             for (const card of cards) void this.fadeCard(card);
@@ -967,7 +1068,7 @@ export class Stage3D {
           spawn(u.art.effects.slash, where, { roll: ((cuts.rollDeg[i % cuts.rollDeg.length] ?? 0) * Math.PI) / 180 });
           const part = parts[i] ?? 0;
           //베기선 그림이 곧 이펙트라 금속 불꽃은 내지 않는다. 0.08초 간격이라 중간 베기는 조금만 밀린다
-          this.impact(this.chest(L), L, -wdir, part, false, last ? events : [], last ? damage : 0, false);
+          this.impact(this.chest(L), L, -wdir, part, false, last ? events : [], last ? damage : 0, false, last ? 'climax' : 'light');
           if (L.down) return;
           if (!last) void this.nudge(L, -wdir, m.hitKnock * cuts.nudgeShare);
           else if (damage > 0) knock = this.knockback(L, -wdir, damage, damage >= m.heavyDamage, epoch);
@@ -1001,6 +1102,16 @@ export class Stage3D {
     const gameDt = this.clock.step(realDt);
     const rect = this.canvas.getBoundingClientRect();
     this.sparks.step(gameDt, this.camera, rect.width, rect.height);
+    this.dust.step(gameDt);
+    //실험 모드: 대기 장만 발을 고정한 채 아주 작게 숨쉰다 (§15 A05). 사람마다 박자를 조금 어긋낸다
+    if (this.lab) {
+      const b = this.config.lab.breath;
+      let phase = 0;
+      for (const a of this.actors.values()) {
+        a.doll.breath = a.doll.idle && !a.doll.down ? b.amplitude * Math.sin((this.clock.realNow / b.period + phase) * Math.PI * 2) : 0;
+        phase += 0.37;
+      }
+    }
     this.rig.write(realDt, this.clock.realNow);
     //겹층(이름표·발밑 바)이 이번 프레임 카메라로 투영하게 행렬을 먼저 맞춘다. 안 하면 한 프레임 늦게 따라온다
     this.camera.updateMatrixWorld();
@@ -1074,6 +1185,47 @@ export class Stage3D {
   //이름표 아래 한 줄 (적이 노리는 대상 등)
   setNote(combatantId: string, text: string): void {
     this.overlay.setNote(combatantId, text);
+  }
+
+  //연출 실험 모드를 켜고 끈다 (SPEC-005 §15)
+  setLab(options: LabOptions | null): void {
+    this.lab = options ? { ...options } : null;
+    if (!this.lab) for (const a of this.actors.values()) a.doll.breath = 0;
+  }
+
+  //배속을 알린다. 소리를 앞당겨 예약할 때 쓴다
+  setSpeed(speed: number): void {
+    this.speed = speed;
+  }
+
+  //배경 밝기를 전투 배경·고유 전장에 같이 쓴다
+  applyBrightness(value: number): void {
+    this.backdrop.setBrightness(value);
+    for (const u of this.ultimates.values()) u.environment?.setBrightness(value);
+  }
+
+  //배경 정보 억제·암부 (§15 F04·C04). 배경만 잠깐 눌렀다 푼다. 인물·카드·바는 그대로
+  private async dimBackdrop(): Promise<void> {
+    const d = this.config.lab.dim;
+    const token = ++this.dimToken;
+    await this.clock.tweenReal(this.dimKnob, 'v', d.level, d.in);
+    await this.clock.waitReal(d.hold);
+    if (token !== this.dimToken) return;
+    await this.clock.tweenReal(this.dimKnob, 'v', 1, d.out);
+  }
+
+  //임팩트 프레임 (§15 C01). 인물은 검은 실루엣, 배경은 밝은 면으로 아주 잠깐 바꾼다. 궁극기 마지막 베기에만 쓴다
+  private async impactFrame(): Promise<void> {
+    const roots = [this.backdrop.root, ...[...this.ultimates.values()].flatMap((u) => (u.environment ? [u.environment.root] : []))];
+    const shown = roots.map((r) => r.visible);
+    for (const r of roots) r.visible = false;
+    const background = this.scene.background;
+    this.scene.background = new THREE.Color(0xe9e4da);
+    for (const a of this.actors.values()) a.doll.setTint(0x000000);
+    await this.clock.waitReal(this.config.lab.impactFrame.seconds);
+    roots.forEach((r, i) => (r.visible = shown[i] ?? r.visible));
+    this.scene.background = background;
+    for (const a of this.actors.values()) a.doll.setTint(0xffffff);
   }
 
   //발밑 궁극기 칸 (SPEC-004 §2.2.1)

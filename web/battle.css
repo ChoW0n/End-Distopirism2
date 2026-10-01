@@ -312,3 +312,6 @@ button:hover { background: #983030; }
 .foot3d-ult i { flex: 1 1 0; height: 3px; background: rgba(0, 0, 0, 0.7); outline: 1px solid rgba(0, 0, 0, 0.85); transition: background 0.3s, box-shadow 0.3s; }
 .foot3d-ult i.on { background: #8a6f35; }
 .foot3d-ult.ready i { background: #f0cf7a; box-shadow: 0 0 5px rgba(240, 207, 122, 0.9); }
+/* 연출 실험 모드 접근성 체크 (SPEC-005 §15) */
+.lab-options { display: inline-flex; gap: 10px; }
+.lab-options[hidden] { display: none; }

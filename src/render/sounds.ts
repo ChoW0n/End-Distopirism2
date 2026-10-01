@@ -7,6 +7,8 @@ export interface CharacterSounds {
   files: Record<string, string>;
   //소리 id → 세기 (없으면 1)
   gain: Record<string, number>;
+  //소리 id → 파일 안 에너지 정점(ms). 타격 시각보다 이만큼 먼저 튼다 (없으면 0)
+  lead: Record<string, number>;
   //돌진 시작
   dash: string | null;
   //받아내기가 부딪힐 때
@@ -46,12 +48,18 @@ export function parseCharacterSounds(raw: unknown): CharacterSounds {
   const character = root['character'];
   if (typeof character !== 'string' || character.length === 0) throw new CharacterSoundsError('character 가 없다');
   const files = stringMap(root['files'], 'files');
-  const gainRaw = root['gain'] ?? {};
-  const gain: Record<string, number> = {};
-  for (const [k, v] of Object.entries(gainRaw as Json)) {
-    if (typeof v !== 'number' || !(v >= 0)) throw new CharacterSoundsError(`gain.${k} 가 0 이상 숫자가 아니다`);
-    gain[k] = v;
-  }
+  //0 이상 숫자 묶음 (세기·앞당김)
+  const numberMap = (key: string): Record<string, number> => {
+    const out: Record<string, number> = {};
+    for (const [k, v] of Object.entries((root[key] ?? {}) as Json)) {
+      if (k.startsWith('_')) continue;
+      if (typeof v !== 'number' || !(v >= 0)) throw new CharacterSoundsError(`${key}.${k} 가 0 이상 숫자가 아니다`);
+      out[k] = v;
+    }
+    return out;
+  };
+  const gain = numberMap('gain');
+  const lead = numberMap('lead');
   const optional = (key: string): string | null => {
     const v = root[key];
     if (v === undefined || v === null) return null;
@@ -62,12 +70,13 @@ export function parseCharacterSounds(raw: unknown): CharacterSounds {
     character,
     files,
     gain,
+    lead,
     dash: optional('dash'),
     parry: optional('parry'),
     frames: stringMap(root['frames'], 'frames'),
     ultimate: stringMap(root['ultimate'], 'ultimate'),
   };
-  const used = [sounds.dash, sounds.parry, ...Object.values(sounds.frames), ...Object.values(sounds.ultimate), ...Object.keys(gain)];
+  const used = [sounds.dash, sounds.parry, ...Object.values(sounds.frames), ...Object.values(sounds.ultimate), ...Object.keys(gain), ...Object.keys(lead)];
   for (const id of used) if (id !== null && !(id in files)) throw new CharacterSoundsError(`소리 ${id} 의 파일이 없다`);
   return sounds;
 }

@@ -143,6 +143,32 @@ export interface BattleSetup {
   artAlias: Record<string, string>;
 }
 
+//연출 실험 모드 수치 (SPEC-005 §15). 조사 문서 §9 의 초기 튜닝값에서 시작한다
+export interface LabConfig {
+  //히트스톱 단계(초): 중간 타 · 마지막 타 · 궁극기 마지막 베기 (A08)
+  hitStop: { light: number; heavy: number; climax: number };
+  //마지막 타에서 때린 쪽이 타 장을 더 붙잡는 시간(초, 게임) (C09)
+  attackerHold: number;
+  //여러 타의 마지막 타 앞 멈춤(초, 게임) (조사 §2.1)
+  finalBeatPause: number;
+  //흔들림·화각 펀치 배율 (E06·E07)
+  shake: { light: number; heavy: number; climax: number };
+  //배경 누르기: 밝기 · 들어가기 · 붙잡기 · 풀기(초, 실제) (F04·C04)
+  dim: { level: number; in: number; hold: number; out: number };
+  //임팩트 프레임 길이(초, 실제) (C01)
+  impactFrame: { seconds: number };
+  //대기 숨쉬기: 세로 배율 진폭 · 주기(초) (A05)
+  breath: { amplitude: number; period: number };
+  //접지 먼지: 개수 · 수명(초) · 크기(캐릭터 키 비율) · 퍼짐(캐릭터 키 비율) (D05)
+  dust: { count: number; life: number; size: number; spread: number };
+  //소리 좌우 폭 (H08)
+  pan: { width: number };
+  //연타 소리 세기 (H06)
+  voiceGain: { intermediate: number; final: number };
+  //궁극기: 납도 뒤 정적(초, 실제) · 연속 베기 간격(초, 실제) (A10)
+  ultimate: { payoffDelay: number; slashIntervals: number[] };
+}
+
 export interface Stage3dConfig {
   battle: BattleSetup;
   layout: LayoutConfig;
@@ -154,6 +180,7 @@ export interface Stage3dConfig {
   callout: CalloutConfig;
   cardFlip: CardFlipConfig;
   footBar: FootBarConfig;
+  lab: LabConfig;
 }
 
 //배경 층 한 장 (SPEC-005 §8.8)
@@ -253,6 +280,7 @@ export function parseStage3dConfig(raw: unknown): Stage3dConfig {
       'slowScale', 'approachShare', 'spinTime', 'spinTurns', 'revealPop', 'holdTime', 'height', 'headLift', 'fadeTime',
     ]),
     footBar: numbers<FootBarConfig>(root['footBar'], 'footBar', ['widthRatio', 'minWidth', 'hpHeight', 'mtHeight', 'gap', 'tween', 'downFade']),
+    lab: parseLab(root['lab']),
   };
 }
 
@@ -331,4 +359,26 @@ function parseDraws(value: unknown, id: string): BackdropDraw[] {
     const d = obj(raw, `placement.layers.${id}.draws[${i}]`);
     return { source: rect4(d['source'], `${id}.draws[${i}].source`), destination: rect4(d['destination'], `${id}.draws[${i}].destination`) };
   });
+}
+
+//연출 실험 모드 수치를 읽는다
+function parseLab(raw: unknown): LabConfig {
+  const o = obj(raw, 'lab');
+  const tier = (key: string) => numbers<{ light: number; heavy: number; climax: number }>(o[key], `lab.${key}`, ['light', 'heavy', 'climax']);
+  const one = numbers<{ attackerHold: number; finalBeatPause: number }>(o, 'lab', ['attackerHold', 'finalBeatPause']);
+  const ultimate = numbers<{ payoffDelay: number; slashIntervals: number[] }>(o['ultimate'], 'lab.ultimate', ['payoffDelay', 'slashIntervals']);
+  if (!Array.isArray(ultimate.slashIntervals) || ultimate.slashIntervals.length === 0) throw new Stage3dConfigError('lab.ultimate.slashIntervals 가 숫자 목록이 아니다');
+  return {
+    hitStop: tier('hitStop'),
+    attackerHold: one.attackerHold,
+    finalBeatPause: one.finalBeatPause,
+    shake: tier('shake'),
+    dim: numbers<LabConfig['dim']>(o['dim'], 'lab.dim', ['level', 'in', 'hold', 'out']),
+    impactFrame: numbers<LabConfig['impactFrame']>(o['impactFrame'], 'lab.impactFrame', ['seconds']),
+    breath: numbers<LabConfig['breath']>(o['breath'], 'lab.breath', ['amplitude', 'period']),
+    dust: numbers<LabConfig['dust']>(o['dust'], 'lab.dust', ['count', 'life', 'size', 'spread']),
+    pan: numbers<LabConfig['pan']>(o['pan'], 'lab.pan', ['width']),
+    voiceGain: numbers<LabConfig['voiceGain']>(o['voiceGain'], 'lab.voiceGain', ['intermediate', 'final']),
+    ultimate,
+  };
 }

@@ -111,5 +111,19 @@
   "_cardFlip": "SPEC-005 §11 카드 뒤집기. 달려가며 슬로우 → 머리 위 카드 회전 → 띵 → 비교 → 한 방. 시간은 초(회전·비교는 실제 시간)", "cardFlip": { "slowScale": 0.15, "approachShare": 0.55, "spinTime": 0.6, "spinTurns": 3, "revealPop": 0.18, "holdTime": 0.4, "height": 0.9, "headLift": 0.2, "fadeTime": 0.2 }, "callout": {
     "seconds": 1.1,
     "headOffset": 0.35
+  },
+  "_lab": "연출 실험 모드 (SPEC-005 §15). 일반 게임·시연에는 쓰지 않는다. 조사 문서 §9 초기 튜닝값에서 시작. 시간은 초",
+  "lab": {
+    "hitStop": { "light": 0.035, "heavy": 0.075, "climax": 0.11 },
+    "attackerHold": 0.07,
+    "finalBeatPause": 0.14,
+    "shake": { "light": 0.35, "heavy": 1.0, "climax": 1.35 },
+    "dim": { "level": 0.5, "in": 0.03, "hold": 0.12, "out": 0.35 },
+    "impactFrame": { "seconds": 0.06 },
+    "breath": { "amplitude": 0.008, "period": 2.4 },
+    "dust": { "count": 7, "life": 0.55, "size": 0.6, "spread": 0.5 },
+    "pan": { "width": 0.7 },
+    "voiceGain": { "intermediate": 0.8, "final": 1.0 },
+    "ultimate": { "payoffDelay": 0.18, "slashIntervals": [0.07, 0.07, 0.22] }
   }
 }

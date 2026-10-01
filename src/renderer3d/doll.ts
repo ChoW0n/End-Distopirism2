@@ -30,6 +30,8 @@ export class PaperDoll {
   down = false;
   //교전에 끼지 않아 숨겨진 상태 (SPEC-005 §9.3)
   hidden = false;
+  //대기 숨쉬기. 발을 고정한 채 세로로 늘이는 비율 (SPEC-005 §15 A05). 0 이면 없다
+  breath = 0;
   //투명도를 트윈할 손잡이. 쓰러짐·숨기기가 같은 손잡이를 써서 서로 끊는다
   readonly fade = {
     doll: this as PaperDoll,
@@ -138,7 +140,17 @@ export class PaperDoll {
     this.root.quaternion.copy(camera.quaternion);
     if (Math.sign(this.root.scale.x) !== this.facing) this.root.scale.x = this.facing;
     this.visual.rotation.set(0, 0, 0);
-    this.visual.scale.set(1, 1, 1);
+    this.visual.scale.set(1, 1 + this.breath, 1);
+  }
+
+  //지금 대기 장인지. 숨쉬기는 대기 장에만 준다
+  get idle(): boolean {
+    return this.shownId === this.poseFrame('idle');
+  }
+
+  //판 전부의 색을 곱한다. 검정이면 실루엣이다 (SPEC-005 §15 C01). 흰색이 원래 그림
+  setTint(color: number): void {
+    for (const plate of this.plates.values()) plate.material.color.setHex(color);
   }
 
   //월드 x 이동을 visual 로컬 값으로. 루트가 뒤집혀 있으면 반대로 먹는다

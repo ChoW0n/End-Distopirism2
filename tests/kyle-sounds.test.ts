@@ -35,7 +35,16 @@ describe('카일 소리 묶음', () => {
     expect(Object.keys(sounds.ultimate).sort()).toEqual(['cutLine', 'sheathClick', 'start', 'water']);
   });
 
+  it('타 소리마다 앞당길 정점(lead)이 있다 (v2 cues.json, §14 v2.17)', () => {
+    for (const id of [...Object.values(sounds.frames), sounds.parry]) expect(sounds.lead[id as string], id as string).toBeGreaterThan(0);
+    expect(sounds.lead['s1_slash_water']).toBe(63);
+  });
+
   it('파일이 없는 소리를 가리키면 거절한다', () => {
     expect(() => parseCharacterSounds({ character: 'x', files: {}, dash: 'nope' })).toThrow(CharacterSoundsError);
+  });
+
+  it('앞당김 값이 음수면 거절한다', () => {
+    expect(() => parseCharacterSounds({ character: 'x', files: { a: 'a.wav' }, lead: { a: -1 } })).toThrow(CharacterSoundsError);
   });
 });

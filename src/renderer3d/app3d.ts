@@ -301,7 +301,20 @@ async function main(): Promise<void> {
   let enemyTargets = new Map<string, string>();
   let restSec = 0;
   const playing = (): boolean => (modeSelect?.value ?? 'play') === 'play';
-  const showcasing = (): boolean => modeSelect?.value === 'showcase';
+  //연출 실험(lab)도 시연 걸음을 돈다. 실험 기법만 더 켠다 (SPEC-005 §15)
+  const labbing = (): boolean => modeSelect?.value === 'lab';
+  const showcasing = (): boolean => modeSelect?.value === 'showcase' || labbing();
+  const labMotion = document.getElementById('lab-motion') as HTMLInputElement | null;
+  const labFlash = document.getElementById('lab-flash') as HTMLInputElement | null;
+  const labOptions = document.getElementById('lab-options');
+  //실험 모드 켬·끔과 접근성 체크를 무대에 알린다
+  const applyLab = (): void => {
+    const on = labbing();
+    labOptions?.toggleAttribute('hidden', !on);
+    stage.setLab(on ? { reducedMotion: labMotion?.checked ?? false, reducedFlash: labFlash?.checked ?? false } : null);
+  };
+  labMotion?.addEventListener('change', applyLab);
+  labFlash?.addEventListener('change', applyLab);
   let showcaseSteps: ReturnType<typeof showcaseCycle> = [];
   const isAlly = (id: string): boolean => session?.battle.combatant(id).side === 'ally';
 
@@ -381,12 +394,13 @@ async function main(): Promise<void> {
     const seed = Number(seedInput.value) || 1;
     session = new Session(loaded.catalog, createSeededRng(seed), loaded.stage.battle);
     stage.reset(session.roster());
+    applyLab();
     if (showcasing()) {
       input = null;
       phase = 'showcase';
-      status.textContent = '시연 · S1 → S2 → S3 → 궁극기';
+      status.textContent = labbing() ? '연출 실험 · S1 → S2 → S3 → 궁극기' : '시연 · S1 → S2 → S3 → 궁극기';
       turnLabel.textContent = '-';
-      panel.idle('제작 확인용 자동 시연 — 아군이 합에서 늘 이긴다');
+      panel.idle(labbing() ? '조사한 연출 기법을 켠 실험 — 본편에는 아직 없다' : '제작 확인용 자동 시연 — 아군이 합에서 늘 이긴다');
       startShowcase();
       return;
     }
@@ -525,6 +539,7 @@ async function main(): Promise<void> {
   for (const button of document.querySelectorAll<HTMLButtonElement>('[data-speed]')) {
     button.addEventListener('click', () => {
       speed = Number(button.dataset['speed']) || 1;
+      stage.setSpeed(speed);
       for (const other of document.querySelectorAll<HTMLButtonElement>('[data-speed]')) other.setAttribute('aria-pressed', String(other === button));
     });
   }

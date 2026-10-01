@@ -76,6 +76,11 @@ export class Backdrop {
     for (const m of this.materials) m.opacity = value;
   }
 
+  //층 전부의 밝기. 1 이 원래 그림이다. 타격 순간 배경만 누를 때 쓴다 (SPEC-005 §15 F04)
+  setBrightness(value: number): void {
+    for (const m of this.materials) m.color.setScalar(value);
+  }
+
   //기준 카메라 화면의 한 점(정규 좌표)에서 쏜 선이 z 평면과 만나는 곳
   private rayToZ(nx: number, ny: number, z: number): THREE.Vector3 {
     const cam = this.paintCamera;
