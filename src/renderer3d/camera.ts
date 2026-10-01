@@ -33,7 +33,14 @@ function noise(i: number, t: number): number {
 export class CameraRig {
   private readonly homePos: THREE.Vector3;
   private readonly homeQuat = new THREE.Quaternion();
-  private readonly homeFov: number;
+  //원화 화각. 교전 집중은 늘 이 화각에서 계산한다
+  private readonly baseFov: number;
+  //대기 화각. 화면 비·UI 구역에 맞춰 넓어질 수 있다 (SPEC-004 §13.4)
+  private homeFov: number;
+  //투영 이동량(정규 화면 좌표). 대기·집중 목표와 지금 값
+  private readonly homeShift = new THREE.Vector2();
+  private readonly focusShift = new THREE.Vector2();
+  private readonly shift = new THREE.Vector2();
   private readonly goalPos = new THREE.Vector3();
   private readonly goalQuat = new THREE.Quaternion();
   private goalFov: number;
@@ -63,6 +70,7 @@ export class CameraRig {
     private readonly shake: ShakeConfig,
   ) {
     this.homePos = home.clone();
+    this.baseFov = fov;
     this.homeFov = fov;
     this.goalFov = fov;
     this.fov = fov;
@@ -78,6 +86,7 @@ export class CameraRig {
     this.pos.copy(this.homePos);
     this.quat.copy(this.homeQuat);
     this.fov = this.homeFov;
+    this.shift.copy(this.homeShift);
     this.trauma = 0;
     this.kick.set(0, 0, 0);
     this.kickVel.set(0, 0, 0);
@@ -86,15 +95,26 @@ export class CameraRig {
     for (const v of Object.values(this.vel)) v.v = 0;
   }
 
+  //대기 화각과 렌즈 이동을 바꾼다. 자리·방향은 그대로다 (SPEC-004 §13.4)
+  setHome(fov: number, offsetX: number, offsetY: number): void {
+    this.homeFov = fov;
+    this.homeShift.set(offsetX, offsetY);
+  }
+
+  //교전 집중 때의 렌즈 이동. 집중 화면의 가운데를 UI 가 덮지 않는 구역 가운데로 옮긴다
+  setFocusShift(offsetX: number, offsetY: number): void {
+    this.focusShift.set(offsetX, offsetY);
+  }
+
   //두 가슴 가운데로 다가가며 공격자 쪽 측면으로 돌고 기운다.
   //거리는 캐릭터 화면 크기가 대기의 focusSizeGain 배를 넘지 않게 정한다
   focus(a: THREE.Vector3, b: THREE.Vector3, dir: number): void {
     const c = this.config;
     const middle = a.clone().add(b).multiplyScalar(0.5);
     middle.y += c.focusHeight;
-    const zoomFov = this.homeFov - c.fovZoom;
+    const zoomFov = this.baseFov - c.fovZoom;
     const dist =
-      (this.homePos.distanceTo(middle) * Math.tan((this.homeFov * DEG) / 2)) / Math.tan((zoomFov * DEG) / 2) / c.focusSizeGain;
+      (this.homePos.distanceTo(middle) * Math.tan((this.baseFov * DEG) / 2)) / Math.tan((zoomFov * DEG) / 2) / c.focusSizeGain;
     const fwd = new THREE.Vector3(0, 0, -1)
       .applyQuaternion(this.homeQuat)
       .applyAxisAngle(new THREE.Vector3(0, 1, 0), -dir * c.panYawDeg * DEG)
@@ -153,6 +173,7 @@ export class CameraRig {
     const k = 1 - Math.exp(-dt / Math.max(1e-4, follow));
     this.quat.slerp(wantQuat, k);
     this.fov += (wantFov - this.fov) * k;
+    this.shift.lerp(this.focused ? this.focusShift : this.homeShift, k);
 
     this.trauma = Math.max(0, this.trauma - s.traumaDecay * dt);
     const tt = this.trauma * this.trauma;
@@ -190,5 +211,10 @@ export class CameraRig {
     this.camera.quaternion.copy(this.quat).multiply(new THREE.Quaternion().setFromEuler(ang));
     this.camera.fov = Math.min(170, Math.max(5, (this.fov + this.fovKick) * envFov));
     this.camera.updateProjectionMatrix();
+    //렌즈 이동: 투영 행렬의 가운데 칸만 바꾼다. 원근은 그대로라 배경과 인형이 어긋나지 않는다
+    const e = this.camera.projectionMatrix.elements;
+    e[8] = this.shift.x;
+    e[9] = this.shift.y;
+    this.camera.projectionMatrixInverse.copy(this.camera.projectionMatrix).invert();
   }
 }

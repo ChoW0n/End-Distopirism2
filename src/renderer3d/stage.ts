@@ -7,6 +7,7 @@ import * as THREE from 'three';
 import type { BattleEvent, CardFace, Side, SkillSlot } from '../domain/types.js';
 import { decayDurations } from '../render/decay.js';
 import { splitDamage, type ClashRound, type FlipView, type StageStep, type StepCallout } from '../render/exchange.js';
+import { centerOffset, frameStage, type ScreenRect, type Vec3 } from '../render/framing.js';
 import type { SpriteCatalog } from '../render/manifest.js';
 import type { EnvVfx } from '../render/envvfx.js';
 import type { CharacterSounds } from '../render/sounds.js';
@@ -126,6 +127,9 @@ export class Stage3D {
   private readonly overlay: Overlay;
   //전투 배경. 실험 모드에서 타격 순간 밝기를 누른다
   private readonly backdrop: Backdrop;
+  //UI 가 덮지 않는 구역과 UI 기준 단위 (SPEC-004 §13.4). 앱이 화면 배치를 재서 준다
+  private zones: { home: ScreenRect; focus: ScreenRect } | null = null;
+  private uiUnit = 1;
   //공용 환경 이펙트 (§16). 없으면 내지 않는다
   private readonly envFx: { vfx: EnvVfx; layer: EnvFxLayer } | null;
   //전투 맵 지형과 지금 깔린 고유 전장 지형
@@ -267,7 +271,7 @@ export class Stage3D {
     return this.skillInfo(skillId).slot;
   }
 
-  //캔버스가 보이는 크기에 그리기 버퍼를 맞춘다
+  //캔버스가 보이는 크기에 그리기 버퍼를 맞춘다. 대기 카메라 여백도 다시 잡는다
   resize(): void {
     const rect = this.canvas.getBoundingClientRect();
     const w = Math.max(1, Math.round(rect.width));
@@ -275,6 +279,57 @@ export class Stage3D {
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
+    this.reframe();
+  }
+
+  //UI 가 덮지 않는 구역 (SPEC-004 §13.4). home 은 입력 단계(지시판이 있을 때), focus 는 교전 집중. unit 은 UI 기준 단위 1 의 px
+  setFrameZones(zones: { home: ScreenRect; focus: ScreenRect }, unit: number): void {
+    this.zones = zones;
+    this.uiUnit = unit > 0 ? unit : 1;
+    this.overlay.setUnit(this.uiUnit);
+    this.reframe();
+  }
+
+  //대기 카메라의 화각·렌즈 이동을 다시 구한다. 살아 있는 사람 전원의 이름표부터 발밑 바까지 빈 구역에 넣는다
+  //snap 이면 바로 옮기고, 아니면 카메라가 따라가며 옮긴다
+  reframe(snap = false): void {
+    const zones = this.zones;
+    if (!zones) return;
+    const rect = this.canvas.getBoundingClientRect();
+    const w = Math.max(1, rect.width);
+    const hPx = Math.max(1, rect.height);
+    const f = this.config.framing;
+    const u = this.uiUnit;
+    const z = zones.home;
+    const inner: ScreenRect = {
+      left: z.left + (f.sideMargin * u) / w,
+      right: z.right - (f.sideMargin * u) / w,
+      top: z.top + (f.tagMargin * u) / hPx,
+      bottom: z.bottom - (f.footMargin * u) / hPx,
+    };
+    const h = this.config.layout.characterHeight;
+    const points: Vec3[] = [];
+    for (const a of this.actors.values()) {
+      if (a.doll.down) continue;
+      const { x, z: depth } = a.doll.home;
+      points.push([x - f.bodyHalfWidth * h, 0, depth], [x + f.bodyHalfWidth * h, 0, depth], [x, f.headHeight * h, depth]);
+    }
+    const eye = this.backdrop.homePosition;
+    const look = this.backdrop.homeLookAt;
+    const framing = frameStage({
+      eye: [eye.x, eye.y, eye.z],
+      target: [look.x, look.y, look.z],
+      baseFov: this.backdrop.fov,
+      aspect: w / hPx,
+      points,
+      rect: inner,
+      maxZoomOut: f.maxZoomOut,
+      cover: f.cover,
+    });
+    this.rig.setHome(framing.fov, framing.offsetX, framing.offsetY);
+    const focus = centerOffset(zones.focus);
+    this.rig.setFocusShift(focus.offsetX, focus.offsetY);
+    if (snap) this.rig.snapHome();
   }
 
   //캐릭터의 장 텍스처를 한 번만 만든다
@@ -339,6 +394,7 @@ export class Stage3D {
     }
     this.overlay.setActors(roster.filter((r) => this.actors.has(r.combatantId)));
     this.foregroundFade.v = 1;
+    this.reframe();
     this.rig.snapHome();
   }
 
@@ -1287,6 +1343,11 @@ export class Stage3D {
 
   setSelection(selection: Selection3d): void {
     this.overlay.setSelection(selection);
+  }
+
+  //이름표를 눌러 고를 때 부를 곳 (SPEC-004 §13.2 적 고르기는 무대 위를 누른다)
+  onTagPick(handler: (combatantId: string) => void): void {
+    this.overlay.onPick = handler;
   }
 
   //이름표 아래 한 줄 (적이 노리는 대상 등)

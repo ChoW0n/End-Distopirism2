@@ -66,6 +66,23 @@ export interface FootBarConfig {
   downFade: number;
 }
 
+//대기 카메라 여백 (SPEC-004 §13.4). 여백은 UI 기준 단위(1920×1080 화면의 px), 몸 크기는 캐릭터 키 비율
+export interface FramingConfig {
+  //화각을 넓히는 한도 (원화 화각 탄젠트 배수)
+  maxZoomOut: number;
+  //배경 층이 위아래로 덮는 범위 (원화 화면 반 높이 배수)
+  cover: number;
+  //머리 위 이름표·노림 표지 자리
+  tagMargin: number;
+  //발밑 바·궁극기 칸 자리
+  footMargin: number;
+  //좌우 여백 (바 숫자 포함)
+  sideMargin: number;
+  //몸 반 폭과 머리 높이 (캐릭터 키 비율)
+  bodyHalfWidth: number;
+  headHeight: number;
+}
+
 export interface CameraConfig {
   focusSizeGain: number;
   focusHeight: number;
@@ -180,6 +197,7 @@ export interface Stage3dConfig {
   callout: CalloutConfig;
   cardFlip: CardFlipConfig;
   footBar: FootBarConfig;
+  framing: FramingConfig;
   lab: LabConfig;
 }
 
@@ -292,6 +310,7 @@ export function parseStage3dConfig(raw: unknown): Stage3dConfig {
       'slowScale', 'approachShare', 'spinTime', 'spinTurns', 'revealPop', 'holdTime', 'height', 'headLift', 'fadeTime',
     ]),
     footBar: numbers<FootBarConfig>(root['footBar'], 'footBar', ['widthRatio', 'minWidth', 'hpHeight', 'mtHeight', 'gap', 'tween', 'downFade']),
+    framing: numbers<FramingConfig>(root['framing'], 'framing', ['maxZoomOut', 'cover', 'tagMargin', 'footMargin', 'sideMargin', 'bodyHalfWidth', 'headHeight']),
     lab: parseLab(root['lab']),
   };
 }

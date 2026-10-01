@@ -1,317 +1,359 @@
-/* 전투 화면. 캔버스 한 장 위에 HUD 를 비율로 얹는다.
-   좌표는 원작 Battle.unity 기준(1920x1080)을 % 로 바꾼 값이다 */
-* { box-sizing: border-box; }
-body {
-  margin: 0;
-  background: #08080a;
-  color: #e8e4dc;
+/* 3D 게임 화면 (SPEC-004 §13). 캔버스가 창 전체를 채우고 UI 는 1920x1080 기준 상자 안에만 둔다.
+   .ui 안의 px 는 전부 기준 단위다. 상자를 통째로 --u 배로 줄여 PC 와 iPhone 15 가 같은 배치가 된다.
+   2D 비교 화면은 battle2d.css */
+:root {
+  /* 기준 단위 1 의 실제 px. 앱이 창 크기에 맞춰 다시 적는다 */
+  --u: 0.5;
+  --bg: #08080a;
+  --ink: #e8e4dc;
+  --dim: #a89f92;
+  --faint: #7d766c;
+  --plate: rgba(16, 13, 12, 0.86);
+  --plate-hi: #2a2220;
+  --edge: #3b3634;
+  --red: #7a2222;
+  --red-hi: #983030;
+  --gold: #d9a441;
+  --amber: #ffb347;
   color-scheme: dark;
-  font: 14px/1.5 system-ui, sans-serif;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  padding-block: 12px;
-  padding-inline: 16px;
+}
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--ink);
+  font: 14px/1.4 system-ui, sans-serif;
+  /* 두 번 눌러 확대·당겨서 새로고침을 막는다 */
+  touch-action: manipulation;
+  overscroll-behavior: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
-/* 캔버스와 HUD 를 같은 상자에 넣어 함께 늘어나게 한다 */
+/* 창 전체 */
 .stage {
-  position: relative;
-  width: min(100%, 1600px);
-  aspect-ratio: 16 / 9;
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: #000;
 }
-canvas {
+canvas#view {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   display: block;
-  background: #000;
 }
 
-/* OutLine — 화면을 둘러싸는 테두리 */
-.frame {
-  position: absolute;
-  inset: 0;
-  border: 2px solid #6d1f1f;
-  pointer-events: none;
-}
-
-/* 위·아래 띠. 원작은 1920x100 스크롤 이미지(Battleline)였다.
-   그 그림이 아직 없어서 자리와 두께만 맞추고 옅게 깐다 */
-.band {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 9.3%;
-  pointer-events: none;
-  background: linear-gradient(180deg, rgba(8,8,10,0.55), rgba(8,8,10,0));
-}
-.band-top { top: 1.1%; border-bottom: 1px solid rgba(150,55,55,0.35); }
-.band-bottom {
-  bottom: 2.4%;
-  background: linear-gradient(0deg, rgba(8,8,10,0.55), rgba(8,8,10,0));
-  border-top: 1px solid rgba(150,55,55,0.35);
-}
-
-/* StageText — 좌상단 */
-.stage-name {
-  position: absolute;
-  left: 1.2%;
-  top: 1.6%;
-  font-size: clamp(12px, 1.7vw, 26px);
-  letter-spacing: 0.1em;
-  color: #cfc8bc;
-  text-shadow: 0 2px 6px #000;
-}
-
-/* TurnUI — 상단 중앙 */
-.turn {
+/* UI 상자: 1920x1080 을 가운데에 놓고 --u 배로 줄인다. 상자 밖은 무대(배경)만 보인다 */
+.ui {
   position: absolute;
   left: 50%;
-  top: 1.2%;
-  transform: translateX(-50%);
-  display: flex;
-  align-items: baseline;
-  gap: 0.25em;
-  font-size: clamp(16px, 2.6vw, 40px);
-  font-weight: 700;
-  color: #e8e0d2;
-  text-shadow: 0 2px 8px #000;
+  top: 50%;
+  width: 1920px;
+  height: 1080px;
+  transform: translate(-50%, -50%) scale(var(--u));
+  pointer-events: none;
+  z-index: 4;
+  font-size: 30px;
 }
-.turn small { font-size: 0.45em; font-weight: 400; color: #a89f92; }
+.ui button, .ui select, .ui input, .ui label, .ui summary, .ui .dialog { pointer-events: auto; }
 
-/* 보는 사람용 조작 줄. 원작 HUD 가 아니라 화면 아래 따로 둔다 */
-.panel {
-  width: min(100%, 1600px);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 16px;
-  align-items: center;
-  font-size: 13px;
-  color: #b8b0a4;
-}
-.panel label { display: inline-flex; gap: 6px; align-items: center; }
-.status { color: #efe6d8; min-width: 6em; font-variant-numeric: tabular-nums; }
-.speed { display: inline-flex; gap: 2px; }
-.speed button { background: #1f1c1b; color: #b8b0a4; padding: 4px 9px; }
-.speed button[aria-pressed="true"] { background: #7a2222; color: #f2ede4; }
-.panel .primary { margin-left: auto; }
-select {
-  background: rgba(0,0,0,0.55);
-  color: inherit;
-  border: 1px solid #45454c;
-  border-radius: 3px;
-  padding: 3px 5px;
-  max-width: 100%;
-}
-button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid #d9a441; outline-offset: 2px; }
-input {
-  width: 4.5em;
-  background: rgba(0,0,0,0.55);
-  color: inherit;
-  border: 1px solid #45454c;
-  border-radius: 3px;
-  padding: 2px 5px;
-}
 button {
-  background: #7a2222;
-  color: #f2ede4;
+  font: inherit;
+  color: var(--ink);
+  background: var(--red);
   border: 0;
-  border-radius: 3px;
-  padding: 4px 10px;
+  border-radius: 6px;
   cursor: pointer;
 }
-button:hover { background: #983030; }
-.panel .check { gap: 4px; }
-.sound-hint { color: #c9a24a; }
-.dev { display: inline-flex; }
-.dev summary { cursor: pointer; color: #8a8278; }
-.dev[open] { gap: 10px; align-items: center; }
-.dev[open] summary { margin-right: 6px; }
-.dev label { margin-right: 10px; }
+button:hover { background: var(--red-hi); }
+button:focus-visible, select:focus-visible, input:focus-visible { outline: 4px solid var(--gold); outline-offset: 4px; }
+button:disabled { cursor: default; }
 
-/* 하단 현황판 (SPEC-004 §11). 아래 띠 안에 아군 왼쪽, 적 오른쪽 */
-.hud {
-  position: absolute;
-  left: 1.2%;
-  right: 1.2%;
-  bottom: 3.2%;
-  display: flex;
-  justify-content: space-between;
-  gap: 2%;
-  pointer-events: none;
-  font-size: clamp(10px, 0.95vw, 14px);
+/* 작은 버튼 판 U3: 120x120 (터치 최소 크기, §13.1) */
+.btn-s {
+  width: 120px;
+  height: 120px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  font-size: 40px;
+  font-weight: 800;
+  background: var(--plate);
+  border: 2px solid #5a2020;
 }
-.hud-side { display: flex; gap: 8px; flex: 1 1 0; min-width: 0; }
-.hud-side.enemy { flex-direction: row-reverse; }
-.hud-unit {
-  flex: 0 1 13em;
+.btn-s:hover { background: var(--plate-hi); }
+.btn-s[aria-pressed="true"] { background: #3a2a18; border-color: var(--gold); color: #fff2da; }
+#auto { font-size: 30px; }
+
+/* ── 위 띠 y 0~120 ── */
+.topbar {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 1920px;
+  height: 120px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+/* 맵 이름과 단계 안내 x 168~820 */
+.where {
+  width: 652px;
   min-width: 0;
-  padding: 4px 8px 5px;
-  background: rgba(10,9,9,0.72);
-  border-left: 3px solid var(--side);
   display: grid;
   gap: 2px;
+  line-height: 1.2;
 }
-.hud-side.enemy .hud-unit { border-left: 0; border-right: 3px solid var(--side); text-align: right; }
-.hud-unit b { color: var(--side); font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.hud-unit.down { opacity: 0.4; }
-.hud-unit.down b::after { content: ' · 쓰러짐'; color: #a89f92; font-weight: 400; }
-.hud-bar { height: 5px; background: #000; position: relative; }
-.hud-bar i { position: absolute; inset: 0 auto 0 0; background: var(--fill); transition: width 0.4s; }
-.hud-side.enemy .hud-bar i { inset: 0 0 0 auto; }
-.hud-num { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0 0.8em; white-space: nowrap; color: #cfc6b8; font-variant-numeric: tabular-nums; }
-.hud-num em { font-style: normal; color: #c9a24a; }
+.stage-name { font-size: 26px; letter-spacing: 0.12em; color: var(--dim); font-weight: 600; }
+.step { font-size: 32px; font-weight: 800; color: #efe6d8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hint { font-size: 26px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hint strong { color: var(--amber); }
+.hint:empty { display: none; }
+/* 턴 U8: 가운데 200 폭 */
+.turn {
+  position: absolute;
+  left: 860px;
+  top: 10px;
+  width: 200px;
+  height: 100px;
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 8px;
+  padding-top: 8px;
+  font-size: 64px;
+  font-weight: 800;
+  line-height: 1;
+  color: #e8e0d2;
+  text-shadow: 0 4px 12px #000;
+}
+.turn small { font-size: 28px; font-weight: 500; color: var(--dim); }
+/* 배속·자동·도움말 x 1512~1896 */
+.top-right {
+  margin-left: auto;
+  display: flex;
+  gap: 12px;
+}
+/* 위 띠·지시판 바탕은 UI 상자 밖 좌우까지 잇는다 (U7 띠 재질은 이어 붙는 그림). 내용은 가운데 1920 안 */
+.topbar::before, .command::before {
+  content: '';
+  position: absolute;
+  inset: 0 -1200px;
+  z-index: -1;
+}
+.topbar::before { background: linear-gradient(180deg, rgba(8, 8, 10, 0.78), rgba(8, 8, 10, 0.35)); border-bottom: 2px solid rgba(150, 55, 55, 0.4); }
+.command::before { background: linear-gradient(0deg, rgba(14, 11, 11, 0.94), rgba(14, 11, 11, 0.8)); border-top: 2px solid rgba(150, 55, 55, 0.5); }
+.topbar, .command { isolation: isolate; }
+.sound-hint {
+  position: absolute;
+  left: 50%;
+  top: 136px;
+  transform: translateX(-50%);
+  padding: 8px 22px;
+  font-size: 28px;
+  color: #f0d8a0;
+  background: rgba(20, 16, 12, 0.85);
+  border: 2px solid #8a6f35;
+  border-radius: 999px;
+}
+.sound-hint[hidden] { display: none; }
 
-/* 불러오기 */
+/* ── 지시판 y 800~1020 (입력 단계에만) ── */
+.command {
+  position: absolute;
+  left: 0;
+  top: 800px;
+  width: 1920px;
+  height: 220px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  transition: opacity 0.2s, transform 0.2s;
+}
+/* 입력 단계가 아니면 숨긴다. 자리는 그대로 두어 카메라 여백을 잴 수 있다 */
+.command.off { opacity: 0; visibility: hidden; transform: translateY(24px); }
+.cmd-group { display: grid; gap: 6px; align-content: center; }
+.cmd-group > small { font-size: 22px; color: var(--faint); letter-spacing: 0.14em; }
+.cmd-group.allies { width: 496px; }
+.cmd-group.cards { width: 960px; }
+.cmd-allies, .cmd-cards { display: flex; gap: 12px; }
+.cmd-enemies[hidden] { display: none; }
+
+/* 아군 칸 U6: 160x170 */
+.pick {
+  width: 160px;
+  height: 170px;
+  padding: 14px 14px 12px;
+  display: grid;
+  align-content: space-between;
+  text-align: left;
+  background: #1d1a19;
+  border: 2px solid var(--edge);
+  border-left: 8px solid var(--side, #555);
+}
+.pick b { font-size: 30px; line-height: 1.15; overflow-wrap: anywhere; }
+.pick small { font-size: 22px; color: #9d958a; }
+.pick:hover { background: var(--plate-hi); }
+.pick[aria-pressed="true"] { background: #3a2a18; border-color: var(--gold); border-left-color: var(--side, var(--gold)); }
+.pick.done small { color: #7fc29b; }
+.pick:disabled { opacity: 0.35; }
+
+/* 카드 U2: 230x170 */
+.card {
+  width: 230px;
+  height: 170px;
+  padding: 12px 14px;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  gap: 4px;
+  text-align: left;
+  background: #1b1918;
+  border: 2px solid var(--edge);
+  overflow: hidden;
+}
+.card:hover { background: var(--plate-hi); border-color: var(--red); }
+.card:disabled { opacity: 0.35; background: #1b1918; border-color: var(--edge); }
+.card .top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.card .slot { min-width: 0; flex: 1 1 auto; font-size: 28px; font-weight: 800; color: #efe6d8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.card .attr { flex: none; font-size: 22px; color: #c9a24a; white-space: nowrap; }
+.card .dmg { font-size: 30px; font-weight: 800; color: #ffd94a; font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* 카드 폭이 좁아 '위력' 꼬리말은 뺀다. 앞·뒤 숫자만으로 읽힌다 */
+.card .dmg small { display: none; }
+.card p { margin: 0; font-size: 24px; line-height: 1.25; max-height: 2.5em; color: var(--dim); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.card.ult { border-color: #9b2a26; box-shadow: inset 0 0 0 2px rgba(240, 207, 122, 0.25); }
+
+/* 합 진행 U1: 344x140 */
+.go {
+  width: 344px;
+  height: 140px;
+  margin-left: auto;
+  font-size: 40px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+}
+.go:disabled { background: #2a2524; color: #6f6860; }
+
+/* ── 겹창 U17 (메뉴·도움말) 960x640 ── */
+.dialog {
+  position: absolute;
+  left: 480px;
+  top: 200px;
+  width: 960px;
+  max-height: 760px;
+  overflow: auto;
+  padding: 36px 44px;
+  background: rgba(14, 12, 11, 0.97);
+  border: 2px solid #6d1f1f;
+  box-shadow: 0 20px 80px #000;
+  font-size: 30px;
+  z-index: 2;
+}
+.dialog[hidden] { display: none; }
+.dialog h2 { margin: 0 0 16px; font-size: 40px; letter-spacing: 0.06em; }
+.dialog .close { margin-top: 24px; min-width: 240px; height: 120px; font-size: 34px; font-weight: 800; }
+.help ol { margin: 0; padding-left: 1.3em; display: grid; gap: 12px; line-height: 1.45; }
+.help .enemy-arrow { color: #ff9a3c; }
+.menu .status { margin: 0 0 20px; color: var(--dim); font-variant-numeric: tabular-nums; }
+.menu .rows { display: grid; gap: 14px; }
+/* 줄 버튼 U18: 480x120 */
+.menu .row { min-height: 120px; display: flex; align-items: center; gap: 18px; padding: 0 24px; background: #1b1918; border: 2px solid var(--edge); border-radius: 6px; }
+.menu button.row { width: 480px; justify-content: center; font-weight: 800; background: var(--red); border: 0; }
+.menu button.row:hover { background: var(--red-hi); }
+.menu input[type="checkbox"] { width: 40px; height: 40px; }
+.menu select, .menu input[type="number"] {
+  font: inherit;
+  color: inherit;
+  background: #000;
+  border: 2px solid #45454c;
+  border-radius: 6px;
+  padding: 10px 14px;
+}
+.menu input[type="number"] { width: 5em; }
+.menu .dev { display: block; padding: 24px; }
+.menu .dev summary { cursor: pointer; color: var(--faint); }
+.menu .dev label { display: inline-flex; gap: 12px; align-items: center; margin: 16px 28px 0 0; }
+.lab-options[hidden] { display: none; }
+.lab-options label { display: inline-flex; gap: 12px; align-items: center; }
+
+/* ── 불러오기 ── */
 .loading {
   position: absolute;
   inset: 0;
+  z-index: 10;
   display: grid;
   place-content: center;
   justify-items: center;
-  gap: 10px;
-  background: #08080a;
+  gap: 12px;
+  background: var(--bg);
   color: #cfc8bc;
   letter-spacing: 0.08em;
 }
 .loading[hidden] { display: none; }
-.loading .meter { width: min(320px, 50vw); height: 4px; background: #1d1b1a; }
+.loading .meter { width: min(320px, 60vw); height: 4px; background: #1d1b1a; }
 .loading .meter i { display: block; height: 100%; width: 0; background: #9b2a26; transition: width 0.2s; }
 .loading small { color: #8a8278; font-variant-numeric: tabular-nums; }
 
-/* 도움말 */
-.help-open {
-  position: absolute;
-  right: 1.2%;
-  top: 1.8%;
-  width: 2em;
-  height: 2em;
-  border-radius: 50%;
-  padding: 0;
-  font-weight: 800;
-  background: rgba(20,16,15,0.8);
-  border: 1px solid #6d1f1f;
+/* ── 세로 화면 안내 (휴대폰을 세로로 들었을 때) ── */
+.rotate { display: none; }
+@media (orientation: portrait) and (max-width: 900px) {
+  .rotate {
+    position: absolute;
+    inset: 0;
+    z-index: 20;
+    display: grid;
+    place-content: center;
+    justify-items: center;
+    gap: 16px;
+    background: var(--bg);
+    font-size: 18px;
+    letter-spacing: 0.06em;
+  }
+  .rotate b { font-size: 56px; color: var(--gold); }
 }
-.help {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: min(560px, 90%);
-  max-height: 88%;
-  overflow: auto;
-  padding: 18px 22px;
-  background: rgba(14,12,11,0.96);
-  border: 1px solid #6d1f1f;
-  box-shadow: 0 10px 40px #000;
-  font-size: clamp(12px, 1.1vw, 15px);
-}
-.help[hidden] { display: none; }
-.help h2 { margin: 0 0 8px; font-size: 1.25em; letter-spacing: 0.06em; }
-.help ol { margin: 0 0 14px; padding-left: 1.3em; display: grid; gap: 6px; }
-.help .enemy-arrow { color: #ff9a3c; }
-.help button { padding: 6px 18px; }
 
-/* 명령 패널 (SPEC-004 §10). 무대 바로 아래에 붙는다. 캐릭터 발을 가리지 않는다 */
-.command {
-  width: min(100%, 1600px);
-  margin-top: -6px;
-  padding: 10px 14px 12px;
-  background: #121011;
-  border: 1px solid #3a1717;
-  border-top: 0;
-  display: grid;
-  gap: 8px;
-}
-.command.off .cmd-row { opacity: 0.35; pointer-events: none; }
-.cmd-head { display: flex; gap: 14px; align-items: baseline; flex-wrap: wrap; }
-.cmd-head b { color: #efe6d8; letter-spacing: 0.04em; }
-.cmd-head .hint { color: #b8b0a4; font-size: 13px; }
-.cmd-head .hint strong { color: #ffb347; }
-.cmd-row { display: flex; gap: 16px; align-items: stretch; flex-wrap: wrap; }
-.cmd-group { display: grid; gap: 4px; align-content: start; }
-.cmd-group.grow { flex: 1; min-width: 280px; }
-.cmd-group > small { color: #7d766c; letter-spacing: 0.1em; }
-.cmd-allies, .cmd-enemies, .cmd-cards { display: flex; gap: 6px; flex-wrap: wrap; }
-.pick {
-  background: #1d1a19;
-  color: #e8e0d2;
-  border: 1px solid #3b3634;
-  border-left: 3px solid var(--side, #555);
-  text-align: left;
-  padding: 6px 10px;
-  display: grid;
-  gap: 1px;
-  min-width: 7.5em;
-}
-.pick:hover { background: #2a2524; }
-.pick small { color: #9d958a; font-size: 11px; }
-.pick[aria-pressed="true"] { background: #3a2a18; border-color: #d9a441; border-left-color: var(--side, #d9a441); }
-.pick.done small { color: #7fc29b; }
-.pick.clash small { color: #ffb347; }
-.pick:disabled { opacity: 0.35; cursor: default; }
-.card {
-  background: #1b1918;
-  color: #e8e0d2;
-  border: 1px solid #3b3634;
-  text-align: left;
-  padding: 7px 10px 8px;
-  width: 11.5em;
-  display: grid;
-  gap: 3px;
-}
-.card:hover { background: #2a2524; border-color: #7a2222; }
-.card:disabled { opacity: 0.35; cursor: default; background: #1b1918; border-color: #3b3634; }
-.card .top { display: flex; justify-content: space-between; align-items: baseline; }
-.card .slot { font-weight: 800; color: #efe6d8; }
-.card .attr { font-size: 11px; color: #c9a24a; }
-.card .dmg { font-size: 15px; font-weight: 800; color: #ffd94a; font-variant-numeric: tabular-nums; }
-.card .dmg small { font-size: 11px; font-weight: 400; color: #9d958a; }
-.card p { margin: 0; font-size: 11px; color: #a89f92; line-height: 1.35; }
-.card.ult { border-color: #9b2a26; }
-.go { align-self: stretch; padding: 8px 18px; font-weight: 800; font-size: 15px; }
-.go:disabled { background: #2a2524; color: #6f6860; cursor: default; }
-.go kbd { font: inherit; font-size: 11px; opacity: 0.7; margin-left: 4px; }
-
-/* ── 3D 무대 겹층 (SPEC-005 §9.6·§8.10). 이름표·결과 알림·피해 숫자 ── */
-.overlay3d { position: absolute; inset: 0; pointer-events: none; overflow: hidden; font-size: clamp(10px, 1.1vw, 16px); }
-.tag3d { position: absolute; transform: translate(-50%, -100%); text-align: center; white-space: nowrap; line-height: 1.25; opacity: 0.85; transition: opacity 0.2s; }
-.tag3d b { display: inline-block; padding: 0.05em 0.6em; background: rgba(10, 9, 8, 0.72); border-bottom: 2px solid #8fb0c8; color: #d8e6f0; font-size: 0.85em; letter-spacing: 0.04em; }
+/* ── 3D 무대 겹층 (SPEC-005 §9.6·§8.10). 캔버스 px 자리에 붙고 크기는 기준 단위(--u)로 ── */
+.overlay3d { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 2; font-size: calc(var(--u) * 30px); }
+.tag3d { position: absolute; transform: translate(-50%, -100%); text-align: center; white-space: nowrap; line-height: 1.25; opacity: 0.88; transition: opacity 0.2s; }
+.tag3d b { display: inline-block; padding: 0.08em 0.6em; background: rgba(10, 9, 8, 0.74); border-bottom: calc(var(--u) * 4px) solid #8fb0c8; color: #d8e6f0; font-size: 0.9em; letter-spacing: 0.04em; }
 .tag3d.enemy b { border-bottom-color: #b3262b; color: #f0d6d0; }
-.tag3d small { display: block; color: #e9b35c; font-size: 0.75em; text-shadow: 0 1px 2px #000; }
-.tag3d.pickable { opacity: 1; }
-.tag3d.pickable b { background: rgba(40, 32, 20, 0.85); }
-.tag3d.picked b { background: #3a2a18; border-bottom-color: #d9a441; color: #fff2da; }
-.tag3d.picked::before { content: '▼'; display: block; color: #d9a441; font-size: 0.8em; }
+.tag3d small { display: block; color: #e9b35c; font-size: 0.8em; text-shadow: 0 1px 2px #000; }
+.tag3d.pickable { opacity: 1; pointer-events: auto; cursor: pointer; }
+.tag3d.pickable b { background: rgba(40, 32, 20, 0.88); }
+.tag3d.picked b { background: #3a2a18; border-bottom-color: var(--gold); color: #fff2da; }
+.tag3d.picked::before { content: '▼'; display: block; color: var(--gold); font-size: 0.8em; }
 .tag3d.down { opacity: 0.35; }
-.callout3d { position: absolute; transform: translate(-50%, -100%); padding: 0.25em 0.9em 0.3em; background: rgba(12, 10, 9, 0.82); border-top: 2px solid #8fb0c8; text-align: center; white-space: nowrap; animation: callout3d 1.1s ease-out forwards; }
-.callout3d b { display: block; font-size: 1.1em; letter-spacing: 0.08em; color: #f3e6cc; }
-.callout3d small { display: block; font-size: 0.78em; color: #9a8e80; font-variant-numeric: tabular-nums; }
+.callout3d { position: absolute; transform: translate(-50%, -100%); padding: 0.25em 0.9em 0.3em; background: rgba(12, 10, 9, 0.84); border-top: calc(var(--u) * 4px) solid #8fb0c8; text-align: center; white-space: nowrap; animation: callout3d 1.1s ease-out forwards; }
+.callout3d b { display: block; font-size: 1.15em; letter-spacing: 0.08em; color: #f3e6cc; }
+.callout3d small { display: block; font-size: 0.8em; color: #9a8e80; font-variant-numeric: tabular-nums; }
 .callout3d.lose { border-top-color: #b3262b; }
 .callout3d.lose b { color: #ff7a66; }
 @keyframes callout3d { 0% { opacity: 0; margin-top: 0.8em; } 12% { opacity: 1; margin-top: 0; } 78% { opacity: 1; } 100% { opacity: 0; margin-top: -0.4em; } }
-.num3d { position: absolute; transform: translate(-50%, -50%); font: 900 2.8em/1 system-ui, sans-serif; color: #f5ede0; -webkit-text-stroke: 0.06em #120c0a; paint-order: stroke; animation: num3d 1.1s ease-out forwards; white-space: nowrap; }
+.num3d { position: absolute; transform: translate(-50%, -50%); font: 900 2.6em/1 system-ui, sans-serif; color: #f5ede0; -webkit-text-stroke: 0.06em #120c0a; paint-order: stroke; animation: num3d 1.1s ease-out forwards; white-space: nowrap; }
 .num3d.heavy { color: #ff4b3a; -webkit-text-stroke-color: #fff2e0; }
 .num3d.tag { font-size: 1.3em; color: #e9c77a; }
 @keyframes num3d { 0% { transform: translate(-50%, -50%) scale(1.8); opacity: 1; } 12% { transform: translate(-50%, -50%) scale(0.92); } 22% { transform: translate(-50%, -50%) scale(1); } 75% { opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1); margin-top: -2em; opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .num3d, .callout3d { animation-duration: 0.01s; } }
 
-/* 발밑 체력·정신력 바 (SPEC-004 §2.2.1). 원작처럼 발 기준점 바로 밑 */
-.foot3d { position: absolute; transform: translate(-50%, 6px); display: flex; flex-direction: column; pointer-events: none; transition-property: opacity; }
+/* 발밑 체력·정신력 바 (SPEC-004 §2.2.1). 원작처럼 발 기준점 바로 밑. 두께는 stage3d.json footBar (기준 단위) */
+.foot3d { position: absolute; transform: translate(-50%, calc(var(--u) * 10px)); display: flex; flex-direction: column; pointer-events: none; transition-property: opacity; }
 .foot3d.down { opacity: 0; }
-.foot3d-row { display: flex; align-items: center; gap: 4px; }
-.foot3d-track { flex: 1 1 auto; background: rgba(0, 0, 0, 0.7); outline: 1px solid rgba(0, 0, 0, 0.85); position: relative; }
+.foot3d-row { position: relative; display: flex; align-items: center; }
+.foot3d-track { flex: 1 1 auto; background: rgba(0, 0, 0, 0.72); outline: 1px solid rgba(0, 0, 0, 0.85); position: relative; }
 .foot3d-track i { position: absolute; inset: 0 auto 0 0; transition-property: width, background; transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94); }
 .foot3d-row.mt .foot3d-track i { background: #c9a24a; }
-.foot3d-row span { position: absolute; left: 100%; margin-left: 4px; font-size: 0.68em; line-height: 1; color: #e8e0d2; text-shadow: 0 1px 2px #000, 0 0 2px #000; white-space: nowrap; font-variant-numeric: tabular-nums; }
-.foot3d-row { position: relative; }
-.foot3d-row.mt span { color: #e0c27a; }
-/* 발밑 궁극기 칸 (SPEC-004 §2.2.1). 속성 합만큼 차고, 카드가 손에 있으면 빛난다 */
-.foot3d-ult { display: flex; gap: 2px; margin-top: 1px; }
-.foot3d-ult i { flex: 1 1 0; height: 3px; background: rgba(0, 0, 0, 0.7); outline: 1px solid rgba(0, 0, 0, 0.85); transition: background 0.3s, box-shadow 0.3s; }
+.foot3d-row span { position: absolute; left: 100%; margin-left: 0.3em; font-size: 0.8em; line-height: 1; color: #e8e0d2; text-shadow: 0 1px 2px #000, 0 0 2px #000; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.foot3d-row.hp span { bottom: 0; }
+.foot3d-row.mt span { top: 0; color: #e0c27a; }
+/* 발밑 궁극기 칸. 속성 합만큼 차고, 카드가 손에 있으면 빛난다 */
+.foot3d-ult { display: flex; gap: calc(var(--u) * 4px); margin-top: calc(var(--u) * 3px); }
+.foot3d-ult[hidden] { display: none; }
+.foot3d-ult i { flex: 1 1 0; height: calc(var(--u) * 7px); background: rgba(0, 0, 0, 0.72); outline: 1px solid rgba(0, 0, 0, 0.85); transition: background 0.3s, box-shadow 0.3s; }
 .foot3d-ult i.on { background: #8a6f35; }
-.foot3d-ult.ready i { background: #f0cf7a; box-shadow: 0 0 5px rgba(240, 207, 122, 0.9); }
-/* 연출 실험 모드 접근성 체크 (SPEC-005 §15) */
-.lab-options { display: inline-flex; gap: 10px; }
-.lab-options[hidden] { display: none; }
+.foot3d-ult.ready i { background: #f0cf7a; box-shadow: 0 0 calc(var(--u) * 10px) rgba(240, 207, 122, 0.9); }

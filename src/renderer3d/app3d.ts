@@ -250,7 +250,29 @@ class Session {
   }
 }
 
+//UI 상자 기준 단위 (SPEC-004 §13.1). 1920x1080 상자를 창에 맞춰 줄이는 배율을 CSS 에 적는다
+const UI_WIDTH = 1920;
+const UI_HEIGHT = 1080;
+function layoutUi(): number {
+  const u = Math.min(window.innerWidth / UI_WIDTH, window.innerHeight / UI_HEIGHT);
+  document.documentElement.style.setProperty('--u', String(u));
+  return u;
+}
+
+//캔버스 기준 비율 구역 (0~1)
+function fraction(rect: DOMRect, canvas: DOMRect): { left: number; right: number; top: number; bottom: number } {
+  const w = Math.max(1, canvas.width);
+  const h = Math.max(1, canvas.height);
+  return {
+    left: Math.max(0, (rect.left - canvas.left) / w),
+    right: Math.min(1, (rect.right - canvas.left) / w),
+    top: Math.max(0, (rect.top - canvas.top) / h),
+    bottom: Math.min(1, (rect.bottom - canvas.top) / h),
+  };
+}
+
 async function main(): Promise<void> {
+  layoutUi();
   const canvas = document.getElementById('view') as HTMLCanvasElement;
   const host = canvas.parentElement as HTMLElement;
   const status = document.getElementById('status') as HTMLElement;
@@ -309,7 +331,26 @@ async function main(): Promise<void> {
     loaded.voices,
     loaded.envFx,
   );
-  window.addEventListener('resize', () => stage.resize());
+  //UI 가 덮지 않는 구역을 재서 무대에 넘긴다 (SPEC-004 §13.4). 위 띠 아래 ~ 지시판 위가 입력 단계 구역, 위 띠 아래 ~ 홈 인디케이터 위가 교전 구역
+  const uiBox = document.getElementById('ui');
+  const topBar = document.querySelector('.topbar');
+  const commandBox = document.getElementById('command');
+  const applyLayout = (): void => {
+    const u = layoutUi();
+    stage.resize();
+    if (!uiBox || !topBar || !commandBox) return;
+    const c = canvas.getBoundingClientRect();
+    const box = uiBox.getBoundingClientRect();
+    const top = topBar.getBoundingClientRect().bottom;
+    const panelTop = commandBox.getBoundingClientRect().top;
+    //홈 인디케이터 자리 (아래 60)
+    const bottom = box.bottom - 60 * u;
+    const zone = (y0: number, y1: number) => fraction(new DOMRect(box.left, y0, box.width, y1 - y0), c);
+    stage.setFrameZones({ home: zone(top, panelTop), focus: zone(top, bottom) }, u);
+  };
+  applyLayout();
+  window.addEventListener('resize', applyLayout);
+  window.addEventListener('orientationchange', applyLayout);
 
   //턴 진행 단계 (2D 화면과 같다)
   //showcase: 제작 확인용 자동 시연 (SPEC-005 §13)
@@ -467,6 +508,8 @@ async function main(): Promise<void> {
     if (!session) return;
     input = new OrderInput(session.inputAllies(), session.inputEnemies().map((e) => e.id), enemyTargets);
     phase = 'input';
+    //쓰러진 사람을 빼고 남은 사람으로 대기 카메라를 다시 잡는다
+    stage.reframe();
     showTargets(true);
     refresh();
   };
@@ -506,13 +549,15 @@ async function main(): Promise<void> {
     if (phase !== 'input' || !session) return null;
     return stage.hitTest(event.clientX, event.clientY);
   };
-  canvas.addEventListener('click', (event) => {
-    const id = pickAt(event);
-    if (!id || !session || !input) return;
+  const pick = (id: string | null): void => {
+    if (!id || !session || !input || phase !== 'input') return;
     if (session.inputAllies().some((a) => a.id === id)) input.selectAlly(id);
     else if (session.inputEnemies().some((e) => e.id === id)) input.selectTarget(id);
     refresh();
-  });
+  };
+  canvas.addEventListener('click', (event) => pick(pickAt(event)));
+  //이름표를 눌러도 고른다 (작은 화면에서 몸보다 누르기 쉽다)
+  stage.onTagPick(pick);
   canvas.addEventListener('mousemove', (event) => {
     canvas.style.cursor = pickAt(event) ? 'pointer' : '';
   });
@@ -526,10 +571,16 @@ async function main(): Promise<void> {
       //저장이 막혀 있으면 다음에 또 뜰 뿐이다
     }
   };
-  document.getElementById('help-open')?.addEventListener('click', () => help?.removeAttribute('hidden'));
+  document.getElementById('help-open')?.addEventListener('click', () => {
+    document.getElementById('menu')?.setAttribute('hidden', '');
+    help?.removeAttribute('hidden');
+  });
   document.getElementById('help-close')?.addEventListener('click', closeHelp);
   window.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') return closeHelp();
+    if (event.key === 'Escape') {
+      document.getElementById('menu')?.setAttribute('hidden', '');
+      return closeHelp();
+    }
     if (phase !== 'input' || !input || !session) return;
     if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) return;
     if (event.key === 'Enter') {
@@ -567,13 +618,32 @@ async function main(): Promise<void> {
       panel.idle('자동 관전 중');
     }
   });
-  for (const button of document.querySelectorAll<HTMLButtonElement>('[data-speed]')) {
-    button.addEventListener('click', () => {
-      speed = Number(button.dataset['speed']) || 1;
-      stage.setSpeed(speed);
-      for (const other of document.querySelectorAll<HTMLButtonElement>('[data-speed]')) other.setAttribute('aria-pressed', String(other === button));
-    });
-  }
+  //배속은 위 띠 버튼 하나로 ×1 → ×2 → ×3 를 돈다
+  const speedButton = document.getElementById('speed');
+  speedButton?.addEventListener('click', () => {
+    speed = speed >= 3 ? 1 : speed + 1;
+    stage.setSpeed(speed);
+    speedButton.textContent = `×${speed}`;
+    speedButton.setAttribute('aria-pressed', String(speed > 1));
+  });
+  //자동 전투: 직접 조작 ↔ 자동 관전
+  const autoButton = document.getElementById('auto');
+  const showAuto = (): void => autoButton?.setAttribute('aria-pressed', String(modeSelect?.value === 'watch'));
+  autoButton?.addEventListener('click', () => {
+    if (!modeSelect) return;
+    modeSelect.value = modeSelect.value === 'watch' ? 'play' : 'watch';
+    modeSelect.dispatchEvent(new Event('change'));
+  });
+  modeSelect?.addEventListener('change', showAuto);
+  showAuto();
+  //메뉴 겹창
+  const menu = document.getElementById('menu');
+  document.getElementById('menu-open')?.addEventListener('click', () => {
+    help?.setAttribute('hidden', '');
+    menu?.removeAttribute('hidden');
+  });
+  document.getElementById('menu-close')?.addEventListener('click', () => menu?.setAttribute('hidden', ''));
+  document.getElementById('restart')?.addEventListener('click', () => menu?.setAttribute('hidden', ''));
 
   let last = performance.now();
   const loop = (now: number): void => {

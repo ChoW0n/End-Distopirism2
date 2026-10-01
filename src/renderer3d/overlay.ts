@@ -61,6 +61,10 @@ export class Overlay {
   private readonly tags = new Map<string, Tag>();
   private callouts: Callout[] = [];
   private selection: Selection3d = { ally: null, target: null, pickable: [] };
+  //UI 기준 단위 1 이 몇 px 인지 (SPEC-004 §13.1). 발밑 바 크기가 이 단위다
+  private unit = 1;
+  //이름표를 눌렀을 때 (입력 단계에 고를 수 있는 사람만)
+  onPick: ((combatantId: string) => void) | null = null;
 
   //bar: 발밑 바 수치 (stage3d.json footBar)
   constructor(
@@ -75,7 +79,7 @@ export class Overlay {
   private barRow(height: number, className: string): { row: HTMLElement; fill: HTMLElement; text: HTMLElement } {
     const row = el('div', `foot3d-row ${className}`);
     const track = el('div', 'foot3d-track');
-    track.style.height = `${height}px`;
+    track.style.height = `calc(var(--u, 1) * ${height}px)`;
     const fill = el('i', '');
     fill.style.transitionDuration = `${this.bar.tween}s`;
     track.append(fill);
@@ -93,11 +97,14 @@ export class Overlay {
     this.tags.clear();
     for (const actor of actors) {
       const box = el('div', `tag3d ${actor.side}`);
+      box.addEventListener('click', () => {
+        if (this.selection.pickable.includes(actor.combatantId)) this.onPick?.(actor.combatantId);
+      });
       const name = el('b', '', actor.name);
       const note = el('small', '');
       box.append(name, note);
       const foot = el('div', `foot3d ${actor.side}`);
-      foot.style.gap = `${this.bar.gap}px`;
+      foot.style.gap = `calc(var(--u, 1) * ${this.bar.gap}px)`;
       foot.style.transitionDuration = `${this.bar.downFade}s`;
       const hp = this.barRow(this.bar.hpHeight, 'hp');
       const mt = this.barRow(this.bar.mtHeight, 'mt');
@@ -111,6 +118,11 @@ export class Overlay {
 
   setSelection(selection: Selection3d): void {
     this.selection = selection;
+  }
+
+  //UI 기준 단위 크기를 바꾼다 (창 크기가 바뀔 때)
+  setUnit(unit: number): void {
+    this.unit = unit > 0 ? unit : 1;
   }
 
   //궁극기 칸을 채운다. null 이면 숨긴다
@@ -169,7 +181,7 @@ export class Overlay {
       if (!f || !v) continue;
       //폭은 캐릭터 화면 키에 비례한다. 멀리 있으면 작아진다
       const tall = h ? Math.abs(f.y - h.y) * height : 0;
-      tag.foot.style.width = `${Math.max(this.bar.minWidth, tall * this.bar.widthRatio)}px`;
+      tag.foot.style.width = `${Math.max(this.bar.minWidth * this.unit, tall * this.bar.widthRatio)}px`;
       tag.foot.style.left = `${f.x * 100}%`;
       tag.foot.style.top = `${f.y * 100}%`;
       const hpRatio = v.maxHp > 0 ? Math.max(0, Math.min(1, v.hp / v.maxHp)) : 0;
