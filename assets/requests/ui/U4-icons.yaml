@@ -1,9 +1,9 @@
-# UI 제작 요청 U4 · 아이콘 12종 (SPEC-007 §9.5)
+# UI 제작 요청 U4 · 아이콘 16종 (SPEC-004 §13.3, SPEC-007 §9.5 에서 바뀜)
 # 양식: docs/참고/gpt-astra-이미지제작-능력.md §15. null·빈 목록은 합의 전 상태다
 task:
   asset_name: "U4-icons"
   purpose: "ui"
-  requested_change: "공격, 막아서기, 교란, 근접, 원거리, 정신력, 체력, 이동, 묶임, 궁극기, 메뉴, 되돌리기. 한 아이콘 = 파일 1개. 단색(흰색) 실루엣 + 알파. 스텐실로 찍은 듯한 거친 가장자리"
+  requested_change: "메뉴, 도움말, 자동 전투, 배속, 소리 켬, 소리 끔, 재시작, 공격, 방어, 보조, 궁극기, 체력, 정신력, 노림(적이 아군을 겨눔), 선택 표시(▼), 가로로 돌리기. 한 아이콘 = 파일 1개. 단색(흰색) 실루엣 + 알파. 스텐실로 찍은 듯한 거친 가장자리. iPhone 에서 35pt 정도로 보여도 구분돼야 한다"
   approved_base_version: null
   input_files: []
   references:
@@ -22,7 +22,7 @@ constraints:
   runtime_blend_mode: "일반 알파"
   preserve: []
   allowed_changes: []
-  note: "12개를 한 장에 모으지 않는다"
+  note: "16개를 한 장에 모으지 않는다. 막아서기·교란·근접·원거리·이동·묶임·되돌리기는 SPEC-007 확정 뒤 다시 요청한다"
 
 delivery:
   result_files: []

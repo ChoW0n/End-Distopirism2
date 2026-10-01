@@ -1,9 +1,9 @@
-# UI 제작 요청 U5 · 적 선언 표지 판 (SPEC-007 §9.5)
+# UI 제작 요청 U5 · 노림 표지 판 (SPEC-004 §13.3)
 # 양식: docs/참고/gpt-astra-이미지제작-능력.md §15. null·빈 목록은 합의 전 상태다
 task:
   asset_name: "U5-intent-plate"
   purpose: "ui"
-  requested_change: "적 머리 위에 뜨는 선언 표지 바탕(예: 근접 12 → 소각원). 찢긴 테이프를 붙인 느낌. 글자 없음. 끊김 상태는 가운데를 가로지르는 찢김·줄"
+  requested_change: "적 이름표 아래에 뜨는 노림 표지 바탕(예: → 카일). 적이 이번 턴에 어느 아군을 노리는지 보인다. 찢긴 테이프를 붙인 느낌. 글자 없음. 합 상태는 그 아군도 이 적을 노려 합이 벌어진다는 뜻이라 더 도드라진다"
   approved_base_version: null
   input_files: []
   references:
@@ -14,7 +14,7 @@ task:
 constraints:
   target_size_reference_units: "300x72"
   size_note: "목표값이다. 정확히 못 맞추면 비율만 지키고 크게 준다. 크기 맞춤·9분할은 반입 도구가 한다"
-  states: [normal, cancelled]
+  states: [normal, clash]
   one_file_per_state: true
   no_text_in_image: true
   tone: "무채색·브라운 기반, 강한 명암 대비, 거친 마모 질감, 균열·녹·벗겨진 페인트 (배경·UI 재질 톤, CLAUDE.md · STORY-001 §18). 재질: 녹슨 철판·찢긴 테이프·스텐실 (SPEC-006 A-5 제안, 미확정)"

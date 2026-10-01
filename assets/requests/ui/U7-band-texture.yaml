@@ -1,4 +1,4 @@
-# UI 제작 요청 U7 · 띠 재질 (SPEC-007 §9.5)
+# UI 제작 요청 U7 · 띠 재질 (SPEC-004 §13.3)
 # 양식: docs/참고/gpt-astra-이미지제작-능력.md §15. null·빈 목록은 합의 전 상태다
 task:
   asset_name: "U7-band-texture"

@@ -1,9 +1,9 @@
-# UI 제작 요청 U1 · 주 버튼 판 (합 진행) (SPEC-004 §13.3)
+# UI 제작 요청 U9 · 이름표 판 (SPEC-004 §13.3)
 # 양식: docs/참고/gpt-astra-이미지제작-능력.md §15. null·빈 목록은 합의 전 상태다
 task:
-  asset_name: "U1-main-button"
+  asset_name: "U9-name-plate"
   purpose: "ui"
-  requested_change: "지시판 오른쪽 끝의 「합 진행」 버튼 바탕판. 가로로 긴 녹슨 철판 조각. 글자·아이콘 없음(코드가 얹는다). 눌림은 한 단 어둡고 안쪽으로 눌린 느낌, 잠김은 채도·명도를 낮춘 상태"
+  requested_change: "캐릭터 머리 위 이름 바탕. 아군·적이 같이 쓴다. 아래 가장자리에 진영 색을 받을 얇은 선 자리를 둔다(색은 코드). 9분할로 가로로 늘어난다"
   approved_base_version: null
   input_files: []
   references:
@@ -12,9 +12,9 @@ task:
       inspected: false
 
 constraints:
-  target_size_reference_units: "344x140"
-  size_note: "목표값이다. 정확히 못 맞추면 비율만 지키고 크게 준다. 크기 맞춤·9분할은 반입 도구가 한다"
-  states: [normal, pressed, disabled]
+  target_size_reference_units: "220x52"
+  size_note: "기준 단위(1920×1080 화면) 크기다. 원본은 이 크기의 2배로 준다(iPhone 15 는 1.09배로 보인다). 정확히 못 맞추면 비율만 지키고 크게 준다. 크기 맞춤·9분할은 반입 도구가 한다"
+  states: [normal]
   one_file_per_state: true
   no_text_in_image: true
   tone: "무채색·브라운 기반, 강한 명암 대비, 거친 마모 질감, 균열·녹·벗겨진 페인트 (배경·UI 재질 톤, CLAUDE.md · STORY-001 §18). 재질: 녹슨 철판·찢긴 테이프·스텐실 (SPEC-006 A-5 제안, 미확정)"
@@ -22,7 +22,7 @@ constraints:
   runtime_blend_mode: "일반 알파"
   preserve: []
   allowed_changes: []
-  note: "9분할 여백은 반입 도구가 정한다"
+  note: "회색조 1벌. 무대 위에서 캐릭터를 가리지 않게 얇고 낮게"
 
 delivery:
   result_files: []
@@ -30,7 +30,7 @@ delivery:
 
 verification:
   file_checks: []        # 반입 도구: RGBA 여부, 배경 알파 0, 크기
-  visual_checks: []      # 밝은·어두운 배경 합성 캡처, 게임 화면 안 배치 캡처
+  visual_checks: []      # 밝은·어두운 배경 합성 캡처, 1920×1080 · iPhone 15(2556×1179) 화면 안 배치 캡처
   engine_checked: false
   user_approved: false
   remaining_failures: []

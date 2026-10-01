@@ -1,9 +1,9 @@
-# UI 제작 요청 U3 · 작은 버튼 판 (SPEC-007 §9.5)
+# UI 제작 요청 U3 · 작은 버튼 판 (SPEC-004 §13.3)
 # 양식: docs/참고/gpt-astra-이미지제작-능력.md §15. null·빈 목록은 합의 전 상태다
 task:
   asset_name: "U3-small-button"
   purpose: "ui"
-  requested_change: "정사각 작은 버튼 바탕(태우기 −/+, 메뉴 등 공용). 아이콘 없음"
+  requested_change: "정사각 작은 버튼 바탕(메뉴·배속·자동·도움말·닫기 공용). 아이콘 없음(코드가 U4 아이콘을 얹는다). 켜짐은 자동 전투·배속처럼 켜 둔 상태가 보이게"
   approved_base_version: null
   input_files: []
   references:
@@ -14,7 +14,7 @@ task:
 constraints:
   target_size_reference_units: "120x120"
   size_note: "목표값이다. 정확히 못 맞추면 비율만 지키고 크게 준다. 크기 맞춤·9분할은 반입 도구가 한다"
-  states: [normal, pressed, disabled]
+  states: [normal, pressed, on]
   one_file_per_state: true
   no_text_in_image: true
   tone: "무채색·브라운 기반, 강한 명암 대비, 거친 마모 질감, 균열·녹·벗겨진 페인트 (배경·UI 재질 톤, CLAUDE.md · STORY-001 §18). 재질: 녹슨 철판·찢긴 테이프·스텐실 (SPEC-006 A-5 제안, 미확정)"
