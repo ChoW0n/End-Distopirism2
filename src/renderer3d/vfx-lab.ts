@@ -140,7 +140,7 @@ async function main(): Promise<void> {
   const originalRoot = new THREE.Group();
   originalRoot.add(original);
   scene.add(originalRoot);
-  let compare: 'off' | 'side' | 'over' = 'off';
+  let compare: 'off' | 'side' | 'over' = 'side';
   const applyCompare = (): void => {
     const has = originals.some((t) => t);
     originalRoot.visible = has && compare !== 'off';
