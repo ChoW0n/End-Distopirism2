@@ -1,21 +1,28 @@
 {
-  "_주석": "SPEC-005 §15.1 물금 실시간 VFX — 효과 단독 실험 화면 전용. 초깃값은 준비물 kyle-s1-vfx-lab.json 그대로. 일반 게임·시연에는 쓰지 않는다. 경로 점은 발 기준 캐릭터 키(H) 배수, 시간은 게임 ms",
-  "schemaVersion": 1,
+  "_주석": "SPEC-005 §15.1 물금 실시간 VFX — 효과 단독 실험 화면 전용. 시간 계약은 준비물 kyle-s1-vfx-lab.json 그대로, 모양·색은 원본 S1 통합 장(norm/11-skill1-01) 물결 베기에 맞춤(v2.25). 일반 게임·시연에는 쓰지 않는다. 길이 단위는 캐릭터 키 H(= 대기 몸 높이 580px), 시간은 게임 ms",
+  "schemaVersion": 2,
   "id": "kyle-s1-mulgeum",
   "enabledInNormalPlay": false,
   "bodyIntegration": "blocked-no-clean-body-no-approved-anchors",
   "timeDomain": "game",
   "timingMs": { "reveal": 60, "hold": 160, "erase": 780, "bodyAfterHold": 160 },
-  "erase": { "direction": "tail-to-head", "exponent": 2, "edgeFeatherU": 0.025, "staticNoiseAmplitudeU": 0.012, "shrinkWholeMesh": false },
-  "paletteSRGB": { "body": "#081B30", "middle": "#124C68", "edge": "#67B9C9", "core": "#DAEEF0" },
+  "erase": { "direction": "tail-to-head", "exponent": 2, "edgeFeatherU": 0.03, "staticNoiseAmplitudeU": 0.08, "strandLagU": 0.18, "thinU": 0.3, "shrinkWholeMesh": false },
+  "_erase": "staticNoiseAmplitudeU 고정 노이즈 흔들림, strandLagU 깊이 띠마다 늦게 지우는 최대량, thinU 줄결이 아닌 곳을 먼저 지우는 양(가닥이 남는다). 모두 u 단위",
+  "_palette": "원본 01 장 효과 픽셀을 밝기 단계로 나눈 평균. deep 짙은 남 → body 몸통 → bright 밝은 파랑 → light 하늘 → foam 거품 → core 흰 심",
+  "paletteSRGB": { "deep": "#001C52", "body": "#053EAB", "bright": "#1F70E5", "light": "#61ADF6", "foam": "#AEDAF9", "core": "#FFFFFF" },
+  "_path": "원본 01 장의 밝은 흰 호를 눈으로 따라 잡은 3차 베지어. 발 기준 H 배수(x 오른쪽, y 위). u=0 꼬리(오른쪽 끝) → u=1 머리(칼끝 쪽). innerWidthsH 는 호 안쪽 물결 몸통 두께, outerWidthsH 는 호 바깥 흰 심·번짐 두께 [u, H]",
   "path": {
     "space": "foot-relative-character-height",
-    "points": [[-0.9, 1.15], [1.1, 1.75], [1.5, 0.1], [0.65, 0.2]],
-    "segments": 64,
-    "maxWidthInCharacterHeights": 0.22
+    "points": [[0.733, 0.44], [0.295, 0.109], [-1.24, 0.018], [-0.993, 0.845]],
+    "segments": 96,
+    "innerWidthsH": [[0, 0.02], [0.1, 0.1], [0.25, 0.17], [0.4, 0.3], [0.55, 0.45], [0.68, 0.6], [0.8, 0.58], [0.9, 0.42], [0.97, 0.16], [1, 0.03]],
+    "outerWidthsH": [[0, 0.005], [0.2, 0.018], [0.5, 0.028], [0.8, 0.032], [0.95, 0.022], [1, 0.006]],
+    "coreWidthH": 0.012
   },
-  "_widthProfile": "u 에 따른 폭 비율 = sin(πu)^power. 양 끝이 가늘고 가운데가 최대 폭. 시간에 따라 바뀌지 않는다",
-  "widthProfile": { "shape": "sine", "power": 0.7 },
-  "render": { "edgeOpacity": 0.25, "edgeWidthV": 0.18, "seed": 101 },
+  "_waves": "호 안쪽 물결 마루. 겹 셋(뒤 count×0.35 크게 · 가운데 count×0.8 · 앞 count×1.6 작게) 톱니, 마루 높이는 안쪽 두께 대비 base~1, lean 은 마루 끝이 꼬리 쪽으로 기우는 정도, foam 은 마루 테두리 거품 두께(안쪽 두께 비율)",
+  "waves": { "count": 12, "base": 0.16, "lean": 0.8, "foam": 0.07 },
+  "_droplets": "물방울. 고정 자리(seed). outerShare 는 호 바깥 비율, offsetH 는 호에서 떨어진 거리 범위, sizeH 는 지름 범위, lagU 는 자기 u 보다 늦게 지워지는 정도 범위, driftH 는 1초에 바깥으로 흩어지는 거리 범위",
+  "droplets": { "count": 90, "seed": 7, "outerShare": 0.6, "offsetH": [0.02, 0.3], "sizeH": [0.016, 0.05], "lagU": [0.03, 0.14], "driftH": [0.04, 0.22] },
+  "render": { "glowOpacity": 0.32, "seed": 101 },
   "test": { "backgrounds": ["#101820", "#D9D9D4", "#655344", "#497383"], "playbackRates": [0.25, 0.5, 1, 2], "fps": [30, 60, 120], "sampleTimesMs": [0, 30, 60, 220, 415, 610, 805, 950, 1000, 1160] }
 }

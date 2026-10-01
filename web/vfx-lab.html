@@ -12,6 +12,7 @@
   .panel { padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)); background: var(--plate); border-top: 1px solid var(--gold); display: grid; gap: 8px; }
   .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
   .row > b { min-width: 4.5em; color: var(--dim); font-weight: 600; }
+  select { min-height: 36px; background: #111d2b; color: var(--ink); border: 1px solid #4a4538; font: inherit; }
   button { min-height: 36px; padding: 0 12px; border: 1px solid #4a4538; background: #111d2b; color: var(--ink); font: inherit; cursor: pointer; }
   button[aria-pressed="true"] { border-color: #ffe0a1; color: #ffe0a1; }
   button.swatch { width: 44px; padding: 0; }
@@ -36,9 +37,11 @@
     <div class="row"><b>배경</b><span id="bg" class="row"></span>
       <button id="facing" type="button">방향: 오른쪽</button>
       <label><input id="debug" type="checkbox" checked> 경로·꼬리(주황)/머리(초록)·u 화살표·발 기준점</label>
-      <label><input id="edge" type="checkbox" checked> 밝은 경계(가산)</label>
+      <label><input id="glow" type="checkbox" checked> 빛(가산)</label>
+      <label><input id="drops" type="checkbox" checked> 물방울</label>
+      <label>원본 비교 <select id="compare"><option value="off">끔</option><option value="side">나란히</option><option value="over">겹쳐(원본 50%)</option></select></label>
     </div>
-    <div class="note">효과 단독 테스트 — 카일 본체 합성 아님 (깨끗한 본체·앵커 승인 전). 경로는 카일에 맞추지 않은 실험 경로.</div>
+    <div class="note">효과 단독 테스트 — 카일 본체 합성 아님 (깨끗한 본체·앵커 승인 전). 모양·색은 원본 S1 물결 베기(01 장)를 눈으로 맞춘 것. 원본 비교는 참고용.</div>
   </div>
 </div>
 <script type="module" src="vfx-lab.js"></script>

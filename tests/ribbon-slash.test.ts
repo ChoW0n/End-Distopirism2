@@ -3,13 +3,16 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   arcLengthPoints,
+  dropletLayout,
+  dropletVisible,
   erasedAt,
+  innerWidthAt,
+  outerWidthAt,
   parseRibbonConfig,
   slashDuration,
   slashSample,
   slashVisible,
   staticNoise,
-  widthAt,
 } from '../src/render/ribbon-slash.js';
 
 const config = parseRibbonConfig(JSON.parse(readFileSync(new URL('../assets/kyle/realtime-vfx.json', import.meta.url), 'utf-8')));
@@ -116,10 +119,13 @@ describe('경로·폭·노이즈', () => {
     expect(last[0]).toBeCloseTo((config.path.points[3] as readonly [number, number])[0], 6);
   });
 
-  it('폭은 양 끝 0, 가운데 최대, 시간과 무관', () => {
-    expect(widthAt(config, 0)).toBe(0);
-    expect(widthAt(config, 0.5)).toBe(1);
-    expect(widthAt(config, 1)).toBeCloseTo(0, 6);
+  it('두께: 꼬리 가늘고 칼끝 쪽 두껍다 (원본 물결 모양)', () => {
+    expect(innerWidthAt(config, 0)).toBeLessThan(0.05);
+    expect(innerWidthAt(config, 0.68)).toBeGreaterThan(innerWidthAt(config, 0.25));
+    expect(innerWidthAt(config, 1)).toBeLessThan(0.05);
+    expect(outerWidthAt(config, 0.5)).toBeGreaterThan(config.path.coreWidthH);
+    //표 사이는 직선
+    expect(innerWidthAt(config, 0.05)).toBeCloseTo((0.02 + 0.1) / 2, 9);
   });
 
   it('노이즈는 고정 (같은 자리 같은 값) · -1~1', () => {
@@ -130,7 +136,7 @@ describe('경로·폭·노이즈', () => {
     }
   });
 
-  it('노이즈를 넣어도 지워진 곳은 다시 켜지지 않는다', () => {
+  it('노이즈·가닥 지연을 넣어도 지워진 곳은 다시 켜지지 않는다', () => {
     for (let u = 0; u <= 1; u += 0.02) {
       for (const v of [0.1, 0.5, 0.9]) {
         let erased = false;
@@ -140,5 +146,45 @@ describe('경로·폭·노이즈', () => {
         }
       }
     }
+  });
+});
+
+describe('물방울', () => {
+  const drops = dropletLayout(config);
+
+  it('씨앗이 같으면 자리가 같고, 칼끝 쪽에 더 많다', () => {
+    expect(dropletLayout(config)).toEqual(drops);
+    expect(drops).toHaveLength(config.droplets.count);
+    const late = drops.filter((d) => d.u > 0.5).length;
+    expect(late).toBeGreaterThan(drops.length / 2);
+  });
+
+  it('바깥 물방울은 호 바깥, 안쪽은 물결 몸통 안', () => {
+    for (const d of drops) {
+      if (d.offsetH > 0) expect(d.offsetH).toBeGreaterThan(outerWidthAt(config, d.u));
+      else expect(-d.offsetH).toBeLessThanOrEqual(innerWidthAt(config, d.u) + 1e-9);
+    }
+  });
+
+  it('머리가 지나가야 켜지고, 꺼지면 다시 켜지지 않으며, 끝에는 전부 꺼진다', () => {
+    for (const d of drops) {
+      let seen = false;
+      let gone = false;
+      for (let t = 0; t <= total; t += 5) {
+        const v = dropletVisible(config, d, t);
+        if (v && !seen) expect(slashSample(config, t).head).toBeGreaterThanOrEqual(d.u);
+        if (v) seen = true;
+        if (seen && !v) gone = true;
+        if (gone) expect(v).toBe(false);
+      }
+      expect(dropletVisible(config, d, total)).toBe(false);
+    }
+  });
+
+  it('잔여 물방울: 자기 자리 몸통보다 늦게 꺼진다', () => {
+    const d = drops.find((x) => x.u < 0.6) as (typeof drops)[number];
+    const t = reveal + hold + erase * Math.sqrt(d.u + 0.001);
+    expect(slashVisible(config, d.u, t)).toBe(false);
+    expect(dropletVisible(config, d, t)).toBe(true);
   });
 });

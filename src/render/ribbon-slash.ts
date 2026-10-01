@@ -11,12 +11,37 @@ export interface RibbonSlashConfig {
   bodyIntegration: string;
   timeDomain: 'game' | 'real';
   timingMs: { reveal: number; hold: number; erase: number; bodyAfterHold: number };
-  erase: { exponent: number; edgeFeatherU: number; staticNoiseAmplitudeU: number };
-  paletteSRGB: { body: string; middle: string; edge: string; core: string };
-  path: { points: readonly Vec2[]; segments: number; maxWidthInCharacterHeights: number };
-  widthProfile: { power: number };
-  render: { edgeOpacity: number; edgeWidthV: number; seed: number };
+  erase: { exponent: number; edgeFeatherU: number; staticNoiseAmplitudeU: number; strandLagU: number; thinU: number };
+  paletteSRGB: { deep: string; body: string; bright: string; light: string; foam: string; core: string };
+  path: {
+    points: readonly Vec2[];
+    segments: number;
+    //[u, 두께 H] 표. 사이는 직선으로 잇는다
+    innerWidthsH: readonly Vec2[];
+    outerWidthsH: readonly Vec2[];
+    coreWidthH: number;
+  };
+  waves: { count: number; base: number; lean: number; foam: number };
+  droplets: {
+    count: number;
+    seed: number;
+    outerShare: number;
+    offsetH: Vec2;
+    sizeH: Vec2;
+    lagU: Vec2;
+    driftH: Vec2;
+  };
+  render: { glowOpacity: number; seed: number };
   test: { backgrounds: string[]; playbackRates: number[]; fps: number[]; sampleTimesMs: number[] };
+}
+
+//물방울 하나. u 는 붙은 자리, offsetH 는 호에서 떨어진 거리(+ 바깥, − 안쪽), lagU 만큼 늦게 지워진다
+export interface Droplet {
+  u: number;
+  offsetH: number;
+  sizeH: number;
+  lagU: number;
+  driftH: number;
 }
 
 //설정 파일이 규격과 다를 때 던진다
@@ -106,9 +131,68 @@ export function slashVisible(config: RibbonSlashConfig, u: number, ageMs: number
   return s.alive && s.head > s.tail && u >= s.tail && u <= s.head;
 }
 
-//u 에 따른 폭 비율. 양 끝이 가늘고 가운데가 최대. 시간과 무관하다
-export function widthAt(config: RibbonSlashConfig, u: number): number {
-  return Math.pow(Math.max(0, Math.sin(Math.PI * clamp01(u))), config.widthProfile.power);
+//[u, 값] 표를 직선으로 이어 u 자리 값을 읽는다
+export function tableAt(table: readonly Vec2[], u: number): number {
+  const x = clamp01(u);
+  const first = table[0] as Vec2;
+  if (x <= first[0]) return first[1];
+  for (let i = 1; i < table.length; i++) {
+    const a = table[i - 1] as Vec2;
+    const b = table[i] as Vec2;
+    if (x <= b[0]) return a[1] + ((b[1] - a[1]) * (x - a[0])) / Math.max(1e-9, b[0] - a[0]);
+  }
+  return (table[table.length - 1] as Vec2)[1];
+}
+
+//호 안쪽 물결 몸통 두께(H). 꼬리 가늘고 칼끝 쪽 두껍다. 시간과 무관하다
+export function innerWidthAt(config: RibbonSlashConfig, u: number): number {
+  return tableAt(config.path.innerWidthsH, u);
+}
+
+//호 바깥 흰 심·번짐 두께(H)
+export function outerWidthAt(config: RibbonSlashConfig, u: number): number {
+  return tableAt(config.path.outerWidthsH, u);
+}
+
+//씨앗 고정 난수 (mulberry32). 물방울 자리를 매번 같게 만든다
+function seeded(seed: number): () => number {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+//물방울 자리. 칼끝 쪽(u 큰 쪽)에 더 많다. 바깥 비율 outerShare, 안쪽은 물결 몸통 안에
+export function dropletLayout(config: RibbonSlashConfig): Droplet[] {
+  const d = config.droplets;
+  const rand = seeded(d.seed);
+  const lerp = (r: Vec2, t: number): number => r[0] + (r[1] - r[0]) * t;
+  return Array.from({ length: d.count }, () => {
+    //u 는 0.05~1, 제곱근으로 칼끝 쪽에 몰린다
+    const u = 0.05 + 0.95 * Math.sqrt(rand());
+    const outer = rand() < d.outerShare;
+    //바깥은 호 가까이에 몰리고(제곱 분포), 칼끝 쪽일수록 멀리 튄다
+    const reach = lerp(d.offsetH, rand() * rand()) * (0.45 + 0.55 * u);
+    const offsetH = outer ? outerWidthAt(config, u) + reach : -innerWidthAt(config, u) * (0.2 + 0.75 * rand());
+    return { u, offsetH, sizeH: lerp(d.sizeH, rand()), lagU: lerp(d.lagU, rand()), driftH: outer ? lerp(d.driftH, rand()) : 0 };
+  });
+}
+
+//물방울이 이 시각에 보이는지. 머리가 지나간 뒤 켜지고, 꼬리가 자기 u + lag 를 넘으면 꺼진다 (다시 켜지지 않는다)
+export function dropletVisible(config: RibbonSlashConfig, drop: Droplet, ageMs: number): boolean {
+  const s = slashSample(config, ageMs);
+  return s.alive && drop.u <= s.head && s.tail < drop.u + drop.lagU;
+}
+
+//물줄기 가닥 지연. 안쪽 깊이(0 호 ~ 1 안쪽 끝)를 띠로 나눠 띠마다 0~strandLagU 만큼 늦게 지운다. 셰이더 strandLag 와 같은 식
+export function strandLag(config: RibbonSlashConfig, depth: number): number {
+  const band = Math.floor(clamp01(depth) * 11);
+  const s = Math.sin(band * 91.7 + config.render.seed * 1.3) * 43758.5453;
+  return (s - Math.floor(s)) * config.erase.strandLagU;
 }
 
 //고정 공간 노이즈 (-1~1). 시간 항이 없어서 소멸 중 위상이 떨리지 않는다. 셰이더 noiseAt 과 같은 식
@@ -124,10 +208,22 @@ export function staticNoise(u: number, v: number, seed: number): number {
   return cell(i, y) * (1 - f) + cell(i + 1, y) * f;
 }
 
-//한 점(u,v)이 이 시각에 지워졌는지. 노이즈로 흔든 u 가 tail 보다 앞이면 지워진다 (단조: tail 만 커진다)
-export function erasedAt(config: RibbonSlashConfig, u: number, v: number, ageMs: number): boolean {
+//물줄기 결 (0~1). 호를 따라 흐르는 가는 줄. 셰이더 streakAt 과 같은 식
+export function streakAt(config: RibbonSlashConfig, u: number, depth: number): number {
+  return 0.5 + 0.5 * Math.sin(depth * 46 + u * 18 + staticNoise(u * 0.5, depth, config.render.seed) * 6);
+}
+
+//줄결이 아닌 곳은 thinU 만큼 먼저 지워져 끝이 가닥으로 남는다 (원본 S1 소멸처럼)
+export function thinningAt(config: RibbonSlashConfig, u: number, depth: number): number {
+  const s = streakAt(config, u, depth);
+  return config.erase.thinU * (1 - s * s);
+}
+
+//한 점이 이 시각에 지워졌는지. depth 는 호 안쪽 깊이(0~1). 노이즈·가닥 지연으로 흔든 u 가 tail 보다 앞이면 지워진다
+//노이즈·지연·가닥 남김이 시간에 따라 바뀌지 않으므로 단조다 (tail 만 커진다)
+export function erasedAt(config: RibbonSlashConfig, u: number, depth: number, ageMs: number): boolean {
   const s = slashSample(config, ageMs);
-  return u + staticNoise(u, v, config.render.seed) * config.erase.staticNoiseAmplitudeU < s.tail;
+  return u + staticNoise(u, depth, config.render.seed) * config.erase.staticNoiseAmplitudeU + strandLag(config, depth) - thinningAt(config, u, depth) < s.tail;
 }
 
 //JSON 을 검사해 설정으로. 시간이 0 이하거나 꼬리→머리 방향이 아니면 던진다
@@ -141,6 +237,11 @@ export function parseRibbonConfig(raw: unknown): RibbonSlashConfig {
   if (!(c.erase.exponent >= 1)) throw new RibbonConfigError('erase.exponent 는 1 이상');
   if (!Array.isArray(c.path?.points) || c.path.points.length !== 4) throw new RibbonConfigError('path.points 는 3차 베지어 점 4개');
   if (!(c.path.segments >= 2)) throw new RibbonConfigError('path.segments 는 2 이상');
+  for (const key of ['innerWidthsH', 'outerWidthsH'] as const) {
+    const t = c.path[key];
+    if (!Array.isArray(t) || t.length < 2 || t.some((p, i) => i > 0 && p[0] <= (t[i - 1] as Vec2)[0])) throw new RibbonConfigError(`path.${key} 는 u 가 커지는 [u, H] 표`);
+  }
+  if (!(c.waves?.count >= 1) || !(c.droplets?.count >= 0)) throw new RibbonConfigError('waves.count·droplets.count 가 없다');
   if (c.timeDomain !== 'game' && c.timeDomain !== 'real') throw new RibbonConfigError('timeDomain 은 game 또는 real');
   return c;
 }
