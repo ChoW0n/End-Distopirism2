@@ -1,0 +1,1292 @@
+{
+  "version": "1.0.0",
+  "project": "End-Distopirism2",
+  "date": "2026-10-01",
+  "count": 64,
+  "palette": {
+    "ink": "#0b0d0e",
+    "base": "#191c1d",
+    "edge": "#7c817d",
+    "bone": "#e8e1cf",
+    "muted": "#535957",
+    "red": "#b94938",
+    "hot": "#e06d4c",
+    "gold": "#c8a65f",
+    "blue": "#79a0ad",
+    "green": "#9baf94"
+  },
+  "format": "PNG RGBA sRGB",
+  "source": "ui-source.svg",
+  "assets": [
+    {
+      "id": "U1",
+      "name": "U1_clash_default",
+      "w": 344,
+      "h": 140,
+      "state": "default",
+      "safe": [
+        35,
+        33,
+        205,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "file": "png/U1_clash_default.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U1",
+      "name": "U1_clash_pressed",
+      "w": 344,
+      "h": 140,
+      "state": "pressed",
+      "safe": [
+        35,
+        33,
+        205,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "file": "png/U1_clash_pressed.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U1",
+      "name": "U1_clash_locked",
+      "w": 344,
+      "h": 140,
+      "state": "locked",
+      "safe": [
+        35,
+        33,
+        205,
+        68
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "file": "png/U1_clash_locked.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U2",
+      "name": "U2_s1_default",
+      "w": 230,
+      "h": 170,
+      "state": "default",
+      "rank": 1,
+      "artWindow": [
+        15,
+        35,
+        200,
+        89
+      ],
+      "safe": [
+        35,
+        132,
+        155,
+        26
+      ],
+      "file": "png/U2_s1_default.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U2",
+      "name": "U2_s1_selected",
+      "w": 230,
+      "h": 170,
+      "state": "selected",
+      "rank": 1,
+      "artWindow": [
+        15,
+        35,
+        200,
+        89
+      ],
+      "safe": [
+        35,
+        132,
+        155,
+        26
+      ],
+      "file": "png/U2_s1_selected.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U2",
+      "name": "U2_s1_locked",
+      "w": 230,
+      "h": 170,
+      "state": "locked",
+      "rank": 1,
+      "artWindow": [
+        15,
+        35,
+        200,
+        89
+      ],
+      "safe": [
+        35,
+        132,
+        155,
+        26
+      ],
+      "file": "png/U2_s1_locked.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U2",
+      "name": "U2_s2_default",
+      "w": 230,
+      "h": 170,
+      "state": "default",
+      "rank": 2,
+      "artWindow": [
+        15,
+        35,
+        200,
+        89
+      ],
+      "safe": [
+        35,
+        132,
+        155,
+        26
+      ],
+      "file": "png/U2_s2_default.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U2",
+      "name": "U2_s2_selected",
+      "w": 230,
+      "h": 170,
+      "state": "selected",
+      "rank": 2,
+      "artWindow": [
+        15,
+        35,
+        200,
+        89
+      ],
+      "safe": [
+        35,
+        132,
+        155,
+        26
+      ],
+      "file": "png/U2_s2_selected.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U2",
+      "name": "U2_s2_locked",
+      "w": 230,
+      "h": 170,
+      "state": "locked",
+      "rank": 2,
+      "artWindow": [
+        15,
+        35,
+        200,
+        89
+      ],
+      "safe": [
+        35,
+        132,
+        155,
+        26
+      ],
+      "file": "png/U2_s2_locked.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U2",
+      "name": "U2_s3_default",
+      "w": 230,
+      "h": 170,
+      "state": "default",
+      "rank": 3,
+      "artWindow": [
+        15,
+        35,
+        200,
+        89
+      ],
+      "safe": [
+        35,
+        132,
+        155,
+        26
+      ],
+      "file": "png/U2_s3_default.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U2",
+      "name": "U2_s3_selected",
+      "w": 230,
+      "h": 170,
+      "state": "selected",
+      "rank": 3,
+      "artWindow": [
+        15,
+        35,
+        200,
+        89
+      ],
+      "safe": [
+        35,
+        132,
+        155,
+        26
+      ],
+      "file": "png/U2_s3_selected.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U2",
+      "name": "U2_s3_locked",
+      "w": 230,
+      "h": 170,
+      "state": "locked",
+      "rank": 3,
+      "artWindow": [
+        15,
+        35,
+        200,
+        89
+      ],
+      "safe": [
+        35,
+        132,
+        155,
+        26
+      ],
+      "file": "png/U2_s3_locked.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U3",
+      "name": "U3_small_default",
+      "w": 120,
+      "h": 120,
+      "state": "default",
+      "safe": [
+        20,
+        20,
+        80,
+        80
+      ],
+      "file": "png/U3_small_default.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U3",
+      "name": "U3_small_pressed",
+      "w": 120,
+      "h": 120,
+      "state": "pressed",
+      "safe": [
+        20,
+        20,
+        80,
+        80
+      ],
+      "file": "png/U3_small_pressed.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U3",
+      "name": "U3_small_on",
+      "w": 120,
+      "h": 120,
+      "state": "on",
+      "safe": [
+        20,
+        20,
+        80,
+        80
+      ],
+      "file": "png/U3_small_on.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_menu",
+      "w": 96,
+      "h": 96,
+      "meaning": "메뉴",
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "tintable": true,
+      "file": "png/U4_icon_menu.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_help",
+      "w": 96,
+      "h": 96,
+      "meaning": "도움말",
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "tintable": true,
+      "file": "png/U4_icon_help.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_auto",
+      "w": 96,
+      "h": 96,
+      "meaning": "자동",
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "tintable": true,
+      "file": "png/U4_icon_auto.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_speed",
+      "w": 96,
+      "h": 96,
+      "meaning": "배속",
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "tintable": true,
+      "file": "png/U4_icon_speed.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_sound_on",
+      "w": 96,
+      "h": 96,
+      "meaning": "소리 켬",
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "tintable": true,
+      "file": "png/U4_icon_sound_on.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_sound_off",
+      "w": 96,
+      "h": 96,
+      "meaning": "소리 끔",
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "tintable": true,
+      "file": "png/U4_icon_sound_off.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_restart",
+      "w": 96,
+      "h": 96,
+      "meaning": "재시작",
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "tintable": true,
+      "file": "png/U4_icon_restart.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_attack",
+      "w": 96,
+      "h": 96,
+      "meaning": "공격",
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "tintable": true,
+      "file": "png/U4_icon_attack.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_defense",
+      "w": 96,
+      "h": 96,
+      "meaning": "방어",
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "tintable": true,
+      "file": "png/U4_icon_defense.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_support",
+      "w": 96,
+      "h": 96,
+      "meaning": "보조",
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "tintable": true,
+      "file": "png/U4_icon_support.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_ultimate",
+      "w": 96,
+      "h": 96,
+      "meaning": "궁극기",
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "tintable": true,
+      "file": "png/U4_icon_ultimate.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_health",
+      "w": 96,
+      "h": 96,
+      "meaning": "체력",
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "tintable": true,
+      "file": "png/U4_icon_health.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_spirit",
+      "w": 96,
+      "h": 96,
+      "meaning": "정신력",
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "tintable": true,
+      "file": "png/U4_icon_spirit.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_target",
+      "w": 96,
+      "h": 96,
+      "meaning": "노림",
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "tintable": true,
+      "file": "png/U4_icon_target.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_dropdown",
+      "w": 96,
+      "h": 96,
+      "meaning": "선택",
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "tintable": true,
+      "file": "png/U4_icon_dropdown.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_rotate",
+      "w": 96,
+      "h": 96,
+      "meaning": "가로 회전",
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "tintable": true,
+      "file": "png/U4_icon_rotate.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U5",
+      "name": "U5_target_default",
+      "w": 300,
+      "h": 72,
+      "state": "default",
+      "safe": [
+        79,
+        18,
+        195,
+        36
+      ],
+      "file": "png/U5_target_default.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U5",
+      "name": "U5_target_clash",
+      "w": 300,
+      "h": 72,
+      "state": "clash",
+      "safe": [
+        79,
+        18,
+        195,
+        36
+      ],
+      "file": "png/U5_target_clash.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U6",
+      "name": "U6_ally_default",
+      "w": 160,
+      "h": 170,
+      "state": "default",
+      "artWindow": [
+        15,
+        25,
+        130,
+        107
+      ],
+      "safe": [
+        23,
+        136,
+        86,
+        23
+      ],
+      "file": "png/U6_ally_default.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U6",
+      "name": "U6_ally_selected",
+      "w": 160,
+      "h": 170,
+      "state": "selected",
+      "artWindow": [
+        15,
+        25,
+        130,
+        107
+      ],
+      "safe": [
+        23,
+        136,
+        86,
+        23
+      ],
+      "file": "png/U6_ally_selected.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U6",
+      "name": "U6_ally_ordered",
+      "w": 160,
+      "h": 170,
+      "state": "ordered",
+      "artWindow": [
+        15,
+        25,
+        130,
+        107
+      ],
+      "safe": [
+        23,
+        136,
+        86,
+        23
+      ],
+      "file": "png/U6_ally_ordered.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U6",
+      "name": "U6_ally_fallen",
+      "w": 160,
+      "h": 170,
+      "state": "fallen",
+      "artWindow": [
+        15,
+        25,
+        130,
+        107
+      ],
+      "safe": [
+        23,
+        136,
+        86,
+        23
+      ],
+      "file": "png/U6_ally_fallen.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U7",
+      "name": "U7_strip_top",
+      "w": 1920,
+      "h": 120,
+      "repeat": "x",
+      "pivot": [
+        0,
+        0
+      ],
+      "safe": [
+        0,
+        12,
+        1920,
+        96
+      ],
+      "file": "png/U7_strip_top.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Repeat X / Clamp Y"
+    },
+    {
+      "id": "U7",
+      "name": "U7_strip_command",
+      "w": 1920,
+      "h": 220,
+      "repeat": "x",
+      "pivot": [
+        0,
+        0
+      ],
+      "safe": [
+        0,
+        12,
+        1920,
+        196
+      ],
+      "file": "png/U7_strip_command.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Repeat X / Clamp Y"
+    },
+    {
+      "id": "U8",
+      "name": "U8_turn",
+      "w": 200,
+      "h": 100,
+      "safe": [
+        94,
+        22,
+        80,
+        56
+      ],
+      "origin": "원작 Turn.png 마름모 도상을 재구성. 원본 픽셀 미재사용.",
+      "file": "png/U8_turn.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U9",
+      "name": "U9_nameplate",
+      "w": 220,
+      "h": 52,
+      "safe": [
+        28,
+        10,
+        173,
+        32
+      ],
+      "file": "png/U9_nameplate.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U10",
+      "name": "U10_status_bleed",
+      "w": 56,
+      "h": 56,
+      "meaning": "출혈",
+      "safe": [
+        3,
+        3,
+        50,
+        50
+      ],
+      "file": "png/U10_status_bleed.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U10",
+      "name": "U10_status_confusion",
+      "w": 56,
+      "h": 56,
+      "meaning": "혼란",
+      "safe": [
+        3,
+        3,
+        50,
+        50
+      ],
+      "file": "png/U10_status_confusion.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U10",
+      "name": "U10_status_poison",
+      "w": 56,
+      "h": 56,
+      "meaning": "독",
+      "safe": [
+        3,
+        3,
+        50,
+        50
+      ],
+      "file": "png/U10_status_poison.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U10",
+      "name": "U10_status_defense_down",
+      "w": 56,
+      "h": 56,
+      "meaning": "방어력 감소",
+      "safe": [
+        3,
+        3,
+        50,
+        50
+      ],
+      "file": "png/U10_status_defense_down.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U11",
+      "name": "U11_bar_hp",
+      "w": 180,
+      "h": 14,
+      "fillRect": [
+        6,
+        3,
+        168,
+        8
+      ],
+      "safe": [
+        6,
+        3,
+        168,
+        8
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "scaleMode": "native-pixel",
+      "file": "png/U11_bar_hp.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U11",
+      "name": "U11_bar_sp",
+      "w": 180,
+      "h": 10,
+      "fillRect": [
+        6,
+        3,
+        168,
+        4
+      ],
+      "safe": [
+        6,
+        3,
+        168,
+        4
+      ],
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "scaleMode": "native-pixel",
+      "file": "png/U11_bar_sp.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U12",
+      "name": "U12_ultimate_empty",
+      "w": 56,
+      "h": 14,
+      "state": "empty",
+      "meaning": "전체 궁극기 게이지의 빈칸",
+      "file": "png/U12_ultimate_empty.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U12",
+      "name": "U12_ultimate_charged",
+      "w": 56,
+      "h": 14,
+      "state": "charged",
+      "meaning": "한 칸 충전",
+      "file": "png/U12_ultimate_charged.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U12",
+      "name": "U12_ultimate_full",
+      "w": 56,
+      "h": 14,
+      "state": "full",
+      "meaning": "전체 궁극기 게이지의 발동 가능",
+      "file": "png/U12_ultimate_full.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U13",
+      "name": "U13_selection_ring",
+      "w": 320,
+      "h": 110,
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "space": "world-ground",
+      "occlusion": "발·캐릭터 뒤에 배치",
+      "file": "png/U13_selection_ring.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U14",
+      "name": "U14_clash_win",
+      "w": 360,
+      "h": 120,
+      "state": "win",
+      "label": "합 승리",
+      "textBaked": true,
+      "file": "png/U14_clash_win.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U14",
+      "name": "U14_clash_lose",
+      "w": 360,
+      "h": 120,
+      "state": "lose",
+      "label": "합 패배",
+      "textBaked": true,
+      "file": "png/U14_clash_lose.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U14",
+      "name": "U14_clash_draw",
+      "w": 360,
+      "h": 120,
+      "state": "draw",
+      "label": "교착",
+      "textBaked": true,
+      "file": "png/U14_clash_draw.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U15",
+      "name": "U15_overhead_front",
+      "w": 256,
+      "h": 360,
+      "artWindow": [
+        22,
+        53,
+        212,
+        222
+      ],
+      "safe": [
+        28,
+        287,
+        200,
+        50
+      ],
+      "pivot": [
+        0.5,
+        1
+      ],
+      "file": "png/U15_overhead_front.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U15",
+      "name": "U15_overhead_back",
+      "w": 256,
+      "h": 360,
+      "pivot": [
+        0.5,
+        1
+      ],
+      "safe": null,
+      "file": "png/U15_overhead_back.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U16",
+      "name": "U16_ultimate_card_default",
+      "w": 230,
+      "h": 170,
+      "state": "default",
+      "artWindow": [
+        15,
+        39,
+        200,
+        85
+      ],
+      "safe": [
+        31,
+        129,
+        65,
+        28
+      ],
+      "file": "png/U16_ultimate_card_default.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U16",
+      "name": "U16_ultimate_card_selected",
+      "w": 230,
+      "h": 170,
+      "state": "selected",
+      "artWindow": [
+        15,
+        39,
+        200,
+        85
+      ],
+      "safe": [
+        31,
+        129,
+        65,
+        28
+      ],
+      "file": "png/U16_ultimate_card_selected.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U16",
+      "name": "U16_ultimate_card_locked",
+      "w": 230,
+      "h": 170,
+      "state": "locked",
+      "artWindow": [
+        15,
+        39,
+        200,
+        85
+      ],
+      "safe": [
+        31,
+        129,
+        65,
+        28
+      ],
+      "file": "png/U16_ultimate_card_locked.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U17",
+      "name": "U17_modal",
+      "w": 960,
+      "h": 640,
+      "titleRect": [
+        56,
+        32,
+        804,
+        50
+      ],
+      "safe": [
+        48,
+        125,
+        864,
+        461
+      ],
+      "nineSlice": [
+        36,
+        112,
+        36,
+        36
+      ],
+      "file": "png/U17_modal.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U18",
+      "name": "U18_menu_default",
+      "w": 480,
+      "h": 120,
+      "state": "default",
+      "safe": [
+        89,
+        30,
+        356,
+        60
+      ],
+      "file": "png/U18_menu_default.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U18",
+      "name": "U18_menu_pressed",
+      "w": 480,
+      "h": 120,
+      "state": "pressed",
+      "safe": [
+        89,
+        30,
+        356,
+        60
+      ],
+      "file": "png/U18_menu_pressed.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U19",
+      "name": "U19_banner_win",
+      "w": 1200,
+      "h": 300,
+      "state": "win",
+      "label": "승리",
+      "textBaked": true,
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "file": "png/U19_banner_win.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U19",
+      "name": "U19_banner_lose",
+      "w": 1200,
+      "h": 300,
+      "state": "lose",
+      "label": "패배",
+      "textBaked": true,
+      "pivot": [
+        0.5,
+        0.5
+      ],
+      "file": "png/U19_banner_lose.png",
+      "pixelsPerUnit": 100,
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    }
+  ]
+}
