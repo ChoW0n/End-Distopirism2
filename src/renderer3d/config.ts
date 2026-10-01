@@ -186,6 +186,11 @@ export interface LabConfig {
   ultimate: { payoffDelay: number; slashIntervals: number[] };
 }
 
+//고른 아군·대상 적 발밑 선택 고리 U13 (SPEC-004 §13.5). 폭은 캐릭터 키의 비율(월드)
+export interface SelectRingConfig {
+  widthRatio: number;
+}
+
 export interface Stage3dConfig {
   battle: BattleSetup;
   layout: LayoutConfig;
@@ -198,6 +203,7 @@ export interface Stage3dConfig {
   cardFlip: CardFlipConfig;
   footBar: FootBarConfig;
   framing: FramingConfig;
+  selectRing: SelectRingConfig;
   lab: LabConfig;
 }
 
@@ -311,6 +317,7 @@ export function parseStage3dConfig(raw: unknown): Stage3dConfig {
     ]),
     footBar: numbers<FootBarConfig>(root['footBar'], 'footBar', ['widthRatio', 'minWidth', 'hpHeight', 'mtHeight', 'gap', 'tween', 'downFade']),
     framing: numbers<FramingConfig>(root['framing'], 'framing', ['maxZoomOut', 'cover', 'tagMargin', 'footMargin', 'sideMargin', 'bodyHalfWidth', 'headHeight']),
+    selectRing: numbers<SelectRingConfig>(root['selectRing'], 'selectRing', ['widthRatio']),
     lab: parseLab(root['lab']),
   };
 }

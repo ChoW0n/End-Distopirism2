@@ -43,9 +43,11 @@ writeFileSync('web/standalone.html', html);
 
 //공유용 한 장. CSS·스크립트를 안에 넣고 데이터는 같은 폴더의 assets/ · data/ 에서 읽는다.
 //그림은 리포에 없으므로(SPEC-002 §9) 올릴 때 파일을 따로 붙인다
-const page = read('web/battle.html')
+//공유본은 그림을 같은 폴더 assets/ 에서 읽는다. CSS·HTML 의 ../assets/ 를 고친다 (UI 묶음 판, SPEC-004 §13.5)
+const local = (text) => text.replace(/\.\.\/assets\//g, 'assets/');
+const page = local(read('web/battle.html'))
   .replace('<!doctype html>\n', '')
-  .replace('<link rel="stylesheet" href="battle.css">', () => `<style>\n${read('web/battle.css')}\n</style>`)
+  .replace('<link rel="stylesheet" href="battle.css">', () => `<style>\n${local(read('web/battle.css'))}\n</style>`)
   .replace('<canvas id="view" width="1600" height="900">',
     '<canvas id="view" width="1600" height="900" data-assets="assets" data-battle="data/battle-data.json">')
   //코드에 $& · $' 같은 글자가 있으면 문자열 치환이 그걸 치환 패턴으로 읽어 코드가 깨진다. 함수로 넘긴다

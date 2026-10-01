@@ -22,6 +22,7 @@ import { CommandPanel } from '../renderer/command-panel.js';
 import { SynthSound } from '../renderer/sound.js';
 import { parseBackdropConfig, parseStage3dConfig, type BackdropConfig, type BattleSetup, type Stage3dConfig } from './config.js';
 import { Stage3D, type EnvFxBundle, type RosterEntry, type UltimateBundle } from './stage.js';
+import { bindFullscreen } from './fullscreen.js';
 
 const view = document.getElementById('view') as HTMLCanvasElement | null;
 const ASSETS = view?.dataset['assets'] ?? '../assets';
@@ -290,6 +291,12 @@ async function main(): Promise<void> {
     if (loadingText) loadingText.textContent = text;
     if (loadingBar) loadingBar.style.width = `${Math.round(ratio * 100)}%`;
   });
+  //UI 묶음 v1 (SPEC-004 §13.5). 작은 버튼 판이 들어오면 판을 씌운다. 없으면 임시 도형 그대로
+  const kit = `${ASSETS}/ui/kit`;
+  const [kitProbe, plateFront, plateBack, ring] = await Promise.all(
+    ['U3_small_default', 'U15_overhead_front', 'U15_overhead_back', 'U13_selection_ring'].map((name) => image(`${kit}/${name}.png`)),
+  );
+  if (kitProbe) document.documentElement.classList.add('kit');
   loading?.setAttribute('hidden', '');
   //장소 이름은 맵 데이터가 정한다
   const stageName = document.querySelector('.stage-name');
@@ -331,6 +338,7 @@ async function main(): Promise<void> {
     loaded.voices,
     loaded.envFx,
   );
+  stage.setKit({ plates: plateFront && plateBack ? { front: plateFront, back: plateBack } : null, ring: ring ?? null });
   //UI 가 덮지 않는 구역을 재서 무대에 넘긴다 (SPEC-004 §13.4). 위 띠 아래 ~ 지시판 위가 입력 단계 구역, 위 띠 아래 ~ 홈 인디케이터 위가 교전 구역
   const uiBox = document.getElementById('ui');
   const topBar = document.querySelector('.topbar');
@@ -351,6 +359,8 @@ async function main(): Promise<void> {
   applyLayout();
   window.addEventListener('resize', applyLayout);
   window.addEventListener('orientationchange', applyLayout);
+  //게임 화면만 전체화면 (SPEC-004 §13.6). 크기가 바뀌면 resize 가 와서 여백을 다시 잰다
+  bindFullscreen(host, document.getElementById('fullscreen'));
 
   //턴 진행 단계 (2D 화면과 같다)
   //showcase: 제작 확인용 자동 시연 (SPEC-005 §13)
@@ -395,19 +405,55 @@ async function main(): Promise<void> {
     }
   };
 
-  //적이 노리는 대상을 적 이름표 아래에 적는다 (§9.6)
+  //이름표 오른쪽 상태 아이콘. 턴 시작·끝에 도메인에서 다시 읽는다 (SPEC-004 §13.5 U10)
+  const showStatuses = (): void => {
+    if (!session) return;
+    for (const c of session.battle.combatants) stage.setStatuses(c.id, c.isDefeated ? [] : c.statuses.map((st) => ({ id: st.id, turns: st.turns })));
+  };
+
+  //적이 노리는 대상을 적 이름표 아래에 적는다 (§9.6). 노림 받는 아군이 그 적을 치라고 이미 지시했으면 합 표지 (U5)
   const showTargets = (on: boolean): void => {
     if (!session) return;
     for (const enemy of session.battle.sideOf('enemy')) {
       const targetId = enemyTargets.get(enemy.id);
       const name = targetId ? session.battle.combatant(targetId).base.name : '';
-      stage.setNote(enemy.id, on && name ? `→ ${name}` : '');
+      const clash = !!targetId && input?.orderOf(targetId)?.targetId === enemy.id;
+      stage.setNote(enemy.id, on ? name : '', clash);
     }
+  };
+
+  //아군 칸 초상화 (SPEC-004 §13.5 U6). 대기 장의 머리 쪽을 잘라 한 번만 만든다. 남의 그림을 세운 캐릭터면 그 그림
+  const faces = new Map<string, string | null>();
+  const portrait = (characterId: string): string | null => {
+    if (faces.has(characterId)) return faces.get(characterId) ?? null;
+    const artId = loaded.stage.battle.artAlias[characterId] ?? characterId;
+    const frame = loaded.sprites.get(artId)?.frameEndingWith('idle');
+    const bitmap = frame ? loaded.frames.get(`${artId}/${frame.file}`) : undefined;
+    let url: string | null = null;
+    if (frame && bitmap) {
+      const [x0, y0, x1, y1] = frame.bbox;
+      //창 비율 126:103. 폭은 몸 높이의 0.42, 가로 가운데는 발 기준점
+      const w = Math.min(x1 - x0, (y1 - y0) * 0.42);
+      const h = (w * 103) / 126;
+      const left = Math.max(0, frame.anchor.x - w / 2);
+      const canvasEl = document.createElement('canvas');
+      canvasEl.width = 252;
+      canvasEl.height = 206;
+      canvasEl.getContext('2d')?.drawImage(bitmap, left, Math.max(0, y0 - h * 0.04), w, h, 0, 0, 252, 206);
+      try {
+        url = canvasEl.toDataURL('image/png');
+      } catch {
+        url = `${ASSETS}/${artId}/${frame.file}`;
+      }
+    }
+    faces.set(characterId, url);
+    return url;
   };
 
   const refresh = (): void => {
     if (!session || !input || phase !== 'input') return;
     panel.show(input, session.inputAllies(), session.inputEnemies());
+    showTargets(true);
     stage.setSelection({
       ally: input.selectedAlly,
       target: input.selectedTarget,
@@ -428,7 +474,7 @@ async function main(): Promise<void> {
       refresh();
     },
     go: () => submit(),
-  });
+  }, portrait);
 
   //시연 한 바퀴. 아군 첫 캐릭터가 S1 → S2 → S3 → 궁극기로 합에서 이긴다 (SPEC-005 §13)
   const startShowcase = (): void => {
@@ -452,7 +498,17 @@ async function main(): Promise<void> {
     stage.play(showcaseSteps);
   };
 
+  //판이 끝났을 때 가운데 배너 (U19). 다음 판을 시작하면 지운다
+  const result = document.getElementById('result');
+  const showResult = (winner: Side | null): void => {
+    if (!result) return;
+    result.hidden = false;
+    result.className = `result ${winner === 'ally' ? 'win' : winner === 'enemy' ? 'lose' : 'draw'}`;
+    result.textContent = winner === 'ally' ? '승리' : winner === 'enemy' ? '패배' : '무승부';
+  };
+
   const restart = (): void => {
+    if (result) result.hidden = true;
     const seed = Number(seedInput.value) || 1;
     session = new Session(loaded.catalog, createSeededRng(seed), loaded.stage.battle);
     stage.reset(session.roster());
@@ -489,6 +545,7 @@ async function main(): Promise<void> {
     const startEvents = session.battle.startTurn();
     feed(startEvents);
     showGauges();
+    showStatuses();
     turnLabel.textContent = String(session.battle.turn);
     if (session.battle.isFinished) return end();
     enemyTargets = new Map<string, string>();
@@ -534,6 +591,8 @@ async function main(): Promise<void> {
     showGauges();
     const winner = session.battle.winner;
     status.textContent = winner === 'ally' ? '아군 승' : winner === 'enemy' ? '적 승' : '무승부';
+    showStatuses();
+    showResult(winner);
     panel.idle(`${status.textContent} — 재시작을 누르면 다시 한다`);
     if (autoNext?.checked) {
       window.setTimeout(() => {
@@ -623,7 +682,8 @@ async function main(): Promise<void> {
   speedButton?.addEventListener('click', () => {
     speed = speed >= 3 ? 1 : speed + 1;
     stage.setSpeed(speed);
-    speedButton.textContent = `×${speed}`;
+    const label = speedButton.querySelector('span');
+    if (label) label.textContent = `×${speed}`;
     speedButton.setAttribute('aria-pressed', String(speed > 1));
   });
   //자동 전투: 직접 조작 ↔ 자동 관전

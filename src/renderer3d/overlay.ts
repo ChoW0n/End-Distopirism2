@@ -1,7 +1,7 @@
 //무대 위 DOM 겹층 (SPEC-005 §9.6·§8.10). 이름표·결과 알림·피해 숫자
 //3D 좌표를 화면 비율로 바꾸는 건 무대가 하고, 여기는 받은 자리에 글을 놓기만 한다
 
-import type { Side } from '../domain/types.js';
+import type { Side, StatusId } from '../domain/types.js';
 import type { FootBarConfig } from './config.js';
 
 //화면 비율 좌표 (0~1, 좌상단 원점). 카메라 뒤면 null
@@ -19,7 +19,18 @@ interface Tag {
   mtText: HTMLElement;
   //궁극기 칸 (SPEC-004 §2.2.1). 속성 합만큼 찬다
   ult: HTMLElement;
+  //이름표 오른쪽 상태 아이콘 (SPEC-004 §13.5 U10)
+  status: HTMLElement;
 }
+
+//이름표 옆에 띄울 상태 하나. 남은 턴을 숫자로
+export interface StatusMark {
+  id: StatusId;
+  turns: number;
+}
+
+//합 결과 알림 중 판 그림(U14)으로 보이는 것. 나머지는 글 판 그대로 (SPEC-004 §13.5)
+const RESULT_PLATES: Record<string, string> = { '합 승리': 'win', '합 패배': 'lose', 교착: 'draw' };
 
 //궁극기 칸에 적을 값. 칸 수는 문턱값, ready 면 전부 빛난다
 export interface UltimateGauge {
@@ -102,7 +113,8 @@ export class Overlay {
       });
       const name = el('b', '', actor.name);
       const note = el('small', '');
-      box.append(name, note);
+      const status = el('div', 'status');
+      box.append(name, note, status);
       const foot = el('div', `foot3d ${actor.side}`);
       foot.style.gap = `calc(var(--u, 1) * ${this.bar.gap}px)`;
       foot.style.transitionDuration = `${this.bar.downFade}s`;
@@ -112,7 +124,7 @@ export class Overlay {
       ult.hidden = true;
       foot.append(hp.row, mt.row, ult);
       this.root.append(box, foot);
-      this.tags.set(actor.combatantId, { el: box, name, note, foot, hp: hp.fill, hpText: hp.text, mt: mt.fill, mtText: mt.text, ult });
+      this.tags.set(actor.combatantId, { el: box, name, note, foot, hp: hp.fill, hpText: hp.text, mt: mt.fill, mtText: mt.text, ult, status });
     }
   }
 
@@ -137,15 +149,32 @@ export class Overlay {
     tag.ult.classList.toggle('ready', gauge.ready);
   }
 
-  //이름표 아래 한 줄. 적이 노리는 대상 같은 것을 적는다. 빈 문자열이면 지운다
-  setNote(combatantId: string, text: string): void {
+  //이름표 아래 한 줄. 적이 노리는 대상 같은 것을 적는다. 빈 문자열이면 지운다. clash 면 합 표지(U5 합)
+  setNote(combatantId: string, text: string, clash = false): void {
     const tag = this.tags.get(combatantId);
-    if (tag) tag.note.textContent = text;
+    if (!tag) return;
+    tag.note.textContent = text;
+    tag.note.classList.toggle('clash', clash && text !== '');
+  }
+
+  //이름표 오른쪽 상태 아이콘을 다시 그린다. 빈 목록이면 지운다
+  setStatuses(combatantId: string, marks: readonly StatusMark[]): void {
+    const tag = this.tags.get(combatantId);
+    if (!tag) return;
+    tag.status.replaceChildren(
+      ...marks.map((m) => {
+        const icon = el('i', '');
+        icon.dataset['id'] = m.id;
+        icon.append(el('span', '', String(m.turns)));
+        return icon;
+      }),
+    );
   }
 
   //결과 알림을 띄운다. 실제 시간으로 흐른다
   callout(combatantId: string, success: boolean, title: string, reason: string, realNow: number, seconds: number): void {
-    const box = el('div', success ? 'callout3d' : 'callout3d lose');
+    const plate = RESULT_PLATES[title];
+    const box = el('div', plate ? `callout3d plate ${plate}${success ? '' : ' lose'}` : success ? 'callout3d' : 'callout3d lose');
     box.append(el('b', '', title));
     if (reason) box.append(el('small', '', reason));
     box.style.animationDuration = `${seconds}s`;
@@ -185,11 +214,12 @@ export class Overlay {
       tag.foot.style.left = `${f.x * 100}%`;
       tag.foot.style.top = `${f.y * 100}%`;
       const hpRatio = v.maxHp > 0 ? Math.max(0, Math.min(1, v.hp / v.maxHp)) : 0;
-      tag.hp.style.width = `${hpRatio * 100}%`;
+      //채움 폭은 틀 안쪽 폭(--fill-w)의 비율이다. 틀이 없으면 바 전체
+      tag.hp.style.width = `calc(var(--fill-w, 100%) * ${hpRatio})`;
       //원작처럼 체력 비율로 빨강 ↔ 초록
       tag.hp.style.background = `rgb(${Math.round(210 * (1 - hpRatio) + 60 * hpRatio)}, ${Math.round(40 * (1 - hpRatio) + 190 * hpRatio)}, 50)`;
       tag.hpText.textContent = `${v.hp}/${v.maxHp}`;
-      tag.mt.style.width = `${v.maxMentality > 0 ? Math.max(0, Math.min(1, v.mentality / v.maxMentality)) * 100 : 0}%`;
+      tag.mt.style.width = `calc(var(--fill-w, 100%) * ${v.maxMentality > 0 ? Math.max(0, Math.min(1, v.mentality / v.maxMentality)) : 0})`;
       tag.mtText.textContent = String(v.mentality);
       tag.foot.classList.toggle('down', down(id));
     }

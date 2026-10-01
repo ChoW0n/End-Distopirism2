@@ -60,7 +60,7 @@ describe('SPEC-005 §11.4 카드 뒤집기 수치', () => {
       revealPop: 0.18,
       holdTime: 0.4,
       height: 0.9,
-      headLift: 0.2,
+      headLift: 0.45,
       fadeTime: 0.2,
     });
   });

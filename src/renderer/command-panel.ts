@@ -39,10 +39,12 @@ export class CommandPanel {
   private readonly goButton: HTMLButtonElement;
 
   //패널 요소를 id 로 잡는다. 버튼 이벤트는 여기서 한 번만 건다
+  //portrait: 아군 칸 초상화 창에 넣을 그림 주소 (SPEC-004 §13.5 U6). 없으면 이름만
   constructor(
     private readonly catalog: BattleCatalog,
     private readonly side: SideData,
     private readonly handlers: CommandHandlers,
+    private readonly portrait: (characterId: string) => string | null = () => null,
   ) {
     const find = (id: string): HTMLElement => {
       const found = document.getElementById(id);
@@ -100,6 +102,15 @@ export class CommandPanel {
       ...allies.map((ally) => {
         const order = input.orderOf(ally.id);
         const button = this.pick(ally.name, this.side.ally, ally.id === input.selectedAlly);
+        const face = this.portrait(ally.characterId);
+        if (face) {
+          const frame = el('span', 'face');
+          const img = el('img');
+          img.src = face;
+          img.alt = '';
+          frame.append(img);
+          button.prepend(frame);
+        }
         const note = order
           ? `${enemies.find((e) => e.id === order.targetId)?.name ?? '?'} · ${this.catalog.skill(order.skillId).slot}`
           : ally.id === input.selectedAlly
@@ -127,7 +138,10 @@ export class CommandPanel {
     this.cards.replaceChildren(
       ...(current ? current.deck : []).map((skillId, i) => {
         const view = cardView(this.catalog, skillId);
-        const button = el('button', view.slot === 'ULT' ? 'card ult' : 'card');
+        //슬롯 홈 개수로 판을 고른다 (SPEC-004 §13.5 U2·U16). 지금 아군이 이미 고른 카드는 선택 판
+        const chosen = current ? input.orderOf(current.id)?.skillId === skillId : false;
+        const button = el('button', `card ${view.slot === 'ULT' ? 'ult' : view.slot.toLowerCase()}${chosen ? ' chosen' : ''}`);
+        button.title = `${view.name} — ${view.text}`;
         button.type = 'button';
         const top = el('div', 'top');
         top.append(el('span', 'slot', `${i + 1}. ${view.name}`), el('span', 'attr', view.attribute ?? '궁극기'));

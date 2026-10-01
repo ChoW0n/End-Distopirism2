@@ -13,19 +13,23 @@
   <div id="ui" class="ui">
     <!-- 위 띠 y 0~120: 메뉴 · 맵 이름과 단계 안내 · 턴 · 배속·자동·도움말 -->
     <header class="topbar">
-      <button id="menu-open" class="btn-s" type="button" aria-label="메뉴" aria-haspopup="dialog">☰</button>
+      <button id="menu-open" class="btn-s" type="button" aria-label="메뉴" aria-haspopup="dialog"><span>☰</span></button>
       <div class="where">
         <b class="stage-name"></b>
         <span id="cmd-step" class="step">…</span>
         <span id="cmd-hint" class="hint"></span>
       </div>
-      <div class="turn"><span id="turn">1</span><small>턴</small></div>
+      <div class="turn" aria-label="턴"><span id="turn">1</span><small>턴</small></div>
       <div class="top-right">
-        <button id="speed" class="btn-s" type="button" aria-label="배속">×1</button>
-        <button id="auto" class="btn-s" type="button" aria-pressed="false">자동</button>
-        <button id="help-open" class="btn-s" type="button" aria-label="도움말">?</button>
+        <button id="speed" class="btn-s" type="button" aria-label="배속" aria-pressed="false"><span>×1</span></button>
+        <button id="auto" class="btn-s" type="button" aria-label="자동" aria-pressed="false"><span>자동</span></button>
+        <!-- 게임 화면만 전체화면 (SPEC-004 §13.6). 지원하지 않는 브라우저에서는 숨긴다 -->
+        <button id="fullscreen" class="btn-s" type="button" aria-label="전체화면" aria-pressed="false" hidden><span>⛶</span></button>
+        <button id="help-open" class="btn-s" type="button" aria-label="도움말"><span>?</span></button>
       </div>
     </header>
+    <!-- 판이 끝났을 때 가운데 배너 U19 (SPEC-004 §13.5) -->
+    <div id="result" class="result" hidden></div>
     <!-- 소리가 잠겨 있으면 위 띠 아래에 한 줄 -->
     <div id="sound-hint" class="sound-hint" hidden>화면을 눌러 소리 켜기</div>
 
@@ -46,8 +50,7 @@
 
     <!-- 메뉴 겹창. 개발 도구는 여기에만 둔다 (SPEC-007 §9.4 규칙 2) -->
     <div id="menu" class="dialog menu" role="dialog" aria-labelledby="menu-title" hidden>
-      <h2 id="menu-title">메뉴</h2>
-      <p id="status" class="status">…</p>
+      <div class="head"><h2 id="menu-title">메뉴</h2><p id="status" class="status">…</p></div>
       <div class="rows">
         <button id="restart" class="row primary" type="button">다시 시작</button>
         <label class="row check"><input id="sound" type="checkbox" checked> 소리</label>
@@ -78,10 +81,10 @@
       <h2 id="help-title">전투 방법</h2>
       <ol>
         <li><b>아군</b>을 고르고 → 칠 <b>적</b>을 무대에서 누르고 → <b>카드</b>를 고른다. 아군 수만큼 반복.</li>
-        <li>적 이름표 아래 <span class="enemy-arrow">→ 이름</span>은 그 적이 노리는 아군이다.
+        <li>적 이름표 아래 <span class="enemy-arrow">노림 표지</span>의 이름은 그 적이 노리는 아군이다.
           <b>나를 노리는 적을 같이 노리면 합</b>, 아니면 서로 한 대씩 치는 일방 공격이다.</li>
         <li><b>합</b>: 양쪽 카드가 머리 위에서 뒤집힌다. 앞면이면 높은 위력, 뒷면이면 낮은 위력. 위력이 높은 쪽이 이긴다.</li>
-        <li><b>정신력</b>(황동색 바)이 높을수록 앞면이 잘 나온다. 합에서 지면 깎이고 이기면 오른다.</li>
+        <li><b>정신력</b>(발밑 아래쪽 황동색 바)이 높을수록 앞면이 잘 나온다. 합에서 지면 깎이고 이기면 오른다.</li>
         <li>적을 전부 쓰러뜨리면 승리.</li>
       </ol>
       <button id="help-close" class="close" type="button">시작</button>
