@@ -118,6 +118,23 @@ describe('카일 궁극기 시간표 (SPEC-005 §10.2)', () => {
     expect(new Set(art.slashes.rollDeg.slice(0, 4)).size).toBe(4);
   });
 
+  it('중간 베기마다 다른 방향으로 튕긴다 (v2.22): 좌우가 섞이고, 위로만 뜬다', () => {
+    const jolts = art.slashes.jolt.slice(0, art.slashes.count - 1);
+    expect(jolts.length).toBe(art.slashes.count - 1);
+    expect(jolts.some(([x]) => x > 0) && jolts.some(([x]) => x < 0)).toBe(true);
+    for (const [, y] of jolts) expect(y).toBeGreaterThanOrEqual(0);
+    expect(new Set(jolts.map((j) => j.join(','))).size).toBe(jolts.length);
+    expect(art.slashes.joltTime).toBeLessThan(art.slashes.interval);
+  });
+
+  it('튕김이 없으면 제자리, 튕기는 시간이 0 이하면 멈춘다', () => {
+    const raw = readJson('assets/kyle/ultimate.json') as { slashes: Record<string, unknown> };
+    delete raw.slashes['jolt'];
+    expect(parseUltimateArt(raw).slashes.jolt).toEqual([[0, 0]]);
+    raw.slashes['joltTime'] = 0;
+    expect(() => parseUltimateArt(raw)).toThrow();
+  });
+
   it('마지막 베기선의 잔흔(15장 × 60ms)도 전장 복귀 전에 끝난다', () => {
     const slash = kyle?.effect(art.effects.slash);
     const seconds = (slash?.frames.reduce((s, f) => s + f.ms, 0) ?? 0) / 1000;

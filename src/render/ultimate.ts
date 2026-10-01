@@ -41,8 +41,10 @@ export interface UltimateSlashes {
   rollDeg: number[];
   //베기선마다 자리 (캐릭터 키 비율 x, y). 횟수보다 짧으면 되풀이한다
   offset: [number, number][];
-  //중간 베기에 밀리는 거리 = 타 밀림(hitKnock) × 이 몫
-  nudgeShare: number;
+  //중간 베기마다 맞은 쪽이 튕겨 가는 자리 (캐릭터 키 비율 [베인 방향, 위]). 누적하지 않는다. 횟수보다 짧으면 되풀이한다 (v2.22)
+  jolt: [number, number][];
+  //튕겨 가는 시간(초)
+  joltTime: number;
 }
 
 export interface UltimateArt {
@@ -133,15 +135,21 @@ export function parseUltimateArt(raw: unknown): UltimateArt {
 
 //여러 번 베기. 없으면 한 번 벤다
 function parseSlashes(value: unknown): UltimateSlashes {
-  if (value === undefined) return { count: 1, interval: 0, rollDeg: [0], offset: [[0, 0]], nudgeShare: 0 };
+  if (value === undefined) return { count: 1, interval: 0, rollDeg: [0], offset: [[0, 0]], jolt: [[0, 0]], joltTime: 0.06 };
   const o = obj(value, 'slashes');
   const count = num(o, 'count', 'slashes');
   if (!Number.isInteger(count) || count < 1) throw new UltimateArtError('slashes.count 가 1 이상 정수가 아니다');
   const rollDeg = o['rollDeg'];
   const offset = o['offset'];
+  const jolt = o['jolt'] ?? [[0, 0]];
   if (!Array.isArray(rollDeg) || rollDeg.length === 0 || rollDeg.some((v) => typeof v !== 'number')) throw new UltimateArtError('slashes.rollDeg 가 숫자 목록이 아니다');
   if (!Array.isArray(offset) || offset.length === 0 || offset.some((v) => !Array.isArray(v) || v.length !== 2 || v.some((x) => typeof x !== 'number'))) {
     throw new UltimateArtError('slashes.offset 이 숫자 2개짜리 목록이 아니다');
   }
-  return { count, interval: num(o, 'interval', 'slashes'), rollDeg: rollDeg as number[], offset: offset as [number, number][], nudgeShare: num(o, 'nudgeShare', 'slashes') };
+  if (!Array.isArray(jolt) || jolt.length === 0 || jolt.some((v) => !Array.isArray(v) || v.length !== 2 || v.some((x) => typeof x !== 'number'))) {
+    throw new UltimateArtError('slashes.jolt 가 숫자 2개짜리 목록이 아니다');
+  }
+  const joltTime = o['joltTime'] === undefined ? 0.06 : num(o, 'joltTime', 'slashes');
+  if (!(joltTime > 0)) throw new UltimateArtError('slashes.joltTime 이 0 보다 커야 한다');
+  return { count, interval: num(o, 'interval', 'slashes'), rollDeg: rollDeg as number[], offset: offset as [number, number][], jolt: jolt as [number, number][], joltTime };
 }

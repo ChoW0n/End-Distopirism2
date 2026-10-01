@@ -513,11 +513,10 @@ export class Stage3D {
   }
 
   //중간 타에 맞은 쪽이 피격 장으로 밀린다. 자리 자체가 밀려서 때린 쪽이 따라간다 (§12.1)
-  //distance 를 주면 그만큼만 밀린다 (궁극기 연속 베기는 조금씩)
-  private nudge(d: PaperDoll, dir: number, distance = this.config.motion.hitKnock): Promise<void> {
+  private nudge(d: PaperDoll, dir: number): Promise<void> {
     const m = this.config.motion;
     d.setPose('hurt');
-    return this.clock.tween(d.root.position, 'x', d.root.position.x + dir * distance, m.knockTime, ease.outExpo);
+    return this.clock.tween(d.root.position, 'x', d.root.position.x + dir * m.hitKnock, m.knockTime, ease.outExpo);
   }
 
   //맞은 쪽의 지금 발 x (월드)
@@ -1167,12 +1166,18 @@ export class Stage3D {
           const where = this.chest(L).add(new THREE.Vector3(ox * h * W.facing, oy * h, 0));
           spawn(u.art.effects.slash, where, { roll: ((cuts.rollDeg[i % cuts.rollDeg.length] ?? 0) * Math.PI) / 180 });
           const part = parts[i] ?? 0;
-          //베기선 그림이 곧 이펙트라 금속 불꽃은 내지 않는다. 0.08초 간격이라 중간 베기는 조금만 밀린다
-          this.impact(this.chest(L), L, -wdir, part, false, last ? events : [], last ? damage : 0, false, last ? 'climax' : 'light');
+          //중간 베기는 베기마다 다른 방향으로 확 튕긴다. 자리는 쌓지 않고 제자리 둘레를 이리저리 (§10.2 v2.22)
+          const [jx, jy] = last ? [1, 0] : (cuts.jolt[i % cuts.jolt.length] ?? [0, 0]);
+          const hitDir = -wdir * (jx < 0 ? -1 : 1);
+          //베기선 그림이 곧 이펙트라 금속 불꽃은 내지 않는다. 흔들림은 튕기는 방향을 따른다
+          this.impact(this.chest(L), L, hitDir, part, false, last ? events : [], last ? damage : 0, false, last ? 'climax' : 'light');
           if (last) this.envEvent('ultPayoff', L, -wdir);
           if (L.down) return;
-          if (!last) void this.nudge(L, -wdir, m.hitKnock * cuts.nudgeShare);
-          else if (damage > 0) knock = this.knockback(L, -wdir, damage, damage >= m.heavyDamage, epoch);
+          if (!last) {
+            L.setPose('hurt');
+            void this.clock.tween(L.visual.position, 'x', L.toLocalX(-wdir * jx * h), cuts.joltTime, ease.outExpo);
+            void this.clock.tween(L.visual.position, 'y', jy * h, cuts.joltTime, ease.outExpo);
+          } else if (damage > 0) knock = this.knockback(L, -wdir, damage, damage >= m.heavyDamage, epoch);
         },
       });
     }
