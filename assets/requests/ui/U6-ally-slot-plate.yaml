@@ -12,7 +12,7 @@ task:
       inspected: false
 
 constraints:
-  target_size_reference_units: "160x196"
+  target_size_reference_units: "160x170"
   size_note: "목표값이다. 정확히 못 맞추면 비율만 지키고 크게 준다. 크기 맞춤·9분할은 반입 도구가 한다"
   states: [normal, selected, done, down]
   one_file_per_state: true
