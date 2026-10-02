@@ -87,3 +87,53 @@ describe('RibbonSlashEffect', () => {
     fx.dispose();
   });
 });
+
+describe('RibbonSlashEffect 질감 방식 (§15.2)', () => {
+  //흰 바탕 가짜 띠 (WebGL 없이 조각 구성만 본다)
+  const w = 32;
+  const h = 8;
+  const pixels = new Uint8ClampedArray(w * h * 4).fill(220);
+  const strip = { image: { width: w, height: h }, pixels, width: w, height: h };
+
+  it('몸통·빛·흩어짐·추가 물방울 네 조각, 옵션대로 보인다', () => {
+    const fx = new RibbonSlashEffect(config, 2, strip);
+    expect(fx.textured).toBe(true);
+    fx.spawn(at, 1);
+    const roles = () => (fx.root.children[0] as THREE.Group).children.map((c) => [c.userData['role'], c.visible]);
+    expect(roles()).toEqual([
+      ['body', true],
+      ['glow', true],
+      ['spray', config.options?.spray ?? false],
+      ['drops', config.options?.extraDroplets ?? false],
+    ]);
+    fx.options.spray = false;
+    fx.options.extraDroplets = true;
+    fx.update(1);
+    expect(roles()).toEqual([
+      ['body', true],
+      ['glow', true],
+      ['spray', false],
+      ['drops', true],
+    ]);
+    fx.dispose();
+  });
+
+  it('옵션 켜짐이 uniform 으로 간다 (흐름·머리 섬광·빛 번짐·반짝임)', () => {
+    const fx = new RibbonSlashEffect(config, 2, strip);
+    const h1 = fx.spawn(at, 1);
+    fx.options.flow = false;
+    fx.options.flare = true;
+    fx.seek(h1.id, 100);
+    const glow = ((fx.root.children[0] as THREE.Group).children[1] as THREE.Mesh).material as THREE.ShaderMaterial;
+    expect(glow.uniforms['uFlow']?.value).toBe(0);
+    expect(glow.uniforms['uFlare']?.value).toBe(1);
+    expect(glow.uniforms['uAgeMs']?.value).toBe(100);
+    fx.dispose();
+  });
+
+  it('텍스처가 없으면 절차 방식', () => {
+    const fx = new RibbonSlashEffect(config, 2, null);
+    expect(fx.textured).toBe(false);
+    fx.dispose();
+  });
+});

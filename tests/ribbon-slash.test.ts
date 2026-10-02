@@ -6,13 +6,18 @@ import {
   dropletLayout,
   dropletVisible,
   erasedAt,
+  erodeTimeOf,
+  erosionValue,
   innerWidthAt,
   outerWidthAt,
   parseRibbonConfig,
+  pickSprayTexels,
   slashDuration,
   slashSample,
   slashVisible,
+  sprayProgress,
   staticNoise,
+  textureVisible,
 } from '../src/render/ribbon-slash.js';
 
 const config = parseRibbonConfig(JSON.parse(readFileSync(new URL('../assets/kyle/realtime-vfx.json', import.meta.url), 'utf-8')));
@@ -186,5 +191,70 @@ describe('물방울', () => {
     const t = reveal + hold + erase * Math.sqrt(d.u + 0.001);
     expect(slashVisible(config, d.u, t)).toBe(false);
     expect(dropletVisible(config, d, t)).toBe(true);
+  });
+});
+
+describe('§15.2 질감 방식', () => {
+  it('소멸 값 E: 시간과 무관, 0~0.999, 소멸 끝에는 모든 칸이 꺼진다', () => {
+    for (let u = 0; u <= 1; u += 0.05) {
+      for (const t of [0, 0.3, 0.7, 1]) {
+        const e = erosionValue(config, u, t);
+        expect(e).toBeGreaterThanOrEqual(0);
+        expect(e).toBeLessThan(1);
+        expect(textureVisible(config, u, t, total)).toBe(false);
+        expect(textureVisible(config, u, t, total - 1)).toBe(e > slashSample(config, total - 1).tail);
+      }
+    }
+  });
+
+  it('지워진 칸은 다시 켜지지 않는다 (단조)', () => {
+    for (let u = 0; u <= 1; u += 0.04) {
+      for (const t of [0, 0.25, 0.5, 0.75, 1]) {
+        let erased = false;
+        for (let a = reveal; a <= total; a += 5) {
+          const v = textureVisible(config, u, t, a);
+          if (!v) erased = true;
+          if (erased) expect(v).toBe(false);
+        }
+      }
+    }
+  });
+
+  it('같은 원본 순서 T 라면 꼬리 쪽(u 작은 칸)이 먼저 지워진다', () => {
+    for (const t of [0, 0.5, 1]) expect(erosionValue(config, 0.1, t)).toBeLessThan(erosionValue(config, 0.9, t));
+  });
+
+  it('흩어짐: 자기 칸이 지워지는 순간부터 sprayMs 동안 한 번만', () => {
+    const life = config.options?.sprayMs ?? 0;
+    for (const e of [0.05, 0.4, 0.95]) {
+      const start = erodeTimeOf(config, e);
+      expect(slashSample(config, start).tail).toBeCloseTo(e, 6);
+      expect(sprayProgress(config, e, start - 1)).toBeNull();
+      expect(sprayProgress(config, e, start)).toBe(0);
+      expect(sprayProgress(config, e, start + life / 2)).toBeCloseTo(0.5, 6);
+      expect(sprayProgress(config, e, start + life)).toBeNull();
+    }
+  });
+
+  it('흩어짐 칸 고르기: 밝고 덮인 칸만, 씨앗이 같으면 같다', () => {
+    const w = 40;
+    const h = 10;
+    const px = new Uint8ClampedArray(w * h * 4);
+    //왼쪽 절반만 밝다
+    for (let y = 0; y < h; y++) for (let x = 0; x < w / 2; x++) px.set([230, 128, 50, 255], (y * w + x) * 4);
+    const a = pickSprayTexels(config, px, w, h);
+    expect(a.length).toBeGreaterThan(0);
+    expect(pickSprayTexels(config, px, w, h)).toEqual(a);
+    const [u0, u1] = config.texture?.uRange ?? [0, 1];
+    for (const t of a) expect(t.u).toBeLessThanOrEqual(u0 + (u1 - u0) / 2 + 1e-9);
+  });
+
+  it('텍스처 자리: 바깥이 위, 가로가 0~1 을 덮는다', () => {
+    const tex = config.texture;
+    expect(tex).toBeDefined();
+    expect(tex?.dRangeH[0]).toBeGreaterThan(0);
+    expect(tex?.dRangeH[1]).toBeLessThan(0);
+    expect(tex?.uRange[0]).toBeLessThanOrEqual(0);
+    expect(tex?.uRange[1]).toBeGreaterThanOrEqual(1);
   });
 });

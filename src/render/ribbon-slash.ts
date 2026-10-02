@@ -32,7 +32,46 @@ export interface RibbonSlashConfig {
     driftH: Vec2;
   };
   render: { glowOpacity: number; seed: number };
+  //§15.2 받은 효과 레이어 질감. 없으면 절차적 그리기만 쓴다
+  texture?: {
+    source: string;
+    file: string;
+    uRange: Vec2;
+    //세로 위 끝·아래 끝의 호에서 거리 (H, + 바깥)
+    dRangeH: Vec2;
+    //밝기 → 덮임 [바닥, 폭]
+    coverage: Vec2;
+    erosionWeight: number;
+    //밝기 자리(0~1) → 팔레트 이름
+    gradient: readonly (readonly [number, keyof RibbonSlashConfig['paletteSRGB']])[];
+  };
+  //§15.2 화려함 옵션 기본값과 수치
+  options?: RibbonOptions & {
+    flowSpeedU: number;
+    flareMs: number;
+    sparkleDensity: number;
+    sprayCount: number;
+    sprayMs: number;
+    sprayDistH: number;
+  };
   test: { backgrounds: string[]; playbackRates: number[]; fps: number[]; sampleTimesMs: number[] };
+}
+
+//화려함 옵션 켜짐 (§15.2). 소멸 박자·덮임 모양은 바꾸지 않고 색·빛·입자만 더한다
+export interface RibbonOptions {
+  flow: boolean;
+  flare: boolean;
+  glow: boolean;
+  sparkle: boolean;
+  spray: boolean;
+  extraDroplets: boolean;
+}
+
+//흩어짐 물방울 하나. 띠 텍스처의 밝은 칸 자리(u, 거리 H)와 그 칸의 소멸 값 E
+export interface SprayTexel {
+  u: number;
+  dH: number;
+  e: number;
 }
 
 //물방울 하나. u 는 붙은 자리, offsetH 는 호에서 떨어진 거리(+ 바깥, − 안쪽), lagU 만큼 늦게 지워진다
@@ -244,4 +283,60 @@ export function parseRibbonConfig(raw: unknown): RibbonSlashConfig {
   if (!(c.waves?.count >= 1) || !(c.droplets?.count >= 0)) throw new RibbonConfigError('waves.count·droplets.count 가 없다');
   if (c.timeDomain !== 'game' && c.timeDomain !== 'real') throw new RibbonConfigError('timeDomain 은 game 또는 real');
   return c;
+}
+
+//밝기 → 덮임 (0~1). 셰이더와 같은 식
+export function coverageOf(config: RibbonSlashConfig, lum: number): number {
+  const [lo, span] = config.texture?.coverage ?? [0.04, 0.2];
+  return clamp01((lum - lo) / span);
+}
+
+//질감 방식의 소멸 값. E = mix(u, T, w) 를 0~0.999 로 자른다. 보이는 곳은 E > tail (tail = 1 이면 전부 사라진다)
+export function erosionValue(config: RibbonSlashConfig, u: number, t: number): number {
+  const w = config.texture?.erosionWeight ?? 0;
+  return Math.min(0.999, clamp01(u * (1 - w) + clamp01(t) * w));
+}
+
+//질감 방식에서 한 칸이 이 시각에 보이는지. 머리가 지나갔고 소멸 값이 꼬리보다 크다
+export function textureVisible(config: RibbonSlashConfig, u: number, t: number, ageMs: number): boolean {
+  const s = slashSample(config, ageMs);
+  return s.alive && u <= s.head && erosionValue(config, u, t) > s.tail;
+}
+
+//꼬리가 소멸 값 e 에 닿는 시각(ms). tail(a) = ((a − reveal − hold) / erase)^k 를 거꾸로 푼다
+export function erodeTimeOf(config: RibbonSlashConfig, e: number): number {
+  const { reveal, hold, erase } = config.timingMs;
+  return reveal + hold + erase * Math.pow(clamp01(e), 1 / config.erase.exponent);
+}
+
+//흩어짐 물방울 진행 (0~1). 자기 칸이 지워지는 순간부터 sprayMs 동안만, 그 밖은 null. 칸마다 한 번뿐이다
+export function sprayProgress(config: RibbonSlashConfig, e: number, ageMs: number): number | null {
+  const life = config.options?.sprayMs ?? 250;
+  const start = erodeTimeOf(config, e);
+  if (ageMs < start || ageMs >= start + life) return null;
+  return (ageMs - start) / life;
+}
+
+//띠 텍스처(RGB, 위 = 바깥)에서 흩어짐을 낼 밝은 칸을 고른다. 덮임이 크고 밝은 칸만, 씨앗 고정
+//pixels: RGBA 바이트 (ImageData.data 모양), width·height: 텍스처 크기
+export function pickSprayTexels(config: RibbonSlashConfig, pixels: ArrayLike<number>, width: number, height: number): SprayTexel[] {
+  const tex = config.texture;
+  const count = config.options?.sprayCount ?? 0;
+  if (!tex || count <= 0) return [];
+  const rand = seeded(config.render.seed + 17);
+  const out: SprayTexel[] = [];
+  const [u0, u1] = tex.uRange;
+  const [dTop, dBottom] = tex.dRangeH;
+  for (let tries = 0; tries < count * 60 && out.length < count; tries++) {
+    const x = Math.floor(rand() * width);
+    const y = Math.floor(rand() * height);
+    const i = (y * width + x) * 4;
+    const lum = (pixels[i] ?? 0) / 255;
+    if (lum < 0.55 || coverageOf(config, lum) < 0.9) continue;
+    const u = u0 + ((x + 0.5) / width) * (u1 - u0);
+    if (u < 0 || u > 1) continue;
+    const dH = dTop + ((y + 0.5) / height) * (dBottom - dTop);
+    out.push({ u, dH, e: erosionValue(config, u, (pixels[i + 1] ?? 0) / 255) });
+  }
+  return out;
 }
