@@ -6,9 +6,11 @@
   /* 물금 실시간 VFX 효과 단독 실험 화면 (SPEC-005 §15.1 단계 B). 캐릭터 없이 경로·소멸만 본다 */
   :root { --bg: #101820; --ink: #fff1d7; --dim: #b7b6b6; --gold: #d9b77c; --plate: rgba(9, 15, 24, 0.86); color-scheme: dark; }
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--ink); font: 14px/1.4 system-ui, sans-serif; }
-  .lab { position: fixed; inset: 0; display: grid; grid-template-rows: 1fr auto; }
-  canvas#view { width: 100%; height: 100%; display: block; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.4 system-ui, sans-serif; }
+  /* 페이지는 아래로 스크롤된다. 화면(캔버스)은 위에 붙어 있고 조작부가 그 아래로 내려간다 (휴대폰에서 조작부가 길다) */
+  .lab { display: block; }
+  canvas#view { position: sticky; top: 0; z-index: 1; width: 100%; height: min(56.25vw, 62vh); display: block; background: var(--bg); }
   .panel { padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)); background: var(--plate); border-top: 1px solid var(--gold); display: grid; gap: 8px; }
   .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
   .row > b { min-width: 4.5em; color: var(--dim); font-weight: 600; }
@@ -19,7 +21,7 @@
   button.swatch[aria-pressed="true"] { outline: 2px solid #ffe0a1; outline-offset: 2px; }
   input[type="range"] { flex: 1 1 240px; }
   label { display: inline-flex; align-items: center; gap: 4px; }
-  #readout { font-variant-numeric: tabular-nums; white-space: pre; color: var(--ink); overflow-x: auto; }
+  #readout { font-variant-numeric: tabular-nums; white-space: pre-wrap; color: var(--ink); }
   .note { color: var(--dim); font-size: 12px; }
 </style>
 <body>
