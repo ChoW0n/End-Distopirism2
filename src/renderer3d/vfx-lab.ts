@@ -1,11 +1,13 @@
 //물금 실시간 VFX 효과 단독 실험 화면 (SPEC-005 §15.1 단계 B). 캐릭터 없이 경로·소멸만 본다
 //고정 원근 카메라, 배경 4색, 배속·프레임 상한·시크, 경로·꼬리/머리·u 화살표·발 기준점 표시
+//질감 방식(§15.2): 받은 효과 레이어 띠 텍스처 + 화려함 옵션(흐름·머리 섬광·빛 번짐·반짝임·흩어짐·추가 물방울)을 하나씩 켜고 끈다. 절차 방식(§15.1)과 전환해 비교
 //원본 비교: 원본 S1 통합 장(norm/11-skill1-*)을 같은 발 기준·같은 크기로 나란히 또는 겹쳐 같은 시각에 돌린다 (참고용)
 //시계: 효과 시각은 게임 시간. 실제 경과에 배속을 한 번만 곱해 더한다 (역경직 없는 실험 화면)
 
 import * as THREE from 'three';
 import { arcLengthPoints, parseRibbonConfig, slashDuration, slashSample, type RibbonSlashConfig } from '../render/ribbon-slash.js';
-import { RibbonSlashEffect, type RibbonHandle } from './ribbon-slash.js';
+import { RibbonSlashEffect, type RibbonHandle, type StripSource } from './ribbon-slash.js';
+import type { RibbonOptions } from '../render/ribbon-slash.js';
 
 //실험 화면 캐릭터 키(월드). 경로·폭은 이 배수로 잡힌다
 const H = 2;
@@ -23,6 +25,25 @@ function originalFrameAt(ageMs: number, revealMs: number): number {
   if (t >= T) return 14;
   for (let i = n - 1; i >= 0; i--) if (t >= T * Math.pow(i / n, 1 / 2)) return 1 + i;
   return 1;
+}
+
+//띠 텍스처를 읽는다. 그림과 같은 그림의 RGBA 바이트(흩어짐 칸 고르기용). 없으면 null
+async function loadStrip(url: string): Promise<StripSource | null> {
+  const image = new Image();
+  image.src = url;
+  try {
+    await image.decode();
+  } catch {
+    return null;
+  }
+  const canvas = document.createElement('canvas');
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return null;
+  ctx.drawImage(image, 0, 0);
+  const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  return { image, pixels: data.data, width: canvas.width, height: canvas.height };
 }
 
 function byId<T extends HTMLElement>(id: string): T {
@@ -126,8 +147,13 @@ async function main(): Promise<void> {
   //실시간 효과 자리 (나란히 비교면 오른쪽으로 옮긴다)
   const live = new THREE.Group();
   scene.add(live);
-  const fx = new RibbonSlashEffect(config, H);
-  live.add(fx.root);
+  //질감 방식(띠 텍스처가 있으면)과 절차 방식 둘 다 만들어 두고 전환한다
+  const strip = config.texture ? await loadStrip(`${assets}/kyle/${config.texture.file}`) : null;
+  const procedural = new RibbonSlashEffect(config, H);
+  const textured = strip ? new RibbonSlashEffect(config, H, strip) : null;
+  live.add(procedural.root);
+  if (textured) live.add(textured.root);
+  let fx = textured ?? procedural;
   const debug = buildDebug(config);
   live.add(debug);
 
@@ -257,14 +283,51 @@ async function main(): Promise<void> {
   debugBox.addEventListener('change', () => (debug.visible = debugBox.checked));
   const glowBox = byId<HTMLInputElement>('glow');
   glowBox.addEventListener('change', () => {
-    fx.glowEnabled = glowBox.checked;
+    procedural.glowEnabled = glowBox.checked;
     if (handle) fx.seek(handle.id, age);
   });
   const dropBox = byId<HTMLInputElement>('drops');
   dropBox.addEventListener('change', () => {
-    fx.dropletsEnabled = dropBox.checked;
+    procedural.dropletsEnabled = dropBox.checked;
     if (handle) fx.seek(handle.id, age);
   });
+  //질감 방식 화려함 옵션. 켜고 끄면 같은 시각을 다시 그린다
+  const optionKeys: (keyof RibbonOptions)[] = ['flow', 'flare', 'glow', 'sparkle', 'spray', 'extraDroplets'];
+  const setOption = (key: keyof RibbonOptions, on: boolean): void => {
+    if (textured) textured.options[key] = on;
+    const box = document.getElementById(`opt-${key}`) as HTMLInputElement | null;
+    if (box) box.checked = on;
+    if (handle) fx.seek(handle.id, age);
+  };
+  for (const key of optionKeys) {
+    const box = byId<HTMLInputElement>(`opt-${key}`);
+    box.checked = textured ? textured.options[key] : false;
+    box.addEventListener('change', () => setOption(key, box.checked));
+  }
+  byId<HTMLButtonElement>('opt-all').addEventListener('click', () => optionKeys.forEach((k) => setOption(k, k !== 'extraDroplets')));
+  byId<HTMLButtonElement>('opt-none').addEventListener('click', () => optionKeys.forEach((k) => setOption(k, false)));
+  //방식 전환: 질감 ↔ 절차. 같은 시각에서 이어 본다
+  const modeBox = byId<HTMLSelectElement>('mode');
+  const texRow = byId<HTMLElement>('tex-options');
+  const procRow = byId<HTMLElement>('proc-options');
+  const setMode = (mode: 'texture' | 'procedural'): void => {
+    const next = mode === 'texture' && textured ? textured : procedural;
+    modeBox.value = next === textured ? 'texture' : 'procedural';
+    texRow.hidden = next !== textured;
+    procRow.hidden = next === textured;
+    if (next === fx) return;
+    const keep = age;
+    fx.clear();
+    fx = next;
+    restart();
+    seek(keep);
+  };
+  if (!textured) {
+    (modeBox.querySelector('option[value="texture"]') as HTMLOptionElement).disabled = true;
+    (modeBox.querySelector('option[value="texture"]') as HTMLOptionElement).textContent = '원본 질감 (띠 텍스처 없음)';
+  }
+  modeBox.addEventListener('change', () => setMode(modeBox.value as 'texture' | 'procedural'));
+  setMode(textured ? 'texture' : 'procedural');
   const compareBox = byId<HTMLSelectElement>('compare');
   compareBox.addEventListener('change', () => {
     compare = compareBox.value as typeof compare;
@@ -280,7 +343,8 @@ async function main(): Promise<void> {
     const h = canvas.clientHeight;
     renderer.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
     renderer.setSize(w, h, false);
-    fx.setViewportHeight(h * renderer.getPixelRatio());
+    procedural.setViewportHeight(h * renderer.getPixelRatio());
+    textured?.setViewportHeight(h * renderer.getPixelRatio());
     camera.aspect = w / Math.max(1, h);
     camera.updateProjectionMatrix();
   };
@@ -291,7 +355,8 @@ async function main(): Promise<void> {
     requestAnimationFrame(frame);
     //프레임 상한: 상한 간격이 지나기 전이면 그리지도 흘리지도 않는다. 흘릴 때는 지난 그린 프레임부터의 실제 시간 전부
     if (fpsCap > 0 && now - lastFrame < 1000 / fpsCap - 0.5) return;
-    const dtReal = Math.min(100, now - lastTime);
+    //첫 프레임의 rAF 시각이 앞서 잰 시각보다 이를 수 있어 0 밑으로 내려가지 않게 한다
+    const dtReal = Math.max(0, Math.min(100, now - lastTime));
     lastTime = now;
     lastFrame = now;
     if (playing) {
@@ -326,6 +391,8 @@ async function main(): Promise<void> {
   //검수 자동화용 손잡이 (캡처 스크립트가 쓴다)
   (window as unknown as { __vfxLab: unknown }).__vfxLab = {
     seek: (ms: number) => seek(ms),
+    mode: (m: 'texture' | 'procedural') => setMode(m),
+    option: (key: keyof RibbonOptions, on: boolean) => setOption(key, on),
     compare: (mode: 'off' | 'side' | 'over') => {
       compare = mode;
       compareBox.value = mode;
@@ -344,6 +411,7 @@ async function main(): Promise<void> {
       age,
       ...slashSample(config, age),
       active: fx.activeCount,
+      textured: fx === textured,
       geometries: renderer.info.memory.geometries,
       textures: renderer.info.memory.textures,
       programs: renderer.info.programs?.length ?? 0,

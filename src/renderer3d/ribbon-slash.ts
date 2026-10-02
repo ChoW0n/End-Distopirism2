@@ -280,13 +280,13 @@ void main() {
     if (uFlow > 0.5) {
       vec2 fuv = vec2(vUv.x - uAgeMs * uFlowSpeed, vUv.y + sin(vUv.x * 40.0 + uAgeMs * 0.012) * 0.004);
       float l2 = texture2D(uStrip, fuv).r;
-      col += light * max(0.0, l2 - 0.35) * 0.55 * cov;
+      col += light * max(0.0, l2 - 0.45) * 0.35 * cov;
     }
     gl_FragColor = vec4(col, cov * keep * reveal);
   } else {
     vec3 add = vec3(0.0);
     //빛 번짐: B 통로
-    if (uGlowOn > 0.5) add += mix(light, foam, s.b) * s.b * uGlowOpacity;
+    if (uGlowOn > 0.5) add += mix(uGradC[2], light, s.b) * s.b * s.b * uGlowOpacity * 0.7;
     //반짝임: 밝은 칸 중 고정 자리만 깜빡인다
     if (uSparkle > 0.5 && lum > 0.72) {
       vec2 cell = floor(vUv * vec2(520.0, 170.0));
