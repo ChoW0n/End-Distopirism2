@@ -34,7 +34,7 @@ export class SpaceFxTrackMesh {
 
   //textures 는 장마다 하나 (빈 장은 null). flat 이면 깊이 0 면·깊이 시험 끔
   constructor(
-    private readonly config: SpaceFxConfig,
+    config: SpaceFxConfig,
     private readonly track: SpaceFxTrack,
     private readonly textures: readonly (THREE.Texture | null)[],
     hPerPx: number,
