@@ -6,7 +6,6 @@ import type {
   BattleData,
   BattleRules,
   CharacterData,
-  DecisionRules,
   EnemyAiRules,
   SkillSlot,
   SkillData,
@@ -277,30 +276,6 @@ function parseStatusEffect(raw: unknown, index: number): StatusEffectData {
 }
 
 //JSON.parse 결과를 받아 검증된 전투 데이터로 바꾼다
-//교전 중 결단 수치를 읽는다 (SPEC-008 §2)
-function parseDecisions(raw: unknown): DecisionRules {
-  const o = obj(raw, 'decisions');
-  const press = obj(o['press'], 'decisions.press');
-  const brace = obj(o['brace'], 'decisions.brace');
-  const allIn = obj(o['allIn'], 'decisions.allIn');
-  return {
-    press: {
-      mentalityCost: num(press, 'mentalityCost', 'decisions.press'),
-      frontChanceBonus: num(press, 'frontChanceBonus', 'decisions.press'),
-      chanceCap: num(press, 'chanceCap', 'decisions.press'),
-    },
-    brace: {
-      takenMultiplier: num(brace, 'takenMultiplier', 'decisions.brace'),
-      dealtMultiplier: num(brace, 'dealtMultiplier', 'decisions.brace'),
-      mentalityOnLose: num(brace, 'mentalityOnLose', 'decisions.brace'),
-    },
-    allIn: {
-      dealtMultiplier: num(allIn, 'dealtMultiplier', 'decisions.allIn'),
-      takenMultiplier: num(allIn, 'takenMultiplier', 'decisions.allIn'),
-    },
-  };
-}
-
 export function parseBattleData(raw: unknown): BattleData {
   const source = obj(raw, 'root');
   const data: BattleData = {
@@ -309,7 +284,6 @@ export function parseBattleData(raw: unknown): BattleData {
     characters: arr(source, 'characters', 'root').map(parseCharacter),
     skills: arr(source, 'skills', 'root').map(parseSkill),
     statusEffects: arr(source, 'statusEffects', 'root').map(parseStatusEffect),
-    decisions: source['decisions'] === undefined ? null : parseDecisions(source['decisions']),
   };
 
   if (data.characters.length === 0) throw new BattleDataError('캐릭터가 하나도 없다');
@@ -374,11 +348,6 @@ export class BattleCatalog {
 
   get enemyAi(): EnemyAiRules {
     return this.data.enemyAi;
-  }
-
-  //교전 중 결단 수치 (SPEC-008). 없으면 null
-  get decisions(): DecisionRules | null {
-    return this.data.decisions;
   }
 
   //캐릭터를 찾는다. 없으면 던진다

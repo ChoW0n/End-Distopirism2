@@ -172,18 +172,6 @@ export interface BattleData {
   characters: CharacterData[];
   skills: SkillData[];
   statusEffects: StatusEffectData[];
-  //교전 중 결단 (SPEC-008 테스트 버전). 없으면 결단 실험을 못 쓴다
-  decisions: DecisionRules | null;
-}
-
-//교전 직전 자세 (SPEC-008 §2). steady 는 아무것도 바꾸지 않는다
-export type Stance = 'steady' | 'press' | 'brace' | 'allIn';
-
-//자세 수치 (SPEC-008 §2)
-export interface DecisionRules {
-  press: { mentalityCost: number; frontChanceBonus: number; chanceCap: number };
-  brace: { takenMultiplier: number; dealtMultiplier: number; mentalityOnLose: number };
-  allIn: { dealtMultiplier: number; takenMultiplier: number };
 }
 
 //정신력이 바뀐 이유. UI 가 연출을 고르는 데 쓴다
@@ -192,8 +180,7 @@ export type MentalityReason =
   | 'clashLose'
   | 'deadlock'
   | 'skill'
-  | 'turnRegen'
-  | 'stance';
+  | 'turnRegen';
 
 //카드의 어느 면이 나왔는지
 export type CardFace = 'front' | 'back';
@@ -201,7 +188,6 @@ export type CardFace = 'front' | 'back';
 //도메인이 내보내는 이벤트. 렌더러는 이것만 구독한다
 export type BattleEvent =
   | { type: 'turnStart'; turn: number }
-  | { type: 'stanceTaken'; combatantId: string; stance: Stance }
   | { type: 'enemyTargeted'; enemyId: string; targetId: string }
   | { type: 'clashStart'; attackerId: string; defenderId: string; attackerSkillId: number; defenderSkillId: number }
   | { type: 'oneSidedStart'; attackerId: string; targetId: string; skillId: number }

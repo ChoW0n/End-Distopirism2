@@ -9,7 +9,6 @@ import type {
   BattleRules,
   CardFace,
   MentalityReason,
-  Stance,
   SkillData,
   SkillEffectBody,
   StatusId,
@@ -94,11 +93,8 @@ export class ClashResolver {
   }
 
   //카드를 한 번 뒤집는다. 드러난 면의 위력이 이 교전의 위력이다
-  //밀어붙이는 자세면 앞면 확률이 오른다 (SPEC-008 §2). steady 는 그대로라 난수 소비도 같다
-  flipCard(combatant: Combatant, skill: SkillData, stance: Stance = 'steady'): CardFlip {
-    const press = this.catalog.decisions?.press;
-    const base = this.frontChance(combatant, skill);
-    const chance = stance === 'press' && press ? Math.min(Math.max(base, press.chanceCap), base + press.frontChanceBonus) : base;
+  flipCard(combatant: Combatant, skill: SkillData): CardFlip {
+    const chance = this.frontChance(combatant, skill);
     const face: CardFace = this.rng.next() < chance ? 'front' : 'back';
     return { face, power: face === 'front' ? skill.frontPower : skill.backPower, chance };
   }
@@ -120,49 +116,13 @@ export class ClashResolver {
     return { damage: Math.max(0, Math.floor(damage)), levelBonus };
   }
 
-  //교전 시작에 자세를 건다. 자세 이벤트를 내고, 밀어붙이면 정신력을 먼저 치른다 (SPEC-008 §2)
-  takeStance(combatant: Combatant, stance: Stance, events: BattleEvent[]): void {
-    if (stance === 'steady') return;
-    events.push({ type: 'stanceTaken', combatantId: combatant.id, stance });
-    const press = this.catalog.decisions?.press;
-    if (stance === 'press' && press && press.mentalityCost !== 0) this.changeMentality(combatant, -press.mentalityCost, 'stance', events);
-  }
-
-  //자세가 주는 피해에 거는 배수 (SPEC-008 §2)
-  private dealtMultiplier(stance: Stance): number {
-    const d = this.catalog.decisions;
-    if (!d) return 1;
-    if (stance === 'brace') return d.brace.dealtMultiplier;
-    if (stance === 'allIn') return d.allIn.dealtMultiplier;
-    return 1;
-  }
-
-  //자세가 받는 피해에 거는 배수 (SPEC-008 §2)
-  private takenMultiplier(stance: Stance): number {
-    const d = this.catalog.decisions;
-    if (!d) return 1;
-    if (stance === 'brace') return d.brace.takenMultiplier;
-    if (stance === 'allIn') return d.allIn.takenMultiplier;
-    return 1;
-  }
-
-  //자세 배수를 피해에 건다. 둘 다 1 이면 그대로 (내림)
-  private stanceDamage(damage: number, dealer: Stance, receiver: Stance): number {
-    const m = this.dealtMultiplier(dealer) * this.takenMultiplier(receiver);
-    return m === 1 ? damage : Math.max(0, Math.floor(damage * m));
-  }
-
   //합 한 판을 끝까지 돌린다. 코인이 떨어지거나 교착이 한도에 닿을 때까지 반복한다
-  //stances: 결단 실험의 자세 (SPEC-008). 없으면 둘 다 steady
   resolve(
     attacker: Combatant,
     attackerSkillId: number,
     defender: Combatant,
     defenderSkillId: number,
-    stances: { attacker?: Stance; defender?: Stance } = {},
   ): BattleEvent[] {
-    const attackerStance = stances.attacker ?? 'steady';
-    const defenderStance = stances.defender ?? 'steady';
     const events: BattleEvent[] = [];
     const attackerSkill = this.catalog.skill(attackerSkillId);
     const defenderSkill = this.catalog.skill(defenderSkillId);
@@ -181,8 +141,8 @@ export class ClashResolver {
 
     for (;;) {
       //양쪽이 카드를 뒤집는다. 드러난 위력끼리 겨룬다 (v3.0 §3)
-      const attackerFlip = this.flipCard(attacker, attackerSkill, attackerStance);
-      const defenderFlip = this.flipCard(defender, defenderSkill, defenderStance);
+      const attackerFlip = this.flipCard(attacker, attackerSkill);
+      const defenderFlip = this.flipCard(defender, defenderSkill);
       this.pushFlip(attacker, attackerSkill, attackerFlip, events);
       this.pushFlip(defender, defenderSkill, defenderFlip, events);
 
@@ -204,10 +164,7 @@ export class ClashResolver {
       const loser = attackerWon ? defender : attacker;
       const winnerFlip = attackerWon ? attackerFlip : defenderFlip;
       const loserFlip = attackerWon ? defenderFlip : attackerFlip;
-      const winnerStance = attackerWon ? attackerStance : defenderStance;
-      const loserStance = attackerWon ? defenderStance : attackerStance;
-      const raw = this.calculateDamage(winner, loser, winnerFlip.power);
-      const hit = { ...raw, damage: this.stanceDamage(raw.damage, winnerStance, loserStance) };
+      const hit = this.calculateDamage(winner, loser, winnerFlip.power);
       events.push({
         type: 'damageCalculated',
         combatantId: winner.id,
@@ -226,9 +183,6 @@ export class ClashResolver {
       this.changeMentality(winner, this.catalog.rules.mentalityOnClashWin, 'clashWin', events);
       //지면 흔들린다. 합에서 진 만큼 정신력이 깎인다 (D-21)
       this.changeMentality(loser, this.catalog.rules.mentalityOnClashLose, 'clashLose', events);
-      //받아내는 자세로 졌으면 버틴 만큼 정신력이 조금 돌아온다 (SPEC-008 §2)
-      const brace = this.catalog.decisions?.brace;
-      if (loserStance === 'brace' && brace && brace.mentalityOnLose !== 0) this.changeMentality(loser, brace.mentalityOnLose, 'stance', events);
 
       outcome = {
         winner,
@@ -268,19 +222,17 @@ export class ClashResolver {
 
   //일방 공격. 겨룰 상대가 없으니 공격자만 카드를 뒤집어 드러난 위력으로 때린다 (SPEC §4.7, v3.0 §4)
   //정신력 회복은 겨뤘을 때만 나오므로 여기서는 기본적으로 일어나지 않는다
-  resolveOneSided(attacker: Combatant, skillId: number, target: Combatant, stance: Stance = 'steady'): BattleEvent[] {
+  resolveOneSided(attacker: Combatant, skillId: number, target: Combatant): BattleEvent[] {
     const events: BattleEvent[] = [];
     const skill = this.catalog.skill(skillId);
     const rules = this.catalog.rules;
 
     events.push({ type: 'oneSidedStart', attackerId: attacker.id, targetId: target.id, skillId });
 
-    const flip = this.flipCard(attacker, skill, stance);
+    const flip = this.flipCard(attacker, skill);
     this.pushFlip(attacker, skill, flip, events);
 
-    //일방 공격은 지는 경우가 없어 자세는 주는 피해에만 걸린다 (SPEC-008 §2)
-    const raw = this.calculateDamage(attacker, target, flip.power);
-    const hit = { ...raw, damage: this.stanceDamage(raw.damage, stance, 'steady') };
+    const hit = this.calculateDamage(attacker, target, flip.power);
     events.push({
       type: 'damageCalculated',
       combatantId: attacker.id,
