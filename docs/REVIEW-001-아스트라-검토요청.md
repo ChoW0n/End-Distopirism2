@@ -16,7 +16,7 @@
 
 | 받는 것 | 위치 | 내용 |
 |---|---|---|
-| 실행 묶음 | GitHub Release `review-2026-10-03` 의 `end-distopirism2-review-<커밋>.zip` | 빌드된 화면 3개 + 세 화면이 실제로 부르는 그림·소리만 + 이 문서 + 스크린샷 |
+| 실행 묶음 | 검토 가지 `review-2026-10-03` (본 가지와 역사를 공유하지 않는 고아 가지) | 빌드된 화면 3개 + 세 화면이 실제로 부르는 그림·소리만 + 이 문서 + 스크린샷 |
 | 코드·스펙 | 리포 기본 가지 `claude/trusting-keller-2qeupr` | 묶음의 `BUILD.json` 에 적힌 커밋과 같은 코드 |
 
 묶음 만드는 법(리포 쪽): `node scripts/review_bundle.mjs` (§7).
@@ -24,8 +24,8 @@
 ## 2. 켜는 법
 
 ```
-unzip end-distopirism2-review-<커밋>.zip
-cd end-distopirism2-review-<커밋>
+git clone -b review-2026-10-03 --single-branch --depth 1 https://github.com/ChoW0n/End-Distopirism2.git ed2-review
+cd ed2-review
 python3 -m http.server 8000      # 또는 npx serve -l 8000
 # 브라우저로 http://localhost:8000/ 을 연다
 ```
@@ -179,6 +179,7 @@ node scripts/review_bundle.mjs            # 그림이 들어 있는 작업 환�
 1. `node web/build.mjs` 로 화면을 빌드하고 `npm run typecheck`·`npm test` 결과를 `BUILD.json` 에 적는다
 2. 정적 서버를 띄우고 Playwright 로 세 화면을 열어 **실제로 요청한 파일만** 모은다. 404 가 하나라도 나면 멈춘다
 3. 같은 길에 `screenshots/` 를 찍는다
-4. `review-bundle/end-distopirism2-review-<커밋>/` 와 같은 이름의 zip 을 만든다. 둘 다 커밋하지 않는다
+4. `review-bundle/end-distopirism2-review-<커밋>/` 와 같은 이름의 zip 을 만든다. 본 가지에는 커밋하지 않는다
 
-Release 에 올리는 것은 사용자 승인 뒤에 한다. 묶음에는 그림 원본이 들어가므로 공개 리포의 Release 에 올리면 누구나 받을 수 있다.
+보내기: 묶음 폴더를 고아 가지 `review-<날짜>` 에 통째로 커밋해 올린다 (2026-10-03 사용자 승인. 작업 세션에서는 Release 를 만들 수 없다).
+본 가지 역사에는 그림이 들어가지 않는다. 다만 공개 리포라 누구나 받을 수 있고, 가지를 다 받는 일반 클론은 그만큼 커진다. 검토가 끝나면 가지를 지운다.
