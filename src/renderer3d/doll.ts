@@ -66,10 +66,7 @@ export class PaperDoll {
 
   //bbox 로 자른 장을 발 기준점이 원점이 되게 놓는다
   private makePlate(frame: FrameData, texture: THREE.Texture, order: number): Plate {
-    const [x0, y0, x1, y1] = frame.bbox;
-    const s = this.worldPerPixel;
-    const geometry = new THREE.PlaneGeometry((x1 - x0) * s, (y1 - y0) * s);
-    geometry.translate(((x0 + x1) / 2 - frame.anchor.x) * s, (frame.anchor.y - (y0 + y1) / 2) * s, 0);
+    const geometry = plateGeometry(frame, this.worldPerPixel);
     const material = new THREE.MeshBasicMaterial({
       map: texture,
       transparent: true,
@@ -172,6 +169,15 @@ export class PaperDoll {
     this.setOpacity(1);
     this.setPose('idle');
   }
+}
+
+//bbox 로 자른 장 크기의 판. 발 기준점이 원점에 온다. 몸 가림 판(SPEC-005 §15.3)도 같은 모양을 쓴다
+export function plateGeometry(frame: FrameData, worldPerPixel: number): THREE.PlaneGeometry {
+  const [x0, y0, x1, y1] = frame.bbox;
+  const s = worldPerPixel;
+  const geometry = new THREE.PlaneGeometry((x1 - x0) * s, (y1 - y0) * s);
+  geometry.translate(((x0 + x1) / 2 - frame.anchor.x) * s, (frame.anchor.y - (y0 + y1) / 2) * s, 0);
+  return geometry;
 }
 
 //프레임 PNG(공통 캔버스)를 bbox 로 잘라 텍스처로 만든다. 긴 변은 maxSide 로 줄인다

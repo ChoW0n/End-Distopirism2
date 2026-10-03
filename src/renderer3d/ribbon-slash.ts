@@ -368,6 +368,67 @@ export interface StripSource {
   height: number;
 }
 
+//질감 띠 재질 (§15.2). 평면 띠와 공간형 띠(§15.3)가 같은 셰이더·같은 uniform 을 쓴다. 지오메트리만 다르다
+//glow 0 = 몸통(일반 혼합), 1 = 빛(가산). 깊이 시험은 하고 깊이는 쓰지 않는다 (몸 가림 판에 가린다)
+export function createStripMaterial(
+  config: RibbonSlashConfig,
+  texture: THREE.Texture,
+  grade: { brightness: number; saturation: number; gamma: number },
+  glow: number,
+  blending: THREE.Blending,
+): THREE.ShaderMaterial {
+  const tex = config.texture as NonNullable<RibbonSlashConfig['texture']>;
+  const o = config.options;
+  const palette = config.paletteSRGB;
+  const grad = tex.gradient.map(([, name]) => new THREE.Color().setStyle(palette[name], THREE.SRGBColorSpace));
+  const gradP = tex.gradient.map(([pos]) => pos);
+  const [u0, u1] = tex.uRange;
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      uStrip: { value: texture },
+      uHead: { value: 0 },
+      uTail: { value: 0 },
+      uFeather: { value: config.erase.edgeFeatherU },
+      uErosionW: { value: tex.erosionWeight },
+      uCovLo: { value: tex.coverage[0] },
+      uCovSpan: { value: tex.coverage[1] },
+      uAgeMs: { value: 0 },
+      uRevealMs: { value: config.timingMs.reveal },
+      uSeed: { value: config.render.seed },
+      uGlowPass: { value: glow },
+      uFlow: { value: 0 },
+      //u 단위 속도를 텍스처 가로(ms 당)로
+      uFlowSpeed: { value: (o?.flowSpeedU ?? 0) / (u1 - u0) / 1000 },
+      uFlare: { value: 0 },
+      uFlareMs: { value: o?.flareMs ?? 200 },
+      uGlowOn: { value: 0 },
+      uGlowOpacity: { value: config.render.glowOpacity },
+      uSparkle: { value: 0 },
+      uSparkleDensity: { value: o?.sparkleDensity ?? 0 },
+      uGradeBright: { value: grade.brightness },
+      uGradeSat: { value: grade.saturation },
+      uGradeGamma: { value: grade.gamma },
+      uGradC: { value: grad },
+      uGradP: { value: gradP },
+    },
+    vertexShader: STRIP_VERTEX,
+    fragmentShader: STRIP_FRAGMENT,
+    transparent: true,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+    blending,
+  });
+}
+
+//띠 텍스처를 three 텍스처로. 색 공간 변환 없이 통로 값을 그대로 읽는다
+export function stripTexture(strip: StripSource): THREE.Texture {
+  const texture = new THREE.Texture(strip.image);
+  texture.colorSpace = THREE.NoColorSpace;
+  texture.anisotropy = 4;
+  texture.needsUpdate = true;
+  return texture;
+}
+
 //한 효과를 이루는 조각 하나. role 로 옵션 켜짐을 가른다
 interface Part {
   role: 'body' | 'glow' | 'drops' | 'spray';
@@ -504,55 +565,11 @@ export class RibbonSlashEffect {
   //질감 방식 조각: 몸통·빛 띠(같은 텍스처) + 흩어짐 물방울
   private buildStripParts(strip: StripSource, H: number, colors: Record<string, { value: THREE.Color }>): void {
     const config = this.config;
-    const tex = config.texture as NonNullable<RibbonSlashConfig['texture']>;
     const o = config.options;
-    const texture = new THREE.Texture(strip.image);
-    texture.colorSpace = THREE.NoColorSpace;
-    texture.anisotropy = 4;
-    texture.needsUpdate = true;
+    const texture = stripTexture(strip);
     this.textures.push(texture);
     const geometry = RibbonSlashEffect.buildStripGeometry(config, H);
-    const palette = config.paletteSRGB;
-    const grad = tex.gradient.map(([, name]) => new THREE.Color().setStyle(palette[name], THREE.SRGBColorSpace));
-    const gradP = tex.gradient.map(([pos]) => pos);
-    const [u0, u1] = tex.uRange;
-    const stripUniforms = (glow: number) => ({
-      uStrip: { value: texture },
-      uHead: { value: 0 },
-      uTail: { value: 0 },
-      uFeather: { value: config.erase.edgeFeatherU },
-      uErosionW: { value: tex.erosionWeight },
-      uCovLo: { value: tex.coverage[0] },
-      uCovSpan: { value: tex.coverage[1] },
-      uAgeMs: { value: 0 },
-      uRevealMs: { value: config.timingMs.reveal },
-      uSeed: { value: config.render.seed },
-      uGlowPass: { value: glow },
-      uFlow: { value: 0 },
-      //u 단위 속도를 텍스처 가로(ms 당)로
-      uFlowSpeed: { value: (o?.flowSpeedU ?? 0) / (u1 - u0) / 1000 },
-      uFlare: { value: 0 },
-      uFlareMs: { value: o?.flareMs ?? 200 },
-      uGlowOn: { value: 0 },
-      uGlowOpacity: { value: config.render.glowOpacity },
-      uSparkle: { value: 0 },
-      uSparkleDensity: { value: o?.sparkleDensity ?? 0 },
-      uGradeBright: { value: this.grade.brightness },
-      uGradeSat: { value: this.grade.saturation },
-      uGradeGamma: { value: this.grade.gamma },
-      uGradC: { value: grad },
-      uGradP: { value: gradP },
-    });
-    const material = (glow: number, blending: THREE.Blending) =>
-      new THREE.ShaderMaterial({
-        uniforms: stripUniforms(glow),
-        vertexShader: STRIP_VERTEX,
-        fragmentShader: STRIP_FRAGMENT,
-        transparent: true,
-        depthWrite: false,
-        side: THREE.DoubleSide,
-        blending,
-      });
+    const material = (glow: number, blending: THREE.Blending) => createStripMaterial(config, texture, this.grade, glow, blending);
     this.parts.push(
       { role: 'body', geometry, material: material(0, THREE.NormalBlending), points: false },
       { role: 'glow', geometry, material: material(1, THREE.AdditiveBlending), points: false },

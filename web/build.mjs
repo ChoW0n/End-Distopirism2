@@ -32,6 +32,15 @@ await build({
   minify: true,
   outfile: 'web/vfx-lab.js',
 });
+//물금 공간형 VFX 시험 화면 (SPEC-005 §15.3)
+await build({
+  entryPoints: ['src/renderer3d/vfx-space.ts'],
+  bundle: true,
+  format: 'esm',
+  target: 'es2020',
+  minify: true,
+  outfile: 'web/vfx-space.js',
+});
 //2D 캔버스 화면은 비교용으로 남긴다 (SPEC-005 §9)
 await build({
   entryPoints: ['src/renderer/app.ts'],
@@ -73,4 +82,12 @@ const lab = read('web/vfx-lab.html')
   .replace('<body>\n', '')
   .replace('\n</body>', '');
 writeFileSync('web/share/vfx-lab.html', lab);
-console.log('web/domain.js, web/battle.js, web/vfx-lab.js, web/battle-data.json, web/standalone.html, web/share/index.html, web/share/vfx-lab.html');
+//물금 공간형 시험 화면 공유본. 설정·그림은 같은 폴더 assets/ 에서 읽는다
+const spaceLab = read('web/vfx-space.html')
+  .replace('<!doctype html>\n', '')
+  .replace('<canvas id="view">', '<canvas id="view" data-assets="assets">')
+  .replace('<script type="module" src="vfx-space.js"></script>', () => `<script type="module">\n${read('web/vfx-space.js').replace(/<\/script/gi, '<\\/script')}\n</script>`)
+  .replace('<body>\n', '')
+  .replace('\n</body>', '');
+writeFileSync('web/share/vfx-space.html', spaceLab);
+console.log('web/domain.js, web/battle.js, web/vfx-lab.js, web/vfx-space.js, web/battle-data.json, web/standalone.html, web/share/index.html, web/share/vfx-lab.html, web/share/vfx-space.html');

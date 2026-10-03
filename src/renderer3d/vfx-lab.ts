@@ -5,8 +5,9 @@
 //시계: 효과 시각은 게임 시간. 실제 경과에 배속을 한 번만 곱해 더한다 (역경직 없는 실험 화면)
 
 import * as THREE from 'three';
-import { arcLengthPoints, parseRibbonConfig, slashDuration, slashSample, type RibbonSlashConfig } from '../render/ribbon-slash.js';
-import { RibbonSlashEffect, type RibbonHandle, type StripSource } from './ribbon-slash.js';
+import { arcLengthPoints, originalFrameAt, parseRibbonConfig, slashDuration, slashSample, type RibbonSlashConfig } from '../render/ribbon-slash.js';
+import { RibbonSlashEffect, type RibbonHandle } from './ribbon-slash.js';
+import { loadStrip } from './strip-loader.js';
 import type { RibbonOptions } from '../render/ribbon-slash.js';
 
 //실험 화면 캐릭터 키(월드). 경로·폭은 이 배수로 잡힌다
@@ -15,36 +16,6 @@ const H = 2;
 const SHEET = { w: 1700, h: 720, footX: 760, footY: 600, bodyPx: 580 } as const;
 //원본 S1 장 이름. 01 타 장, 02~14 잔흔, 15 마무리
 const ORIGINAL_FRAMES = Array.from({ length: 15 }, (_, i) => `11-skill1-${String(i + 1).padStart(2, '0')}`);
-
-//시각 → 원본 장 번호(0~14). 01 은 전개 동안, 잔흔 02~14 는 §12.5 곡선(T·(i/n)^(1/k), k=2)으로 780ms, 그 뒤 15
-function originalFrameAt(ageMs: number, revealMs: number): number {
-  if (ageMs < revealMs) return 0;
-  const n = 13;
-  const T = 780;
-  const t = ageMs - revealMs;
-  if (t >= T) return 14;
-  for (let i = n - 1; i >= 0; i--) if (t >= T * Math.pow(i / n, 1 / 2)) return 1 + i;
-  return 1;
-}
-
-//띠 텍스처를 읽는다. 그림과 같은 그림의 RGBA 바이트(흩어짐 칸 고르기용). 없으면 null
-async function loadStrip(url: string): Promise<StripSource | null> {
-  const image = new Image();
-  image.src = url;
-  try {
-    await image.decode();
-  } catch {
-    return null;
-  }
-  const canvas = document.createElement('canvas');
-  canvas.width = image.naturalWidth;
-  canvas.height = image.naturalHeight;
-  const ctx = canvas.getContext('2d');
-  if (!ctx) return null;
-  ctx.drawImage(image, 0, 0);
-  const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  return { image, pixels: data.data, width: canvas.width, height: canvas.height };
-}
 
 function byId<T extends HTMLElement>(id: string): T {
   const found = document.getElementById(id);

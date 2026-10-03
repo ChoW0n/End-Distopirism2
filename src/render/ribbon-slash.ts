@@ -196,7 +196,7 @@ export function outerWidthAt(config: RibbonSlashConfig, u: number): number {
 }
 
 //씨앗 고정 난수 (mulberry32). 물방울 자리를 매번 같게 만든다
-function seeded(seed: number): () => number {
+export function seeded(seed: number): () => number {
   let a = seed >>> 0;
   return () => {
     a = (a + 0x6d2b79f5) >>> 0;
@@ -341,4 +341,15 @@ export function pickSprayTexels(config: RibbonSlashConfig, pixels: ArrayLike<num
     out.push({ u, dH, e: erosionValue(config, u, (pixels[i + 1] ?? 0) / 255) });
   }
   return out;
+}
+
+//시각 → 원본 S1 장 번호(0~14). 01 은 전개 동안, 잔흔 02~14 는 §12.5 곡선(T·(i/n)^(1/k), k=2)으로 780ms, 그 뒤 15. 실험 화면 비교용
+export function originalFrameAt(ageMs: number, revealMs: number): number {
+  if (ageMs < revealMs) return 0;
+  const n = 13;
+  const T = 780;
+  const t = ageMs - revealMs;
+  if (t >= T) return 14;
+  for (let i = n - 1; i >= 0; i--) if (t >= T * Math.pow(i / n, 1 / 2)) return 1 + i;
+  return 1;
 }
