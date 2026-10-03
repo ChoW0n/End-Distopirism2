@@ -1,0 +1,1112 @@
+{
+ "_comment": "카일 전 스킬 공간형 (SPEC-005 §15.4). 효과 분리 v3 장을 격자 메시에 깔고 꼭짓점마다 곡면 깊이를 준다. z = c + kx·dx + ky·dy + kxx·dx² + kyy·dy² + kxy·dx·dy (dx, dy = 원점에서 거리, 캐릭터 키 H 단위, 위가 +). 높이는 y = (Y + z·sin p) / cos p 로 게임 카메라에서 원화 자리와 겹친다. 바닥 밑은 groundLift 로 올려 바닥에 눕힌다. floor 는 장 전체를 바닥에 눕힌다. 박자는 받은 manifest 그대로",
+ "grid": [
+  40,
+  20
+ ],
+ "groundLift": 0.004,
+ "surfaces": {
+  "none": {
+   "origin": [
+    0,
+    0
+   ],
+   "c": 0,
+   "kx": 0,
+   "ky": 0,
+   "kxx": 0,
+   "kyy": 0,
+   "kxy": 0
+  },
+  "flat": {
+   "origin": [
+    0,
+    0
+   ],
+   "c": 0,
+   "kx": 0,
+   "ky": 0,
+   "kxx": 0,
+   "kyy": 0,
+   "kxy": 0
+  },
+  "thrust": {
+   "origin": [
+    1.56,
+    0.44
+   ],
+   "c": 0.1,
+   "kx": 0,
+   "ky": -0.6,
+   "kxx": 0.05,
+   "kyy": 0,
+   "kxy": 0.3
+  },
+  "parry": {
+   "origin": [
+    0.45,
+    0.62
+   ],
+   "c": 0.2,
+   "kx": 0.9,
+   "ky": 0,
+   "kxx": 0,
+   "kyy": -0.6,
+   "kxy": 0
+  },
+  "upcut": {
+   "origin": [
+    0.4,
+    0.5
+   ],
+   "c": 0.25,
+   "kx": 1.1,
+   "ky": 0,
+   "kxx": 0,
+   "kyy": -0.5,
+   "kxy": 0
+  },
+  "downcut": {
+   "origin": [
+    0,
+    0.3
+   ],
+   "c": 0.15,
+   "kx": -0.55,
+   "ky": 0,
+   "kxx": -0.12,
+   "kyy": 0,
+   "kxy": 0
+  },
+  "cut1": {
+   "origin": [
+    0,
+    0
+   ],
+   "c": 0.05,
+   "kx": 0.7,
+   "ky": 0,
+   "kxx": 0,
+   "kyy": 0,
+   "kxy": 0
+  },
+  "cut2": {
+   "origin": [
+    0,
+    0
+   ],
+   "c": 0.05,
+   "kx": -0.7,
+   "ky": 0,
+   "kxx": 0,
+   "kyy": 0,
+   "kxy": 0
+  },
+  "cut3": {
+   "origin": [
+    0,
+    0
+   ],
+   "c": 0,
+   "kx": 0.9,
+   "ky": 0,
+   "kxx": -0.25,
+   "kyy": 0,
+   "kxy": 0
+  },
+  "cut4": {
+   "origin": [
+    0,
+    0
+   ],
+   "c": 0.1,
+   "kx": -0.5,
+   "ky": 0.4,
+   "kxx": 0,
+   "kyy": 0,
+   "kxy": 0
+  },
+  "water": {
+   "origin": [
+    0,
+    0
+   ],
+   "c": 0.3,
+   "kx": 0,
+   "ky": -0.15,
+   "kxx": -0.7,
+   "kyy": 0,
+   "kxy": 0
+  },
+  "floor": {
+   "mode": "floor"
+  }
+ },
+ "skills": [
+  {
+   "id": "s2",
+   "name": "S2 찌르기",
+   "scene": "self",
+   "ready": {
+    "flat": "12-skill2-ready",
+    "ms": 180
+   },
+   "tracks": [
+    {
+     "name": "찌르기",
+     "anchor": "kyleFoot",
+     "canvas": [
+      1700,
+      720
+     ],
+     "pivot": [
+      760,
+      600
+     ],
+     "scale": null,
+     "crop": [
+      888,
+      154,
+      1675,
+      532
+     ],
+     "delayMs": 0,
+     "frames": [
+      {
+       "fx": "fx3/s2/01.png",
+       "ms": 70,
+       "surface": "thrust",
+       "flat": "12-skill2-01",
+       "body": "fx3/body/s2-01.png"
+      },
+      {
+       "fx": "fx3/s2/02.png",
+       "ms": 70,
+       "surface": "thrust",
+       "flat": "12-skill2-02",
+       "body": "fx3/body/s2-02.png"
+      },
+      {
+       "fx": "fx3/s2/03.png",
+       "ms": 70,
+       "surface": "thrust",
+       "flat": "12-skill2-03",
+       "body": "fx3/body/s2-03.png"
+      },
+      {
+       "fx": "fx3/s2/04.png",
+       "ms": 70,
+       "surface": "thrust",
+       "flat": "12-skill2-04",
+       "body": "fx3/body/s2-04.png"
+      },
+      {
+       "fx": "fx3/s2/05.png",
+       "ms": 70,
+       "surface": "thrust",
+       "flat": "12-skill2-05",
+       "body": "fx3/body/s2-05.png"
+      },
+      {
+       "fx": "fx3/s2/06.png",
+       "ms": 70,
+       "surface": "thrust",
+       "flat": "12-skill2-06",
+       "body": "fx3/body/s2-06.png"
+      },
+      {
+       "fx": "fx3/s2/07.png",
+       "ms": 70,
+       "surface": "thrust",
+       "flat": "12-skill2-07",
+       "body": "fx3/body/s2-07.png"
+      },
+      {
+       "fx": "fx3/s2/08.png",
+       "ms": 70,
+       "surface": "thrust",
+       "flat": "12-skill2-08",
+       "body": "fx3/body/s2-08.png"
+      },
+      {
+       "fx": "fx3/s2/09.png",
+       "ms": 70,
+       "surface": "thrust",
+       "flat": "12-skill2-09",
+       "body": "fx3/body/s2-09.png"
+      },
+      {
+       "fx": "fx3/s2/10.png",
+       "ms": 70,
+       "surface": "thrust",
+       "flat": "12-skill2-10",
+       "body": "fx3/body/s2-10.png"
+      },
+      {
+       "fx": "fx3/s2/11.png",
+       "ms": 70,
+       "surface": "thrust",
+       "flat": "12-skill2-11",
+       "body": "fx3/body/s2-11.png"
+      },
+      {
+       "fx": "fx3/s2/12.png",
+       "ms": 70,
+       "surface": "thrust",
+       "flat": "12-skill2-12",
+       "body": "fx3/body/s2-12.png"
+      },
+      {
+       "fx": "fx3/s2/13.png",
+       "ms": 70,
+       "surface": "thrust",
+       "flat": "12-skill2-13",
+       "body": "fx3/body/s2-13.png"
+      },
+      {
+       "fx": "fx3/s2/14.png",
+       "ms": 70,
+       "surface": "thrust",
+       "flat": "12-skill2-14",
+       "body": "fx3/body/s2-14.png"
+      },
+      {
+       "fx": "fx3/s2/15.png",
+       "ms": 120,
+       "surface": "thrust",
+       "flat": "12-skill2-15",
+       "body": "fx3/body/s2-15.png"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "s3",
+   "name": "S3 쳐내기·올려베기·내려베기",
+   "scene": "self",
+   "ready": null,
+   "tracks": [
+    {
+     "name": "쳐내기·올려베기·내려베기",
+     "anchor": "kyleFoot",
+     "canvas": [
+      1700,
+      720
+     ],
+     "pivot": [
+      760,
+      600
+     ],
+     "scale": null,
+     "crop": [
+      17,
+      84,
+      1151,
+      711
+     ],
+     "delayMs": 0,
+     "frames": [
+      {
+       "fx": "fx3/s3/01-idle.png",
+       "ms": 380,
+       "surface": "none",
+       "flat": "13-skill3-ready",
+       "body": "fx3/body/s3-01.png"
+      },
+      {
+       "fx": "fx3/s3/02-low-entry.png",
+       "ms": 70,
+       "surface": "parry",
+       "flat": "13-skill3-ready",
+       "body": "fx3/body/s3-02.png"
+      },
+      {
+       "fx": "fx3/s3/03-parry-impact.png",
+       "ms": 90,
+       "surface": "parry",
+       "flat": "13-skill3-03-parry-impact",
+       "body": "fx3/body/s3-03.png"
+      },
+      {
+       "fx": "fx3/s3/04-parry-decay.png",
+       "ms": 40,
+       "surface": "parry",
+       "flat": "13-skill3-04-parry-decay",
+       "body": "fx3/body/s3-04.png"
+      },
+      {
+       "fx": "fx3/s3/05-parry-decay.png",
+       "ms": 40,
+       "surface": "parry",
+       "flat": "13-skill3-05-parry-decay",
+       "body": "fx3/body/s3-05.png"
+      },
+      {
+       "fx": "fx3/s3/06-parry-decay.png",
+       "ms": 40,
+       "surface": "parry",
+       "flat": "13-skill3-06-parry-decay",
+       "body": "fx3/body/s3-06.png"
+      },
+      {
+       "fx": "fx3/s3/07-parry-decay.png",
+       "ms": 40,
+       "surface": "parry",
+       "flat": "13-skill3-07-parry-decay",
+       "body": "fx3/body/s3-07.png"
+      },
+      {
+       "fx": "fx3/s3/08-upcut-impact.png",
+       "ms": 110,
+       "surface": "upcut",
+       "flat": "13-skill3-08-upcut-impact",
+       "body": "fx3/body/s3-08.png"
+      },
+      {
+       "fx": "fx3/s3/09-upcut-decay.png",
+       "ms": 60,
+       "surface": "upcut",
+       "flat": "13-skill3-09-upcut-decay",
+       "body": "fx3/body/s3-09.png"
+      },
+      {
+       "fx": "fx3/s3/10-upcut-decay.png",
+       "ms": 60,
+       "surface": "upcut",
+       "flat": "13-skill3-10-upcut-decay",
+       "body": "fx3/body/s3-10.png"
+      },
+      {
+       "fx": "fx3/s3/11-upcut-decay.png",
+       "ms": 60,
+       "surface": "upcut",
+       "flat": "13-skill3-11-upcut-decay",
+       "body": "fx3/body/s3-11.png"
+      },
+      {
+       "fx": "fx3/s3/12-upcut-decay.png",
+       "ms": 60,
+       "surface": "upcut",
+       "flat": "13-skill3-12-upcut-decay",
+       "body": "fx3/body/s3-12.png"
+      },
+      {
+       "fx": "fx3/s3/13-upcut-decay.png",
+       "ms": 60,
+       "surface": "upcut",
+       "flat": "13-skill3-13-upcut-decay",
+       "body": "fx3/body/s3-13.png"
+      },
+      {
+       "fx": "fx3/s3/14-upcut-decay.png",
+       "ms": 60,
+       "surface": "upcut",
+       "flat": "13-skill3-14-upcut-decay",
+       "body": "fx3/body/s3-14.png"
+      },
+      {
+       "fx": "fx3/s3/15-upcut-decay.png",
+       "ms": 60,
+       "surface": "upcut",
+       "flat": "13-skill3-15-upcut-decay",
+       "body": "fx3/body/s3-15.png"
+      },
+      {
+       "fx": "fx3/s3/16-upcut-decay.png",
+       "ms": 60,
+       "surface": "upcut",
+       "flat": "13-skill3-16-upcut-decay",
+       "body": "fx3/body/s3-16.png"
+      },
+      {
+       "fx": "fx3/s3/17-upcut-decay.png",
+       "ms": 60,
+       "surface": "upcut",
+       "flat": "13-skill3-17-upcut-decay",
+       "body": "fx3/body/s3-17.png"
+      },
+      {
+       "fx": "fx3/s3/18-upcut-decay.png",
+       "ms": 60,
+       "surface": "upcut",
+       "flat": "13-skill3-18-upcut-decay",
+       "body": "fx3/body/s3-18.png"
+      },
+      {
+       "fx": "fx3/s3/19-upcut-decay.png",
+       "ms": 60,
+       "surface": "upcut",
+       "flat": "13-skill3-19-upcut-decay",
+       "body": "fx3/body/s3-19.png"
+      },
+      {
+       "fx": "fx3/s3/20-upcut-decay.png",
+       "ms": 60,
+       "surface": "upcut",
+       "flat": "13-skill3-20-upcut-decay",
+       "body": "fx3/body/s3-20.png"
+      },
+      {
+       "fx": "fx3/s3/21-downcut-smear.png",
+       "ms": 50,
+       "surface": "downcut",
+       "flat": "13-skill3-21-downcut-smear",
+       "body": "fx3/body/s3-21.png"
+      },
+      {
+       "fx": "fx3/s3/22-downcut-impact.png",
+       "ms": 120,
+       "surface": "downcut",
+       "flat": "13-skill3-22-downcut-impact",
+       "body": "fx3/body/s3-22.png"
+      },
+      {
+       "fx": "fx3/s3/23-downcut-decay.png",
+       "ms": 60,
+       "surface": "downcut",
+       "flat": "13-skill3-23-downcut-decay",
+       "body": "fx3/body/s3-23.png"
+      },
+      {
+       "fx": "fx3/s3/24-downcut-decay.png",
+       "ms": 60,
+       "surface": "downcut",
+       "flat": "13-skill3-24-downcut-decay",
+       "body": "fx3/body/s3-24.png"
+      },
+      {
+       "fx": "fx3/s3/25-downcut-decay.png",
+       "ms": 60,
+       "surface": "downcut",
+       "flat": "13-skill3-25-downcut-decay",
+       "body": "fx3/body/s3-25.png"
+      },
+      {
+       "fx": "fx3/s3/26-downcut-decay.png",
+       "ms": 60,
+       "surface": "downcut",
+       "flat": "13-skill3-26-downcut-decay",
+       "body": "fx3/body/s3-26.png"
+      },
+      {
+       "fx": "fx3/s3/27-downcut-decay.png",
+       "ms": 60,
+       "surface": "downcut",
+       "flat": "13-skill3-27-downcut-decay",
+       "body": "fx3/body/s3-27.png"
+      },
+      {
+       "fx": "fx3/s3/28-downcut-decay.png",
+       "ms": 60,
+       "surface": "downcut",
+       "flat": "13-skill3-28-downcut-decay",
+       "body": "fx3/body/s3-28.png"
+      },
+      {
+       "fx": "fx3/s3/29-downcut-decay.png",
+       "ms": 60,
+       "surface": "downcut",
+       "flat": "13-skill3-29-downcut-decay",
+       "body": "fx3/body/s3-29.png"
+      },
+      {
+       "fx": "fx3/s3/30-downcut-decay.png",
+       "ms": 60,
+       "surface": "downcut",
+       "flat": "13-skill3-30-downcut-decay",
+       "body": "fx3/body/s3-30.png"
+      },
+      {
+       "fx": "fx3/s3/31-downcut-decay.png",
+       "ms": 60,
+       "surface": "downcut",
+       "flat": "13-skill3-31-downcut-decay",
+       "body": "fx3/body/s3-31.png"
+      },
+      {
+       "fx": "fx3/s3/32-downcut-decay.png",
+       "ms": 60,
+       "surface": "downcut",
+       "flat": "13-skill3-32-downcut-decay",
+       "body": "fx3/body/s3-32.png"
+      },
+      {
+       "fx": "fx3/s3/33-downcut-decay.png",
+       "ms": 60,
+       "surface": "downcut",
+       "flat": "13-skill3-33-downcut-decay",
+       "body": "fx3/body/s3-33.png"
+      },
+      {
+       "fx": "fx3/s3/34-downcut-decay.png",
+       "ms": 60,
+       "surface": "downcut",
+       "flat": "13-skill3-34-downcut-decay",
+       "body": "fx3/body/s3-34.png"
+      },
+      {
+       "fx": "fx3/s3/35-downcut-decay.png",
+       "ms": 60,
+       "surface": "downcut",
+       "flat": "13-skill3-35-downcut-decay",
+       "body": "fx3/body/s3-35.png"
+      },
+      {
+       "fx": "fx3/s3/36-downcut-decay.png",
+       "ms": 60,
+       "surface": "downcut",
+       "flat": "13-skill3-36-downcut-decay",
+       "body": "fx3/body/s3-36.png"
+      },
+      {
+       "fx": "fx3/s3/37-downcut-decay.png",
+       "ms": 60,
+       "surface": "downcut",
+       "flat": "13-skill3-37-downcut-decay",
+       "body": "fx3/body/s3-37.png"
+      },
+      {
+       "fx": "fx3/s3/38-follow-through.png",
+       "ms": 120,
+       "surface": "downcut",
+       "flat": "13-skill3-38-follow-through",
+       "body": "fx3/body/s3-38.png"
+      },
+      {
+       "fx": "fx3/s3/39-return-idle.png",
+       "ms": 450,
+       "surface": "none",
+       "flat": "00-idle",
+       "body": "fx3/body/s3-39.png"
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "id": "ult",
+   "name": "결행",
+   "scene": "ultimate",
+   "ready": null,
+   "kyleFrame": "14-ult-post-closed",
+   "enemyFrame": "04-hit",
+   "behindGap": 1.1,
+   "durationMs": 1250,
+   "tracks": [
+    {
+     "name": "베기 1",
+     "anchor": "enemyHit",
+     "canvas": [
+      768,
+      512
+     ],
+     "pivot": [
+      400,
+      280
+     ],
+     "scale": 1.333,
+     "crop": [
+      27,
+      34,
+      728,
+      248
+     ],
+     "delayMs": 0,
+     "frames": [
+      {
+       "fx": "fx3/ult/p1/01.png",
+       "ms": 60,
+       "surface": "cut1"
+      },
+      {
+       "fx": "fx3/ult/p1/02.png",
+       "ms": 60,
+       "surface": "cut1"
+      },
+      {
+       "fx": "fx3/ult/p1/03.png",
+       "ms": 60,
+       "surface": "cut1"
+      },
+      {
+       "fx": "fx3/ult/p1/04.png",
+       "ms": 60,
+       "surface": "cut1"
+      },
+      {
+       "fx": "fx3/ult/p1/05.png",
+       "ms": 60,
+       "surface": "cut1"
+      },
+      {
+       "fx": "fx3/ult/p1/06.png",
+       "ms": 60,
+       "surface": "cut1"
+      },
+      {
+       "fx": "fx3/ult/p1/07.png",
+       "ms": 60,
+       "surface": "cut1"
+      },
+      {
+       "fx": "fx3/ult/p1/08.png",
+       "ms": 60,
+       "surface": "cut1"
+      },
+      {
+       "fx": "fx3/ult/p1/09.png",
+       "ms": 60,
+       "surface": "cut1"
+      },
+      {
+       "fx": "fx3/ult/p1/10.png",
+       "ms": 60,
+       "surface": "cut1"
+      },
+      {
+       "fx": "fx3/ult/p1/11.png",
+       "ms": 60,
+       "surface": "cut1"
+      },
+      {
+       "fx": "fx3/ult/p1/12.png",
+       "ms": 60,
+       "surface": "cut1"
+      },
+      {
+       "fx": "fx3/ult/p1/13.png",
+       "ms": 60,
+       "surface": "cut1"
+      },
+      {
+       "fx": "fx3/ult/p1/14.png",
+       "ms": 60,
+       "surface": "cut1"
+      },
+      {
+       "fx": "fx3/ult/p1/15.png",
+       "ms": 60,
+       "surface": "cut1"
+      }
+     ]
+    },
+    {
+     "name": "베기 2",
+     "anchor": "enemyHit",
+     "canvas": [
+      768,
+      512
+     ],
+     "pivot": [
+      400,
+      280
+     ],
+     "scale": 1.333,
+     "crop": [
+      136,
+      140,
+      707,
+      288
+     ],
+     "delayMs": 100,
+     "frames": [
+      {
+       "fx": "fx3/ult/p2/01.png",
+       "ms": 60,
+       "surface": "cut2"
+      },
+      {
+       "fx": "fx3/ult/p2/02.png",
+       "ms": 60,
+       "surface": "cut2"
+      },
+      {
+       "fx": "fx3/ult/p2/03.png",
+       "ms": 60,
+       "surface": "cut2"
+      },
+      {
+       "fx": "fx3/ult/p2/04.png",
+       "ms": 60,
+       "surface": "cut2"
+      },
+      {
+       "fx": "fx3/ult/p2/05.png",
+       "ms": 60,
+       "surface": "cut2"
+      },
+      {
+       "fx": "fx3/ult/p2/06.png",
+       "ms": 60,
+       "surface": "cut2"
+      },
+      {
+       "fx": "fx3/ult/p2/07.png",
+       "ms": 60,
+       "surface": "cut2"
+      },
+      {
+       "fx": "fx3/ult/p2/08.png",
+       "ms": 60,
+       "surface": "cut2"
+      },
+      {
+       "fx": "fx3/ult/p2/09.png",
+       "ms": 60,
+       "surface": "cut2"
+      },
+      {
+       "fx": "fx3/ult/p2/10.png",
+       "ms": 60,
+       "surface": "cut2"
+      },
+      {
+       "fx": "fx3/ult/p2/11.png",
+       "ms": 60,
+       "surface": "cut2"
+      },
+      {
+       "fx": "fx3/ult/p2/12.png",
+       "ms": 60,
+       "surface": "cut2"
+      },
+      {
+       "fx": "fx3/ult/p2/13.png",
+       "ms": 60,
+       "surface": "cut2"
+      },
+      {
+       "fx": "fx3/ult/p2/14.png",
+       "ms": 60,
+       "surface": "cut2"
+      },
+      {
+       "fx": "fx3/ult/p2/15.png",
+       "ms": 60,
+       "surface": "cut2"
+      }
+     ]
+    },
+    {
+     "name": "베기 3",
+     "anchor": "enemyHit",
+     "canvas": [
+      768,
+      512
+     ],
+     "pivot": [
+      400,
+      280
+     ],
+     "scale": 1.333,
+     "crop": [
+      53,
+      250,
+      747,
+      326
+     ],
+     "delayMs": 200,
+     "frames": [
+      {
+       "fx": "fx3/ult/p3/01.png",
+       "ms": 60,
+       "surface": "cut3"
+      },
+      {
+       "fx": "fx3/ult/p3/02.png",
+       "ms": 60,
+       "surface": "cut3"
+      },
+      {
+       "fx": "fx3/ult/p3/03.png",
+       "ms": 60,
+       "surface": "cut3"
+      },
+      {
+       "fx": "fx3/ult/p3/04.png",
+       "ms": 60,
+       "surface": "cut3"
+      },
+      {
+       "fx": "fx3/ult/p3/05.png",
+       "ms": 60,
+       "surface": "cut3"
+      },
+      {
+       "fx": "fx3/ult/p3/06.png",
+       "ms": 60,
+       "surface": "cut3"
+      },
+      {
+       "fx": "fx3/ult/p3/07.png",
+       "ms": 60,
+       "surface": "cut3"
+      },
+      {
+       "fx": "fx3/ult/p3/08.png",
+       "ms": 60,
+       "surface": "cut3"
+      },
+      {
+       "fx": "fx3/ult/p3/09.png",
+       "ms": 60,
+       "surface": "cut3"
+      },
+      {
+       "fx": "fx3/ult/p3/10.png",
+       "ms": 60,
+       "surface": "cut3"
+      },
+      {
+       "fx": "fx3/ult/p3/11.png",
+       "ms": 60,
+       "surface": "cut3"
+      },
+      {
+       "fx": "fx3/ult/p3/12.png",
+       "ms": 60,
+       "surface": "cut3"
+      },
+      {
+       "fx": "fx3/ult/p3/13.png",
+       "ms": 60,
+       "surface": "cut3"
+      },
+      {
+       "fx": "fx3/ult/p3/14.png",
+       "ms": 60,
+       "surface": "cut3"
+      },
+      {
+       "fx": "fx3/ult/p3/15.png",
+       "ms": 60,
+       "surface": "cut3"
+      }
+     ]
+    },
+    {
+     "name": "베기 4",
+     "anchor": "enemyHit",
+     "canvas": [
+      768,
+      512
+     ],
+     "pivot": [
+      400,
+      280
+     ],
+     "scale": 1.333,
+     "crop": [
+      44,
+      172,
+      616,
+      511
+     ],
+     "delayMs": 300,
+     "frames": [
+      {
+       "fx": "fx3/ult/p4/01.png",
+       "ms": 60,
+       "surface": "cut4"
+      },
+      {
+       "fx": "fx3/ult/p4/02.png",
+       "ms": 60,
+       "surface": "cut4"
+      },
+      {
+       "fx": "fx3/ult/p4/03.png",
+       "ms": 60,
+       "surface": "cut4"
+      },
+      {
+       "fx": "fx3/ult/p4/04.png",
+       "ms": 60,
+       "surface": "cut4"
+      },
+      {
+       "fx": "fx3/ult/p4/05.png",
+       "ms": 60,
+       "surface": "cut4"
+      },
+      {
+       "fx": "fx3/ult/p4/06.png",
+       "ms": 60,
+       "surface": "cut4"
+      },
+      {
+       "fx": "fx3/ult/p4/07.png",
+       "ms": 60,
+       "surface": "cut4"
+      },
+      {
+       "fx": "fx3/ult/p4/08.png",
+       "ms": 60,
+       "surface": "cut4"
+      },
+      {
+       "fx": "fx3/ult/p4/09.png",
+       "ms": 60,
+       "surface": "cut4"
+      },
+      {
+       "fx": "fx3/ult/p4/10.png",
+       "ms": 60,
+       "surface": "cut4"
+      },
+      {
+       "fx": "fx3/ult/p4/11.png",
+       "ms": 60,
+       "surface": "cut4"
+      },
+      {
+       "fx": "fx3/ult/p4/12.png",
+       "ms": 60,
+       "surface": "cut4"
+      },
+      {
+       "fx": "fx3/ult/p4/13.png",
+       "ms": 60,
+       "surface": "cut4"
+      },
+      {
+       "fx": "fx3/ult/p4/14.png",
+       "ms": 60,
+       "surface": "cut4"
+      },
+      {
+       "fx": "fx3/ult/p4/15.png",
+       "ms": 60,
+       "surface": "cut4"
+      }
+     ]
+    },
+    {
+     "name": "물보라",
+     "anchor": "enemyFoot",
+     "canvas": [
+      768,
+      512
+     ],
+     "pivot": [
+      384,
+      490
+     ],
+     "scale": 1.333,
+     "crop": [
+      6,
+      0,
+      768,
+      512
+     ],
+     "delayMs": 350,
+     "frames": [
+      {
+       "fx": "ult/water/01.png",
+       "ms": 60,
+       "surface": "water"
+      },
+      {
+       "fx": "ult/water/02.png",
+       "ms": 60,
+       "surface": "water"
+      },
+      {
+       "fx": "ult/water/03.png",
+       "ms": 60,
+       "surface": "water"
+      },
+      {
+       "fx": "ult/water/04.png",
+       "ms": 60,
+       "surface": "water"
+      },
+      {
+       "fx": "ult/water/05.png",
+       "ms": 60,
+       "surface": "water"
+      },
+      {
+       "fx": "ult/water/06.png",
+       "ms": 60,
+       "surface": "water"
+      },
+      {
+       "fx": "ult/water/07.png",
+       "ms": 60,
+       "surface": "water"
+      },
+      {
+       "fx": "ult/water/08.png",
+       "ms": 60,
+       "surface": "water"
+      },
+      {
+       "fx": "ult/water/09.png",
+       "ms": 60,
+       "surface": "water"
+      },
+      {
+       "fx": "ult/water/10.png",
+       "ms": 60,
+       "surface": "water"
+      },
+      {
+       "fx": "ult/water/11.png",
+       "ms": 60,
+       "surface": "water"
+      },
+      {
+       "fx": "ult/water/12.png",
+       "ms": 60,
+       "surface": "water"
+      },
+      {
+       "fx": "ult/water/13.png",
+       "ms": 60,
+       "surface": "water"
+      },
+      {
+       "fx": "ult/water/14.png",
+       "ms": 60,
+       "surface": "water"
+      },
+      {
+       "fx": "ult/water/15.png",
+       "ms": 60,
+       "surface": "water"
+      }
+     ]
+    },
+    {
+     "name": "밤물",
+     "anchor": "kyleFoot",
+     "canvas": [
+      470,
+      120
+     ],
+     "pivot": [
+      235,
+      60
+     ],
+     "scale": 0.816,
+     "crop": [
+      1,
+      0,
+      469,
+      120
+     ],
+     "delayMs": 0,
+     "frames": [
+      {
+       "fx": "ult/night-pool.png",
+       "ms": 1250,
+       "surface": "floor"
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

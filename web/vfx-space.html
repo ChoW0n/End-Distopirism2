@@ -1,9 +1,9 @@
 <!doctype html>
 <meta charset="utf-8">
-<title>물금 공간형 VFX</title>
+<title>카일 공간형 VFX</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>
-  /* 물금 공간형 VFX 시험 화면 (SPEC-005 §15.3). 게임과 같은 무대·카메라에서 평면 재생과 공간형을 나란히 본다 */
+  /* 카일 전 스킬 공간형 VFX 시험 화면 (SPEC-005 §15.3·§15.4). 게임과 같은 무대·카메라에서 평면 재생과 공간형을 나란히 본다 */
   :root { --bg: #0e0c0b; --ink: #fff1d7; --dim: #b7b6b6; --gold: #d9b77c; --plate: rgba(9, 15, 24, 0.86); color-scheme: dark; }
   * { box-sizing: border-box; }
   [hidden] { display: none !important; }
@@ -40,6 +40,9 @@
     <label><input id="loop" type="checkbox" checked> 반복</label>
   </div>
   <div class="row"><b>배속</b><span id="rates" class="row"></span></div>
+  <div class="row"><b>스킬</b>
+    <select id="skill" aria-label="스킬"><option value="s1" selected>S1 물금</option><option value="s2">S2 찌르기</option><option value="s3">S3 쳐내기·올려베기·내려베기</option><option value="ult">결행 (궁극기)</option></select>
+  </div>
   <div class="row"><b>보기</b>
     <select id="viewmode" aria-label="보기"><option value="side" selected>나란히 (같은 카메라)</option><option value="flat">평면만</option><option value="space">공간형만</option></select>
     <select id="shot" aria-label="카메라"><option value="combat" selected>게임 교전 카메라</option><option value="close">근접 (교전 카메라에서 다가감)</option><option value="home">게임 대기 카메라</option></select>
@@ -47,18 +50,18 @@
     <label>높이 <input id="orbit-up" type="range" min="-10" max="70" step="1" value="0" aria-label="궤도 높이 (도)"> <output id="orbit-up-v"></output></label>
   </div>
   <div class="row"><b>층</b>
-    <label><input id="ly-ribbon" type="checkbox" checked> 휜 띠</label>
-    <label><input id="ly-glow" type="checkbox" checked> 띠 빛</label>
-    <label><input id="ly-drops" type="checkbox" checked> 깊이별 물방울</label>
-    <label><input id="ly-ripples" type="checkbox" checked> 지면 물결</label>
+    <label><input id="ly-ribbon" type="checkbox" checked> 효과 (휜 띠·곡면)</label>
+    <label><input id="ly-glow" type="checkbox" checked> 띠 빛 (S1)</label>
+    <label><input id="ly-drops" type="checkbox" checked> 깊이별 물방울 (S1)</label>
+    <label><input id="ly-ripples" type="checkbox" checked> 지면 물결 (S1)</label>
     <label><input id="ly-occlude" type="checkbox" checked> 몸 가림</label>
     <label><input id="ly-mask" type="checkbox"> 가림 판 보기</label>
   </div>
-  <div class="row"><b>옵션</b>
+  <div class="row"><b>옵션 (S1)</b>
     <label><input id="opt-flow" type="checkbox" checked> 흐름</label>
     <label><input id="opt-sparkle" type="checkbox" checked> 반짝임</label>
   </div>
-  <div class="note">시험 화면 — 본편 아님. 평면 = 원본 S1 15장 그대로. 공간형 = 원본 15장 몸 + 승인 질감·색(§15.2)을 입힌 띠가 몸 둘레를 도는 휘두름 궤적(오른쪽 뒤 → 앞 → 왼쪽 위)에 선다. 궤도·높이 0° 가 게임 카메라. 돌리면 몸 판은 게임처럼 카메라를 향하고 궤적은 공간에 그대로 있다.</div>
+  <div class="note">시험 화면 — 본편 아님. 궤도·높이 0° 가 게임 카메라. 돌리면 몸 판은 게임처럼 카메라를 향하고 효과는 공간에 그대로 있다.<br>S1 물금: 평면 = 원본 15장, 공간형 = 승인 질감·색의 띠가 몸 둘레를 도는 휘두름 궤적(§15.3). S2·S3·결행: 평면 = 게임과 같은 장, 공간형 = 몸만 남긴 장 + 받은 효과 장을 투영 곡면에 얹음(§15.4) — 게임 카메라에서는 원화와 같은 자리, 돌리면 깊이가 드러나고 몸 뒤쪽은 몸에 가린다.</div>
 </div>
 <script type="module" src="vfx-space.js"></script>
 </body>

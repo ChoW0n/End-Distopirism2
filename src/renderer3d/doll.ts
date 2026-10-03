@@ -64,6 +64,20 @@ export class PaperDoll {
     this.showFrame(this.poseFrame('idle'));
   }
 
+  //나중에 받은 장을 붙인다. 이미 있으면 그림만 바꾼다 (시험 화면이 스킬마다 그림을 늦게 받는다)
+  addFrame(frameId: string, texture: THREE.Texture, order = 10): void {
+    const known = this.plates.get(frameId);
+    if (known) {
+      known.material.map = texture;
+      known.material.needsUpdate = true;
+      return;
+    }
+    const plate = this.makePlate(this.catalog.frame(frameId), texture, order);
+    plate.mesh.visible = false;
+    this.visual.add(plate.mesh);
+    this.plates.set(frameId, plate);
+  }
+
   //bbox 로 자른 장을 발 기준점이 원점이 되게 놓는다
   private makePlate(frame: FrameData, texture: THREE.Texture, order: number): Plate {
     const geometry = plateGeometry(frame, this.worldPerPixel);
