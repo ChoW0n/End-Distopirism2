@@ -1,0 +1,67 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>카일 공간형 VFX</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>
+  /* 카일 전 스킬 공간형 VFX 시험 화면 (SPEC-005 §15.3·§15.4). 게임과 같은 무대·카메라에서 평면 재생과 공간형을 나란히 본다 */
+  :root { --bg: #0e0c0b; --ink: #fff1d7; --dim: #b7b6b6; --gold: #d9b77c; --plate: rgba(9, 15, 24, 0.86); color-scheme: dark; }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.4 system-ui, sans-serif; }
+  /* 화면은 위에 붙어 있고 조작부가 아래로 내려간다 (휴대폰에서 조작부가 길다) */
+  .stage { position: sticky; top: 0; z-index: 1; height: min(62vh, 640px); background: var(--bg); }
+  canvas#view { width: 100%; height: 100%; display: block; }
+  .tag { position: absolute; padding: 2px 8px; background: rgba(9, 15, 24, 0.75); border-left: 3px solid var(--gold); font-size: 13px; pointer-events: none; }
+  .panel { padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px)); background: var(--plate); border-top: 1px solid var(--gold); display: grid; gap: 8px; }
+  .row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .row > b { min-width: 4.5em; color: var(--dim); font-weight: 600; }
+  select { min-height: 36px; background: #111d2b; color: var(--ink); border: 1px solid #4a4538; font: inherit; }
+  button { min-height: 36px; padding: 0 12px; border: 1px solid #4a4538; background: #111d2b; color: var(--ink); font: inherit; cursor: pointer; }
+  button[aria-pressed="true"] { border-color: #ffe0a1; color: #ffe0a1; }
+  input[type="range"] { flex: 1 1 240px; }
+  label input[type="range"] { flex: 0 1 160px; width: 160px; }
+  output { min-width: 3em; font-variant-numeric: tabular-nums; color: var(--dim); }
+  label { display: inline-flex; align-items: center; gap: 4px; }
+  #readout { font-variant-numeric: tabular-nums; white-space: pre-wrap; }
+  .note { color: var(--dim); font-size: 12px; }
+</style>
+<body>
+<div class="stage">
+  <canvas id="view"></canvas>
+  <span id="label-a" class="tag" hidden></span>
+  <span id="label-b" class="tag" hidden></span>
+</div>
+<div class="panel">
+  <div id="readout">불러오는 중…</div>
+  <div class="row">
+    <button id="play" type="button">정지</button>
+    <button id="replay" type="button">다시</button>
+    <input id="time" type="range" min="0" max="1400" step="1" value="0" aria-label="시각 (ms)">
+    <label><input id="loop" type="checkbox" checked> 반복</label>
+  </div>
+  <div class="row"><b>배속</b><span id="rates" class="row"></span></div>
+  <div class="row"><b>스킬</b>
+    <select id="skill" aria-label="스킬"><option value="s1" selected>S1 물금</option><option value="s2">S2 찌르기</option><option value="s3">S3 쳐내기·올려베기·내려베기</option><option value="ult">결행 (궁극기)</option></select>
+  </div>
+  <div class="row"><b>보기</b>
+    <select id="viewmode" aria-label="보기"><option value="side" selected>나란히 (같은 카메라)</option><option value="flat">평면만</option><option value="space">공간형만</option></select>
+    <select id="shot" aria-label="카메라"><option value="combat" selected>게임 교전 카메라</option><option value="close">근접 (교전 카메라에서 다가감)</option><option value="home">게임 대기 카메라</option></select>
+    <label>궤도 <input id="orbit" type="range" min="-90" max="90" step="1" value="0" aria-label="궤도 좌우 (도)"> <output id="orbit-v"></output></label>
+    <label>높이 <input id="orbit-up" type="range" min="-10" max="70" step="1" value="0" aria-label="궤도 높이 (도)"> <output id="orbit-up-v"></output></label>
+  </div>
+  <div class="row"><b>층</b>
+    <label><input id="ly-ribbon" type="checkbox" checked> 효과 (휜 띠·곡면)</label>
+    <label><input id="ly-glow" type="checkbox" checked> 띠 빛 (S1)</label>
+    <label><input id="ly-drops" type="checkbox" checked> 깊이별 물방울 (S1)</label>
+    <label><input id="ly-ripples" type="checkbox" checked> 지면 물결 (S1)</label>
+    <label><input id="ly-occlude" type="checkbox" checked> 몸 가림</label>
+    <label><input id="ly-mask" type="checkbox"> 가림 판 보기</label>
+  </div>
+  <div class="row"><b>옵션 (S1)</b>
+    <label><input id="opt-flow" type="checkbox" checked> 흐름</label>
+    <label><input id="opt-sparkle" type="checkbox" checked> 반짝임</label>
+  </div>
+  <div class="note">시험 화면 — 본편 아님. 궤도·높이 0° 가 게임 카메라. 돌리면 몸 판은 게임처럼 카메라를 향하고 효과는 공간에 그대로 있다.<br>S1 물금: 평면 = 원본 15장, 공간형 = 승인 질감·색의 띠가 몸 둘레를 도는 휘두름 궤적(§15.3). S2·S3·결행: 평면 = 게임과 같은 장, 공간형 = 몸만 남긴 장 + 받은 효과 장을 투영 곡면에 얹음(§15.4) — 게임 카메라에서는 원화와 같은 자리, 돌리면 깊이가 드러나고 몸 뒤쪽은 몸에 가린다.</div>
+</div>
+<script type="module" src="vfx-space.js"></script>
+</body>

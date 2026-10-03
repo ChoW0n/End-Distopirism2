@@ -1,0 +1,13 @@
+{
+  "_comment": "카일은 캐릭터 이펙트 그림이 아직 없다. 3D 무대는 충돌에 금속 스파크를 쓴다 (SPEC-005 §8.6·§9.7). 그림이 오면 incinerator 와 같은 형식으로 채운다",
+  "version": 2,
+  "character": "kyle",
+  "frames": {},
+  "ultimate": [],
+  "defeat": [],
+  "ready": [],
+  "dash": [],
+  "clash": [],
+  "recoil": [],
+  "glow": []
+}

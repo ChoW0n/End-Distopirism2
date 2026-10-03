@@ -1,0 +1,46 @@
+{
+  "_comment": "카일 녹음 소리 (SPEC-005 §14). 드라이브 '2026-10-01_카일_전투사운드_v2_dry-walk제외'. 파일은 assets/kyle/sound/ 에 받고 커밋하지 않는다. move_step_dry 는 쓰지 않는다 (사용자 지시). 세기는 납품에서 맞춰 왔으므로 1",
+  "character": "kyle",
+  "files": {
+    "move_dash": "sound/move_dash.wav",
+    "s1_slash_water": "sound/s1_slash_water.wav",
+    "s2_guard": "sound/s2_guard.wav",
+    "s2_thrust": "sound/s2_thrust.wav",
+    "s3_upstrike_scabbard": "sound/s3_upstrike_scabbard.wav",
+    "s3_slash_up": "sound/s3_slash_up.wav",
+    "s3_slash_down": "sound/s3_slash_down.wav",
+    "ult_water_rise": "sound/ult_water_rise.wav",
+    "ult_draw_cut": "sound/ult_draw_cut.wav",
+    "ult_sheath_click": "sound/ult_sheath_click.wav",
+    "ult_delayed_waterburst": "sound/ult_delayed_waterburst.wav"
+  },
+  "gain": {},
+  "_lead": "파일 안 에너지 정점(ms). 재생 시작 = 타격 시각 - 정점 (납품 README · cues.json technical_qa.energy_peak_ms)",
+  "lead": {
+    "s1_slash_water": 63,
+    "s2_guard": 18,
+    "s2_thrust": 38,
+    "s3_upstrike_scabbard": 21,
+    "s3_slash_up": 48,
+    "s3_slash_down": 63,
+    "ult_draw_cut": 33,
+    "ult_sheath_click": 11,
+    "ult_delayed_waterburst": 53,
+    "move_dash": 28
+  },
+  "dash": "move_dash",
+  "parry": "s2_guard",
+  "frames": {
+    "11-skill1-01": "s1_slash_water",
+    "12-skill2-01": "s2_thrust",
+    "13-skill3-03-parry-impact": "s3_upstrike_scabbard",
+    "13-skill3-08-upcut-impact": "s3_slash_up",
+    "13-skill3-22-downcut-impact": "s3_slash_down"
+  },
+  "ultimate": {
+    "start": "ult_water_rise",
+    "cutLine": "ult_draw_cut",
+    "sheathClick": "ult_sheath_click",
+    "water": "ult_delayed_waterburst"
+  }
+}

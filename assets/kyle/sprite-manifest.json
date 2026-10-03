@@ -1,0 +1,2246 @@
+{
+  "_comment": "카일 완성 스프라이트 (드라이브 2026-09-29). scripts/kyle_assets.py 가 만든다. 모든 장은 1700x720 공통 캔버스, 발 (760,600). 원화는 오른쪽을 본다. ms 는 전용기 장 넘김 시간, impact 는 궤적 중에 한 번 더 부딪히는 장 (SPEC-005 §9.4)",
+  "version": 2,
+  "character": "kyle",
+  "canvas": [
+    1700,
+    720
+  ],
+  "ground": [
+    760,
+    600
+  ],
+  "frames": [
+    {
+      "id": "00-idle",
+      "file": "norm/00-idle.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        746.0,
+        101.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        733,
+        27
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        486,
+        24,
+        1078,
+        604
+      ]
+    },
+    {
+      "id": "01-advance",
+      "file": "norm/01-advance.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        910.0,
+        245.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        937,
+        163
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        360,
+        146,
+        988,
+        555
+      ]
+    },
+    {
+      "id": "02-retreat",
+      "file": "norm/02-retreat.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        770.5,
+        151.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        770,
+        73
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        526,
+        70,
+        1067,
+        610
+      ]
+    },
+    {
+      "id": "03-guard",
+      "file": "norm/03-guard.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        940.5,
+        50.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        948,
+        11
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        521,
+        8,
+        966,
+        605
+      ]
+    },
+    {
+      "id": "04-hit",
+      "file": "norm/04-hit.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        681.0,
+        168.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        683,
+        86
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        536,
+        82,
+        1076,
+        607
+      ]
+    },
+    {
+      "id": "11-skill1-ready",
+      "file": "norm/11-skill1-ready.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        647.5,
+        307.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        406,
+        307
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        403,
+        133,
+        991,
+        604
+      ]
+    },
+    {
+      "id": "11-skill1-01",
+      "file": "norm/11-skill1-01.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        206.0,
+        212.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        167,
+        104
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        128,
+        100,
+        1198,
+        606
+      ],
+      "ms": 60,
+      "impact": true
+    },
+    {
+      "id": "11-skill1-02",
+      "file": "norm/11-skill1-02.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        206.5,
+        212.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        167,
+        104
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        128,
+        99,
+        1203,
+        606
+      ],
+      "ms": 60
+    },
+    {
+      "id": "11-skill1-03",
+      "file": "norm/11-skill1-03.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        213.0,
+        213.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        167,
+        104
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        128,
+        99,
+        1203,
+        606
+      ],
+      "ms": 60
+    },
+    {
+      "id": "11-skill1-04",
+      "file": "norm/11-skill1-04.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        213.0,
+        213.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        167,
+        104
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        128,
+        99,
+        1203,
+        606
+      ],
+      "ms": 60
+    },
+    {
+      "id": "11-skill1-05",
+      "file": "norm/11-skill1-05.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        199.0,
+        193.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        167,
+        104
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        128,
+        99,
+        1203,
+        606
+      ],
+      "ms": 60
+    },
+    {
+      "id": "11-skill1-06",
+      "file": "norm/11-skill1-06.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        286.0,
+        179.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        167,
+        104
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        128,
+        99,
+        1203,
+        606
+      ],
+      "ms": 60
+    },
+    {
+      "id": "11-skill1-07",
+      "file": "norm/11-skill1-07.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        285.0,
+        178.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        167,
+        104
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        128,
+        99,
+        1201,
+        606
+      ],
+      "ms": 60
+    },
+    {
+      "id": "11-skill1-08",
+      "file": "norm/11-skill1-08.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        285.0,
+        178.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        167,
+        104
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        128,
+        99,
+        1127,
+        606
+      ],
+      "ms": 60
+    },
+    {
+      "id": "11-skill1-09",
+      "file": "norm/11-skill1-09.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        228.5,
+        155.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        167,
+        104
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        128,
+        99,
+        1127,
+        606
+      ],
+      "ms": 60
+    },
+    {
+      "id": "11-skill1-10",
+      "file": "norm/11-skill1-10.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        232.0,
+        154.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        167,
+        104
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        129,
+        100,
+        1127,
+        606
+      ],
+      "ms": 60
+    },
+    {
+      "id": "11-skill1-11",
+      "file": "norm/11-skill1-11.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        231.0,
+        153.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        167,
+        104
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        133,
+        101,
+        1127,
+        606
+      ],
+      "ms": 60
+    },
+    {
+      "id": "11-skill1-12",
+      "file": "norm/11-skill1-12.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        219.5,
+        147.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        167,
+        104
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        133,
+        101,
+        1127,
+        606
+      ],
+      "ms": 60
+    },
+    {
+      "id": "11-skill1-13",
+      "file": "norm/11-skill1-13.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        314.0,
+        179.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        167,
+        104
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        139,
+        101,
+        1127,
+        606
+      ],
+      "ms": 60
+    },
+    {
+      "id": "11-skill1-14",
+      "file": "norm/11-skill1-14.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        809.5,
+        213.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        167,
+        104
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        139,
+        101,
+        1127,
+        606
+      ],
+      "ms": 60
+    },
+    {
+      "id": "11-skill1-15",
+      "file": "norm/11-skill1-15.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        809.5,
+        213.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        167,
+        104
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        163,
+        101,
+        1127,
+        606
+      ],
+      "ms": 160
+    },
+    {
+      "id": "12-skill2-ready",
+      "file": "norm/03-guard.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        940.5,
+        50.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        948,
+        11
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        521,
+        8,
+        966,
+        605
+      ],
+      "ms": 180,
+      "impact": true
+    },
+    {
+      "id": "12-skill2-01",
+      "file": "norm/12-skill2-01.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        1131.5,
+        260.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        1664,
+        356
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        521,
+        159,
+        1669,
+        604
+      ],
+      "ms": 70,
+      "impact": true
+    },
+    {
+      "id": "12-skill2-02",
+      "file": "norm/12-skill2-02.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        1188.0,
+        272.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        1661,
+        356
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        521,
+        159,
+        1669,
+        604
+      ],
+      "ms": 70
+    },
+    {
+      "id": "12-skill2-03",
+      "file": "norm/12-skill2-03.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        813.0,
+        281.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        1661,
+        360
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        521,
+        159,
+        1669,
+        604
+      ],
+      "ms": 70
+    },
+    {
+      "id": "12-skill2-04",
+      "file": "norm/12-skill2-04.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        813.0,
+        281.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        1662,
+        360
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        521,
+        176,
+        1669,
+        604
+      ],
+      "ms": 70
+    },
+    {
+      "id": "12-skill2-05",
+      "file": "norm/12-skill2-05.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        813.0,
+        281.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        1660,
+        360
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        521,
+        176,
+        1669,
+        604
+      ],
+      "ms": 70
+    },
+    {
+      "id": "12-skill2-06",
+      "file": "norm/12-skill2-06.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        815.5,
+        296.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        1660,
+        354
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        521,
+        176,
+        1668,
+        604
+      ],
+      "ms": 70
+    },
+    {
+      "id": "12-skill2-07",
+      "file": "norm/12-skill2-07.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        815.5,
+        296.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        1662,
+        354
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        521,
+        179,
+        1668,
+        604
+      ],
+      "ms": 70
+    },
+    {
+      "id": "12-skill2-08",
+      "file": "norm/12-skill2-08.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        815.5,
+        296.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        1661,
+        354
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        521,
+        193,
+        1668,
+        604
+      ],
+      "ms": 70
+    },
+    {
+      "id": "12-skill2-09",
+      "file": "norm/12-skill2-09.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        815.5,
+        296.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        1658,
+        354
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        521,
+        193,
+        1669,
+        604
+      ],
+      "ms": 70
+    },
+    {
+      "id": "12-skill2-10",
+      "file": "norm/12-skill2-10.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        815.5,
+        296.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        1652,
+        354
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        521,
+        195,
+        1669,
+        604
+      ],
+      "ms": 70
+    },
+    {
+      "id": "12-skill2-11",
+      "file": "norm/12-skill2-11.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        815.5,
+        296.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        1645,
+        354
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        521,
+        213,
+        1669,
+        604
+      ],
+      "ms": 70
+    },
+    {
+      "id": "12-skill2-12",
+      "file": "norm/12-skill2-12.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        815.5,
+        296.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        1618,
+        355
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        521,
+        213,
+        1668,
+        604
+      ],
+      "ms": 70
+    },
+    {
+      "id": "12-skill2-13",
+      "file": "norm/12-skill2-13.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        815.5,
+        296.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        1616,
+        355
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        521,
+        213,
+        1648,
+        604
+      ],
+      "ms": 70
+    },
+    {
+      "id": "12-skill2-14",
+      "file": "norm/12-skill2-14.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        815.5,
+        296.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        1246,
+        352
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        521,
+        213,
+        1648,
+        604
+      ],
+      "ms": 70
+    },
+    {
+      "id": "12-skill2-15",
+      "file": "norm/12-skill2-15.png",
+      "scale": 1.0,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        815.5,
+        296.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        1246,
+        352
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        521,
+        213,
+        1250,
+        604
+      ],
+      "ms": 120
+    },
+    {
+      "id": "13-skill3-ready",
+      "file": "norm/13-skill3-ready.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        740.5,
+        292.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        206,
+        542
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        203,
+        182,
+        1123,
+        621
+      ],
+      "ms": 70
+    },
+    {
+      "id": "13-skill3-03-parry-impact",
+      "file": "norm/13-skill3-03-parry-impact.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        738.5,
+        259.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        1141,
+        164
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        203,
+        147,
+        1164,
+        621
+      ],
+      "ms": 90,
+      "impact": true
+    },
+    {
+      "id": "13-skill3-04-parry-decay",
+      "file": "norm/13-skill3-04-parry-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        738.5,
+        259.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        1138,
+        164
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        203,
+        147,
+        1143,
+        621
+      ],
+      "ms": 40
+    },
+    {
+      "id": "13-skill3-05-parry-decay",
+      "file": "norm/13-skill3-05-parry-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        744.0,
+        281.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        1143,
+        183
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        203,
+        154,
+        1164,
+        621
+      ],
+      "ms": 40
+    },
+    {
+      "id": "13-skill3-06-parry-decay",
+      "file": "norm/13-skill3-06-parry-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        740.5,
+        277.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        206,
+        542
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        203,
+        154,
+        1144,
+        621
+      ],
+      "ms": 40
+    },
+    {
+      "id": "13-skill3-07-parry-decay",
+      "file": "norm/13-skill3-07-parry-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        740.5,
+        292.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        206,
+        542
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        203,
+        182,
+        1123,
+        621
+      ],
+      "ms": 40
+    },
+    {
+      "id": "13-skill3-08-upcut-impact",
+      "file": "norm/13-skill3-08-upcut-impact.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        927.0,
+        164.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        966,
+        97
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        394,
+        89,
+        1140,
+        614
+      ],
+      "ms": 110,
+      "impact": true
+    },
+    {
+      "id": "13-skill3-09-upcut-decay",
+      "file": "norm/13-skill3-09-upcut-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        927.0,
+        164.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        968,
+        98
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        394,
+        89,
+        1140,
+        614
+      ],
+      "ms": 60
+    },
+    {
+      "id": "13-skill3-10-upcut-decay",
+      "file": "norm/13-skill3-10-upcut-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        930.0,
+        163.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        973,
+        98
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        394,
+        89,
+        1133,
+        614
+      ],
+      "ms": 60
+    },
+    {
+      "id": "13-skill3-11-upcut-decay",
+      "file": "norm/13-skill3-11-upcut-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        930.5,
+        163.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        971,
+        97
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        394,
+        89,
+        1133,
+        614
+      ],
+      "ms": 60
+    },
+    {
+      "id": "13-skill3-12-upcut-decay",
+      "file": "norm/13-skill3-12-upcut-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        930.0,
+        163.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        973,
+        98
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        394,
+        89,
+        1133,
+        614
+      ],
+      "ms": 60
+    },
+    {
+      "id": "13-skill3-13-upcut-decay",
+      "file": "norm/13-skill3-13-upcut-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        927.0,
+        164.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        968,
+        98
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        394,
+        80,
+        1140,
+        614
+      ],
+      "ms": 60
+    },
+    {
+      "id": "13-skill3-14-upcut-decay",
+      "file": "norm/13-skill3-14-upcut-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        927.0,
+        164.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        966,
+        97
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        394,
+        80,
+        1140,
+        614
+      ],
+      "ms": 60
+    },
+    {
+      "id": "13-skill3-15-upcut-decay",
+      "file": "norm/13-skill3-15-upcut-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        927.0,
+        164.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        967,
+        98
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        394,
+        80,
+        1140,
+        614
+      ],
+      "ms": 60
+    },
+    {
+      "id": "13-skill3-16-upcut-decay",
+      "file": "norm/13-skill3-16-upcut-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        890.0,
+        163.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        926,
+        94
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        394,
+        80,
+        1119,
+        614
+      ],
+      "ms": 60
+    },
+    {
+      "id": "13-skill3-17-upcut-decay",
+      "file": "norm/13-skill3-17-upcut-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        889.5,
+        163.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        927,
+        94
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        394,
+        80,
+        1103,
+        614
+      ],
+      "ms": 60
+    },
+    {
+      "id": "13-skill3-18-upcut-decay",
+      "file": "norm/13-skill3-18-upcut-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        889.5,
+        163.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        929,
+        95
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        394,
+        80,
+        1103,
+        614
+      ],
+      "ms": 60
+    },
+    {
+      "id": "13-skill3-19-upcut-decay",
+      "file": "norm/13-skill3-19-upcut-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        655.0,
+        216.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        955,
+        131
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        394,
+        91,
+        1021,
+        614
+      ],
+      "ms": 60
+    },
+    {
+      "id": "13-skill3-20-upcut-decay",
+      "file": "norm/13-skill3-20-upcut-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        655.0,
+        216.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        955,
+        131
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        394,
+        124,
+        1021,
+        614
+      ],
+      "ms": 60
+    },
+    {
+      "id": "13-skill3-21-downcut-smear",
+      "file": "norm/13-skill3-21-downcut-smear.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        757.5,
+        302.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        29,
+        504
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        19,
+        180,
+        941,
+        706
+      ],
+      "ms": 50,
+      "windup": true
+    },
+    {
+      "id": "13-skill3-22-downcut-impact",
+      "file": "norm/13-skill3-22-downcut-impact.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        751.5,
+        300.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        29,
+        504
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        19,
+        179,
+        941,
+        706
+      ],
+      "ms": 120,
+      "impact": true
+    },
+    {
+      "id": "13-skill3-23-downcut-decay",
+      "file": "norm/13-skill3-23-downcut-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        755.5,
+        304.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        29,
+        504
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        17,
+        179,
+        941,
+        706
+      ],
+      "ms": 60
+    },
+    {
+      "id": "13-skill3-24-downcut-decay",
+      "file": "norm/13-skill3-24-downcut-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        758.0,
+        347.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        29,
+        504
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        9,
+        179,
+        941,
+        706
+      ],
+      "ms": 60
+    },
+    {
+      "id": "13-skill3-25-downcut-decay",
+      "file": "norm/13-skill3-25-downcut-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        758.0,
+        347.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        29,
+        505
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        9,
+        179,
+        941,
+        706
+      ],
+      "ms": 60
+    },
+    {
+      "id": "13-skill3-26-downcut-decay",
+      "file": "norm/13-skill3-26-downcut-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        758.0,
+        347.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        30,
+        503
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        9,
+        179,
+        941,
+        706
+      ],
+      "ms": 60
+    },
+    {
+      "id": "13-skill3-27-downcut-decay",
+      "file": "norm/13-skill3-27-downcut-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        758.0,
+        347.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        52,
+        458
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        9,
+        179,
+        940,
+        705
+      ],
+      "ms": 60
+    },
+    {
+      "id": "13-skill3-28-downcut-decay",
+      "file": "norm/13-skill3-28-downcut-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        758.0,
+        347.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        52,
+        460
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        9,
+        179,
+        940,
+        703
+      ],
+      "ms": 60
+    },
+    {
+      "id": "13-skill3-29-downcut-decay",
+      "file": "norm/13-skill3-29-downcut-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        758.0,
+        347.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        52,
+        461
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        9,
+        179,
+        940,
+        703
+      ],
+      "ms": 60
+    },
+    {
+      "id": "13-skill3-30-downcut-decay",
+      "file": "norm/13-skill3-30-downcut-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        758.0,
+        347.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        52,
+        461
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        9,
+        179,
+        940,
+        703
+      ],
+      "ms": 60
+    },
+    {
+      "id": "13-skill3-31-downcut-decay",
+      "file": "norm/13-skill3-31-downcut-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        758.0,
+        347.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        52,
+        462
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        9,
+        179,
+        940,
+        703
+      ],
+      "ms": 60
+    },
+    {
+      "id": "13-skill3-32-downcut-decay",
+      "file": "norm/13-skill3-32-downcut-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        758.0,
+        347.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        53,
+        460
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        9,
+        179,
+        940,
+        703
+      ],
+      "ms": 60
+    },
+    {
+      "id": "13-skill3-33-downcut-decay",
+      "file": "norm/13-skill3-33-downcut-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        758.0,
+        347.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        47,
+        500
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        36,
+        179,
+        897,
+        696
+      ],
+      "ms": 60
+    },
+    {
+      "id": "13-skill3-34-downcut-decay",
+      "file": "norm/13-skill3-34-downcut-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        758.0,
+        347.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        46,
+        501
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        37,
+        179,
+        897,
+        672
+      ],
+      "ms": 60
+    },
+    {
+      "id": "13-skill3-35-downcut-decay",
+      "file": "norm/13-skill3-35-downcut-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        758.0,
+        347.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        47,
+        500
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        37,
+        179,
+        897,
+        672
+      ],
+      "ms": 60
+    },
+    {
+      "id": "13-skill3-36-downcut-decay",
+      "file": "norm/13-skill3-36-downcut-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        758.0,
+        347.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        110,
+        573
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        37,
+        179,
+        897,
+        669
+      ],
+      "ms": 60
+    },
+    {
+      "id": "13-skill3-37-downcut-decay",
+      "file": "norm/13-skill3-37-downcut-decay.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        758.0,
+        347.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        110,
+        573
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        106,
+        179,
+        897,
+        606
+      ],
+      "ms": 60
+    },
+    {
+      "id": "13-skill3-38-follow-through",
+      "file": "norm/13-skill3-38-follow-through.png",
+      "scale": 0.9311,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        758.0,
+        347.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        110,
+        573
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        106,
+        179,
+        897,
+        606
+      ],
+      "ms": 120
+    },
+    {
+      "id": "14-ult-ready",
+      "file": "norm/14-ult-ready.png",
+      "scale": 0.3984,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        890.5,
+        315.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        931,
+        249
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        493,
+        236,
+        978,
+        603
+      ]
+    },
+    {
+      "id": "14-ult-post-closed",
+      "file": "norm/14-ult-post-closed.png",
+      "scale": 0.4983,
+      "scaleMatch": 1.0,
+      "anchor": [
+        760,
+        600
+      ],
+      "headCenter": [
+        772.0,
+        136.0
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        774,
+        55
+      ],
+      "tipSource": "자동 검출(발에서 가장 먼 점)",
+      "bbox": [
+        457,
+        52,
+        905,
+        603
+      ]
+    }
+  ],
+  "effects": [
+    {
+      "id": "ult-slash",
+      "name": "발도술 베기선",
+      "anchor": "hitPoint",
+      "size": [
+        768,
+        512
+      ],
+      "pivot": [
+        400,
+        280
+      ],
+      "scale": 1.333,
+      "blend": "normal",
+      "loop": false,
+      "frames": [
+        {
+          "file": "ult/slash/01.png",
+          "ms": 60
+        },
+        {
+          "file": "ult/slash/02.png",
+          "ms": 60
+        },
+        {
+          "file": "ult/slash/03.png",
+          "ms": 60
+        },
+        {
+          "file": "ult/slash/04.png",
+          "ms": 60
+        },
+        {
+          "file": "ult/slash/05.png",
+          "ms": 60
+        },
+        {
+          "file": "ult/slash/06.png",
+          "ms": 60
+        },
+        {
+          "file": "ult/slash/07.png",
+          "ms": 60
+        },
+        {
+          "file": "ult/slash/08.png",
+          "ms": 60
+        },
+        {
+          "file": "ult/slash/09.png",
+          "ms": 60
+        },
+        {
+          "file": "ult/slash/10.png",
+          "ms": 60
+        },
+        {
+          "file": "ult/slash/11.png",
+          "ms": 60
+        },
+        {
+          "file": "ult/slash/12.png",
+          "ms": 60
+        },
+        {
+          "file": "ult/slash/13.png",
+          "ms": 60
+        },
+        {
+          "file": "ult/slash/14.png",
+          "ms": 60
+        },
+        {
+          "file": "ult/slash/15.png",
+          "ms": 60
+        }
+      ]
+    },
+    {
+      "id": "ult-water",
+      "name": "발도술 물보라",
+      "anchor": "emissionPoint",
+      "size": [
+        768,
+        512
+      ],
+      "pivot": [
+        384,
+        490
+      ],
+      "scale": 1.333,
+      "blend": "normal",
+      "loop": false,
+      "frames": [
+        {
+          "file": "ult/water/01.png",
+          "ms": 60
+        },
+        {
+          "file": "ult/water/02.png",
+          "ms": 60
+        },
+        {
+          "file": "ult/water/03.png",
+          "ms": 60
+        },
+        {
+          "file": "ult/water/04.png",
+          "ms": 60
+        },
+        {
+          "file": "ult/water/05.png",
+          "ms": 60
+        },
+        {
+          "file": "ult/water/06.png",
+          "ms": 60
+        },
+        {
+          "file": "ult/water/07.png",
+          "ms": 60
+        },
+        {
+          "file": "ult/water/08.png",
+          "ms": 60
+        },
+        {
+          "file": "ult/water/09.png",
+          "ms": 60
+        },
+        {
+          "file": "ult/water/10.png",
+          "ms": 60
+        },
+        {
+          "file": "ult/water/11.png",
+          "ms": 60
+        },
+        {
+          "file": "ult/water/12.png",
+          "ms": 60
+        },
+        {
+          "file": "ult/water/13.png",
+          "ms": 60
+        },
+        {
+          "file": "ult/water/14.png",
+          "ms": 60
+        },
+        {
+          "file": "ult/water/15.png",
+          "ms": 60
+        }
+      ]
+    },
+    {
+      "id": "ult-night-pool",
+      "name": "발밑 밤물",
+      "anchor": "emissionPoint",
+      "size": [
+        470,
+        120
+      ],
+      "pivot": [
+        235,
+        60
+      ],
+      "scale": 0.816,
+      "blend": "normal",
+      "loop": true,
+      "frames": [
+        {
+          "file": "ult/night-pool.png",
+          "ms": 1000
+        }
+      ]
+    }
+  ]
+}

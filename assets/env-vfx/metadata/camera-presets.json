@@ -1,0 +1,85 @@
+{
+  "version": "1.0",
+  "status": "tuning_start_values_not_engine_verified",
+  "deduplication_key": "destruction_event_id",
+  "offset_reference": "unshaken_camera_pose",
+  "amplitude_cap_height_ratio": 0.008,
+  "envelope": "(1-t/duration)^2",
+  "reduced_motion": {
+    "shake": 0,
+    "zoom": 0,
+    "flash": 0
+  },
+  "presets": {
+    "crack": {
+      "amplitude_height_ratio": 0.001,
+      "duration_ms": 80,
+      "zoom_delta": 0,
+      "rotation_degrees": 0,
+      "flash_enabled_by_default": false,
+      "optional_flash_opacity": 0,
+      "optional_flash_ms": 0
+    },
+    "fragment_burst": {
+      "amplitude_height_ratio": 0.004,
+      "duration_ms": 160,
+      "zoom_delta": 0,
+      "rotation_degrees": 0,
+      "flash_enabled_by_default": false,
+      "optional_flash_opacity": 0,
+      "optional_flash_ms": 0
+    },
+    "collapse": {
+      "amplitude_height_ratio": 0.0065,
+      "duration_ms": 260,
+      "zoom_delta": 0.02,
+      "rotation_degrees": 0,
+      "flash_enabled_by_default": false,
+      "optional_flash_opacity": 0.1,
+      "optional_flash_ms": 16
+    },
+    "pressure": {
+      "amplitude_height_ratio": 0.0025,
+      "duration_ms": 140,
+      "zoom_delta": 0.01,
+      "rotation_degrees": 0,
+      "flash_enabled_by_default": false,
+      "optional_flash_opacity": 0,
+      "optional_flash_ms": 0
+    },
+    "large_debris_landing": {
+      "amplitude_height_ratio": 0.00195,
+      "duration_ms": 120,
+      "zoom_delta": 0,
+      "rotation_degrees": 0,
+      "flash_enabled_by_default": false,
+      "optional_flash_opacity": 0,
+      "optional_flash_ms": 0
+    },
+    "none": {
+      "amplitude_height_ratio": 0,
+      "duration_ms": 0,
+      "zoom_delta": 0,
+      "rotation_degrees": 0,
+      "flash_enabled_by_default": false,
+      "optional_flash_opacity": 0,
+      "optional_flash_ms": 0
+    }
+  },
+  "category_events": {
+    "A": "none",
+    "B": "crack",
+    "C": "fragment_burst",
+    "D": "none",
+    "E": "collapse",
+    "F": "pressure",
+    "G": "none",
+    "H": "none"
+  },
+  "notes": [
+    "파편 개수가 아니라 원인 사건 단위로 호출",
+    "D 먼지의 원인 충격은 외부 사건에서 호출",
+    "착지 반응은 실제 충돌이 발생할 때만 호출",
+    "0ms preset은 envelope 계산 없이 건너뛴다"
+  ]
+}

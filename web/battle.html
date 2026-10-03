@@ -1,0 +1,107 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>End-Distopirism 전투</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="stylesheet" href="battle.css">
+<body>
+<!-- 3D 게임 화면 (SPEC-004 §13). 캔버스가 창 전체를 채우고, UI 는 1920x1080 기준 상자 안에만 둔다 -->
+<!-- 2D 비교 화면은 battle2d.html -->
+<div class="stage">
+  <canvas id="view" width="1600" height="900"></canvas>
+
+  <!-- UI 상자. 1920x1080 기준 단위로 짜고 화면 크기에 맞춰 통째로 줄인다 (--u) -->
+  <div id="ui" class="ui">
+    <!-- 위 띠 y 0~120: 메뉴 · 맵 이름과 단계 안내 · 턴 · 배속·자동·도움말 -->
+    <header class="topbar">
+      <button id="menu-open" class="btn-s" type="button" aria-label="메뉴" title="메뉴" aria-haspopup="dialog"><span>☰</span></button>
+      <div class="where">
+        <b class="stage-name"></b>
+        <span id="cmd-step" class="step">…</span>
+        <span id="cmd-hint" class="hint"></span>
+      </div>
+      <div class="turn" aria-label="턴"><span id="turn">1</span><small>턴</small></div>
+      <div class="top-right">
+        <button id="speed" class="btn-s" type="button" aria-label="배속" title="배속" aria-pressed="false"><span>×1</span></button>
+        <button id="auto" class="btn-s" type="button" aria-label="자동" title="자동" aria-pressed="false"><span>자동</span></button>
+        <!-- 게임 화면만 전체화면 (SPEC-004 §13.6). 지원하지 않는 브라우저에서는 숨긴다 -->
+        <button id="fullscreen" class="btn-s" type="button" aria-label="전체화면" title="전체화면" aria-pressed="false" hidden><span>⛶</span></button>
+        <button id="help-open" class="btn-s" type="button" aria-label="도움말" title="도움말"><span>?</span></button>
+      </div>
+    </header>
+    <!-- 판이 끝났을 때 가운데 배너 U19 (SPEC-004 §13.5) -->
+    <div id="result" class="result" hidden></div>
+    <!-- 소리가 잠겨 있으면 위 띠 아래에 한 줄 -->
+    <div id="sound-hint" class="sound-hint" hidden>화면을 눌러 소리 켜기</div>
+
+    <!-- 지시판 y 800~1020. 입력 단계에만 나온다 (SPEC-004 §13.2). 적은 무대 위를 눌러 고른다 -->
+    <section id="command" class="command off" aria-label="명령">
+      <div class="cmd-group allies">
+        <small>아군</small>
+        <div id="cmd-allies" class="cmd-allies"></div>
+      </div>
+      <!-- 적 목록은 화면에 두지 않는다. 패널이 요구하는 자리만 남긴다 -->
+      <div id="cmd-enemies" class="cmd-enemies" hidden></div>
+      <div class="cmd-group cards">
+        <!-- 카드 머리글 줄 = 상세 줄. 앞면 확률·흔적 내역·가리킨 카드 설명 (SPEC-004 §14.6) -->
+        <div class="cmd-head"><small>카드</small><span id="cmd-detail" class="detail"></span></div>
+        <div id="cmd-cards" class="cmd-cards"></div>
+      </div>
+      <button id="cmd-go" class="go" type="button" disabled>교전 시작</button>
+    </section>
+
+    <!-- 메뉴 겹창. 개발 도구는 여기에만 둔다 (SPEC-007 §9.4 규칙 2) -->
+    <div id="menu" class="dialog menu" role="dialog" aria-labelledby="menu-title" hidden>
+      <div class="head"><h2 id="menu-title">메뉴</h2><p id="status" class="status">…</p></div>
+      <div class="rows">
+        <button id="restart" class="row primary" type="button">다시 시작</button>
+        <label class="row check"><input id="sound" type="checkbox" checked> 소리</label>
+        <label class="row">조작
+          <select id="mode">
+            <option value="play">직접 조작</option>
+            <option value="watch">자동 관전</option>
+            <option value="showcase">시연 (제작용)</option>
+            <option value="lab">연출 실험</option>
+            <option value="envfx">환경 이펙트 검수</option>
+          </select>
+        </label>
+        <span id="lab-options" class="row lab-options" hidden>
+          <label class="check"><input id="lab-motion" type="checkbox"> 흔들림 줄이기</label>
+          <label class="check"><input id="lab-flash" type="checkbox"> 섬광 줄이기</label>
+        </span>
+        <details class="row dev">
+          <summary>개발</summary>
+          <label>시드 <input id="seed" type="number" value="1" min="0"></label>
+          <label class="check"><input id="autonext" type="checkbox"> 끝나면 다음 판</label>
+        </details>
+      </div>
+      <button id="menu-close" class="close" type="button">닫기</button>
+    </div>
+
+    <!-- 규칙 요약. 첫 방문에 한 번 뜬다 -->
+    <div id="help" class="dialog help" role="dialog" aria-labelledby="help-title" hidden>
+      <h2 id="help-title">전투 방법</h2>
+      <ol>
+        <li><b>아군</b>을 고르고 → 칠 <b>적</b>을 무대에서 누르고 → <b>카드</b>를 고른다. 아군 수만큼 반복한 뒤 <b>교전 시작</b>.</li>
+        <li>적 이름표 아래 <span class="enemy-arrow">노림 표지</span>의 이름은 그 적이 노리는 아군이다.
+          <b>나를 노리는 적을 같이 노리면 합</b>, 아니면 서로 한 대씩 치는 일방 공격이다.</li>
+        <li><b>합</b>: 양쪽 카드가 머리 위에서 뒤집힌다. 앞면이면 높은 위력, 뒷면이면 낮은 위력. 위력이 높은 쪽이 이긴다.</li>
+        <li>발밑 반원: 바깥 굵은 <b>붉은 띠</b>가 체력, 안쪽 얇은 <b>푸른 띠</b>가 정신력. 체력·정신력이 높을수록 앞면이 잘 나온다. 합에서 지면 정신력이 깎이고 이기면 오른다.</li>
+        <li>합에서 이기면 카드의 <b>흔적</b>(각인·통찰·결의)이 쌓인다. 발밑 세 칸이 차면 다음 턴에 <b>결행</b> 카드가 들어온다.</li>
+        <li>적을 전부 쓰러뜨리면 승리.</li>
+      </ol>
+      <button id="help-close" class="close" type="button">시작</button>
+    </div>
+  </div>
+
+  <!-- 불러오기 (SPEC-004 §12) -->
+  <div id="loading" class="loading" role="status">
+    <b>불러오는 중</b>
+    <div class="meter"><i id="loading-bar"></i></div>
+    <small id="loading-text">데이터</small>
+  </div>
+
+  <!-- 세로 화면 안내 (SPEC-004 §13.1) -->
+  <div class="rotate" aria-hidden="true"><b>⟳</b>가로로 돌려 주세요</div>
+</div>
+<script type="module" src="battle.js"></script>
+</body>

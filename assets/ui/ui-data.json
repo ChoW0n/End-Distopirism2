@@ -1,0 +1,245 @@
+{
+  "_주석": "UI·연출 수치. 단위는 캐릭터 키(H) 배수, 시간은 초. 픽셀 값을 넣지 않는다. 근거: SPEC-004 §7·§8",
+  "dash": {
+    "zoneWidth": 3.2,
+    "zoneDepth": 0.2,
+    "pairGap": 0.85,
+    "lateralJitter": [0.06, 0.16],
+    "_depth": "구역 깊이·깊이 흔들림을 줄였다. 크면 교전마다 원근 배율이 달라 캐릭터 크기가 제각각이었다 (SPEC-004 §7.7, 2026-09-25)",
+    "depthJitter": 0.02,
+    "_forward": "원작 BattleZone 이 캐릭터 줄보다 카메라 쪽으로 443 월드(0.78 카메라높이) 앞에 있다. 합을 걸면 앞으로 나와서 붙는다",
+    "forward": 0.82,
+    "safeDistance": 0.45,
+    "retries": 30,
+    "speed": 2.4,
+    "oneSided": "attackerOnly"
+  },
+  "float": {
+    "amplitude": 0.012,
+    "periodSec": 2.6
+  },
+  "arrow": {
+    "start": "headCenter",
+    "curveHeight": 0.5,
+    "segments": 50,
+    "drawSec": 0.5,
+    "headLength": 0.07,
+    "headAngleDeg": 20,
+    "colorStart": "#ffcc33",
+    "colorEnd": "#ff6600",
+    "allyColorStart": "#bfe0ff",
+    "allyColorEnd": "#4f93e0"
+  },
+  "bar": {
+    "width": 0.42,
+    "height": 0.035,
+    "gap": 0.018,
+    "topMargin": 0.1,
+    "tweenSec": 0.5,
+    "easing": "outQuad",
+    "hpColor": "#c8373a",
+    "mentalityColor": "#c9a24a",
+    "numberSize": 0.03
+  },
+  "badge": {
+    "rise": 0.35,
+    "riseSec": 1.0,
+    "deadlockMax": 3,
+    "safeTop": 0.16
+  },
+  "_side": "SPEC-004 §11 피아 구분. 고리 폭·깊이·이름 크기는 H 배수. rowStagger 는 같은 편 뒷줄을 옆으로 벌리는 양 (§12)",
+  "side": {
+    "ally": "#5fa0e0",
+    "enemy": "#e0504a",
+    "ringWidth": 0.42,
+    "ringDepth": 0.09,
+    "ringAlpha": 0.6,
+    "nameSize": 0.036,
+    "nameGap": 0.012,
+    "rowStagger": 0.9
+  },
+  "_연출": "SPEC-005 전투 연출. 길이는 H 배수, 시간은 초. 측정 전 시작값이다. offsetX 는 상대 쪽이 +, 등 뒤가 - 다",
+  "clash": {
+    "cardSec": 0.34,
+    "powerSec": 0.26,
+    "resultSec": 0.3,
+    "recoilWinner": 0,
+    "recoilLoser": 0,
+    "recoilSec": 0.22,
+    "sparkSize": 0.32,
+    "cardSize": 0.055,
+    "powerSize": 0.15,
+    "powerOffsetX": -0.4,
+    "powerOffsetY": 0.62,
+    "contactHeight": 0.52
+  },
+  "hitStop": {
+    "clashSec": 0.06,
+    "baseSec": 0.07,
+    "perDamageSec": 0.004,
+    "maxSec": 0.18,
+    "slowScale": 0.4,
+    "slowSec": 0.22
+  },
+  "damageText": {
+    "rise": 0.28,
+    "sec": 0.95,
+    "heavyDamage": 25,
+    "height": 0.86,
+    "size": 0.12
+  },
+  "banner": {
+    "sec": 0.5,
+    "height": 0.3,
+    "offsetX": -0.24,
+    "size": 0.075
+  },
+  "knockback": {
+    "distance": 0.32,
+    "sec": 0.3
+  },
+  "flash": {
+    "alpha": 0.32,
+    "sec": 0.14
+  },
+  "exchange": {
+    "_note": "합 라운드마다 밀려났다 다시 달려드는 박자 (SPEC-005 §2.3.8). 거리는 캐릭터 키 배수",
+    "separateLoser": 0.85,
+    "separateWinner": 0.15,
+    "separateTie": 0.42,
+    "separateSec": 0.26,
+    "lingerSec": 0.55,
+    "reengageSec": 0.24,
+    "pullOut": 0.1,
+    "reengageKick": 0.05,
+    "roundFlashAlpha": 0.18,
+    "roundFlashSec": 0.08,
+    "roundShake": 0.35,
+    "hitFlashAlpha": 0.22,
+    "hitFlashSec": 0.1
+  },
+  "afterimage": {
+    "count": 5,
+    "intervalSec": 0.028,
+    "alpha": 0.32
+  },
+  "_motion": "12장뿐인 스프라이트를 몸짓으로 보강한다 (SPEC-005 §6). 시간은 ms 가 붙은 것만 밀리초",
+  "motion": {
+    "othersAlpha": 0,
+    "_othersFadeSec": "숨기는 데 걸리는 시간. 카메라 줌 진행률에 묶었더니 당기는 동안 반투명한 사람이 싸우는 둘과 겹쳐 보였다 (SPEC-005 §4.2)",
+    "othersFadeSec": 0.06,
+    "windupMs": 300,
+    "snapMs": 90,
+    "_swingHoldMs": "휘두른 장을 버티는 최소 시간. 붙은 이펙트가 더 길면 그 길이만큼 버틴다 (SPEC-005 §2.3.2)",
+    "swingHoldMs": 340,
+    "follow": 0.1,
+    "afterHitSec": 0.6,
+    "lunge": 0.06,
+    "lungeSec": 0.3,
+    "breathe": 0.006,
+    "breatheSec": 2.4,
+    "hurtSec": 0.16,
+    "_blendMs": "장이 바뀌면 앞 장을 이 시간 동안 옅게 남긴다. 실루엣이 튀는 걸 가린다 (SPEC-005 §2.3)",
+    "blendMs": 80,
+    "_popScale": "0 = 끔. 장마다 커졌다 줄어 크기가 자꾸 바뀌는 것으로 읽혔다 (SPEC-005 §2.3.1)",
+    "popScale": 0,
+    "popMs": 120,
+    "strikeGhosts": 2,
+    "strikeGhostAlpha": 0.3,
+    "poseKick": 0,
+    "effectFadeMs": 90,
+    "_bodyGap": "교전 중 두 몸 중심(headCenter x) 최소 간격, H 배수. 모자라면 맞는 쪽이 밀린다. 찌르기·쓸기 장은 몸이 발보다 0.2H 앞으로 나와 발 간격만으로는 몸이 겹쳤다 (SPEC-005 §2.3.4)",
+    "bodyGap": 0.62,
+    "bodyGapSec": 0.12,
+    "_ghostColor": "잔상 실루엣 색. 원색 잔상은 캐릭터가 둘로 보였다 (SPEC-005 §2.3.5)",
+    "ghostColor": "#5a1216",
+    "_hurtColor": "맞은 번쩍임. 더하기로 겹치면 흰 옷이 통째로 날아갔다. 그림 모양대로 색만 덮는다",
+    "hurtColor": "#ff6a50",
+    "hurtAlpha": 0.25
+  },
+  "effects": {
+    "_minMs": "이보다 짧은 이펙트는 장마다 같은 비율로 늘려 튼다. 베기 215ms 는 최대 장면이 70ms 라 안 보였다 (SPEC-002 §6-6)",
+    "minMs": 560,
+    "_glow": "발광 겹. 원본 위에 흐린 복사본을 더하기로 얹는다. blur 는 이펙트 긴 변 비율 (SPEC-002 §6-7)",
+    "glowAlpha": 0.35,
+    "glowBlur": 0.03
+  },
+  "cutscene": {
+    "_sec": "궁극기 컷인 전체 길이. 들어옴·나감 포함 (SPEC-005 §2.4)",
+    "sec": 1.9,
+    "inSec": 0.24,
+    "outSec": 0.2,
+    "dim": 0.78,
+    "bandSkewDeg": 7,
+    "bandHeight": 0.78,
+    "slideFrom": 0.28,
+    "pushZoom": 0.07,
+    "swaySec": 1.3,
+    "blinkAt": [0.52, 0.6],
+    "mouthAt": [0.66, 0.92],
+    "flashAlpha": 0.55
+  },
+  "camera": {
+    "focusZoom": 1.6,
+    "punchZoom": 0.04,
+    "punchSec": 0.14,
+    "tiltDeg": 2.2,
+    "slowmoScale": 0.3,
+    "slowmoSec": 0.7,
+    "shakeReferenceDamage": 30,
+    "_depthZoom": "교전 깊이만큼 줌을 보정하는 범위 [최소, 최대]. 일방 공격은 맞는 쪽 제자리(뒷줄)에서 벌어져 합보다 작게 보였다 (SPEC-005 §4, 2026-09-25)",
+    "depthZoom": [0.85, 1.45]
+  },
+  "_down": "쓰러진 사람은 맞은 자세로 굳어 어두워지며 사라진다. 시체 장이 없어서 새로 그리지 않는다 (SPEC-005 §7.2)",
+  "down": {
+    "sec": 0.9,
+    "dim": 0.75
+  },
+  "_floatText": "피해 숫자 말고 뜨는 글자. 크기·높이는 H 배수 (SPEC-005 §7.3)",
+  "floatText": {
+    "size": 0.075,
+    "rise": 0.2,
+    "sec": 1.0,
+    "height": 0.95,
+    "colors": {
+      "self": "#b98a86",
+      "tick": "#c46bd6",
+      "execute": "#ff2f22",
+      "nullify": "#9fc4e8",
+      "status": "#e8d6a0"
+    },
+    "chipSize": 0.032,
+    "chipGap": 0.012
+  },
+  "_display": "SPEC-004 §14.5·§14.6 화면 표시 글. terms 는 카드 이름·설명문 용어 치환(데이터는 그대로). cardKit 은 캐릭터별로 완성 카드 그림 K{기술 id} 를 쓰는 기술과 그 표시 이름 (카일 2099 미명은 카일 한정)",
+  "display": {
+    "terms": { "궁극기": "결행", "속성": "흔적" },
+    "cardKit": {
+      "kyle": { "2041": "물금", "2042": "이면", "2043": "잔향", "2099": "미명" }
+    }
+  },
+  "_result": "전투 결과 띠. 대기열 맨 뒤에서 뜬다 (SPEC-005 §7.4)",
+  "result": {
+    "inSec": 0.35,
+    "bandHeight": 0.2,
+    "size": 0.075
+  },
+  "_sound": "웹 오디오 합성 자리표시 소리 세기. 0 이면 그 소리를 끈다. v2.15 부터 카드 앞·뒷면(flip·reveal)만 켠다 (SPEC-005 §7.5)",
+  "sound": {
+    "master": 0.5,
+    "gains": {
+      "dash": 0,
+      "flip": 0.25,
+      "clash": 0,
+      "clashTie": 0,
+      "reveal": 0.5,
+      "swing": 0,
+      "hit": 0,
+      "hitHeavy": 0,
+      "guard": 0,
+      "down": 0,
+      "ultimate": 0,
+      "result": 0
+    }
+  }
+}

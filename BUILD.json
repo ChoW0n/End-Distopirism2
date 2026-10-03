@@ -1,0 +1,23 @@
+{
+  "name": "end-distopirism2-review-b9894c2",
+  "commit": "b9894c2aab69452b486076533a083f6d8c7c78ad",
+  "branch": "claude/trusting-keller-2qeupr",
+  "date": "2026-10-03T23:13:40.814Z",
+  "dirty": false,
+  "typecheck": {
+    "ok": true
+  },
+  "tests": {
+    "ok": true,
+    "total": 490,
+    "passed": 490,
+    "failed": 0,
+    "files": 32
+  },
+  "files": 410,
+  "pages": [
+    "web/battle.html",
+    "web/vfx-space.html",
+    "web/vfx-lab.html"
+  ]
+}

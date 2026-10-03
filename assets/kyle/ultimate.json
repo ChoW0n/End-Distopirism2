@@ -1,0 +1,41 @@
+{
+  "_comment": "카일 궁극기 연출 시간표 (SPEC-005 §10.2). 드라이브 납품 '발도술 · 밤물 · 지연 피격' 의 animation.json 과 README 시각을 옮겼다. 몸 그림은 최신본 v2 두 장만 (v2.16: open 도 납도 마무리 v2, 컷신 전경은 준비 v2 를 자른 것). 시각은 한 방 시작부터 실제 시간(초)",
+  "character": "kyle",
+  "environment": "map-nightsea",
+  "frames": { "ready": "14-ult-ready", "open": "14-ult-post-closed", "closed": "14-ult-post-closed" },
+  "effects": { "pool": "ult-night-pool", "slash": "ult-slash", "water": "ult-water" },
+  "cutscene": {
+    "foreground": "norm/ult-cutscene.png",
+    "line": "ult/cut-line.png",
+    "size": [1100, 619],
+    "zoomFrom": 1.0,
+    "zoomTo": 1.06,
+    "lineY": 0.5,
+    "lineWipe": 0.08,
+    "fade": 0.08
+  },
+  "timeline": {
+    "poolIn": 0.15,
+    "swapEnvironment": 0.15,
+    "cutsceneStart": 0.6,
+    "cutLine": 1.6,
+    "cutsceneEnd": 2.1,
+    "appearBehind": 2.1,
+    "sheathClick": 2.35,
+    "water": 2.4,
+    "effectsEnd": 3.95,
+    "restoreEnvironment": 4.0,
+    "restoreFade": 0.5,
+    "end": 4.5
+  },
+  "_slashes": "SPEC-005 §10.2 v2.23 여러 번 베기. 벤 횟수·간격(초)·베기선마다 기울기(도)·자리(캐릭터 키 비율 x, y)·중간 베기마다 튕겨 가는 자리(캐릭터 키 비율 [베인 방향, 위], 누적 안 함)·튕기는 시간(초)",
+  "slashes": {
+    "count": 4,
+    "interval": 0.2,
+    "rollDeg": [15, -36, 65, -8],
+    "offset": [[0.1, 0.03], [-0.1, 0.08], [0.06, 0.12], [0, 0]],
+    "jolt": [[-0.22, 0.06], [0.22, 0.16], [-0.14, 0.26]],
+    "joltTime": 0.07
+  },
+  "behindGap": 1.1
+}

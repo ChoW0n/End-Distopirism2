@@ -1,0 +1,77 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>End-Distopirism2 검토 묶음</title>
+<style>
+  :root { color-scheme: dark; --bg: #16130f; --panel: #211c16; --line: #3a3128; --text: #e8e0d4; --dim: #a39787; --gold: #c9a35a; }
+  body { margin: 0; padding: 24px 16px 48px; background: var(--bg); color: var(--text); font: 15px/1.6 system-ui, sans-serif; }
+  main { max-width: 1100px; margin: 0 auto; display: grid; gap: 24px; }
+  h1 { margin: 0; font-size: 22px; } h2 { margin: 0 0 8px; font-size: 16px; color: var(--gold); }
+  p, small { color: var(--dim); } a { color: var(--gold); }
+  ul.pages { list-style: none; padding: 0; margin: 0; display: grid; gap: 8px; }
+  ul.pages li { display: grid; gap: 2px; padding: 12px 14px; background: var(--panel); border: 1px solid var(--line); border-radius: 6px; }
+  ul.pages a { font-weight: 600; font-size: 16px; } ul.pages span { color: var(--dim); }
+  .ok { color: #8fc58a; } .bad { color: #e07a6a; }
+  table { border-collapse: collapse; } td { padding: 2px 12px 2px 0; }
+  code { background: var(--panel); padding: 1px 6px; border-radius: 4px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+  .grid a { display: grid; gap: 4px; text-decoration: none; } .grid img { width: 100%; border: 1px solid var(--line); border-radius: 4px; }
+</style>
+<main>
+  <header>
+    <h1>End-Distopirism2 검토 묶음</h1>
+    <p>커밋 <code>b9894c2aab69452b486076533a083f6d8c7c78ad</code> · 2026-10-03T23:13:40.814Z · 검토 요청서 <a href="docs/REVIEW-001-아스트라-검토요청.md">REVIEW-001</a> (번호 R1~R6 으로 답해 주세요)</p>
+  </header>
+  <section><h2>화면</h2><ul class="pages">
+<li><a href="web/battle.html">전투</a><span>실제 게임. 카일 1대1 · 제3 수문 v4. 메뉴 ☰ → 조작에서 시연·연출 실험·환경 이펙트 검수</span></li>
+<li><a href="web/vfx-space.html">공간형 VFX</a><span>S1·S2·S3·결행 효과를 3D 곡면에 얹은 것과 평면 재생 비교. 궤도 슬라이더로 카메라를 돌린다</span></li>
+<li><a href="web/vfx-lab.html">물금 실시간 VFX</a><span>S1 물금 셰이더 띠와 원본 15장 비교</span></li>
+  </ul><p>정적 서버로 열어야 한다 (<code>python3 -m http.server 8000</code>). <code>file://</code> 로는 데이터를 못 읽는다.</p></section>
+  <section><h2>자동 검사</h2><table>
+    <tr><td>타입 검사</td><td><b class="ok">통과</b></td></tr>
+    <tr><td>테스트</td><td><b class="ok">통과</b> 490/490 (32 파일)</td></tr>
+    <tr><td>묶음 파일</td><td>410 개 · 화면이 요청한 것만</td></tr>
+  </table></section>
+  <section><h2>스크린샷 (작업 쪽에서 찍음, 1600×900)</h2><div class="grid">
+<a href="screenshots/battle-01-input.jpg"><img loading="lazy" src="screenshots/battle-01-input.jpg" alt="battle-01-input.jpg"><small>battle-01-input.jpg</small></a>
+<a href="screenshots/battle-envfx.jpg"><img loading="lazy" src="screenshots/battle-envfx.jpg" alt="battle-envfx.jpg"><small>battle-envfx.jpg</small></a>
+<a href="screenshots/battle-showcase-01.jpg"><img loading="lazy" src="screenshots/battle-showcase-01.jpg" alt="battle-showcase-01.jpg"><small>battle-showcase-01.jpg</small></a>
+<a href="screenshots/battle-showcase-02.jpg"><img loading="lazy" src="screenshots/battle-showcase-02.jpg" alt="battle-showcase-02.jpg"><small>battle-showcase-02.jpg</small></a>
+<a href="screenshots/battle-showcase-03.jpg"><img loading="lazy" src="screenshots/battle-showcase-03.jpg" alt="battle-showcase-03.jpg"><small>battle-showcase-03.jpg</small></a>
+<a href="screenshots/battle-showcase-04.jpg"><img loading="lazy" src="screenshots/battle-showcase-04.jpg" alt="battle-showcase-04.jpg"><small>battle-showcase-04.jpg</small></a>
+<a href="screenshots/battle-showcase-05.jpg"><img loading="lazy" src="screenshots/battle-showcase-05.jpg" alt="battle-showcase-05.jpg"><small>battle-showcase-05.jpg</small></a>
+<a href="screenshots/battle-showcase-06.jpg"><img loading="lazy" src="screenshots/battle-showcase-06.jpg" alt="battle-showcase-06.jpg"><small>battle-showcase-06.jpg</small></a>
+<a href="screenshots/battle-showcase-07.jpg"><img loading="lazy" src="screenshots/battle-showcase-07.jpg" alt="battle-showcase-07.jpg"><small>battle-showcase-07.jpg</small></a>
+<a href="screenshots/battle-showcase-08.jpg"><img loading="lazy" src="screenshots/battle-showcase-08.jpg" alt="battle-showcase-08.jpg"><small>battle-showcase-08.jpg</small></a>
+<a href="screenshots/battle-showcase-09.jpg"><img loading="lazy" src="screenshots/battle-showcase-09.jpg" alt="battle-showcase-09.jpg"><small>battle-showcase-09.jpg</small></a>
+<a href="screenshots/battle-showcase-10.jpg"><img loading="lazy" src="screenshots/battle-showcase-10.jpg" alt="battle-showcase-10.jpg"><small>battle-showcase-10.jpg</small></a>
+<a href="screenshots/battle-showcase-11.jpg"><img loading="lazy" src="screenshots/battle-showcase-11.jpg" alt="battle-showcase-11.jpg"><small>battle-showcase-11.jpg</small></a>
+<a href="screenshots/battle-showcase-12.jpg"><img loading="lazy" src="screenshots/battle-showcase-12.jpg" alt="battle-showcase-12.jpg"><small>battle-showcase-12.jpg</small></a>
+<a href="screenshots/battle-watch-1.jpg"><img loading="lazy" src="screenshots/battle-watch-1.jpg" alt="battle-watch-1.jpg"><small>battle-watch-1.jpg</small></a>
+<a href="screenshots/battle-watch-2.jpg"><img loading="lazy" src="screenshots/battle-watch-2.jpg" alt="battle-watch-2.jpg"><small>battle-watch-2.jpg</small></a>
+<a href="screenshots/battle-watch-3.jpg"><img loading="lazy" src="screenshots/battle-watch-3.jpg" alt="battle-watch-3.jpg"><small>battle-watch-3.jpg</small></a>
+<a href="screenshots/battle-watch-4.jpg"><img loading="lazy" src="screenshots/battle-watch-4.jpg" alt="battle-watch-4.jpg"><small>battle-watch-4.jpg</small></a>
+<a href="screenshots/lab-s1-t200.jpg"><img loading="lazy" src="screenshots/lab-s1-t200.jpg" alt="lab-s1-t200.jpg"><small>lab-s1-t200.jpg</small></a>
+<a href="screenshots/lab-s1-t450.jpg"><img loading="lazy" src="screenshots/lab-s1-t450.jpg" alt="lab-s1-t450.jpg"><small>lab-s1-t450.jpg</small></a>
+<a href="screenshots/space-s1-orbit0-55.jpg"><img loading="lazy" src="screenshots/space-s1-orbit0-55.jpg" alt="space-s1-orbit0-55.jpg"><small>space-s1-orbit0-55.jpg</small></a>
+<a href="screenshots/space-s1-orbit60-0.jpg"><img loading="lazy" src="screenshots/space-s1-orbit60-0.jpg" alt="space-s1-orbit60-0.jpg"><small>space-s1-orbit60-0.jpg</small></a>
+<a href="screenshots/space-s1-t280.jpg"><img loading="lazy" src="screenshots/space-s1-t280.jpg" alt="space-s1-t280.jpg"><small>space-s1-t280.jpg</small></a>
+<a href="screenshots/space-s1-t560.jpg"><img loading="lazy" src="screenshots/space-s1-t560.jpg" alt="space-s1-t560.jpg"><small>space-s1-t560.jpg</small></a>
+<a href="screenshots/space-s1-t840.jpg"><img loading="lazy" src="screenshots/space-s1-t840.jpg" alt="space-s1-t840.jpg"><small>space-s1-t840.jpg</small></a>
+<a href="screenshots/space-s2-orbit0-55.jpg"><img loading="lazy" src="screenshots/space-s2-orbit0-55.jpg" alt="space-s2-orbit0-55.jpg"><small>space-s2-orbit0-55.jpg</small></a>
+<a href="screenshots/space-s2-orbit60-0.jpg"><img loading="lazy" src="screenshots/space-s2-orbit60-0.jpg" alt="space-s2-orbit60-0.jpg"><small>space-s2-orbit60-0.jpg</small></a>
+<a href="screenshots/space-s2-t1068.jpg"><img loading="lazy" src="screenshots/space-s2-t1068.jpg" alt="space-s2-t1068.jpg"><small>space-s2-t1068.jpg</small></a>
+<a href="screenshots/space-s2-t356.jpg"><img loading="lazy" src="screenshots/space-s2-t356.jpg" alt="space-s2-t356.jpg"><small>space-s2-t356.jpg</small></a>
+<a href="screenshots/space-s2-t712.jpg"><img loading="lazy" src="screenshots/space-s2-t712.jpg" alt="space-s2-t712.jpg"><small>space-s2-t712.jpg</small></a>
+<a href="screenshots/space-s3-orbit0-55.jpg"><img loading="lazy" src="screenshots/space-s3-orbit0-55.jpg" alt="space-s3-orbit0-55.jpg"><small>space-s3-orbit0-55.jpg</small></a>
+<a href="screenshots/space-s3-orbit60-0.jpg"><img loading="lazy" src="screenshots/space-s3-orbit60-0.jpg" alt="space-s3-orbit60-0.jpg"><small>space-s3-orbit60-0.jpg</small></a>
+<a href="screenshots/space-s3-t1468.jpg"><img loading="lazy" src="screenshots/space-s3-t1468.jpg" alt="space-s3-t1468.jpg"><small>space-s3-t1468.jpg</small></a>
+<a href="screenshots/space-s3-t2202.jpg"><img loading="lazy" src="screenshots/space-s3-t2202.jpg" alt="space-s3-t2202.jpg"><small>space-s3-t2202.jpg</small></a>
+<a href="screenshots/space-s3-t734.jpg"><img loading="lazy" src="screenshots/space-s3-t734.jpg" alt="space-s3-t734.jpg"><small>space-s3-t734.jpg</small></a>
+<a href="screenshots/space-ult-orbit0-55.jpg"><img loading="lazy" src="screenshots/space-ult-orbit0-55.jpg" alt="space-ult-orbit0-55.jpg"><small>space-ult-orbit0-55.jpg</small></a>
+<a href="screenshots/space-ult-orbit60-0.jpg"><img loading="lazy" src="screenshots/space-ult-orbit60-0.jpg" alt="space-ult-orbit60-0.jpg"><small>space-ult-orbit60-0.jpg</small></a>
+<a href="screenshots/space-ult-t1050.jpg"><img loading="lazy" src="screenshots/space-ult-t1050.jpg" alt="space-ult-t1050.jpg"><small>space-ult-t1050.jpg</small></a>
+<a href="screenshots/space-ult-t350.jpg"><img loading="lazy" src="screenshots/space-ult-t350.jpg" alt="space-ult-t350.jpg"><small>space-ult-t350.jpg</small></a>
+<a href="screenshots/space-ult-t700.jpg"><img loading="lazy" src="screenshots/space-ult-t700.jpg" alt="space-ult-t700.jpg"><small>space-ult-t700.jpg</small></a>
+  </div></section>
+</main>

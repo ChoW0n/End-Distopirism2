@@ -1,0 +1,59 @@
+{
+  "_comment": "공용 환경 이펙트 v1 사건 → 이펙트 (SPEC-005 §16.3). play 는 manifest 의 애니메이션 id(4장) 또는 스프라이트 id(한 장). scale = 512 캔버스 한 변 / 캐릭터 키 (보이는 그림 폭이 목표 폭이 되게 manifest visible_bounds 로 맞춤). surfaces 가 맞을 때만 낸다. camera 는 camera-presets.json 의 프리셋",
+  "_playbackRate": "재생 배속. 장 시간·페이드를 이 값으로 나눈다. 실제 시간으로 돈다 (SPEC-005 §16.1 v2.20)",
+  "playbackRate": 2.0,
+  "events": {
+    "dashStart": {
+      "surfaces": ["concrete"],
+      "camera": "none",
+      "spawns": [{ "play": "D_ground_spread", "anchor": "foot", "offset": [-0.18, 0], "scale": 0.94, "face": "away" }]
+    },
+    "brake": {
+      "surfaces": ["concrete"],
+      "camera": "none",
+      "spawns": [{ "play": "D_contact", "anchor": "foot", "offset": [0.12, 0], "scale": 0.94, "face": "toward" }]
+    },
+    "deadlock": {
+      "surfaces": ["concrete", "water"],
+      "camera": "pressure",
+      "spawns": [{ "play": "F_front_ring", "anchor": "contact", "offset": [0, 0], "scale": 1.66, "face": "toward" }]
+    },
+    "finalHit": {
+      "surfaces": ["concrete", "water"],
+      "camera": "pressure",
+      "spawns": [{ "play": "F_front_ring", "anchor": "contact", "offset": [0, 0], "scale": 1.57, "face": "toward" }]
+    },
+    "knockLand": {
+      "surfaces": ["concrete"],
+      "camera": "none",
+      "heavyCamera": "large_debris_landing",
+      "spawns": [
+        { "play": "D_ground_spread", "anchor": "foot", "offset": [0, 0], "scale": 1.41, "face": "toward" },
+        { "play": "G_01_02", "anchor": "foot", "offset": [0.05, 0.04], "scale": 1.0, "face": "toward", "hold": 260, "fade": 260 }
+      ]
+    },
+    "heavyLand": {
+      "surfaces": ["concrete"],
+      "camera": "crack",
+      "spawns": [{ "play": "B_02_01", "anchor": "floor", "offset": [0, 0], "scale": 2.96, "face": "toward", "hold": 900, "fade": 500 }]
+    },
+    "down": {
+      "surfaces": ["concrete"],
+      "camera": "large_debris_landing",
+      "spawns": [
+        { "play": "D_ground_spread", "anchor": "foot", "offset": [0, 0], "scale": 1.73, "face": "toward" },
+        { "play": "D_contact", "anchor": "foot", "offset": [-0.1, 0], "scale": 1.13, "face": "away" }
+      ]
+    },
+    "ultStart": {
+      "surfaces": ["concrete", "water"],
+      "camera": "pressure",
+      "spawns": [{ "play": "F_inward", "anchor": "chest", "offset": [0, 0], "scale": 2.42, "face": "toward" }]
+    },
+    "ultPayoff": {
+      "surfaces": ["concrete", "water"],
+      "camera": "pressure",
+      "spawns": [{ "play": "F_front_ring", "anchor": "chest", "offset": [0, 0], "scale": 2.59, "face": "toward" }]
+    }
+  }
+}
