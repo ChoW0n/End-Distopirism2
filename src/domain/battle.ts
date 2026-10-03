@@ -7,9 +7,17 @@ import { ClashResolver } from './clash.js';
 import { Combatant, type CombatantInit } from './combatant.js';
 import { BattleCatalog, BattleDataError } from './data.js';
 import { systemRng, type Rng } from './rng.js';
-import type { BattleEvent, Side } from './types.js';
+import type { BattleEvent, Side, Stance } from './types.js';
 
 //턴 진행 단계. 바깥에서는 이 값을 보고 다음에 무엇을 부를지 정한다
+//결단을 물을 교전 (SPEC-008 §3). 아군·상대·아군이 낸 카드
+export interface DecisionRequest {
+  kind: 'clash' | 'oneSided';
+  allyId: string;
+  opponentId: string;
+  skillId: number;
+}
+
 export type BattlePhase = 'turnStart' | 'awaitingOrders' | 'resolving' | 'turnEnd' | 'finished';
 
 //아군 한 명의 이번 턴 지시. 누가 누구를 어떤 카드로 치는지
@@ -48,6 +56,8 @@ export class Battle {
   //이번 턴에 적이 고른 타겟. 턴 시작에 정해지고 아군 입력에 영향받지 않는다
   private readonly enemyTargets = new Map<string, string>();
   private engagements: Engagement[] = [];
+  //resolveNext 가 다음에 볼 교전 자리
+  private cursor = 0;
 
   turn = 0;
   phase: BattlePhase = 'turnStart';
@@ -180,6 +190,7 @@ export class Battle {
     }
 
     this.engagements = this.matchEngagements(orders);
+    this.cursor = 0;
     this.phase = 'resolving';
   }
 
@@ -218,25 +229,64 @@ export class Battle {
     return engagements;
   }
 
-  //교전을 순서대로 실행한다. 쓰러진 캐릭터가 낀 교전은 건너뛴다
+  //교전을 순서대로 실행한다. 쓰러진 캐릭터가 낀 교전은 건너뛴다. 모두 기본 자세(steady)다
   resolve(): BattleEvent[] {
     this.expectPhase('resolving');
     const events: BattleEvent[] = [];
+    while (this.phase === 'resolving') events.push(...this.resolveNext());
+    return events;
+  }
 
-    for (const engagement of this.engagements) {
+  //다음에 돌 교전(쓰러진 사람이 낀 것은 건너뛴다). 없으면 null
+  private nextEngagement(): Engagement | null {
+    while (this.cursor < this.engagements.length) {
+      const engagement = this.engagements[this.cursor] as Engagement;
       const [attacker, target] = this.participantsOf(engagement);
-      if (attacker.isDefeated || target.isDefeated) continue;
-
-      events.push(...this.runEngagement(engagement, attacker, target));
-
-      if (this.checkBattleEnd(events)) {
-        this.engagements = [];
-        return events;
-      }
+      if (!attacker.isDefeated && !target.isDefeated) return engagement;
+      this.cursor += 1;
     }
+    return null;
+  }
 
-    this.engagements = [];
-    this.phase = 'turnEnd';
+  //다음 교전이 결단 대상이면 그 정보 (SPEC-008 §1). 아군이 낀 합·아군 일방 공격만, 결단 수치가 없으면 늘 null
+  peekDecision(): DecisionRequest | null {
+    if (this.phase !== 'resolving' || !this.catalog.decisions) return null;
+    const engagement = this.nextEngagement();
+    if (!engagement) return null;
+    if (engagement.kind === 'clash') {
+      return { kind: 'clash', allyId: engagement.allyId, opponentId: engagement.enemyId, skillId: engagement.allySkillId };
+    }
+    if (engagement.kind === 'allyOneSided') {
+      return { kind: 'oneSided', allyId: engagement.allyId, opponentId: engagement.targetId, skillId: engagement.skillId };
+    }
+    return null;
+  }
+
+  //다음 교전 한 건을 아군 자세로 돌린다 (SPEC-008 §3). 다 돌면 턴 마감 단계로, 판이 끝나면 끝 단계로 넘어간다
+  resolveNext(stance: Stance = 'steady'): BattleEvent[] {
+    this.expectPhase('resolving');
+    const events: BattleEvent[] = [];
+    const engagement = this.nextEngagement();
+    if (!engagement) {
+      this.engagements = [];
+      this.cursor = 0;
+      this.phase = 'turnEnd';
+      return events;
+    }
+    this.cursor += 1;
+    const [attacker, target] = this.participantsOf(engagement);
+    events.push(...this.runEngagement(engagement, attacker, target, stance));
+    if (this.checkBattleEnd(events)) {
+      this.engagements = [];
+      this.cursor = 0;
+      return events;
+    }
+    //마지막 교전이었으면 바로 턴 마감으로 (resolve 한 번이 지금처럼 한 묶음으로 끝나게)
+    if (!this.nextEngagement()) {
+      this.engagements = [];
+      this.cursor = 0;
+      this.phase = 'turnEnd';
+    }
     return events;
   }
 
@@ -256,10 +306,12 @@ export class Battle {
     engagement: Engagement,
     attacker: Combatant,
     target: Combatant,
+    stance: Stance = 'steady',
   ): BattleEvent[] {
     const events: BattleEvent[] = [];
 
     if (engagement.kind === 'clash') {
+      this.resolver.takeStance(attacker, stance, events);
       const enemySkillId = this.enemyAi.chooseSkill(
         target,
         { target: attacker, isClash: true, opponentSkillId: engagement.allySkillId },
@@ -267,13 +319,14 @@ export class Battle {
       );
       this.consumeUltimate(attacker, engagement.allySkillId, events);
       this.consumeUltimate(target, enemySkillId, events);
-      events.push(...this.resolver.resolve(attacker, engagement.allySkillId, target, enemySkillId));
+      events.push(...this.resolver.resolve(attacker, engagement.allySkillId, target, enemySkillId, { attacker: stance }));
       return events;
     }
 
     if (engagement.kind === 'allyOneSided') {
+      this.resolver.takeStance(attacker, stance, events);
       this.consumeUltimate(attacker, engagement.skillId, events);
-      events.push(...this.resolver.resolveOneSided(attacker, engagement.skillId, target));
+      events.push(...this.resolver.resolveOneSided(attacker, engagement.skillId, target, stance));
       return events;
     }
 

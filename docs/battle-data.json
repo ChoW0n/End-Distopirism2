@@ -26,6 +26,13 @@
     "ultimateSkillId": 2099
   },
 
+  "_decisions": "SPEC-008 교전 중 결단 (테스트 버전). 결단 실험 모드에서만 쓴다. 손맛 확인용 임시값. press 밀어붙인다(정신력 비용·앞면 확률 보너스·확률 상한), brace 받아낸다(질 때 받는 피해 배수·이길 때 주는 피해 배수·질 때 정신력), allIn 끝장낸다(이길 때 주는 피해 배수·질 때 받는 피해 배수)",
+  "decisions": {
+    "press": { "mentalityCost": 10, "frontChanceBonus": 0.2, "chanceCap": 0.95 },
+    "brace": { "takenMultiplier": 0.5, "dealtMultiplier": 0.7, "mentalityOnLose": 3 },
+    "allIn": { "dealtMultiplier": 1.4, "takenMultiplier": 1.4 }
+  },
+
   "enemyAi": {
     "_comment": "SPEC-001 §13. 적의 타겟·카드 선택 가중치. 아군에게는 쓰지 않는다",
     "mentalityDangerThreshold": 40,
