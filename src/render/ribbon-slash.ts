@@ -42,6 +42,8 @@ export interface RibbonSlashConfig {
     //밝기 → 덮임 [바닥, 폭]
     coverage: Vec2;
     erosionWeight: number;
+    //색 보정. 밝기 배수, 채도(0 회색 ~ 1 원래 색), 감마(1 보다 크면 중간·밝은 톤이 어두워진다)
+    grade?: { brightness: number; saturation: number; gamma?: number };
     //밝기 자리(0~1) → 팔레트 이름
     gradient: readonly (readonly [number, keyof RibbonSlashConfig['paletteSRGB']])[];
   };

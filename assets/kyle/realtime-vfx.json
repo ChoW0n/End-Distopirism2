@@ -23,7 +23,7 @@
   "waves": { "count": 12, "base": 0.16, "lean": 0.8, "foam": 0.07 },
   "_droplets": "물방울. 고정 자리(seed). outerShare 는 호 바깥 비율, offsetH 는 호에서 떨어진 거리 범위, sizeH 는 지름 범위, lagU 는 자기 u 보다 늦게 지워지는 정도 범위, driftH 는 1초에 바깥으로 흩어지는 거리 범위",
   "droplets": { "count": 90, "seed": 7, "outerShare": 0.6, "offsetH": [0.02, 0.3], "sizeH": [0.016, 0.05], "lagU": [0.03, 0.14], "driftH": [0.04, 0.22] },
-  "_texture": "§15.2 받은 효과 레이어 질감. source 받은 흑백 띠, file 은 scripts/kyle_vfx_strip.py 가 만든 RGB(R 밝기·G 소멸 시각·B 번짐). coverage [바닥, 폭] 은 밝기 → 덮임 = clamp((R − 바닥) / 폭). uRange 가로 끝의 u, dRangeH 세로 위·아래 끝의 호에서 거리(H, + 바깥). erosionWeight 는 E = mix(u, T, w) 의 w. gradient 는 밝기 → 팔레트 이름 자리(0~1)",
+  "_texture": "§15.2 받은 효과 레이어 질감. source 받은 흑백 띠, file 은 scripts/kyle_vfx_strip.py 가 만든 RGB(R 밝기·G 소멸 시각·B 번짐). coverage [바닥, 폭] 은 밝기 → 덮임 = clamp((R − 바닥) / 폭). uRange 가로 끝의 u, dRangeH 세로 위·아래 끝의 호에서 거리(H, + 바깥). erosionWeight 는 E = mix(u, T, w) 의 w. gradient 는 밝기 → 팔레트 이름 자리(0~1). grade 는 색 보정(밝기 배수, 채도 0 회색 ~ 1 원래 색, 감마 1 보다 크면 어둡게)",
   "texture": {
     "source": "vfx/s1-layer-source.png",
     "file": "vfx/s1-strip.png",
@@ -31,11 +31,12 @@
     "dRangeH": [0.467, -0.656],
     "coverage": [0.04, 0.2],
     "erosionWeight": 0.5,
+    "grade": { "brightness": 0.85, "saturation": 0.75, "gamma": 1.5 },
     "gradient": [[0, "deep"], [0.22, "body"], [0.42, "bright"], [0.62, "light"], [0.82, "foam"], [1, "core"]]
   },
   "_options": "§15.2 화려함 옵션 기본값과 수치. flowSpeedU 초당 흐르는 u, flareMs 머리 섬광이 남는 시간, sparkleDensity 반짝임 칸 비율, sprayCount 흩어짐 물방울 수, sprayMs 한 방울 수명, sprayDistH 흩어지는 거리",
   "options": {
-    "flow": true, "flare": true, "glow": true, "sparkle": true, "spray": true, "extraDroplets": false,
+    "flow": true, "flare": false, "glow": false, "sparkle": true, "spray": false, "extraDroplets": false,
     "flowSpeedU": 0.35, "flareMs": 220, "sparkleDensity": 0.12, "sprayCount": 260, "sprayMs": 250, "sprayDistH": 0.12
   },
   "render": { "glowOpacity": 0.32, "seed": 101 },

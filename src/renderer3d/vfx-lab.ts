@@ -306,6 +306,27 @@ async function main(): Promise<void> {
   }
   byId<HTMLButtonElement>('opt-all').addEventListener('click', () => optionKeys.forEach((k) => setOption(k, k !== 'extraDroplets')));
   byId<HTMLButtonElement>('opt-none').addEventListener('click', () => optionKeys.forEach((k) => setOption(k, false)));
+  //기본값: 설정 파일의 options (흐름·반짝임)
+  byId<HTMLButtonElement>('opt-default').addEventListener('click', () => optionKeys.forEach((k) => setOption(k, config.options?.[k] ?? false)));
+  //색 보정 막대 (밝기·채도). 같은 시각을 다시 그린다
+  const gradeBox = (key: 'brightness' | 'saturation' | 'gamma', id: string): void => {
+    const input = byId<HTMLInputElement>(id);
+    const out = byId<HTMLOutputElement>(`${id}-v`);
+    const show = (): void => {
+      out.value = Number(input.value).toFixed(2);
+    };
+    input.value = String(textured ? textured.grade[key] : 1);
+    input.disabled = !textured;
+    show();
+    input.addEventListener('input', () => {
+      if (textured) textured.grade[key] = Number(input.value);
+      show();
+      if (handle) fx.seek(handle.id, age);
+    });
+  };
+  gradeBox('brightness', 'grade-bright');
+  gradeBox('saturation', 'grade-sat');
+  gradeBox('gamma', 'grade-gamma');
   //방식 전환: 질감 ↔ 절차. 같은 시각에서 이어 본다
   const modeBox = byId<HTMLSelectElement>('mode');
   const texRow = byId<HTMLElement>('tex-options');

@@ -250,11 +250,21 @@ uniform float uGlowOn;
 uniform float uGlowOpacity;
 uniform float uSparkle;
 uniform float uSparkleDensity;
+uniform float uGradeBright;
+uniform float uGradeSat;
+uniform float uGradeGamma;
 uniform vec3 uGradC[6];
 uniform float uGradP[6];
 varying vec2 vUv;
 varying float vU;
 varying float vD;
+
+//색 보정: 감마로 중간·밝은 톤을 내리고, 채도를 회색 쪽으로 당기고, 밝기를 곱한다
+vec3 grade(vec3 c) {
+  c = pow(max(c, vec3(0.0)), vec3(uGradeGamma));
+  float g = dot(c, vec3(0.2126, 0.7152, 0.0722));
+  return mix(vec3(g), c, uGradeSat) * uGradeBright;
+}
 
 //밝기 → 원본 팔레트
 vec3 gradient(float l) {
@@ -282,7 +292,7 @@ void main() {
       float l2 = texture2D(uStrip, fuv).r;
       col += light * max(0.0, l2 - 0.45) * 0.35 * cov;
     }
-    gl_FragColor = vec4(col, cov * keep * reveal);
+    gl_FragColor = vec4(grade(col), cov * keep * reveal);
   } else {
     vec3 add = vec3(0.0);
     //빛 번짐: B 통로
@@ -301,7 +311,7 @@ void main() {
       float across = 1.0 - smoothstep(0.0, 0.16, abs(vD));
       add += mix(foam, core, along) * along * across * fade * 1.6 * reveal;
     }
-    gl_FragColor = vec4(add, 1.0);
+    gl_FragColor = vec4(grade(add), 1.0);
   }
   #include <colorspace_fragment>
 }
@@ -399,6 +409,8 @@ export class RibbonSlashEffect {
   dropletsEnabled = true;
   //질감 방식 화려함 옵션 (§15.2). 실험 화면이 바꾼다
   readonly options: RibbonOptions;
+  //질감 방식 색 보정 (§15.2). 실험 화면 막대가 바꾼다
+  readonly grade: { brightness: number; saturation: number; gamma: number };
   //질감 방식인지
   readonly textured: boolean;
 
@@ -418,6 +430,8 @@ export class RibbonSlashEffect {
       extraDroplets: o?.extraDroplets ?? false,
     };
     this.textured = !!strip && !!config.texture;
+    const g = config.texture?.grade;
+    this.grade = { brightness: g?.brightness ?? 1, saturation: g?.saturation ?? 1, gamma: g?.gamma ?? 1 };
     const palette = config.paletteSRGB;
     const color = (hex: string): THREE.Color => new THREE.Color().setStyle(hex, THREE.SRGBColorSpace);
     const colors = {
@@ -523,6 +537,9 @@ export class RibbonSlashEffect {
       uGlowOpacity: { value: config.render.glowOpacity },
       uSparkle: { value: 0 },
       uSparkleDensity: { value: o?.sparkleDensity ?? 0 },
+      uGradeBright: { value: this.grade.brightness },
+      uGradeSat: { value: this.grade.saturation },
+      uGradeGamma: { value: this.grade.gamma },
       uGradC: { value: grad },
       uGradP: { value: gradP },
     });
@@ -789,6 +806,9 @@ export class RibbonSlashEffect {
       set(m, 'uFlare', o.flare ? 1 : 0);
       set(m, 'uGlowOn', o.glow ? 1 : 0);
       set(m, 'uSparkle', o.sparkle ? 1 : 0);
+      set(m, 'uGradeBright', this.grade.brightness);
+      set(m, 'uGradeSat', this.grade.saturation);
+      set(m, 'uGradeGamma', this.grade.gamma);
     }
   }
 
