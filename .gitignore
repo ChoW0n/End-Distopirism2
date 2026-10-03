@@ -221,3 +221,6 @@ assets/**/*.ogg
 #파이썬 도구 캐시
 __pycache__/
 *.pyc
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
