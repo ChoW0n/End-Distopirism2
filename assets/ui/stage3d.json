@@ -127,5 +127,7 @@
     "pan": { "width": 0.7 },
     "voiceGain": { "intermediate": 0.8, "final": 1.0 },
     "ultimate": { "payoffDelay": 0.12, "slashIntervals": [0.16, 0.16, 0.24] }
-  }
+  },
+  "_decision": "SPEC-008 교전 중 결단 (테스트 버전). 결단 순간 어깨 너머 시점: 내 캐릭터 가슴에서 상대 반대쪽으로 back, 대기 카메라 쪽 옆으로 side, 위로 height (캐릭터 키 배), 바라보는 점은 나→상대 lookBias 자리, 화각 fov(도), 고르는 제한 시간 seconds(실제 초)",
+  "decision": { "back": 1.1, "side": 0.55, "height": 0.2, "lookBias": 0.75, "fov": 36, "seconds": 1.6 }
 }

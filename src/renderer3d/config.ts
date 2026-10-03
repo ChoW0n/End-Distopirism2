@@ -188,6 +188,16 @@ export interface LabConfig {
   ultimate: { payoffDelay: number; slashIntervals: number[] };
 }
 
+//결단 순간 어깨 너머 시점 (SPEC-008 §4). 거리는 캐릭터 키 배, 화각은 도, 제한 시간은 실제 초
+export interface DecisionConfig {
+  back: number;
+  side: number;
+  height: number;
+  lookBias: number;
+  fov: number;
+  seconds: number;
+}
+
 export interface Stage3dConfig {
   battle: BattleSetup;
   layout: LayoutConfig;
@@ -201,6 +211,7 @@ export interface Stage3dConfig {
   footGauge: FootGaugeConfig;
   framing: FramingConfig;
   lab: LabConfig;
+  decision: DecisionConfig;
 }
 
 //배경 층 한 장 (SPEC-005 §8.8)
@@ -314,6 +325,7 @@ export function parseStage3dConfig(raw: unknown): Stage3dConfig {
     footGauge: numbers<FootGaugeConfig>(root['footGauge'], 'footGauge', ['widthRatio', 'minWidth', 'maxWidth', 'criticalRatio', 'lossSeconds', 'downFade']),
     framing: numbers<FramingConfig>(root['framing'], 'framing', ['maxZoomOut', 'cover', 'tagMargin', 'footMargin', 'sideMargin', 'bodyHalfWidth', 'headHeight']),
     lab: parseLab(root['lab']),
+    decision: numbers<DecisionConfig>(root['decision'], 'decision', ['back', 'side', 'height', 'lookBias', 'fov', 'seconds']),
   };
 }
 

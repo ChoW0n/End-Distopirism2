@@ -1364,6 +1364,25 @@ export class Stage3D {
     this.overlay.setSelection(selection);
   }
 
+  //결단 순간 (SPEC-008 §4): 두 사람만 남기고 내 캐릭터 어깨 너머에서 상대를 잡는다. 무대가 쉬는 동안에만 부른다
+  decisionFocus(allyId: string, foeId: string): void {
+    const a = this.actors.get(allyId);
+    const b = this.actors.get(foeId);
+    if (!a || !b) return;
+    this.enterExchange([allyId, foeId]);
+    this.rig.shoulder(this.chest(a.doll), this.chest(b.doll), this.config.layout.characterHeight, this.config.decision);
+  }
+
+  //결단이 끝나면 카메라를 푼다. 이어지는 교전 재생이 다시 잡는다
+  decisionRelease(): void {
+    this.rig.release();
+  }
+
+  //고른 자세 이름을 이름표 위에 잠깐 띄운다 (SPEC-008 §4)
+  stanceCallout(combatantId: string, title: string): void {
+    this.overlay.callout(combatantId, true, title, '', this.clock.realNow, this.config.callout.seconds);
+  }
+
   //UI 묶음 그림을 받는다. 게이지는 다음 reset 부터 붙는다 (SPEC-004 §14)
   setKit(kit: StageKit): void {
     this.kit = kit;

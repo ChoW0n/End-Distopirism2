@@ -129,6 +129,29 @@ export class CameraRig {
     this.focused = true;
   }
 
+  //결단 순간 어깨 너머 시점 (SPEC-008 §4). 내 캐릭터 뒤쪽 낮은 자리에서 상대를 화면 가운데에 둔다 (락온)
+  //hero·foe: 두 가슴 자리, back·side·height: 캐릭터 키 배 거리, lookBias: 바라보는 점을 상대 쪽으로 당기는 정도(0 내 캐릭터 ~ 1 상대)
+  shoulder(hero: THREE.Vector3, foe: THREE.Vector3, H: number, opts: { back: number; side: number; height: number; lookBias: number; fov: number }): void {
+    //상대 → 나 방향(수평). 그 뒤로 물러난다
+    const away = new THREE.Vector3(hero.x - foe.x, 0, hero.z - foe.z);
+    if (away.lengthSq() < 1e-6) away.set(-1, 0, 0);
+    away.normalize();
+    //옆 어긋남은 대기 카메라 쪽(+z 쪽)으로. 어깨 너머로 상대가 보이게
+    const side = new THREE.Vector3(-away.z, 0, away.x);
+    if (side.z < 0) side.negate();
+    this.goalPos
+      .copy(hero)
+      .addScaledVector(away, opts.back * H)
+      .addScaledVector(side, opts.side * H)
+      .add(new THREE.Vector3(0, opts.height * H, 0));
+    const look = hero.clone().lerp(foe, opts.lookBias);
+    this.probe.position.copy(this.goalPos);
+    this.probe.lookAt(look);
+    this.goalQuat.copy(this.probe.quaternion);
+    this.goalFov = opts.fov;
+    this.focused = true;
+  }
+
   release(): void {
     this.focused = false;
   }

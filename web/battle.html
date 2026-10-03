@@ -49,6 +49,13 @@
       <button id="cmd-go" class="go" type="button" disabled>교전 시작</button>
     </section>
 
+    <!-- 결단 실험 (SPEC-008 §4). 교전 직전에 자세를 고른다 -->
+    <section id="decision" class="decision" aria-live="polite" hidden>
+      <div class="decision-timer"><i id="decision-bar"></i></div>
+      <p id="decision-context" class="decision-context"></p>
+      <div id="decision-choices" class="decision-choices"></div>
+    </section>
+
     <!-- 메뉴 겹창. 개발 도구는 여기에만 둔다 (SPEC-007 §9.4 규칙 2) -->
     <div id="menu" class="dialog menu" role="dialog" aria-labelledby="menu-title" hidden>
       <div class="head"><h2 id="menu-title">메뉴</h2><p id="status" class="status">…</p></div>
@@ -62,8 +69,12 @@
             <option value="showcase">시연 (제작용)</option>
             <option value="lab">연출 실험</option>
             <option value="envfx">환경 이펙트 검수</option>
+            <option value="decide">결단 실험 (테스트)</option>
           </select>
         </label>
+        <span id="decide-options" class="row lab-options" hidden>
+          <label class="check"><input id="decide-untimed" type="checkbox"> 시간 제한 없음</label>
+        </span>
         <span id="lab-options" class="row lab-options" hidden>
           <label class="check"><input id="lab-motion" type="checkbox"> 흔들림 줄이기</label>
           <label class="check"><input id="lab-flash" type="checkbox"> 섬광 줄이기</label>

@@ -589,3 +589,49 @@ html.kit .callout3d.plate.win b { background-image: url(../assets/ui/kit/U14_cla
 html.kit .callout3d.plate.lose b { background-image: url(../assets/ui/kit/U14_clash_lose.png); }
 html.kit .callout3d.plate.draw b { background-image: url(../assets/ui/kit/U14_clash_draw.png); }
 html.kit .callout3d.plate small { display: inline-block; margin-top: calc(var(--u) * 2px); padding: 0 0.6em; background: rgba(9, 15, 24, 0.85); color: var(--dim); }
+
+/* ── 결단 실험 (SPEC-008 §4). 화면 아래 가운데 자세 네 칸 + 위에 줄어드는 시간 막대 ── */
+.decision {
+  position: absolute;
+  left: 340px;
+  top: 806px;
+  width: 1240px;
+  display: grid;
+  gap: 12px;
+  padding: 16px 20px 20px;
+  background: linear-gradient(0deg, rgba(9, 15, 24, 0.94), rgba(9, 15, 24, 0.78));
+  border-top: 2px solid var(--edge);
+  pointer-events: auto;
+  animation: decision-in 0.18s ease-out;
+}
+.decision-timer { height: 8px; background: rgba(12, 10, 9, 0.7); border: 1px solid var(--edge); }
+.decision-timer i { display: block; height: 100%; width: 100%; background: var(--gold); transform-origin: left center; }
+.decision.untimed .decision-timer i { background: var(--faint); }
+.decision-context { margin: 0; text-align: center; font-size: 28px; font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; }
+.decision-context small { margin-left: 14px; font-size: 24px; color: var(--gold); }
+.decision-choices { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+.stance {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 14px;
+  align-items: center;
+  min-height: 108px;
+  padding: 12px 16px;
+  background: var(--plate);
+  border: 2px solid var(--edge);
+  border-top: 4px solid var(--edge);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.stance:hover, .stance:focus-visible { background: var(--plate-hi); border-color: var(--gold); }
+.stance kbd { grid-row: 1 / span 2; display: grid; place-items: center; width: 44px; height: 44px; border: 2px solid var(--gold); font: 800 26px/1 inherit; color: var(--gold); }
+.stance b { font-size: 32px; font-weight: 800; letter-spacing: 0.06em; }
+.stance small { font-size: 20px; line-height: 1.25; word-break: keep-all; color: var(--dim); }
+.stance[data-stance="press"] { border-top-color: var(--sp); }
+.stance[data-stance="brace"] { border-top-color: var(--win); }
+.stance[data-stance="allIn"] { border-top-color: var(--hp); }
+@keyframes decision-in { 0% { opacity: 0; transform: translateY(20px); } 100% { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .decision { animation: none; } }

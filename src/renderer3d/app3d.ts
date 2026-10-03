@@ -4,11 +4,11 @@
 //명령 패널·현황판·단축키는 2D 화면과 같은 DOM 을 그대로 쓴다. 이 파일은 배선만 한다
 
 import { WeightedEnemyAi, type EnemyAiContext } from '../domain/ai.js';
-import { Battle, type BattleOrder } from '../domain/battle.js';
+import { Battle, type BattleOrder, type DecisionRequest } from '../domain/battle.js';
 import { ClashResolver } from '../domain/clash.js';
 import { BattleCatalog, parseBattleData } from '../domain/data.js';
 import { createSeededRng, type Rng } from '../domain/rng.js';
-import type { BattleEvent, Side } from '../domain/types.js';
+import type { BattleEvent, Side, Stance } from '../domain/types.js';
 import { ultimateStage, type GaugeLayout } from '../render/arc-gauge.js';
 import { toStageSteps } from '../render/exchange.js';
 import { showcaseCycle, type ShowcaseCard } from '../render/showcase.js';
@@ -391,13 +391,16 @@ async function main(): Promise<void> {
   //턴 진행 단계 (2D 화면과 같다)
   //showcase: 제작 확인용 자동 시연 (SPEC-005 §13)
   //turnEnd: 턴 마감을 재생하는 동안. 결행 칸 '다음 턴 대기'가 이때 보인다 (SPEC-004 §14.4)
-  type Phase = 'waitInput' | 'input' | 'resolving' | 'turnEnd' | 'done' | 'showcase';
+  //stepping: 결단 실험에서 교전을 한 건씩 돌리는 동안 (SPEC-008)
+  type Phase = 'waitInput' | 'input' | 'stepping' | 'resolving' | 'turnEnd' | 'done' | 'showcase';
   let phase: Phase = 'done';
   let session: Session | null = null;
   let input: OrderInput | null = null;
   let enemyTargets = new Map<string, string>();
   let restSec = 0;
-  const playing = (): boolean => (modeSelect?.value ?? 'play') === 'play';
+  //결단 실험(decide)도 입력은 직접 조작과 같다 (SPEC-008)
+  const deciding = (): boolean => modeSelect?.value === 'decide';
+  const playing = (): boolean => (modeSelect?.value ?? 'play') === 'play' || deciding();
   //연출 실험(lab)도 시연 걸음을 돈다. 실험 기법만 더 켠다 (SPEC-005 §15)
   const labbing = (): boolean => modeSelect?.value === 'lab';
   const showcasing = (): boolean => modeSelect?.value === 'showcase' || labbing();
@@ -420,6 +423,96 @@ async function main(): Promise<void> {
   //이벤트를 걸음으로 묶어 무대에 넘긴다 (§9.2)
   const feed = (events: readonly BattleEvent[]): void => {
     stage.play(toStageSteps(events, { isPlayerSide: isAlly }));
+  };
+
+  //결단 실험 (SPEC-008 §4). 교전 직전에 카메라를 어깨 뒤로 붙이고 자세 네 칸을 띄운다
+  const decisionBox = document.getElementById('decision');
+  const decisionBar = document.getElementById('decision-bar');
+  const decisionContext = document.getElementById('decision-context');
+  const decisionChoices = document.getElementById('decision-choices');
+  const decideOptions = document.getElementById('decide-options');
+  const untimed = document.getElementById('decide-untimed') as HTMLInputElement | null;
+  const STANCES: readonly Stance[] = ['steady', 'press', 'brace', 'allIn'];
+  const STANCE_NAMES: Record<Stance, string> = { steady: '그대로', press: '밀어붙인다', brace: '받아낸다', allIn: '끝장낸다' };
+  //열려 있는 결단과 연 시각(실제 시간 ms)
+  let decision: { request: DecisionRequest; openedMs: number } | null = null;
+
+  //자세 설명. 수치는 battle-data.json 의 decisions 에서 읽는다
+  const stanceNote = (stance: Stance, kind: DecisionRequest['kind']): string => {
+    const d = loaded.catalog.decisions;
+    const pct = (x: number): string => `${Math.round(x * 100)}`;
+    if (!d || stance === 'steady') return '아무것도 안 바뀐다';
+    if (stance === 'press') return `정신력 −${d.press.mentalityCost} · 앞면 +${pct(d.press.frontChanceBonus)}%p`;
+    if (stance === 'brace') {
+      return kind === 'oneSided'
+        ? `주는 피해 ×${d.brace.dealtMultiplier}`
+        : `지면 피해 ×${d.brace.takenMultiplier} · 정신력 +${d.brace.mentalityOnLose} / 이기면 주는 피해 ×${d.brace.dealtMultiplier}`;
+    }
+    return kind === 'oneSided' ? `주는 피해 ×${d.allIn.dealtMultiplier}` : `이기면 주는 피해 ×${d.allIn.dealtMultiplier} / 지면 받는 피해 ×${d.allIn.takenMultiplier}`;
+  };
+
+  const openDecision = (request: DecisionRequest): void => {
+    if (!session || !decisionBox || !decisionContext || !decisionChoices) return;
+    decision = { request, openedMs: performance.now() };
+    stage.decisionFocus(request.allyId, request.opponentId);
+    const ally = session.battle.combatant(request.allyId);
+    const foe = session.battle.combatant(request.opponentId);
+    const chance = Math.round(session.battle.frontChance(request.allyId, request.skillId) * 100);
+    const skillName = cardView(loaded.catalog, request.skillId, { name: display.cardKit[ally.base.id]?.[request.skillId], terms: display.terms }).name;
+    decisionContext.replaceChildren(`${ally.base.name} → ${foe.base.name} · ${request.kind === 'clash' ? '합' : '일방 공격'}`);
+    const small = document.createElement('small');
+    small.textContent = `${skillName} · 앞면 ${chance}%`;
+    decisionContext.append(small);
+    decisionChoices.replaceChildren(
+      ...STANCES.map((stance, i) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'stance';
+        button.dataset['stance'] = stance;
+        const key = document.createElement('kbd');
+        key.textContent = String(i + 1);
+        const name = document.createElement('b');
+        name.textContent = STANCE_NAMES[stance];
+        const note = document.createElement('small');
+        note.textContent = stanceNote(stance, request.kind);
+        button.append(key, name, note);
+        button.addEventListener('click', () => chooseStance(stance));
+        return button;
+      }),
+    );
+    decisionBox.classList.toggle('untimed', untimed?.checked ?? false);
+    if (decisionBar) decisionBar.style.transform = 'scaleX(1)';
+    decisionBox.hidden = false;
+  };
+
+  //결단을 닫는다. 재시작·모드 변경에도 쓴다
+  const closeDecision = (): void => {
+    if (!decision) return;
+    decision = null;
+    if (decisionBox) decisionBox.hidden = true;
+    stage.decisionRelease();
+  };
+
+  //자세를 정하면 그 교전 한 건을 그 자세로 돌려 재생한다
+  const chooseStance = (stance: Stance): void => {
+    if (!session || !decision) return;
+    const { allyId } = decision.request;
+    closeDecision();
+    if (stance !== 'steady') stage.stanceCallout(allyId, STANCE_NAMES[stance]);
+    feed(session.battle.resolveNext(stance));
+  };
+
+  //무대가 쉬면 다음 교전을 본다. 결단 대상이면 결단을 열고, 아니면 바로 돌린다. 다 돌면 기존 턴 마감 흐름으로 넘긴다
+  const stepNext = (): void => {
+    if (!session) return;
+    const battle = session.battle;
+    if (battle.phase !== 'resolving') {
+      phase = 'resolving';
+      return;
+    }
+    const request = battle.peekDecision();
+    if (request) openDecision(request);
+    else feed(battle.resolveNext());
   };
 
   //발밑 결행 칸. 흔적 합과 결행 카드·대기 플래그를 도메인에서 읽는다 (SPEC-004 §14.4)
@@ -546,6 +639,8 @@ async function main(): Promise<void> {
 
   const restart = (): void => {
     if (result) result.hidden = true;
+    closeDecision();
+    decideOptions?.toggleAttribute('hidden', !deciding());
     const seed = Number(seedInput.value) || 1;
     session = new Session(loaded.catalog, createSeededRng(seed), loaded.stage.battle);
     stage.reset(session.roster());
@@ -571,7 +666,7 @@ async function main(): Promise<void> {
     }
     restSec = 0;
     input = null;
-    status.textContent = playing() ? '전투 중' : `자동 관전 · 시드 ${seed}`;
+    status.textContent = deciding() ? '결단 실험 (테스트)' : playing() ? '전투 중' : `자동 관전 · 시드 ${seed}`;
     turnLabel.textContent = '1';
     phase = 'resolving';
     openTurn();
@@ -614,6 +709,12 @@ async function main(): Promise<void> {
     input = null;
     showTargets(false);
     stage.setSelection({ ally: null, target: null, pickable: [] });
+    //결단 실험은 한 건씩 돈다. 루프가 무대가 쉴 때마다 다음 교전을 본다
+    if (deciding()) {
+      phase = 'stepping';
+      panel.idle('교전 중… 교전 직전마다 자세를 고른다 (1~4)');
+      return;
+    }
     feed(session.battle.resolve());
     phase = 'resolving';
     panel.idle('교전 중…');
@@ -677,6 +778,16 @@ async function main(): Promise<void> {
       document.getElementById('menu')?.setAttribute('hidden', '');
       return closeHelp();
     }
+    if (decision) {
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) return;
+      const n = Number(event.key);
+      const stance = Number.isInteger(n) ? STANCES[n - 1] : undefined;
+      if (stance) {
+        event.preventDefault();
+        chooseStance(stance);
+      }
+      return;
+    }
     if (phase !== 'input' || !input || !session) return;
     if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) return;
     if (event.key === 'Enter') {
@@ -704,6 +815,15 @@ async function main(): Promise<void> {
     if (!session) return;
     //시연으로 들어가거나 나오면 처음부터 다시 한다
     if (showcasing() || phase === 'showcase' || modeSelect?.value === 'envfx' || reviewing) return restart();
+    decideOptions?.toggleAttribute('hidden', !deciding());
+    if (playing()) status.textContent = deciding() ? '결단 실험 (테스트)' : '전투 중';
+    //결단 실험에서 나가면 남은 교전을 전부 기본 자세로 돌린다
+    if (!deciding() && phase === 'stepping') {
+      closeDecision();
+      if (session.battle.phase === 'resolving') feed(session.battle.resolve());
+      phase = 'resolving';
+      panel.idle(playing() ? '교전 중…' : '자동 관전 중');
+    }
     if (!playing() && (phase === 'input' || phase === 'waitInput')) {
       input = null;
       showTargets(false);
@@ -749,6 +869,15 @@ async function main(): Promise<void> {
     stage.tick(deltaSec);
     if (session && phase === 'waitInput' && stage.idle) beginInput();
     if (session && phase === 'showcase' && stage.idle) startShowcase();
+    if (session && phase === 'stepping' && stage.idle && !decision) stepNext();
+    //결단 시간 막대. 배속과 상관없이 실제 시간으로 줄고, 다 되면 그대로
+    if (decision && decisionBar) {
+      const limit = loaded.stage.decision.seconds * 1000;
+      const left = untimed?.checked ? 1 : Math.max(0, 1 - (performance.now() - decision.openedMs) / limit);
+      decisionBox?.classList.toggle('untimed', untimed?.checked ?? false);
+      decisionBar.style.transform = `scaleX(${left})`;
+      if (left <= 0) chooseStance('steady');
+    }
     if (session && phase === 'resolving' && stage.idle) {
       restSec -= deltaSec;
       if (restSec <= 0) {
