@@ -6,7 +6,7 @@
 
 import * as THREE from 'three';
 import { parseRibbonConfig, slashDuration, slashSample, originalFrameAt } from '../render/ribbon-slash.js';
-import { parseSpaceConfig } from '../render/space-slash.js';
+import { parseSpaceConfig, viewPitchDeg } from '../render/space-slash.js';
 import type { SpriteCatalog } from '../render/manifest.js';
 import { loadCharacter } from '../renderer/assets.js';
 import { Backdrop } from './backdrop.js';
@@ -125,7 +125,7 @@ async function main(): Promise<void> {
   }
 
   //공간형 효과. 발 기준점에 붙인다
-  const effect = new SpaceSlashEffect(config, space, H, strip);
+  const effect = new SpaceSlashEffect(config, space, H, strip, viewPitchDeg(backdropConfig.camera));
   effect.root.position.copy(allyAt);
   scene.add(effect.root);
 
@@ -135,6 +135,8 @@ async function main(): Promise<void> {
   const chest = (doll: PaperDoll): THREE.Vector3 => doll.chest(H * 0.5);
   let shot: 'combat' | 'close' | 'home' = 'combat';
   let orbitDeg = 0;
+  //궤도 높이: 카일 가슴을 중심으로 위로 올려 내려다본다 (도)
+  let orbitUpDeg = 0;
   const applyShot = (): void => {
     if (shot !== 'home') rig.focus(chest(flatDoll), chest(enemyDoll), 1);
     else rig.release();
@@ -151,6 +153,13 @@ async function main(): Promise<void> {
     rig.write(Math.max(1e-4, dtSec), realSec);
     baseQuat.copy(camera.quaternion);
     if (shot === 'close') camera.position.lerp(chest(flatDoll), space.lab.closeIn);
+    if (orbitUpDeg !== 0) {
+      const pivot = chest(flatDoll);
+      const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
+      const q = new THREE.Quaternion().setFromAxisAngle(right, (-orbitUpDeg * Math.PI) / 180);
+      camera.position.sub(pivot).applyQuaternion(q).add(pivot);
+      camera.quaternion.premultiply(q);
+    }
     if (orbitDeg !== 0) {
       const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), (orbitDeg * Math.PI) / 180);
       camera.position.sub(allyAt).applyQuaternion(q).add(allyAt);
@@ -237,6 +246,16 @@ async function main(): Promise<void> {
     showOrbit();
   });
   showOrbit();
+  const orbitUp = byId<HTMLInputElement>('orbit-up');
+  const orbitUpOut = byId<HTMLOutputElement>('orbit-up-v');
+  const showOrbitUp = (): void => {
+    orbitUpOut.value = `${orbitUpDeg}°`;
+  };
+  orbitUp.addEventListener('input', () => {
+    orbitUpDeg = Number(orbitUp.value);
+    showOrbitUp();
+  });
+  showOrbitUp();
   //층 켜고 끄기
   const layerBox = (id: string, apply: (on: boolean) => void): void => {
     const box = byId<HTMLInputElement>(id);
@@ -347,7 +366,7 @@ async function main(): Promise<void> {
     readout.textContent =
       `시각 ${age.toFixed(0).padStart(4, ' ')} ms (타 ${t.toFixed(0)} ms) · ${rate}× · ` +
       (t < 0 ? '준비 장' : `head ${s.head.toFixed(3)} · tail ${s.tail.toFixed(3)} · 평면 장 ${String(originalFrameAt(t, config.timingMs.reveal) + 1).padStart(2, '0')}`) +
-      ` · 카메라 ${shot === 'combat' ? '교전' : shot === 'close' ? '근접' : '대기'} ${orbitDeg}°${showOccluder ? ' · 가림 판 보기' : ''}${missing.length ? ` · 없는 장 ${missing.join(', ')}` : ''}`;
+      ` · 카메라 ${shot === 'combat' ? '교전' : shot === 'close' ? '근접' : '대기'} 궤도 ${orbitDeg}° · 높이 ${orbitUpDeg}°${showOccluder ? ' · 가림 판 보기' : ''}${missing.length ? ` · 없는 장 ${missing.join(', ')}` : ''}`;
   };
   requestAnimationFrame(frame);
 
@@ -372,10 +391,13 @@ async function main(): Promise<void> {
       shotBox.value = s;
       applyShot();
     },
-    orbit: (deg: number) => {
+    orbit: (deg: number, up = 0) => {
       orbitDeg = deg;
       orbit.value = String(deg);
       showOrbit();
+      orbitUpDeg = up;
+      orbitUp.value = String(up);
+      showOrbitUp();
     },
     layer: (id: string, on: boolean) => {
       const box = byId<HTMLInputElement>(id);

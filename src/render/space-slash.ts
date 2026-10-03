@@ -1,7 +1,8 @@
-//물금 공간형 VFX 계산 (SPEC-005 §15.3). 렌더러를 모른다
-//§15.1 화면 평면 경로(x·y)에 깊이 z(u)를 더해 띠를 캐릭터 뒤 → 옆 → 앞으로 감는다.
+//물금 공간형 VFX 계산 (SPEC-005 §15.3·§15.3.1). 렌더러를 모른다
+//칼끝이 몸 둘레를 돌며 올려 베는 3D 궤적을 세운다: 위에서 본 깊이 z(u) 로 뒤 → 옆 → 앞을 감고,
+//높이는 게임 카메라(내려다보는 각 p)에서 원화 호에 겹치게 정한다. 단면은 휘두름 면 안쪽을 위로 세운 물 벽이다
 //깊이별 물방울·지면 물결 출처도 여기서 정하고, 시각마다 보이는지·어디 있는지를 셰이더와 같은 식으로 계산한다
-//길이는 캐릭터 키 H 배수(발 기준, x 오른쪽 · y 위 · z 카메라 쪽), 시간은 게임 ms
+//길이는 캐릭터 키 H 배수(발 기준, x 오른쪽 · y 월드 위 · z 카메라 쪽 수평), 시간은 게임 ms
 
 import { arcLengthPoints, seeded, slashSample, tableAt, type RibbonSlashConfig, type Vec2 } from './ribbon-slash.js';
 
@@ -23,11 +24,11 @@ export interface SpaceDropLayer {
 
 //realtime-vfx.json 의 space 모양
 export interface SpaceSlashConfig {
-  //[u, 깊이 H] 표. 꼬리 음수(몸 뒤) → 머리 양수(몸 앞)
+  //[u, 깊이 H] 표. 위에서 본 궤적: 꼬리 음수(몸 뒤) → 앞 최대 → 머리
   depthH: readonly Vec2[];
-  //[u, 도] 표. 단면을 진행 축으로 기울이는 각
-  bankDeg: readonly Vec2[];
-  //안쪽 물결이 카메라 쪽으로 말리는 양 (H, 안쪽 끝에서)
+  //[u, 도] 표. 휘두름 면 안쪽 방향을 월드 위로 세우는 각 (물 벽이 서 보이게)
+  liftDeg: readonly Vec2[];
+  //안쪽 물결 끝이 띠 면 위쪽 법선으로 말리는 양 (H, 안쪽 끝에서)
   curlH: number;
   //단면 줄 수 (휜 단면을 몇 줄로 나눌지)
   crossRows: number;
@@ -49,7 +50,7 @@ export interface SpaceSlashConfig {
   ripples: {
     //호에서 고르는 출처 수 (발 자리 하나는 따로)
     count: number;
-    //호가 바닥에 이보다 가까운 구간에서 고른다 (H)
+    //궤적이 가장 낮은 곳에서 이만큼 높은 데까지의 구간에서 고른다 (H)
     groundReachH: number;
     footRipple: boolean;
     //고리 퍼지는 속도 (H/초)
@@ -66,12 +67,13 @@ export interface SpaceSlashConfig {
   lab: { allyX: number; enemyX: number; closeIn: number };
 }
 
-//띠 중심선 한 점. p 위치(H), tangent 진행 방향, cross 단면 바깥 방향(단위), 모두 3D
+//띠 중심선 한 점. p 위치(H), tangent 진행 방향, cross 단면 바깥 방향(단위, 물결 몸통 반대쪽), normal 띠 면 위쪽 법선. 모두 3D
 export interface SpacePoint {
   u: number;
   p: Vec3;
   tangent: Vec3;
   cross: Vec3;
+  normal: Vec3;
 }
 
 //깊이 물방울 하나. 시각 0 의 자리·흩어지는 방향·크기·소멸 지연
@@ -127,7 +129,7 @@ export function parseSpaceConfig(raw: unknown): SpaceSlashConfig {
   const root = raw as { space?: SpaceSlashConfig } | null;
   const c = root?.space;
   if (!c || typeof c !== 'object') throw new SpaceConfigError('realtime-vfx.json 에 space 가 없다');
-  if (!isTable(c.depthH) || !isTable(c.bankDeg)) throw new SpaceConfigError('space.depthH·bankDeg 는 u 가 커지는 [u, 값] 표');
+  if (!isTable(c.depthH) || !isTable(c.liftDeg)) throw new SpaceConfigError('space.depthH·liftDeg 는 u 가 커지는 [u, 값] 표');
   if (!(c.crossRows >= 2)) throw new SpaceConfigError('space.crossRows 는 2 이상');
   if (!(c.occluderAlphaCut > 0 && c.occluderAlphaCut < 1)) throw new SpaceConfigError('space.occluderAlphaCut 는 0~1 사이');
   if (!Array.isArray(c.droplets?.layers) || c.droplets.layers.length === 0) throw new SpaceConfigError('space.droplets.layers 가 없다');
@@ -140,38 +142,77 @@ export function depthAt(space: SpaceSlashConfig, u: number): number {
   return tableAt(space.depthH, u);
 }
 
-//띠 중심선. §15.1 호 길이 등간격 점에 깊이를 붙이고, 3D 진행 방향과 단면 방향(바깥 법선을 진행 축으로 bank 만큼 돌린 것)을 구한다
-export function spacePath(config: RibbonSlashConfig, space: SpaceSlashConfig, segments: number): SpacePoint[] {
+//게임 카메라가 내려다보는 각 (도). 배경 기준 카메라 자리에서 계산한다
+export function viewPitchDeg(camera: { back: number; height: number; lookAtHeight: number }): number {
+  return (Math.atan2(camera.height - camera.lookAtHeight, camera.back) * 180) / Math.PI;
+}
+
+//3D 점이 게임 카메라에서 원화 판 위 어디에 겹쳐 보이는지 (평행 투영 근사). x 그대로, y 는 카메라 위 방향 성분
+export function screenOf(p: Vec3, pitchDeg: number): [number, number] {
+  const a = (pitchDeg * Math.PI) / 180;
+  return [p[0], p[1] * Math.cos(a) - p[2] * Math.sin(a)];
+}
+
+//휘두름 면 법선 (뉴웰 방법). 위쪽을 향하게 맞춘다
+export function swingNormal(points: readonly Vec3[]): Vec3 {
+  let n: Vec3 = [0, 0, 0];
+  for (let i = 0; i < points.length; i++) {
+    const a = points[i] as Vec3;
+    const b = points[(i + 1) % points.length] as Vec3;
+    n = [n[0] + (a[1] - b[1]) * (a[2] + b[2]), n[1] + (a[2] - b[2]) * (a[0] + b[0]), n[2] + (a[0] - b[0]) * (a[1] + b[1])];
+  }
+  const u = norm3(n);
+  return u[1] < 0 ? [-u[0], -u[1], -u[2]] : u;
+}
+
+//띠 중심선 (§15.3.1). 원화 호 길이 등간격 점마다 깊이 z(u) 를 붙이고, 게임 카메라에서 원화 호에 겹치게 높이를 정한다
+//단면 안쪽 = 휘두름 면 안에서 진행 방향에 직각, 원화의 안쪽(물결 몸통)과 같은 쪽. 그것을 월드 위로 liftDeg 만큼 세운다
+export function spacePath(config: RibbonSlashConfig, space: SpaceSlashConfig, segments: number, pitchDeg: number): SpacePoint[] {
+  const a = (pitchDeg * Math.PI) / 180;
   const flat = arcLengthPoints(config.path.points, segments);
-  const centers: Vec3[] = flat.map((pt) => [pt.p[0], pt.p[1], depthAt(space, pt.u)]);
+  const centers: Vec3[] = flat.map((pt) => {
+    const z = depthAt(space, pt.u);
+    return [pt.p[0], (pt.p[1] + z * Math.sin(a)) / Math.cos(a), z];
+  });
+  const n = swingNormal(centers);
+  const up: Vec3 = [0, 1, 0];
   return flat.map((pt, i) => {
     const prev = centers[Math.max(0, i - 1)] as Vec3;
     const next = centers[Math.min(centers.length - 1, i + 1)] as Vec3;
     const tangent = norm3(sub(next, prev));
-    //화면 평면 바깥 법선 (진행 방향 왼쪽). 3D 진행 방향에 직교하게 다듬는다
-    const n0: Vec3 = [-pt.tangent[1], pt.tangent[0], 0];
-    const k = dot3(n0, tangent);
-    const n = norm3([n0[0] - tangent[0] * k, n0[1] - tangent[1] * k, n0[2] - tangent[2] * k]);
-    const b = cross3(tangent, n);
-    const a = (tableAt(space.bankDeg, pt.u) * Math.PI) / 180;
-    const cross = norm3([n[0] * Math.cos(a) + b[0] * Math.sin(a), n[1] * Math.cos(a) + b[1] * Math.sin(a), n[2] * Math.cos(a) + b[2] * Math.sin(a)]);
-    return { u: pt.u, p: centers[i] as Vec3, tangent, cross };
+    //휘두름 면 안의 진행 직각 방향. 원화 안쪽(왼쪽 법선의 반대)과 화면에서 같은 쪽이 되게 부호를 고른다
+    let inward = norm3(cross3(n, tangent));
+    const seen = screenOf(inward, pitchDeg);
+    if (seen[0] * pt.tangent[1] - seen[1] * pt.tangent[0] < 0) inward = [-inward[0], -inward[1], -inward[2]];
+    //위로 세운다. 진행 방향과 직교하게 다듬는다
+    const lift = (tableAt(space.liftDeg, pt.u) * Math.PI) / 180;
+    let w: Vec3 = [inward[0] * Math.cos(lift) + up[0] * Math.sin(lift), inward[1] * Math.cos(lift) + up[1] * Math.sin(lift), inward[2] * Math.cos(lift) + up[2] * Math.sin(lift)];
+    const k = dot3(w, tangent);
+    w = norm3([w[0] - tangent[0] * k, w[1] - tangent[1] * k, w[2] - tangent[2] * k]);
+    const cross: Vec3 = [-w[0], -w[1], -w[2]];
+    let normal = norm3(cross3(tangent, w));
+    if (normal[1] < 0) normal = [-normal[0], -normal[1], -normal[2]];
+    return { u: pt.u, p: centers[i] as Vec3, tangent, cross, normal };
   });
 }
 
-//단면 위 한 점. d 는 호에서 거리(H, + 바깥 · − 안쪽). 안쪽은 끝으로 갈수록 카메라 쪽(z+)으로 말린다
+//단면 위 한 점. d 는 호에서 거리(H, + 바깥 · − 안쪽). 안쪽은 끝으로 갈수록 띠 면 위쪽 법선으로 말린다
 //innerMax 는 안쪽 끝 거리(양수, 텍스처 아래 끝)
 export function crossPoint(space: SpaceSlashConfig, pt: SpacePoint, d: number, innerMax: number): Vec3 {
   const t = d < 0 ? Math.min(1, -d / Math.max(1e-6, innerMax)) : 0;
   const curl = space.curlH * t * t;
-  return [pt.p[0] + pt.cross[0] * d, pt.p[1] + pt.cross[1] * d, pt.p[2] + pt.cross[2] * d + curl];
+  return [
+    pt.p[0] + pt.cross[0] * d + pt.normal[0] * curl,
+    pt.p[1] + pt.cross[1] * d + pt.normal[1] * curl,
+    pt.p[2] + pt.cross[2] * d + pt.normal[2] * curl,
+  ];
 }
 
 //깊이 물방울 자리. 층마다 씨앗 고정. u 는 칼끝 쪽에 몰리고, 바깥(호 볼록한 쪽)으로 떨어진다
-export function spaceDroplets(config: RibbonSlashConfig, space: SpaceSlashConfig): SpaceDroplet[] {
+export function spaceDroplets(config: RibbonSlashConfig, space: SpaceSlashConfig, pitchDeg: number): SpaceDroplet[] {
   const d = space.droplets;
   const rand = seeded(d.seed);
-  const dense = spacePath(config, space, 256);
+  const dense = spacePath(config, space, 256, pitchDeg);
   const lerp = (r: Vec2, t: number): number => r[0] + (r[1] - r[0]) * t;
   const out: SpaceDroplet[] = [];
   d.layers.forEach((layer, li) => {
@@ -211,12 +252,13 @@ export function spaceDropletPos(config: RibbonSlashConfig, space: SpaceSlashConf
   return [drop.pos[0] + drop.dir[0] * drop.driftH * t, Math.max(drop.sizeH * 0.5, drop.pos[1] + drop.dir[1] * drop.driftH * t - g), drop.pos[2] + drop.dir[2] * drop.driftH * t];
 }
 
-//지면 물결 출처. 호가 바닥에 groundReachH 보다 가까운 구간에서 count 곳을 고르게, 발 자리 하나를 더한다
+//지면 물결 출처. 궤적이 가장 낮은 곳에서 groundReachH 안쪽 구간에서 count 곳을 고르게, 발 자리 하나를 더한다
 //시작 시각은 머리가 그 u 를 지나는 때 (전개 시간 × u)
-export function rippleSources(config: RibbonSlashConfig, space: SpaceSlashConfig): RippleSource[] {
+export function rippleSources(config: RibbonSlashConfig, space: SpaceSlashConfig, pitchDeg: number): RippleSource[] {
   const r = space.ripples;
-  const path = spacePath(config, space, 256);
-  const near = path.filter((pt) => pt.p[1] <= r.groundReachH);
+  const path = spacePath(config, space, 256, pitchDeg);
+  const lowest = Math.min(...path.map((pt) => pt.p[1]));
+  const near = path.filter((pt) => pt.p[1] <= lowest + r.groundReachH);
   const out: RippleSource[] = [];
   if (near.length > 0 && r.count > 0) {
     const u0 = (near[0] as SpacePoint).u;

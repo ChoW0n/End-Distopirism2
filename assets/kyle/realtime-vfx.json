@@ -39,10 +39,10 @@
     "flow": true, "flare": false, "glow": false, "sparkle": true, "spray": false, "extraDroplets": false,
     "flowSpeedU": 0.35, "flareMs": 220, "sparkleDensity": 0.12, "sprayCount": 260, "sprayMs": 250, "sprayDistH": 0.12
   },
-  "_space": "§15.3 공간형 시험 (web/vfx-space.html 전용). depthH 띠 중심 깊이 [u, H] (− 몸 뒤 · + 카메라 쪽), bankDeg 단면을 진행 축으로 기울이는 각, curlH 안쪽 물결 끝이 카메라 쪽으로 말리는 양, crossRows 단면 줄 수, occluderAlphaCut 몸 가림 판이 깊이를 쓰는 알파, preRollMs 타 앞 준비 장. droplets.layers 깊이 층(relative 면 띠 깊이에 더함, dim 1 미만이면 짙은 남 쪽, soft 테 번짐), gravityH 초당² 떨어짐. ripples 지면 물결(groundReachH 호가 바닥에 이만큼 가까운 구간, speedH 퍼짐 H/초, lagU 출처 u 보다 늦게 꺼짐). lab 시험 장면 월드 x·근접 카메라가 다가가는 비율",
+  "_space": "§15.3 공간형 시험 (web/vfx-space.html 전용). depthH 위에서 본 휘두름 궤적 깊이 [u, H] (− 몸 뒤 · + 카메라 쪽. 위에서 본 각 φ 를 u 에 따라 −40°(오른쪽 뒤) → 178°(왼쪽 옆) 고르게 돌려 z = 0.8·sin φ 로 뽑았다, §15.3.1 높이는 게임 카메라에서 원화 호에 겹치게 계산), liftDeg 휘두름 면 안쪽을 월드 위로 세우는 각, curlH 안쪽 물결 끝이 띠 면 위로 말리는 양, crossRows 단면 줄 수, occluderAlphaCut 몸 가림 판이 깊이를 쓰는 알파, preRollMs 타 앞 준비 장. droplets.layers 깊이 층(relative 면 띠 깊이에 더함, dim 1 미만이면 짙은 남 쪽, soft 테 번짐), gravityH 초당² 떨어짐. ripples 지면 물결(groundReachH 궤적 가장 낮은 곳에서 이만큼 높은 데까지, speedH 퍼짐 H/초, lagU 출처 u 보다 늦게 꺼짐). lab 시험 장면 월드 x·근접 카메라가 다가가는 비율",
   "space": {
-    "depthH": [[0, -0.45], [0.15, -0.32], [0.3, -0.16], [0.42, 0], [0.55, 0.18], [0.75, 0.3], [1, 0.28]],
-    "bankDeg": [[0, 24], [0.45, 0], [1, -18]],
+    "depthH": [[0, -0.514], [0.05, -0.389], [0.1, -0.25], [0.15, -0.102], [0.2, 0.05], [0.25, 0.2], [0.3, 0.343], [0.35, 0.474], [0.4, 0.587], [0.45, 0.679], [0.5, 0.747], [0.55, 0.788], [0.6, 0.8], [0.65, 0.783], [0.7, 0.739], [0.75, 0.667], [0.8, 0.572], [0.85, 0.455], [0.9, 0.323], [0.95, 0.179], [1, 0.028]],
+    "liftDeg": [[0, 50], [0.5, 40], [1, 30]],
     "curlH": 0.16,
     "crossRows": 8,
     "occluderAlphaCut": 0.5,
@@ -52,14 +52,14 @@
       "layers": [
         { "name": "far", "count": 36, "depthH": [-0.75, -0.35], "relative": false, "sizeH": [0.012, 0.03], "dim": 0.55, "soft": 0.15 },
         { "name": "mid", "count": 60, "depthH": [-0.08, 0.08], "relative": true, "sizeH": [0.014, 0.04], "dim": 1, "soft": 0.3 },
-        { "name": "near", "count": 10, "depthH": [0.55, 1.0], "relative": false, "sizeH": [0.022, 0.045], "dim": 0.8, "soft": 0.85 }
+        { "name": "near", "count": 10, "depthH": [0.85, 1.25], "relative": false, "sizeH": [0.022, 0.045], "dim": 0.8, "soft": 0.85 }
       ],
       "offsetH": [0.03, 0.4],
       "lagU": [0.03, 0.14],
       "driftH": [0.06, 0.3],
       "gravityH": 0.9
     },
-    "ripples": { "count": 3, "groundReachH": 0.24, "footRipple": true, "speedH": 1.3, "lifeMs": 650, "rings": 2, "ringGapH": 0.12, "ringWidthH": 0.024, "opacity": 0.5, "lagU": 0.08 },
+    "ripples": { "count": 3, "groundReachH": 0.12, "footRipple": true, "speedH": 1.3, "lifeMs": 650, "rings": 2, "ringGapH": 0.12, "ringWidthH": 0.024, "opacity": 0.5, "lagU": 0.08 },
     "lab": { "allyX": -0.55, "enemyX": 0.55, "closeIn": 0.5 }
   },
   "render": { "glowOpacity": 0.32, "seed": 101 },

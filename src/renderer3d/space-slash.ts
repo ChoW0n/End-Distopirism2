@@ -1,4 +1,4 @@
-//물금 공간형 VFX (SPEC-005 §15.3). 승인된 띠 질감을 캐릭터 뒤 → 옆 → 앞으로 감기는 휜 메시에 입히고,
+//물금 공간형 VFX (SPEC-005 §15.3·§15.3.1). 승인된 띠 질감을 몸 둘레를 도는 3D 휘두름 궤적(뒤 → 옆 → 앞)의 휜 메시에 입히고,
 //깊이별 물방울·지면 물결을 따로 그린다. 계산은 src/render/space-slash.ts, 여기는 three.js 메시와 uniform 만 맡는다
 //층(띠 몸통·띠 빛·물방울·물결)은 각각 켜고 끈다. 몸 가림은 부르는 쪽이 깊이만 쓰는 몸 판을 먼저 그려서 한다
 //시각은 게임 ms 하나로만 정해진다 (같은 시각이면 같은 그림). 시험 화면 전용이라 인스턴스는 하나다
@@ -123,7 +123,7 @@ void main() {
     vec2 dv = vXZ - s.xy;
     float dist = length(dv);
     float ang = atan(dv.y, dv.x);
-    float wob = (0.55 * sin(ang * 5.0 + s.w * 40.0) + 0.45 * sin(ang * 11.0 + s.w * 17.0)) * uWidth * 0.9;
+    float wob = (0.6 * sin(ang * 3.0 + s.w * 40.0) + 0.4 * sin(ang * 7.0 + s.w * 17.0)) * uWidth * 0.35;
     for (int k = 0; k < 4; k++) {
       float fk = float(k);
       if (fk >= uRings) break;
@@ -156,10 +156,8 @@ export interface SpaceLayers {
 export class SpaceSlashEffect {
   //장면에 붙인다. 위치 = 발 기준점, x 배율 = 바라보는 쪽
   readonly root = new THREE.Group();
-  //띠·물방울 묶음. 원화 판과 같은 방향(게임 카메라를 향함)으로 돌려 깊이 0 경로가 원화 호에 겹치게 한다
+  //띠·물방울·물결 묶음. 월드 위는 그대로 두고 좌우(요)만 게임 카메라 쪽으로 돈다 (§15.3.1 좌표)
   private readonly oriented = new THREE.Group();
-  //물결 묶음. 바닥에 누워 있어야 하므로 좌우(요)만 돈다
-  private readonly ground = new THREE.Group();
   readonly layers: SpaceLayers = { ribbon: true, glow: true, droplets: true, ripples: true };
   //화려함 옵션 (§15.2 승인 기본값: 흐름·반짝임)
   readonly options: { flow: boolean; sparkle: boolean };
@@ -174,12 +172,13 @@ export class SpaceSlashEffect {
   private readonly texture: THREE.Texture;
   private age = 0;
 
-  //승인 띠 질감(strip)과 캐릭터 키(월드)로 메시를 한 번 만든다
+  //승인 띠 질감(strip)과 캐릭터 키(월드), 게임 카메라가 내려다보는 각(도)으로 메시를 한 번 만든다
   constructor(
     private readonly config: RibbonSlashConfig,
     private readonly space: SpaceSlashConfig,
     private readonly H: number,
     strip: StripSource,
+    private readonly pitchDeg: number,
   ) {
     if (!config.texture) throw new Error('공간형은 §15.2 띠 질감이 있어야 한다');
     this.options = { flow: config.options?.flow ?? false, sparkle: config.options?.sparkle ?? false };
@@ -222,7 +221,7 @@ export class SpaceSlashEffect {
     this.drops = new THREE.Points(this.buildDroplets(), dropMaterial);
 
     //지면 물결: 발 둘레 바닥 판
-    const sources = rippleSources(config, space).slice(0, MAX_RIPPLES);
+    const sources = rippleSources(config, space, pitchDeg).slice(0, MAX_RIPPLES);
     const packed = Array.from({ length: MAX_RIPPLES }, (_, i) => {
       const s = sources[i];
       return s ? new THREE.Vector4(s.x * H, s.z * H, s.startMs, s.u) : new THREE.Vector4();
@@ -271,13 +270,11 @@ export class SpaceSlashEffect {
     this.ribbonBody.renderOrder = 30;
     this.drops.renderOrder = 31;
     this.ribbonGlow.renderOrder = 32;
-    for (const o of [this.ribbonBody, this.drops, this.ribbonGlow]) {
+    for (const o of [this.ripples, this.ribbonBody, this.drops, this.ribbonGlow]) {
       o.frustumCulled = false;
       this.oriented.add(o);
     }
-    this.ripples.frustumCulled = false;
-    this.ground.add(this.ripples);
-    this.root.add(this.oriented, this.ground);
+    this.root.add(this.oriented);
     this.materials.push(body, glow, dropMaterial, rippleMaterial);
     this.geometries.push(ribbonGeometry, this.drops.geometry, floor);
     this.setAge(0);
@@ -291,7 +288,7 @@ export class SpaceSlashEffect {
     const [dTop, dBottom] = tex.dRangeH;
     const rows = this.space.crossRows;
     const H = this.H;
-    const path = spacePath(config, this.space, Math.max(128, config.path.segments));
+    const path = spacePath(config, this.space, Math.max(128, config.path.segments), this.pitchDeg);
     const positions: number[] = [];
     const uvs: number[] = [];
     const us: number[] = [];
@@ -327,7 +324,7 @@ export class SpaceSlashEffect {
   //깊이 물방울 점 (월드 = H 배)
   private buildDroplets(): THREE.BufferGeometry {
     const H = this.H;
-    const drops = spaceDroplets(this.config, this.space);
+    const drops = spaceDroplets(this.config, this.space, this.pitchDeg);
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute('position', new THREE.Float32BufferAttribute(drops.flatMap((d) => [d.pos[0] * H, d.pos[1] * H, d.pos[2] * H]), 3));
     geometry.setAttribute('aDir', new THREE.Float32BufferAttribute(drops.flatMap((d) => [...d.dir]), 3));
@@ -340,10 +337,9 @@ export class SpaceSlashEffect {
     return geometry;
   }
 
-  //원화 판 방향을 받는다 (게임 카메라 회전). 띠·물방울은 그대로 따르고, 물결은 좌우 회전만 따른다
+  //게임 카메라 회전을 받아 좌우(요)만 따른다. 월드 위·바닥은 그대로라 궤적이 실제 공간에 선다
   orient(q: THREE.Quaternion): void {
-    this.oriented.quaternion.copy(q);
-    this.ground.rotation.set(0, new THREE.Euler().setFromQuaternion(q, 'YXZ').y, 0);
+    this.oriented.rotation.set(0, new THREE.Euler().setFromQuaternion(q, 'YXZ').y, 0);
   }
 
   //화면 높이(장치 px). 물방울 크기 계산에 쓴다
