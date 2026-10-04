@@ -147,5 +147,6 @@ rollCoins(): number { }
 - **이번 턴에 돌린 결과 없이 완료·통과를 말하지 않는다.** 못 돌린 것은 "미검증"
 - superpowers 의 강한 문구보다 이 문서가 앞선다. `using-git-worktrees`·`finishing-a-development-branch`·`requesting-code-review`·`subagent-driven-development`·`dispatching-parallel-agents` 는 쓰지 않는다. 서브에이전트는 사용자가 시킬 때만
 - 새 웹 화면은 `frontend-design`, 단 전투 UI 는 SPEC-004 v4·STORY-001 §18 체계가 먼저
+- 연출·이펙트·시연 영상 작업은 `docs/참고/opus-영상-프롬프트-참고.md` 에서 기법을 먼저 확인 (기법만, 문구·결과물 복제 금지)
 - 병합·PR·릴리스는 사용자가 요청할 때만
 

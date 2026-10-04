@@ -33,6 +33,7 @@ superpowers 의 "모든 응답 전에 스킬 호출", "승인 전 구현 금지"
 - 코드는 `graft` 로 먼저 찾는다 (`ask`·`grep`·`callers`). 그다음 필요한 스팬만 읽는다
 - 읽을 문서: 전투 = **SPEC-001 v1~v4**(현행 기준) · 연출 = SPEC-005 · UI = SPEC-004 · 세계관·적·배경 = STORY-001. SPEC-007 은 초안이고 데모 범위 밖
 - 스펙의 TBD 가 미결이면 구현하지 않고 묻는다 (CLAUDE.md)
+- **연출·이펙트·시연 영상 작업이면** `docs/참고/opus-영상-프롬프트-참고.md` 를 본다 (충전→폭발 리듬, 충돌 피드백 체인, "계속 흔들지 않는다", 완성 점검 캡처 시점). 기법만 가져온다. 창작자 문구·결과물을 그대로 쓰지 않는다
 
 ### ③ 설계 게이트 (superpowers:brainstorming 의 이 리포 판)
 - 결정은 `AskUserQuestion` 으로 한 번에 묶어 묻는다. 선택지는 추천을 맨 앞에
@@ -110,6 +111,7 @@ superpowers 의 "모든 응답 전에 스킬 호출", "승인 전 구현 금지"
 | artifact-design · artifact-capabilities | claude.ai Artifact 페이지를 **직접 새로 쓸 때**. 만들어 둔 빌드를 그대로 올릴 때는 불필요 |
 | code-review · simplify · security-review | 큰 변경 뒤 (⑧). simplify 는 품질만, 버그는 code-review |
 | watch (claude-video) | 영상 분석 (유튜브 연출 조사. 네트워크가 허용될 때) |
+| **참고 모음** `docs/참고/opus-영상-프롬프트-참고.md` (awesome-opus5-5-videos, MIT) | 스킬이 아니라 참고 자료. 연출·이펙트·카드/전투 연출 프롬프트·시연 영상을 만들 때 ②에서. 원문은 복사해 두지 않고 필요할 때 스크래치에 clone (문서의 "꺼내 보는 법") |
 | dataviz | 밸런스 결과를 차트로 낼 때 |
 | session-start-hook · update-config · skill-creator · fewer-permission-prompts | 환경·스킬 설정을 만질 때 |
 | docx · pdf · pptx · xlsx · docs · morning · claude-api · minecraft/magicspells 계열 | 이 프로젝트와 무관. 쓰지 않는다 |
@@ -123,6 +125,8 @@ superpowers 의 "모든 응답 전에 스킬 호출", "승인 전 구현 금지"
 | "수치 잡아줘 / 밸런스" | 분류=수치 → graft 로 키 찾기 → 바꾸기 → sim 200판 → 스펙 표에 `[튜닝 날짜·근거]` → 검증 ⑦ → 커밋 |
 | "이 규칙 바꾸자" | 분류=규칙 → AskUserQuestion → SPEC 먼저 커밋 → 테스트 먼저 → 구현 → 검증 → code-review |
 | "연출이 이상해" | 분류=한정 → 캡처로 재현 → 원인(시간표·카메라·z-order) → 수정 → 캡처 전/후 → 스펙 §에 검수 결과 한 줄 |
+| "연출 더 세게 / 박진감" | 분류=수치(구조면 규칙) → 참고 모음에서 기법 확인 → SPEC-005 §17 표에 먼저 → 값 조정 → 캡처 4시점(충전·폭발·공개·정산: 가림·과노출·잔여 흔들림) → 판당 횟수 세기 |
+| "시연 영상 / 예고편" | 분류=구조 → 사용자에게 먼저 묻는다(스펙에 없다) → 참고 모음의 "에이전트가 플레이·촬영·편집" 방식 → 결과는 영상 링크 |
 | "화면 하나 만들어" | 분류=구조 → 결정 → SPEC-004 확인 → frontend-design(체계 안에서) → 캡처·반응형 확인 |
 | "버그" | systematic-debugging → 실패 테스트 → 고치기 → 검증 |
 | "공유본 줘" | 빌드 → 로컬에서 404 0 확인 → 파일 목록 → Artifact 로 게시 → 링크 한 줄 |
