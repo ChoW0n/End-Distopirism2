@@ -1,0 +1,2146 @@
+{
+  "version": "4.0.0",
+  "baselineCommit": "156b4c673cc734d329fc5c1e0dd0c0e16c607221",
+  "project": "End-Distopirism2",
+  "status": "design-delivery-not-integrated",
+  "count": 100,
+  "palette": {
+    "ink": "#090f18",
+    "base": "#111d2b",
+    "paper": "#d9b77c",
+    "text": "#fff1d7",
+    "muted": "#b7b6b6",
+    "edge": "#7d725f",
+    "select": "#ffe0a1",
+    "win": "#98cbb2",
+    "danger": "#ef9b8c",
+    "hp": "#e65060",
+    "info": "#68baff",
+    "violet": "#cbb1e6"
+  },
+  "displaySizeIsLogical": true,
+  "productionTextBaked": false,
+  "assets": [
+    {
+      "id": "U1",
+      "name": "U1_clash_default",
+      "w": 344,
+      "h": 140,
+      "state": "default",
+      "safe": [
+        34,
+        33,
+        239,
+        74
+      ],
+      "file": "png/U1_clash_default.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U1",
+      "name": "U1_clash_pressed",
+      "w": 344,
+      "h": 140,
+      "state": "pressed",
+      "safe": [
+        34,
+        33,
+        239,
+        74
+      ],
+      "file": "png/U1_clash_pressed.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U1",
+      "name": "U1_clash_locked",
+      "w": 344,
+      "h": 140,
+      "state": "locked",
+      "safe": [
+        34,
+        33,
+        239,
+        74
+      ],
+      "file": "png/U1_clash_locked.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U2",
+      "name": "U2_s1_default",
+      "w": 230,
+      "h": 170,
+      "state": "default",
+      "rank": 1,
+      "artWindow": [
+        25,
+        44,
+        180,
+        70
+      ],
+      "titleRect": [
+        48,
+        16,
+        136,
+        24
+      ],
+      "safe": [
+        22,
+        125,
+        185,
+        30
+      ],
+      "file": "png/U2_s1_default.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U2",
+      "name": "U2_s1_selected",
+      "w": 230,
+      "h": 170,
+      "state": "selected",
+      "rank": 1,
+      "artWindow": [
+        25,
+        44,
+        180,
+        70
+      ],
+      "titleRect": [
+        48,
+        16,
+        136,
+        24
+      ],
+      "safe": [
+        22,
+        125,
+        185,
+        30
+      ],
+      "file": "png/U2_s1_selected.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U2",
+      "name": "U2_s1_locked",
+      "w": 230,
+      "h": 170,
+      "state": "locked",
+      "rank": 1,
+      "artWindow": [
+        25,
+        44,
+        180,
+        70
+      ],
+      "titleRect": [
+        48,
+        16,
+        136,
+        24
+      ],
+      "safe": [
+        22,
+        125,
+        185,
+        30
+      ],
+      "file": "png/U2_s1_locked.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U2",
+      "name": "U2_s2_default",
+      "w": 230,
+      "h": 170,
+      "state": "default",
+      "rank": 2,
+      "artWindow": [
+        25,
+        44,
+        180,
+        70
+      ],
+      "titleRect": [
+        48,
+        16,
+        136,
+        24
+      ],
+      "safe": [
+        22,
+        125,
+        185,
+        30
+      ],
+      "file": "png/U2_s2_default.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U2",
+      "name": "U2_s2_selected",
+      "w": 230,
+      "h": 170,
+      "state": "selected",
+      "rank": 2,
+      "artWindow": [
+        25,
+        44,
+        180,
+        70
+      ],
+      "titleRect": [
+        48,
+        16,
+        136,
+        24
+      ],
+      "safe": [
+        22,
+        125,
+        185,
+        30
+      ],
+      "file": "png/U2_s2_selected.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U2",
+      "name": "U2_s2_locked",
+      "w": 230,
+      "h": 170,
+      "state": "locked",
+      "rank": 2,
+      "artWindow": [
+        25,
+        44,
+        180,
+        70
+      ],
+      "titleRect": [
+        48,
+        16,
+        136,
+        24
+      ],
+      "safe": [
+        22,
+        125,
+        185,
+        30
+      ],
+      "file": "png/U2_s2_locked.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U2",
+      "name": "U2_s3_default",
+      "w": 230,
+      "h": 170,
+      "state": "default",
+      "rank": 3,
+      "artWindow": [
+        25,
+        44,
+        180,
+        70
+      ],
+      "titleRect": [
+        48,
+        16,
+        136,
+        24
+      ],
+      "safe": [
+        22,
+        125,
+        185,
+        30
+      ],
+      "file": "png/U2_s3_default.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U2",
+      "name": "U2_s3_selected",
+      "w": 230,
+      "h": 170,
+      "state": "selected",
+      "rank": 3,
+      "artWindow": [
+        25,
+        44,
+        180,
+        70
+      ],
+      "titleRect": [
+        48,
+        16,
+        136,
+        24
+      ],
+      "safe": [
+        22,
+        125,
+        185,
+        30
+      ],
+      "file": "png/U2_s3_selected.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U2",
+      "name": "U2_s3_locked",
+      "w": 230,
+      "h": 170,
+      "state": "locked",
+      "rank": 3,
+      "artWindow": [
+        25,
+        44,
+        180,
+        70
+      ],
+      "titleRect": [
+        48,
+        16,
+        136,
+        24
+      ],
+      "safe": [
+        22,
+        125,
+        185,
+        30
+      ],
+      "file": "png/U2_s3_locked.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U3",
+      "name": "U3_small_default",
+      "w": 120,
+      "h": 120,
+      "state": "default",
+      "safe": [
+        25,
+        25,
+        70,
+        70
+      ],
+      "file": "png/U3_small_default.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U3",
+      "name": "U3_small_pressed",
+      "w": 120,
+      "h": 120,
+      "state": "pressed",
+      "safe": [
+        25,
+        25,
+        70,
+        70
+      ],
+      "file": "png/U3_small_pressed.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U3",
+      "name": "U3_small_on",
+      "w": 120,
+      "h": 120,
+      "state": "on",
+      "safe": [
+        25,
+        25,
+        70,
+        70
+      ],
+      "file": "png/U3_small_on.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_menu",
+      "w": 96,
+      "h": 96,
+      "tintable": true,
+      "file": "png/U4_icon_menu.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_help",
+      "w": 96,
+      "h": 96,
+      "tintable": true,
+      "file": "png/U4_icon_help.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_auto",
+      "w": 96,
+      "h": 96,
+      "tintable": true,
+      "file": "png/U4_icon_auto.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_speed",
+      "w": 96,
+      "h": 96,
+      "tintable": true,
+      "file": "png/U4_icon_speed.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_sound_on",
+      "w": 96,
+      "h": 96,
+      "tintable": true,
+      "file": "png/U4_icon_sound_on.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_sound_off",
+      "w": 96,
+      "h": 96,
+      "tintable": true,
+      "file": "png/U4_icon_sound_off.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_restart",
+      "w": 96,
+      "h": 96,
+      "tintable": true,
+      "file": "png/U4_icon_restart.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_attack",
+      "w": 96,
+      "h": 96,
+      "tintable": true,
+      "file": "png/U4_icon_attack.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_defense",
+      "w": 96,
+      "h": 96,
+      "tintable": true,
+      "file": "png/U4_icon_defense.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_support",
+      "w": 96,
+      "h": 96,
+      "tintable": true,
+      "file": "png/U4_icon_support.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_ultimate",
+      "w": 96,
+      "h": 96,
+      "tintable": true,
+      "file": "png/U4_icon_ultimate.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_health",
+      "w": 96,
+      "h": 96,
+      "tintable": true,
+      "file": "png/U4_icon_health.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_spirit",
+      "w": 96,
+      "h": 96,
+      "tintable": true,
+      "file": "png/U4_icon_spirit.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_target",
+      "w": 96,
+      "h": 96,
+      "tintable": true,
+      "file": "png/U4_icon_target.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_dropdown",
+      "w": 96,
+      "h": 96,
+      "tintable": true,
+      "file": "png/U4_icon_dropdown.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_rotate",
+      "w": 96,
+      "h": 96,
+      "tintable": true,
+      "file": "png/U4_icon_rotate.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U4",
+      "name": "U4_icon_fullscreen",
+      "w": 96,
+      "h": 96,
+      "tintable": true,
+      "file": "png/U4_icon_fullscreen.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "R",
+      "name": "R_mark",
+      "w": 96,
+      "h": 96,
+      "tintable": true,
+      "meaning": "각인",
+      "file": "png/R_mark.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "R",
+      "name": "R_insight",
+      "w": 96,
+      "h": 96,
+      "tintable": true,
+      "meaning": "통찰",
+      "file": "png/R_insight.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "R",
+      "name": "R_resolve",
+      "w": 96,
+      "h": 96,
+      "tintable": true,
+      "meaning": "결의",
+      "file": "png/R_resolve.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U5",
+      "name": "U5_target_default",
+      "w": 300,
+      "h": 72,
+      "state": "default",
+      "safe": [
+        74,
+        21,
+        201,
+        30
+      ],
+      "file": "png/U5_target_default.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U5",
+      "name": "U5_target_clash",
+      "w": 300,
+      "h": 72,
+      "state": "clash",
+      "safe": [
+        74,
+        21,
+        201,
+        30
+      ],
+      "file": "png/U5_target_clash.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U6",
+      "name": "U6_ally_default",
+      "w": 160,
+      "h": 170,
+      "state": "default",
+      "artWindow": [
+        22,
+        33,
+        116,
+        79
+      ],
+      "safe": [
+        22,
+        125,
+        90,
+        30
+      ],
+      "file": "png/U6_ally_default.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U6",
+      "name": "U6_ally_selected",
+      "w": 160,
+      "h": 170,
+      "state": "selected",
+      "artWindow": [
+        22,
+        33,
+        116,
+        79
+      ],
+      "safe": [
+        22,
+        125,
+        90,
+        30
+      ],
+      "file": "png/U6_ally_selected.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U6",
+      "name": "U6_ally_ordered",
+      "w": 160,
+      "h": 170,
+      "state": "ordered",
+      "artWindow": [
+        22,
+        33,
+        116,
+        79
+      ],
+      "safe": [
+        22,
+        125,
+        90,
+        30
+      ],
+      "file": "png/U6_ally_ordered.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U6",
+      "name": "U6_ally_fallen",
+      "w": 160,
+      "h": 170,
+      "state": "fallen",
+      "artWindow": [
+        22,
+        33,
+        116,
+        79
+      ],
+      "safe": [
+        22,
+        125,
+        90,
+        30
+      ],
+      "file": "png/U6_ally_fallen.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U7",
+      "name": "U7_strip_top",
+      "w": 1920,
+      "h": 120,
+      "repeat": "x",
+      "file": "png/U7_strip_top.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "RepeatX"
+    },
+    {
+      "id": "U7",
+      "name": "U7_strip_command",
+      "w": 1920,
+      "h": 220,
+      "repeat": "x",
+      "file": "png/U7_strip_command.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "RepeatX"
+    },
+    {
+      "id": "U8",
+      "name": "U8_turn",
+      "w": 200,
+      "h": 100,
+      "safe": [
+        82,
+        22,
+        97,
+        58
+      ],
+      "origin": "original design; no Turn.png pixels reused",
+      "file": "png/U8_turn.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U9",
+      "name": "U9_nameplate",
+      "w": 220,
+      "h": 52,
+      "safe": [
+        26,
+        13,
+        168,
+        26
+      ],
+      "file": "png/U9_nameplate.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U10",
+      "name": "U10_status_bleed",
+      "w": 56,
+      "h": 56,
+      "meaning": "bleed",
+      "file": "png/U10_status_bleed.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U10",
+      "name": "U10_status_confusion",
+      "w": 56,
+      "h": 56,
+      "meaning": "confusion",
+      "file": "png/U10_status_confusion.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U10",
+      "name": "U10_status_poison",
+      "w": 56,
+      "h": 56,
+      "meaning": "poison",
+      "file": "png/U10_status_poison.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U10",
+      "name": "U10_status_defense_down",
+      "w": 56,
+      "h": 56,
+      "meaning": "균열",
+      "file": "png/U10_status_defense_down.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U11",
+      "name": "U11_bar_hp",
+      "w": 180,
+      "h": 14,
+      "fillRect": [
+        6,
+        3,
+        168,
+        8
+      ],
+      "usage": "fallback/menu only",
+      "fillColor": "#e65060",
+      "file": "png/U11_bar_hp.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U11",
+      "name": "U11_bar_sp",
+      "w": 180,
+      "h": 10,
+      "fillRect": [
+        6,
+        3,
+        168,
+        4
+      ],
+      "usage": "fallback/menu only",
+      "fillColor": "#68baff",
+      "file": "png/U11_bar_sp.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U12",
+      "name": "U12_ultimate_empty",
+      "w": 56,
+      "h": 14,
+      "state": "empty",
+      "file": "png/U12_ultimate_empty.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U12",
+      "name": "U12_ultimate_charged",
+      "w": 56,
+      "h": 14,
+      "state": "charged",
+      "file": "png/U12_ultimate_charged.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U12",
+      "name": "U12_ultimate_full",
+      "w": 56,
+      "h": 14,
+      "state": "full",
+      "file": "png/U12_ultimate_full.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U12",
+      "name": "U12_ultimate_pending",
+      "w": 56,
+      "h": 14,
+      "state": "pending",
+      "file": "png/U12_ultimate_pending.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U13",
+      "name": "U13_selection_ring",
+      "w": 320,
+      "h": 110,
+      "pivot": [
+        0.5,
+        0.273
+      ],
+      "usage": "legacy standalone; do not stack with G selection",
+      "file": "png/U13_selection_ring.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U14",
+      "name": "U14_clash_win",
+      "w": 360,
+      "h": 120,
+      "state": "win",
+      "safe": [
+        102,
+        29,
+        228,
+        62
+      ],
+      "file": "png/U14_clash_win.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U14",
+      "name": "U14_clash_lose",
+      "w": 360,
+      "h": 120,
+      "state": "lose",
+      "safe": [
+        102,
+        29,
+        228,
+        62
+      ],
+      "file": "png/U14_clash_lose.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U14",
+      "name": "U14_clash_draw",
+      "w": 360,
+      "h": 120,
+      "state": "draw",
+      "safe": [
+        102,
+        29,
+        228,
+        62
+      ],
+      "file": "png/U14_clash_draw.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U15",
+      "name": "U15_overhead_front",
+      "w": 256,
+      "h": 360,
+      "face": "front",
+      "titleRect": [
+        37,
+        18,
+        182,
+        30
+      ],
+      "artWindow": [
+        26,
+        55,
+        204,
+        222
+      ],
+      "safe": [
+        27,
+        296,
+        202,
+        47
+      ],
+      "file": "png/U15_overhead_front.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U15",
+      "name": "U15_overhead_back",
+      "w": 256,
+      "h": 360,
+      "face": "back",
+      "titleRect": [
+        37,
+        18,
+        182,
+        30
+      ],
+      "artWindow": [
+        26,
+        55,
+        204,
+        222
+      ],
+      "safe": [
+        27,
+        296,
+        202,
+        47
+      ],
+      "file": "png/U15_overhead_back.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U16",
+      "name": "U16_ultimate_card_default",
+      "w": 230,
+      "h": 170,
+      "state": "default",
+      "titleRect": [
+        48,
+        16,
+        136,
+        24
+      ],
+      "artWindow": [
+        25,
+        44,
+        180,
+        70
+      ],
+      "safe": [
+        22,
+        125,
+        185,
+        30
+      ],
+      "file": "png/U16_ultimate_card_default.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U16",
+      "name": "U16_ultimate_card_selected",
+      "w": 230,
+      "h": 170,
+      "state": "selected",
+      "titleRect": [
+        48,
+        16,
+        136,
+        24
+      ],
+      "artWindow": [
+        25,
+        44,
+        180,
+        70
+      ],
+      "safe": [
+        22,
+        125,
+        185,
+        30
+      ],
+      "file": "png/U16_ultimate_card_selected.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U16",
+      "name": "U16_ultimate_card_locked",
+      "w": 230,
+      "h": 170,
+      "state": "locked",
+      "titleRect": [
+        48,
+        16,
+        136,
+        24
+      ],
+      "artWindow": [
+        25,
+        44,
+        180,
+        70
+      ],
+      "safe": [
+        22,
+        125,
+        185,
+        30
+      ],
+      "file": "png/U16_ultimate_card_locked.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U17",
+      "name": "U17_modal",
+      "w": 960,
+      "h": 640,
+      "titleRect": [
+        54,
+        30,
+        766,
+        53
+      ],
+      "safe": [
+        54,
+        132,
+        848,
+        450
+      ],
+      "nineSlice": [
+        48,
+        116,
+        48,
+        38
+      ],
+      "file": "png/U17_modal.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U18",
+      "name": "U18_menu_default",
+      "w": 480,
+      "h": 120,
+      "state": "default",
+      "safe": [
+        45,
+        29,
+        390,
+        62
+      ],
+      "file": "png/U18_menu_default.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U18",
+      "name": "U18_menu_pressed",
+      "w": 480,
+      "h": 120,
+      "state": "pressed",
+      "safe": [
+        45,
+        29,
+        390,
+        62
+      ],
+      "file": "png/U18_menu_pressed.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U19",
+      "name": "U19_banner_win",
+      "w": 1200,
+      "h": 300,
+      "state": "win",
+      "safe": [
+        155,
+        90,
+        890,
+        120
+      ],
+      "file": "png/U19_banner_win.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "U19",
+      "name": "U19_banner_lose",
+      "w": 1200,
+      "h": 300,
+      "state": "lose",
+      "safe": [
+        155,
+        90,
+        890,
+        120
+      ],
+      "file": "png/U19_banner_lose.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "G",
+      "name": "G_frame",
+      "w": 320,
+      "h": 110,
+      "pivot": [
+        0.5,
+        0.2727272727272727
+      ],
+      "anchor": [
+        160,
+        30
+      ],
+      "space": "screen-aligned-follow-world-feet",
+      "stretch": false,
+      "layer": 40,
+      "file": "gauge/G_frame.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "G",
+      "name": "G_hp_track",
+      "w": 320,
+      "h": 110,
+      "pivot": [
+        0.5,
+        0.2727272727272727
+      ],
+      "anchor": [
+        160,
+        30
+      ],
+      "space": "screen-aligned-follow-world-feet",
+      "stretch": false,
+      "layer": 10,
+      "file": "gauge/G_hp_track.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "G",
+      "name": "G_hp_fill",
+      "w": 320,
+      "h": 110,
+      "pivot": [
+        0.5,
+        0.2727272727272727
+      ],
+      "anchor": [
+        160,
+        30
+      ],
+      "space": "screen-aligned-follow-world-feet",
+      "stretch": false,
+      "layer": 20,
+      "fillMethod": "arc-length-polyline",
+      "path": [
+        [
+          24,
+          19
+        ],
+        [
+          15,
+          30
+        ],
+        [
+          44,
+          56
+        ],
+        [
+          95,
+          73
+        ],
+        [
+          225,
+          73
+        ],
+        [
+          276,
+          56
+        ],
+        [
+          305,
+          30
+        ],
+        [
+          296,
+          19
+        ]
+      ],
+      "strokeWidth": 8,
+      "file": "gauge/G_hp_fill.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "G",
+      "name": "G_hp_mask",
+      "w": 320,
+      "h": 110,
+      "pivot": [
+        0.5,
+        0.2727272727272727
+      ],
+      "anchor": [
+        160,
+        30
+      ],
+      "space": "screen-aligned-follow-world-feet",
+      "stretch": false,
+      "mask": true,
+      "file": "gauge/G_hp_mask.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "G",
+      "name": "G_sp_track",
+      "w": 320,
+      "h": 110,
+      "pivot": [
+        0.5,
+        0.2727272727272727
+      ],
+      "anchor": [
+        160,
+        30
+      ],
+      "space": "screen-aligned-follow-world-feet",
+      "stretch": false,
+      "layer": 10,
+      "file": "gauge/G_sp_track.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "G",
+      "name": "G_sp_fill",
+      "w": 320,
+      "h": 110,
+      "pivot": [
+        0.5,
+        0.2727272727272727
+      ],
+      "anchor": [
+        160,
+        30
+      ],
+      "space": "screen-aligned-follow-world-feet",
+      "stretch": false,
+      "layer": 20,
+      "fillMethod": "arc-length-polyline",
+      "path": [
+        [
+          34,
+          61
+        ],
+        [
+          92,
+          83
+        ],
+        [
+          228,
+          83
+        ],
+        [
+          286,
+          61
+        ]
+      ],
+      "strokeWidth": 4,
+      "file": "gauge/G_sp_fill.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "G",
+      "name": "G_sp_mask",
+      "w": 320,
+      "h": 110,
+      "pivot": [
+        0.5,
+        0.2727272727272727
+      ],
+      "anchor": [
+        160,
+        30
+      ],
+      "space": "screen-aligned-follow-world-feet",
+      "stretch": false,
+      "mask": true,
+      "file": "gauge/G_sp_mask.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "G",
+      "name": "G_selection",
+      "w": 320,
+      "h": 110,
+      "pivot": [
+        0.5,
+        0.2727272727272727
+      ],
+      "anchor": [
+        160,
+        30
+      ],
+      "space": "screen-aligned-follow-world-feet",
+      "stretch": false,
+      "layer": 50,
+      "file": "gauge/G_selection.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "G",
+      "name": "G_critical",
+      "w": 320,
+      "h": 110,
+      "pivot": [
+        0.5,
+        0.2727272727272727
+      ],
+      "anchor": [
+        160,
+        30
+      ],
+      "space": "screen-aligned-follow-world-feet",
+      "stretch": false,
+      "layer": 60,
+      "meaning": "low HP indicator, not a fill",
+      "file": "gauge/G_critical.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "G",
+      "name": "G_hp_loss",
+      "w": 320,
+      "h": 110,
+      "pivot": [
+        0.5,
+        0.2727272727272727
+      ],
+      "anchor": [
+        160,
+        30
+      ],
+      "space": "screen-aligned-follow-world-feet",
+      "stretch": false,
+      "layer": 15,
+      "opacityAtRuntime": 0.3,
+      "usage": "render previous minus current arc only; reduced-motion may hide",
+      "file": "gauge/G_hp_loss.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "G",
+      "name": "G_sp_loss",
+      "w": 320,
+      "h": 110,
+      "pivot": [
+        0.5,
+        0.2727272727272727
+      ],
+      "anchor": [
+        160,
+        30
+      ],
+      "space": "screen-aligned-follow-world-feet",
+      "stretch": false,
+      "layer": 15,
+      "opacityAtRuntime": 0.3,
+      "usage": "render previous minus current arc only; reduced-motion may hide",
+      "file": "gauge/G_sp_loss.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "K",
+      "name": "K2041_default",
+      "w": 230,
+      "h": 170,
+      "state": "default",
+      "skillId": 2041,
+      "artWindow": [
+        25,
+        44,
+        180,
+        70
+      ],
+      "titleRect": [
+        48,
+        16,
+        136,
+        24
+      ],
+      "safe": [
+        22,
+        125,
+        185,
+        30
+      ],
+      "textBaked": false,
+      "file": "png/K2041_default.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "K",
+      "name": "K2041_selected",
+      "w": 230,
+      "h": 170,
+      "state": "selected",
+      "skillId": 2041,
+      "artWindow": [
+        25,
+        44,
+        180,
+        70
+      ],
+      "titleRect": [
+        48,
+        16,
+        136,
+        24
+      ],
+      "safe": [
+        22,
+        125,
+        185,
+        30
+      ],
+      "textBaked": false,
+      "file": "png/K2041_selected.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "K",
+      "name": "K2041_locked",
+      "w": 230,
+      "h": 170,
+      "state": "locked",
+      "skillId": 2041,
+      "artWindow": [
+        25,
+        44,
+        180,
+        70
+      ],
+      "titleRect": [
+        48,
+        16,
+        136,
+        24
+      ],
+      "safe": [
+        22,
+        125,
+        185,
+        30
+      ],
+      "textBaked": false,
+      "file": "png/K2041_locked.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "K",
+      "name": "K2041_overhead_front",
+      "w": 256,
+      "h": 360,
+      "skillId": 2041,
+      "face": "front",
+      "textBaked": false,
+      "titleRect": [
+        37,
+        18,
+        182,
+        30
+      ],
+      "safe": [
+        27,
+        296,
+        202,
+        47
+      ],
+      "file": "png/K2041_overhead_front.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "K",
+      "name": "K2041_overhead_back",
+      "w": 256,
+      "h": 360,
+      "skillId": 2041,
+      "face": "back",
+      "textBaked": false,
+      "titleRect": [
+        37,
+        18,
+        182,
+        30
+      ],
+      "safe": [
+        27,
+        296,
+        202,
+        47
+      ],
+      "file": "png/K2041_overhead_back.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "K",
+      "name": "K2042_default",
+      "w": 230,
+      "h": 170,
+      "state": "default",
+      "skillId": 2042,
+      "artWindow": [
+        25,
+        44,
+        180,
+        70
+      ],
+      "titleRect": [
+        48,
+        16,
+        136,
+        24
+      ],
+      "safe": [
+        22,
+        125,
+        185,
+        30
+      ],
+      "textBaked": false,
+      "file": "png/K2042_default.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "K",
+      "name": "K2042_selected",
+      "w": 230,
+      "h": 170,
+      "state": "selected",
+      "skillId": 2042,
+      "artWindow": [
+        25,
+        44,
+        180,
+        70
+      ],
+      "titleRect": [
+        48,
+        16,
+        136,
+        24
+      ],
+      "safe": [
+        22,
+        125,
+        185,
+        30
+      ],
+      "textBaked": false,
+      "file": "png/K2042_selected.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "K",
+      "name": "K2042_locked",
+      "w": 230,
+      "h": 170,
+      "state": "locked",
+      "skillId": 2042,
+      "artWindow": [
+        25,
+        44,
+        180,
+        70
+      ],
+      "titleRect": [
+        48,
+        16,
+        136,
+        24
+      ],
+      "safe": [
+        22,
+        125,
+        185,
+        30
+      ],
+      "textBaked": false,
+      "file": "png/K2042_locked.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "K",
+      "name": "K2042_overhead_front",
+      "w": 256,
+      "h": 360,
+      "skillId": 2042,
+      "face": "front",
+      "textBaked": false,
+      "titleRect": [
+        37,
+        18,
+        182,
+        30
+      ],
+      "safe": [
+        27,
+        296,
+        202,
+        47
+      ],
+      "file": "png/K2042_overhead_front.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "K",
+      "name": "K2042_overhead_back",
+      "w": 256,
+      "h": 360,
+      "skillId": 2042,
+      "face": "back",
+      "textBaked": false,
+      "titleRect": [
+        37,
+        18,
+        182,
+        30
+      ],
+      "safe": [
+        27,
+        296,
+        202,
+        47
+      ],
+      "file": "png/K2042_overhead_back.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "K",
+      "name": "K2043_default",
+      "w": 230,
+      "h": 170,
+      "state": "default",
+      "skillId": 2043,
+      "artWindow": [
+        25,
+        44,
+        180,
+        70
+      ],
+      "titleRect": [
+        48,
+        16,
+        136,
+        24
+      ],
+      "safe": [
+        22,
+        125,
+        185,
+        30
+      ],
+      "textBaked": false,
+      "file": "png/K2043_default.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "K",
+      "name": "K2043_selected",
+      "w": 230,
+      "h": 170,
+      "state": "selected",
+      "skillId": 2043,
+      "artWindow": [
+        25,
+        44,
+        180,
+        70
+      ],
+      "titleRect": [
+        48,
+        16,
+        136,
+        24
+      ],
+      "safe": [
+        22,
+        125,
+        185,
+        30
+      ],
+      "textBaked": false,
+      "file": "png/K2043_selected.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "K",
+      "name": "K2043_locked",
+      "w": 230,
+      "h": 170,
+      "state": "locked",
+      "skillId": 2043,
+      "artWindow": [
+        25,
+        44,
+        180,
+        70
+      ],
+      "titleRect": [
+        48,
+        16,
+        136,
+        24
+      ],
+      "safe": [
+        22,
+        125,
+        185,
+        30
+      ],
+      "textBaked": false,
+      "file": "png/K2043_locked.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "K",
+      "name": "K2043_overhead_front",
+      "w": 256,
+      "h": 360,
+      "skillId": 2043,
+      "face": "front",
+      "textBaked": false,
+      "titleRect": [
+        37,
+        18,
+        182,
+        30
+      ],
+      "safe": [
+        27,
+        296,
+        202,
+        47
+      ],
+      "file": "png/K2043_overhead_front.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "K",
+      "name": "K2043_overhead_back",
+      "w": 256,
+      "h": 360,
+      "skillId": 2043,
+      "face": "back",
+      "textBaked": false,
+      "titleRect": [
+        37,
+        18,
+        182,
+        30
+      ],
+      "safe": [
+        27,
+        296,
+        202,
+        47
+      ],
+      "file": "png/K2043_overhead_back.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "K",
+      "name": "K2099_default",
+      "w": 230,
+      "h": 170,
+      "state": "default",
+      "skillId": 2099,
+      "artWindow": [
+        25,
+        44,
+        180,
+        70
+      ],
+      "titleRect": [
+        48,
+        16,
+        136,
+        24
+      ],
+      "safe": [
+        22,
+        125,
+        185,
+        30
+      ],
+      "textBaked": false,
+      "file": "png/K2099_default.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "K",
+      "name": "K2099_selected",
+      "w": 230,
+      "h": 170,
+      "state": "selected",
+      "skillId": 2099,
+      "artWindow": [
+        25,
+        44,
+        180,
+        70
+      ],
+      "titleRect": [
+        48,
+        16,
+        136,
+        24
+      ],
+      "safe": [
+        22,
+        125,
+        185,
+        30
+      ],
+      "textBaked": false,
+      "file": "png/K2099_selected.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "K",
+      "name": "K2099_locked",
+      "w": 230,
+      "h": 170,
+      "state": "locked",
+      "skillId": 2099,
+      "artWindow": [
+        25,
+        44,
+        180,
+        70
+      ],
+      "titleRect": [
+        48,
+        16,
+        136,
+        24
+      ],
+      "safe": [
+        22,
+        125,
+        185,
+        30
+      ],
+      "textBaked": false,
+      "file": "png/K2099_locked.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "K",
+      "name": "K2099_overhead_front",
+      "w": 256,
+      "h": 360,
+      "skillId": 2099,
+      "face": "front",
+      "textBaked": false,
+      "titleRect": [
+        37,
+        18,
+        182,
+        30
+      ],
+      "safe": [
+        27,
+        296,
+        202,
+        47
+      ],
+      "file": "png/K2099_overhead_front.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    },
+    {
+      "id": "K",
+      "name": "K2099_overhead_back",
+      "w": 256,
+      "h": 360,
+      "skillId": 2099,
+      "face": "back",
+      "textBaked": false,
+      "titleRect": [
+        37,
+        18,
+        182,
+        30
+      ],
+      "safe": [
+        27,
+        296,
+        202,
+        47
+      ],
+      "file": "png/K2099_overhead_back.png",
+      "filter": "Bilinear",
+      "mipmaps": false,
+      "wrap": "Clamp"
+    }
+  ],
+  "cards": [
+    {
+      "id": 2041,
+      "slot": "S1",
+      "name": "물금",
+      "resource": "mark",
+      "col": "#ef9b8c",
+      "front": 24,
+      "back": 8,
+      "chance": 75,
+      "detail": "성공 시 각인 +1",
+      "src": "S1.png"
+    },
+    {
+      "id": 2042,
+      "slot": "S2",
+      "name": "이면",
+      "resource": "insight",
+      "col": "#68baff",
+      "front": 18,
+      "back": 6,
+      "chance": 70,
+      "detail": "성공 시 균열 부여",
+      "src": "S2.png"
+    },
+    {
+      "id": 2043,
+      "slot": "S3",
+      "name": "잔향",
+      "resource": "resolve",
+      "col": "#cbb1e6",
+      "front": 19,
+      "back": 7,
+      "chance": 75,
+      "detail": "균열 소모 · 피해 +3",
+      "src": "S3.png"
+    },
+    {
+      "id": 2099,
+      "slot": "ULT",
+      "name": "미명",
+      "resource": "resolve",
+      "col": "#d9b77c",
+      "front": 33,
+      "back": 18,
+      "chance": 80,
+      "detail": "흔적 전부 소모",
+      "src": "ULT.png"
+    }
+  ]
+}

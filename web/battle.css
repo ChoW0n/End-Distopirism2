@@ -329,7 +329,8 @@ button:disabled { cursor: default; }
 .loading[hidden] { display: none; }
 .loading .meter { width: min(320px, 60vw); height: 4px; background: #1d1b1a; }
 .loading .meter i { display: block; height: 100%; width: 0; background: #9b2a26; transition: width 0.2s; }
-.loading small { color: #8a8278; font-variant-numeric: tabular-nums; }
+.loading small { color: #8a8278; font-variant-numeric: tabular-nums; max-width: min(560px, 85vw); overflow-wrap: anywhere; text-align: center; }
+.loading button { padding: 12px 24px; font: inherit; }
 
 /* ── 세로 화면 안내 (휴대폰을 세로로 들었을 때) ── */
 .rotate { display: none; }

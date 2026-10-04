@@ -1,23 +1,41 @@
 {
-  "name": "end-distopirism2-review-b9894c2",
-  "commit": "b9894c2aab69452b486076533a083f6d8c7c78ad",
+  "name": "end-distopirism2-review-9eb975c",
+  "commit": "9eb975c4745ec67a70f3d4230c14cfcb8aa43ece",
   "branch": "claude/trusting-keller-2qeupr",
-  "date": "2026-10-03T23:13:40.814Z",
+  "date": "2026-10-04T00:21:51.977Z",
   "dirty": false,
   "typecheck": {
     "ok": true
   },
   "tests": {
     "ok": true,
-    "total": 490,
-    "passed": 490,
+    "total": 510,
+    "passed": 510,
     "failed": 0,
-    "files": 32
+    "skipped": 0,
+    "files": 35
   },
-  "files": 410,
+  "uiAssets": {
+    "ok": true,
+    "count": 85
+  },
+  "files": 421,
   "pages": [
     "web/battle.html",
     "web/vfx-space.html",
     "web/vfx-lab.html"
-  ]
+  ],
+  "sourceTree": "f651650e8edcd669dfc6a326a2a9808b6a2dc685",
+  "browserRegression": {
+    "passed": 31,
+    "failed": 0,
+    "unexpectedHttpErrors": 0,
+    "pageErrors": 0
+  },
+  "bundleRegression": {
+    "passed": 14,
+    "failed": 0,
+    "unexpectedHttpErrors": 0,
+    "pageErrors": 0
+  }
 }
