@@ -15,6 +15,7 @@ def summarize(record):
     visible = [r for r in rows if not r['cut']]
     return {
         'frames': len(rows),
+        'actualSeed': record['startedSeeds'][-1],
         'bodyOutsideFrames': sum(any(min(b['box']) < -1e-5 or max(b['box']) > 1.00001 for b in r['bodies']) for r in visible),
         'cardCoveredFrames': sum(any(c['box'][1] < r['top'] - 1e-5 for c in r['cards']) for r in visible),
         'nightAmbientFrames': sum(r['sea'] and r['ambient'] for r in rows),
@@ -68,7 +69,14 @@ def main():
             if seed:
                 page.locator('details.dev').evaluate('(el) => el.open=true')
                 page.locator('#seed').fill(seed)
-            page.locator('#menu-close').click()
+            if seed:
+                #시드 입력값은 재시작할 때 읽힌다. 관전 모드 전환만 하면 이전 세션이 계속된다
+                page.locator('#restart').click()
+                actual_seed = page.evaluate('window.__m2.startedSeeds.at(-1)')
+                if actual_seed != int(seed):
+                    raise RuntimeError(f'요청 시드 {seed}와 생성 시드 {actual_seed}가 다르다')
+            else:
+                page.locator('#menu-close').click()
             #보이는 메뉴에서 모드만 선택한 것과 같은 변경 이벤트. 첫 렌더 프레임부터 기록한다
             page.evaluate('(mode) => {window.__m2.record=true;const el=document.getElementById("mode");el.value=mode;el.dispatchEvent(new Event("change"));}', mode)
             start = time.monotonic()
@@ -92,7 +100,7 @@ def main():
                     print(case, round(elapsed, 1), status['state'], flush=True)
                     last_progress = elapsed
             page.screenshot(path=str(args.output / (case.replace(':', '-') + '-end.png')))
-            record = page.evaluate('({frames:window.__m2.rows,events:window.__m2.events})')
+            record = page.evaluate('({frames:window.__m2.rows,events:window.__m2.events,startedSeeds:window.__m2.startedSeeds})')
             record.update({'wallSeconds': round(time.monotonic() - start, 3), 'result': page.locator('#result').inner_text() if mode == 'watch' else '시연 1주기', 'complete': complete, 'errors': errors, 'screenshots': shots})
             (args.output / (case.replace(':', '-') + '-raw.json')).write_text(json.dumps(record, ensure_ascii=False))
             summary = summarize(record)
