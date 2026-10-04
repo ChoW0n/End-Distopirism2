@@ -168,7 +168,22 @@ function parseRules(raw: unknown): BattleRules {
     oneSidedGivesMentality: bool(source, 'oneSidedGivesMentality', 'rules'),
     ultimateThreshold: num(source, 'ultimateThreshold', 'rules'),
     ultimateSkillId: num(source, 'ultimateSkillId', 'rules'),
+    actionPoints: parseActionPoints(source['actionPoints']),
   };
+}
+
+//행동력 규칙을 읽는다. 시작이 최대를 넘거나 빚 한도가 0 보다 크면 막는다 (v4.0 §1)
+function parseActionPoints(raw: unknown): BattleRules['actionPoints'] {
+  const path = 'rules.actionPoints';
+  const source = obj(raw, path);
+  const ap = {
+    start: num(source, 'start', path),
+    max: num(source, 'max', path),
+    regenPerTurn: num(source, 'regenPerTurn', path),
+    floor: num(source, 'floor', path),
+  };
+  if (ap.start > ap.max || ap.floor > 0) throw new BattleDataError(`${path} 는 시작 ≤ 최대, 빚 한도 ≤ 0 이어야 한다`);
+  return ap;
 }
 
 //적 AI 가중치 수치를 읽는다
@@ -194,6 +209,10 @@ function parseEnemyAi(raw: unknown): EnemyAiRules {
     aiTargetDuplicatePenalty: num(source, 'aiTargetDuplicatePenalty', 'enemyAi'),
     aiGuardThreatThresholds: thresholds,
     aiGuardWeights: guardWeights,
+    plan: {
+      maxCards: num(obj(source['plan'], 'enemyAi.plan'), 'maxCards', 'enemyAi.plan'),
+      debtFloor: num(obj(source['plan'], 'enemyAi.plan'), 'debtFloor', 'enemyAi.plan'),
+    },
   };
 }
 
@@ -201,7 +220,7 @@ function parseEnemyAi(raw: unknown): EnemyAiRules {
 function parseCharacter(raw: unknown, index: number): CharacterData {
   const path = `characters[${index}]`;
   const source = obj(raw, path);
-  return {
+  const character: CharacterData = {
     id: str(source, 'id', path),
     name: str(source, 'name', path),
     maxHp: num(source, 'maxHp', path),
@@ -211,6 +230,11 @@ function parseCharacter(raw: unknown, index: number): CharacterData {
     role: str(source, 'role', path),
     skills: numArray(source, 'skills', path),
   };
+  if (source['actionPoints'] !== undefined) {
+    const ap = obj(source['actionPoints'], `${path}.actionPoints`);
+    character.actionPoints = { start: num(ap, 'start', `${path}.actionPoints`), max: num(ap, 'max', `${path}.actionPoints`) };
+  }
+  return character;
 }
 
 //앞면 확률 [최소, 최대] 를 읽는다. 0~1 사이이고 최소가 최대보다 크지 않아야 한다
@@ -238,6 +262,7 @@ function parseSkill(raw: unknown, index: number): SkillData {
     frontChance: chancePair(source, path),
     archetype: literal<SkillArchetype>(source, 'archetype', ARCHETYPES, path),
     maxInDeck: num(source, 'maxInDeck', path),
+    apCost: num(source, 'apCost', path),
     tbd: source['tbd'] === true,
     text: str(source, 'text', path),
   };

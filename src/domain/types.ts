@@ -42,6 +42,17 @@ export interface BattleRules {
   //속성 합이 이 값에 닿으면 궁극기가 준비된다 (v2.0 §3.1)
   ultimateThreshold: number;
   ultimateSkillId: number;
+  //행동력 (v4.0 §1)
+  actionPoints: ActionPointRules;
+}
+
+//행동력 수치. 예약할 때 카드 비용만큼 줄고 턴 종료에 찬다 (v4.0 §1)
+export interface ActionPointRules {
+  start: number;
+  max: number;
+  regenPerTurn: number;
+  //빚 한도. 예약 뒤 행동력이 이보다 낮아지면 안 된다
+  floor: number;
 }
 
 //캐릭터 기본 스탯
@@ -55,6 +66,8 @@ export interface CharacterData {
   role: string;
   //이 캐릭터의 전용기 3종. 카드 풀을 공유하지 않는다 (v2.0 §1)
   skills: number[];
+  //캐릭터만 다른 행동력 시작·최대. 없으면 규칙값 (v4.0 §1)
+  actionPoints?: { start: number; max: number };
 }
 
 //카드 효과가 발동하는 시점
@@ -128,6 +141,8 @@ export interface SkillData {
   frontChance: [number, number];
   archetype: SkillArchetype;
   maxInDeck: number;
+  //예약할 때 드는 행동력 (v4.0 §2)
+  apCost: number;
   //수치가 아직 정해지지 않은 카드. AI 가 고르지 않는다 (v2.0 §3.2)
   tbd: boolean;
   //v2.0 전용기에는 효과가 없다. 상태이상이 보류라 효과를 임의로 설계하지 않는다 (v2.0 §1.2)
@@ -163,6 +178,8 @@ export interface EnemyAiRules {
   //방어 태세 위협도 구간 (§13.7). 경계가 n개면 가중치는 n+1개다
   aiGuardThreatThresholds: number[];
   aiGuardWeights: number[];
+  //예약 짜기 (v4.0 §5). 칸 수 한도와 스스로 지는 빚 한도
+  plan: { maxCards: number; debtFloor: number };
 }
 
 //battle-data.json 전체
@@ -172,6 +189,12 @@ export interface BattleData {
   characters: CharacterData[];
   skills: SkillData[];
   statusEffects: StatusEffectData[];
+}
+
+//예약 한 칸. 그 턴에 쓸 카드와 대상 (v4.0 §3)
+export interface PlanStep {
+  skillId: number;
+  targetId: string;
 }
 
 //정신력이 바뀐 이유. UI 가 연출을 고르는 데 쓴다
@@ -209,5 +232,8 @@ export type BattleEvent =
   | { type: 'ultimateUsed'; combatantId: string; skillId: number }
   | { type: 'defeated'; combatantId: string }
   | { type: 'clashEnd'; attackerId: string; defenderId: string; winnerId: string | null }
+  | { type: 'planSet'; combatantId: string; steps: PlanStep[]; actionPoints: number }
+  | { type: 'actionPointsChanged'; combatantId: string; delta: number; actionPoints: number }
+  | { type: 'idle'; combatantId: string }
   | { type: 'turnEnd'; turn: number }
   | { type: 'battleEnd'; winner: Side | null };

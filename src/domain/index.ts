@@ -7,3 +7,4 @@ export * from './combatant.js';
 export * from './clash.js';
 export * from './ai.js';
 export * from './battle.js';
+export * from './plan.js';

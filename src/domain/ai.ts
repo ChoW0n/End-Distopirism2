@@ -23,16 +23,18 @@ export interface EnemyEngagement {
   isClash: boolean;
   //합 상대가 이미 고른 카드. 모르면 상대 덱 평균으로 대체한다
   opponentSkillId: number | null;
+  //이 안에서만 고른다. 예약 짜기가 이미 고른 카드·비용이 넘는 카드를 뺀 목록이다 (v4.0 §5). 없으면 덱 전체
+  candidates?: readonly number[];
 }
 
 export interface EnemyAi {
-  //턴 시작에 아군 한 명을 타겟으로 고른다
+  //턴 시작에 아군 한 명을 타겟으로 고른다. 행동할 수 없으면 null (v4.0 §4)
   chooseTarget(
     enemy: Combatant,
     candidates: readonly Combatant[],
     alreadyTargeted: ReadonlySet<string>,
     context: EnemyAiContext,
-  ): string;
+  ): string | null;
 
   //매칭 판정이 끝난 뒤 이번 교전에 낼 카드를 고른다
   chooseSkill(enemy: Combatant, engagement: EnemyEngagement, context: EnemyAiContext): number;
@@ -52,6 +54,12 @@ function selectableDeck(enemy: Combatant, catalog: BattleCatalog): readonly numb
   const deck = requireDeck(enemy);
   const usable = deck.filter((id) => !catalog.skill(id).tbd);
   return usable.length > 0 ? usable : deck;
+}
+
+//예약 짜기가 넘긴 후보 카드. 비었으면 부른 쪽 잘못이다
+function requireList(enemy: Combatant, list: readonly number[]): readonly number[] {
+  if (list.length === 0) throw new Error(`적 ${enemy.id} 의 고를 카드 후보가 비어 있다`);
+  return list;
 }
 
 //후보가 비었을 때 던진다
@@ -107,7 +115,7 @@ export class WeightedEnemyAi implements EnemyAi {
 
   //카드를 고른다. 방어 태세만 위협도 단계 가중치를 따로 받는다 (§13.1)
   chooseSkill(enemy: Combatant, engagement: EnemyEngagement, context: EnemyAiContext): number {
-    const deck = selectableDeck(enemy, context.catalog);
+    const deck = engagement.candidates ? requireList(enemy, engagement.candidates) : selectableDeck(enemy, context.catalog);
     const ai = context.catalog.enemyAi;
     const guardWeight = this.guardWeight(enemy, engagement, context);
     const inMentalityDanger =
@@ -190,8 +198,8 @@ export class RandomEnemyAi implements EnemyAi {
     return (alive[Math.floor(context.rng.next() * alive.length)] ?? alive[alive.length - 1]!).id;
   }
 
-  chooseSkill(enemy: Combatant, _engagement: EnemyEngagement, context: EnemyAiContext): number {
-    const deck = requireDeck(enemy);
+  chooseSkill(enemy: Combatant, engagement: EnemyEngagement, context: EnemyAiContext): number {
+    const deck = engagement.candidates ? requireList(enemy, engagement.candidates) : requireDeck(enemy);
     return deck[Math.floor(context.rng.next() * deck.length)] ?? deck[deck.length - 1]!;
   }
 }

@@ -29,6 +29,8 @@ export type Engagement =
 export interface BattleOptions {
   rng?: Rng;
   enemyAi?: EnemyAi;
+  //턴 시작 처리(궁극기 카드·출혈) 뒤, 적이 타겟을 고르기 직전에 부른다. 예약 짜기가 여기 들어온다 (v4.0 §4)
+  beforeEnemyTargets?: (events: BattleEvent[]) => void;
 }
 
 //상태 전이를 어겼을 때 던진다
@@ -45,6 +47,7 @@ export class Battle {
   private readonly rng: Rng;
   private readonly enemyAi: EnemyAi;
   private readonly aiContext: EnemyAiContext;
+  private readonly beforeEnemyTargets: ((events: BattleEvent[]) => void) | undefined;
   //이번 턴에 적이 고른 타겟. 턴 시작에 정해지고 아군 입력에 영향받지 않는다
   private readonly enemyTargets = new Map<string, string>();
   private engagements: Engagement[] = [];
@@ -62,6 +65,7 @@ export class Battle {
   ) {
     this.rng = options.rng ?? systemRng;
     this.enemyAi = options.enemyAi ?? new WeightedEnemyAi();
+    this.beforeEnemyTargets = options.beforeEnemyTargets;
 
     for (const init of [...allies, ...enemies]) {
       if (this.combatantsById.has(init.id)) {
@@ -139,6 +143,7 @@ export class Battle {
     }
     if (this.checkBattleEnd(events)) return events;
 
+    this.beforeEnemyTargets?.(events);
     this.chooseEnemyTargets(events);
 
     this.phase = 'awaitingOrders';
@@ -154,6 +159,8 @@ export class Battle {
     const alreadyTargeted = new Set<string>();
     for (const enemy of this.aliveOf('enemy')) {
       const targetId = this.enemyAi.chooseTarget(enemy, candidates, alreadyTargeted, this.aiContext);
+      //행동할 수 없는 적(예약도 행동력도 없음)은 이번 턴 아무도 겨누지 않는다 (v4.0 §4)
+      if (targetId === null) continue;
       this.enemyTargets.set(enemy.id, targetId);
       alreadyTargeted.add(targetId);
       events.push({ type: 'enemyTargeted', enemyId: enemy.id, targetId });
