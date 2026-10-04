@@ -1,6 +1,6 @@
 //카일 전 스킬 공간형 VFX 시험 화면 (SPEC-005 §15.3·§15.4). 게임과 같은 무대·같은 카메라에서 평면 재생과 공간형을 나란히 본다
 //S1 평면: 게임 종이 인형 판에 원본 S1 장(norm/11-skill1-01~15)을 §12.5 곡선 박자로 넘긴다 (원본은 읽기만 한다)
-//S1 공간형: 원본 15 장 몸 판 + 깊이만 쓰는 몸 가림 판 + 휜 띠 메시 + 깊이별 물방울 + 지면 물결
+//S1 공간형: 원본 컬러 효과 장 또는 기존 질감 띠를 같은 휘두름 깊이에서 비교한다
 //S2·S3·결행 (§15.4): 평면은 게임과 같은 통합 장(결행은 깊이 0 면의 효과 장), 공간형은 몸만 남긴 장 + 효과 분리 장을 투영 곡면에 얹는다
 //스킬 그림은 고를 때 받는다
 //카메라: 게임 CameraRig 그대로(교전·대기) + 궤도 막대. 카메라 변환을 쓰는 곳은 writeCamera 하나다
@@ -9,6 +9,7 @@
 import * as THREE from 'three';
 import { parseRibbonConfig, slashDuration, slashSample, originalFrameAt } from '../render/ribbon-slash.js';
 import { parseSpaceConfig, viewPitchDeg } from '../render/space-slash.js';
+import { parseSourceSlashConfig } from '../render/source-slash.js';
 import { hPerPixel, parseSpaceFx, skillDuration, trackFrameAt, type SpaceFxSkill } from '../render/space-fx.js';
 import type { SpriteCatalog } from '../render/manifest.js';
 import { loadCharacter } from '../renderer/assets.js';
@@ -17,6 +18,7 @@ import { CameraRig } from './camera.js';
 import { parseBackdropConfig, parseStage3dConfig } from './config.js';
 import { PaperDoll, frameTexture, plateGeometry } from './doll.js';
 import { SpaceSlashEffect } from './space-slash.js';
+import { SourceSlashEffect } from './source-slash.js';
 import { SpaceFxTrackMesh } from './space-fx.js';
 import { cropTexture, loadStrip } from './strip-loader.js';
 
@@ -77,6 +79,19 @@ async function main(): Promise<void> {
   const catalog: SpriteCatalog | null = await loadCharacter(assets, 'kyle');
   if (!catalog) throw new Error('카일 매니페스트를 읽을 수 없다');
   const fxConfig = parseSpaceFx(await json(`${assets}/kyle/space-fx.json`));
+  const sourceConfig = parseSourceSlashConfig(await json(`${assets}/kyle/source-vfx.json`));
+  const sourceTextures = await Promise.all(sourceConfig.frames.map(async (file) => {
+    const found = await image(`${assets}/kyle/${file}`);
+    if (!found) throw new Error(`물금 원본 효과를 읽을 수 없다: ${file}`);
+    const texture = new THREE.Texture(found);
+    texture.colorSpace = THREE.SRGBColorSpace;
+    const [x0, y0, x1, y1] = sourceConfig.crop;
+    texture.offset.set(x0 / sourceConfig.canvas[0], 1 - y1 / sourceConfig.canvas[1]);
+    texture.repeat.set((x1 - x0) / sourceConfig.canvas[0], (y1 - y0) / sourceConfig.canvas[1]);
+    texture.anisotropy = 4;
+    texture.needsUpdate = true;
+    return texture;
+  }));
   const strip = config.texture ? await loadStrip(`${assets}/kyle/${config.texture.file}`) : null;
   if (!strip) throw new Error('띠 질감(s1-strip.png)을 읽을 수 없다 — scripts/kyle_vfx_strip.py 로 만든다');
   readout.textContent = '그림 받는 중…';
@@ -169,6 +184,9 @@ async function main(): Promise<void> {
   const effect = new SpaceSlashEffect(config, space, H, strip, viewPitchDeg(backdropConfig.camera));
   effect.root.position.copy(allyAt);
   scene.add(effect.root);
+  const sourceEffect = new SourceSlashEffect(sourceConfig, config, space, H, sourceTextures, viewPitchDeg(backdropConfig.camera));
+  sourceEffect.root.position.copy(allyAt);
+  scene.add(sourceEffect.root);
   //S2·S3·결행 효과. 공간형 칸·평면 칸에 따로 보인다
   const spaceFxGroup = new THREE.Group();
   const flatFxGroup = new THREE.Group();
@@ -223,6 +241,7 @@ async function main(): Promise<void> {
   const s1LoopMs = pre + slashMs + config.timingMs.bodyAfterHold;
   let loopMs = s1LoopMs;
   let skillId: SkillId = 's1';
+  let s1Source: 'original' | 'strip' = 'original';
   let current: LoadedSkill | null = null;
   const loaded = new Map<SkillId, LoadedSkill>();
   const loading = new Map<SkillId, Promise<LoadedSkill | null>>();
@@ -250,6 +269,7 @@ async function main(): Promise<void> {
       spaceDoll.showFrame(bodyId);
       kyleOccluder(occlusionOn ? bodyId : null, textures.get(bodyId));
       effect.setAge(Math.max(0, t));
+      sourceEffect.setAge(t);
       if (t < 0) effect.root.visible = false;
       return;
     }
@@ -395,6 +415,7 @@ async function main(): Promise<void> {
     pendingSkill = null;
     for (const l of loaded.values()) for (const m of [...l.space, ...l.flat]) m.root.visible = false;
     skillId = id;
+    showSourceOptions();
     skillBox.value = id;
     current = next;
     loopMs = next ? skillDuration(next.skill) + AFTER_HOLD : s1LoopMs;
@@ -450,6 +471,21 @@ async function main(): Promise<void> {
   skillBox.addEventListener('change', () => {
     void selectSkill(skillBox.value as SkillId);
   });
+  const sourceBox = byId<HTMLSelectElement>('s1-source');
+  //기존 질감의 보정·추가 입자는 그 방식을 고를 때만 보여 준다
+  const showSourceOptions = (): void => {
+    byId<HTMLElement>('s1-source-row').hidden = skillId !== 's1';
+    for (const id of ['ly-glow', 'ly-drops', 'ly-ripples', 'opt-flow', 'opt-sparkle']) {
+      byId<HTMLInputElement>(id).parentElement!.hidden = skillId !== 's1' || s1Source !== 'strip';
+    }
+    byId<HTMLElement>('s1-options').hidden = skillId !== 's1' || s1Source !== 'strip';
+  };
+  sourceBox.addEventListener('change', () => {
+    s1Source = sourceBox.value as typeof s1Source;
+    showSourceOptions();
+    resize();
+  });
+  showSourceOptions();
   const shotBox = byId<HTMLSelectElement>('shot');
   shotBox.addEventListener('change', () => {
     shot = shotBox.value as typeof shot;
@@ -540,7 +576,7 @@ async function main(): Promise<void> {
       if (!p) return;
       label.style.left = `${p.x + 8}px`;
       label.style.top = `${p.y + 8}px`;
-      label.textContent = p.kind === 'flat' ? (skillId === 's1' ? '평면 재생 (원본 15장)' : '평면 재생 (게임과 같은 장)') : skillId === 's1' ? '공간형 (§15.3)' : '공간형 (§15.4 투영 곡면)';
+      label.textContent = p.kind === 'flat' ? (skillId === 's1' ? '평면 재생 (원본 15장)' : '평면 재생 (게임과 같은 장)') : skillId === 's1' ? (s1Source === 'original' ? '공간형 (원본 컬러 15장)' : '공간형 (기존 질감 띠)') : '공간형 (§15.4 투영 곡면)';
     });
   };
   window.addEventListener('resize', resize);
@@ -553,7 +589,8 @@ async function main(): Promise<void> {
     spaceDoll.root.visible = p.kind === 'space';
     const spaceVisible = p.kind === 'space';
     const t = age - pre;
-    effect.root.visible = skillId === 's1' && spaceVisible && t >= 0 && slashSample(config, t).alive;
+    effect.root.visible = skillId === 's1' && s1Source === 'strip' && spaceVisible && t >= 0 && slashSample(config, t).alive;
+    sourceEffect.root.visible = skillId === 's1' && s1Source === 'original' && spaceVisible && fxOn && t >= 0;
     spaceFxGroup.visible = fxOn && spaceVisible;
     flatFxGroup.visible = fxOn && p.kind === 'flat';
     //적 가림 판은 공간형 칸에서만 (적 인형은 두 칸 다 보인다)
@@ -584,7 +621,10 @@ async function main(): Promise<void> {
     applyAge();
     writeCamera(dtReal / 1000);
     for (const doll of [flatDoll, spaceDoll, enemyDoll]) doll.faceCamera(camera);
-    if (skillId === 's1') effect.orient(paintCamera);
+    if (skillId === 's1') {
+      effect.orient(paintCamera);
+      sourceEffect.orient(paintCamera);
+    }
     const foregroundAt = current?.skill.scene === 'self' ? enemyDoll.root.position : undefined;
     for (const m of [...(current?.space ?? []), ...(current?.flat ?? [])]) m.orient(paintCamera, foregroundAt);
     renderer.setScissor(0, 0, canvas.clientWidth, canvas.clientHeight);
@@ -642,7 +682,11 @@ async function main(): Promise<void> {
       skillBox.value = id;
       await selectSkill(id);
     },
-    state: () => ({ skill: skillId, selected: skillBox.value, pendingSkill, selectionError, age, pre, loopMs, enemyOcclusion: enemyOccluderOn, calls: renderer.info.render.calls, programs: renderer.info.programs?.length ?? 0 }),
+    source: (value: 'original' | 'strip') => {
+      sourceBox.value = value;
+      sourceBox.dispatchEvent(new Event('change'));
+    },
+    state: () => ({ skill: skillId, selected: skillBox.value, s1Source, sourceFrame: originalFrameAt(Math.max(0, age - pre), config.timingMs.reveal) + 1, pendingSkill, selectionError, age, pre, loopMs, enemyOcclusion: enemyOccluderOn, calls: renderer.info.render.calls, programs: renderer.info.programs?.length ?? 0 }),
   };
 }
 

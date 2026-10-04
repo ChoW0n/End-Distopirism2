@@ -124,6 +124,43 @@ describe('투영 곡면', () => {
 });
 
 describe('실제 메시의 원근 투영', () => {
+  it('S3 올려베기는 양쪽 60도·높이 20도에서도 실제 호 부분의 면적과 깊이가 남는다', () => {
+    const track = skill('s3').tracks[0];
+    const surface = config.surfaces['upcut'];
+    if (!track || !surface) throw new Error('올려베기');
+    const g = surfaceGrid(track, surface, hPerPixel(track, CHAR_PX), view, config.groundLift, config.grid);
+    const enemy = new THREE.Vector3(0.55, 0, 0).applyMatrix4(frame.matrixWorld.clone().invert()).divideScalar(H);
+    placeGridBehind(view, g.positions, paintDepth(view, [enemy.x, enemy.y, enemy.z]) + 0.004, config.groundLift);
+    //08-upcut-impact 원화의 위·중간·아래 호가 채우는 격자 칸. 투명 여백의 면적은 제외한다
+    const patches = [[32, 1], [35, 3], [37, 7], [35, 11]] as const;
+    const columns = config.grid[0] + 1;
+    const point = (i: number): THREE.Vector3 => new THREE.Vector3(g.positions[i * 3], g.positions[i * 3 + 1], g.positions[i * 3 + 2]).multiplyScalar(H).applyMatrix4(frame.matrixWorld);
+    const area = (camera: THREE.Camera): number => {
+      const triangle = (a: THREE.Vector3, b: THREE.Vector3, c: THREE.Vector3): number => Math.abs((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x)) / 2;
+      return patches.reduce((sum, [x, y]) => {
+        const a = y * columns + x;
+        const [p, q, r, s] = [a, a + 1, a + columns, a + columns + 1].map((i) => point(i).project(camera)) as [THREE.Vector3, THREE.Vector3, THREE.Vector3, THREE.Vector3];
+        return sum + triangle(p, r, q) + triangle(q, r, s);
+      }, 0);
+    };
+    const frontArea = area(camera);
+    for (const yaw of [-60, 60]) {
+      const orbit = camera.clone();
+      const right = new THREE.Vector3(1, 0, 0).applyQuaternion(orbit.quaternion);
+      const rise = new THREE.Quaternion().setFromAxisAngle(right, -20 * Math.PI / 180);
+      const chest = new THREE.Vector3(-0.55, H / 2, 0);
+      orbit.position.sub(chest).applyQuaternion(rise).add(chest);
+      orbit.quaternion.premultiply(rise);
+      const turn = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw * Math.PI / 180);
+      orbit.position.sub(frame.position).applyQuaternion(turn).add(frame.position);
+      orbit.quaternion.premultiply(turn);
+      orbit.updateMatrixWorld();
+      expect(area(orbit) / frontArea).toBeGreaterThan(0.5);
+    }
+    const depths = patches.map(([x, y]) => g.positions[(y * columns + x) * 3 + 2] as number);
+    expect(Math.max(...depths) - Math.min(...depths)).toBeGreaterThan(0.2);
+  });
+
   it('S2 메시를 적 판 뒤로 배치해도 원화와 겹치고 적 몸 높이에서 효과가 앞으로 튀어나오지 않는다', () => {
     const track = skill('s2').tracks[0];
     if (!track) throw new Error('S2');

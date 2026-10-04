@@ -10,6 +10,7 @@
 //Playwright 는 devDependency 가 아니다. 전역 설치본을 찾고, 없으면 PLAYWRIGHT_MODULE 로 경로를 준다
 
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { dirname, extname, join, normalize, resolve } from 'node:path';
@@ -22,6 +23,8 @@ const sha = run('git', ['rev-parse', '--short', 'HEAD']).stdout.trim();
 const NAME = `end-distopirism2-review-${sha}`;
 const BASE = join(ROOT, 'review-bundle');
 const OUT = join(BASE, NAME);
+//원본 출처·프레임 해시는 화면이 요청하지 않아도 검토 묶음에 보존한다
+const S1_METADATA = ['assets/kyle/source-vfx.json', 'assets/kyle/vfx/s1-original/manifest.json'];
 
 //세 화면. 묶음 첫 화면의 목록도 이 표로 만든다
 const PAGES = [
@@ -38,6 +41,21 @@ const MIME = {
 
 function step(text) {
   console.log(`· ${text}`);
+}
+
+function originalVfxAssets(root) {
+  const config = JSON.parse(readFileSync(join(root, S1_METADATA[0]), 'utf-8'));
+  const manifest = JSON.parse(readFileSync(join(root, S1_METADATA[1]), 'utf-8'));
+  const frames = config.frames.map((file) => `assets/kyle/${file}`);
+  const recorded = manifest.frames.map((frame) => `assets/kyle/${frame.kyleRelativeFile}`);
+  if (frames.length !== 15 || new Set(frames).size !== 15 || JSON.stringify(frames) !== JSON.stringify(recorded)) {
+    throw new Error('S1 원본 15장 설정과 출처 목록이 일치하지 않는다');
+  }
+  for (const [index, file] of frames.entries()) {
+    const sha256 = createHash('sha256').update(readFileSync(join(root, file))).digest('hex');
+    if (sha256 !== manifest.frames[index].sha256) throw new Error(`S1 원본 해시가 다르다: ${file}`);
+  }
+  return { frames, files: [...S1_METADATA, ...frames] };
 }
 
 //Playwright 를 찾는다. 프로젝트 → PLAYWRIGHT_MODULE → 전역 설치본 순서
@@ -142,25 +160,37 @@ async function crawl(origin, shots) {
   step('공간형 VFX 화면');
   page = await open('web/vfx-space.html');
   await page.waitForFunction(() => window.__vfxSpace !== undefined, null, { timeout: 120000 });
+  if (await page.evaluate(() => window.__vfxSpace.state().s1Source) !== 'original') errors.push('S1 기본 모드가 원본 컬러가 아니다');
   for (const skill of ['s1', 's2', 's3', 'ult']) {
     await page.evaluate((s) => window.__vfxSpace.skill(s), skill);
     const { loopMs } = await page.evaluate(() => window.__vfxSpace.state());
     const at = (k) => Math.round(loopMs * k);
-    for (const k of [0.2, 0.4, 0.6]) {
-      await page.evaluate(([ms]) => {
-        window.__vfxSpace.orbit(0, 0);
-        window.__vfxSpace.seek(ms);
-      }, [at(k)]);
-      await page.waitForTimeout(400);
-      await shot(page, `space-${skill}-t${at(k)}`);
+    for (const source of skill === 's1' ? ['original', 'strip'] : [null]) {
+      if (source) {
+        await page.evaluate((value) => window.__vfxSpace.source(value), source);
+        if (await page.evaluate(() => window.__vfxSpace.state().s1Source) !== source) errors.push(`S1 ${source} 모드 전환 실패`);
+      }
+      const label = source ? `${skill}-${source}` : skill;
+      for (const k of [0.2, 0.4, 0.6]) {
+        await page.evaluate(([ms]) => {
+          window.__vfxSpace.orbit(0, 0);
+          window.__vfxSpace.seek(ms);
+        }, [at(k)]);
+        await page.waitForTimeout(400);
+        await shot(page, `space-${label}-t${at(k)}`);
+      }
+      for (const [yaw, up] of [[60, 0], [0, 55]]) {
+        await page.evaluate(([y, u, ms]) => {
+          window.__vfxSpace.orbit(y, u);
+          window.__vfxSpace.seek(ms);
+        }, [yaw, up, at(0.4)]);
+        await page.waitForTimeout(400);
+        await shot(page, `space-${label}-orbit${yaw}-${up}`);
+      }
     }
-    for (const [yaw, up] of [[60, 0], [0, 55]]) {
-      await page.evaluate(([y, u, ms]) => {
-        window.__vfxSpace.orbit(y, u);
-        window.__vfxSpace.seek(ms);
-      }, [yaw, up, at(0.4)]);
-      await page.waitForTimeout(400);
-      await shot(page, `space-${skill}-orbit${yaw}-${up}`);
+    if (skill === 's1') {
+      await page.evaluate(() => window.__vfxSpace.source('original'));
+      if (await page.evaluate(() => window.__vfxSpace.state().s1Source) !== 'original') errors.push('S1 원본 컬러 모드 복귀 실패');
     }
   }
   await page.close();
@@ -232,6 +262,7 @@ async function main() {
   //누락된 UI가 있으면 빌드·화면 순회 전에 멈춘다
   const uiAssets = collectUiAssets(ROOT);
   assertUiAssets(ROOT, uiAssets);
+  const s1Assets = originalVfxAssets(ROOT);
   const checks = buildAndCheck();
   const server = await serve();
   const origin = `http://127.0.0.1:${server.address().port}`;
@@ -244,13 +275,16 @@ async function main() {
   } finally {
     server.close();
   }
+  for (const file of s1Assets.frames) {
+    if (!result.seen.includes(file)) result.errors.push(`S1 원본 프레임이 요청되지 않았다: ${file}`);
+  }
   if (result.errors.length > 0) {
     throw new Error(`화면에서 오류가 났다. 묶음을 만들지 않는다\n${result.errors.join('\n')}`);
   }
 
-  //요청한 파일 + 모든 UI 상태 + 읽을 문서
-  const docs = readdirSync(join(ROOT, 'docs')).filter((f) => f.endsWith('.md')).map((f) => `docs/${f}`);
-  const files = [...new Set([...result.seen, ...uiAssets, ...docs, 'docs/참고/gpt-astra-이미지제작-능력.md'])].sort();
+  //요청한 파일 + 모든 UI 상태 + 원본 출처 + 읽을 문서
+  const docs = readdirSync(join(ROOT, 'docs')).filter((f) => f.endsWith('.md') || (f.startsWith('qa-') && f.endsWith('.json'))).map((f) => `docs/${f}`);
+  const files = [...new Set([...result.seen, ...uiAssets, ...s1Assets.files, ...docs, 'docs/참고/gpt-astra-이미지제작-능력.md'])].sort();
   step(`파일 ${files.length}개 복사`);
   for (const rel of files) {
     const dst = join(OUT, rel);
@@ -258,6 +292,7 @@ async function main() {
     copyFileSync(join(ROOT, rel), dst);
   }
   assertUiAssets(OUT, uiAssets);
+  originalVfxAssets(OUT);
   const info = {
     name: NAME,
     commit: run('git', ['rev-parse', 'HEAD']).stdout.trim(),
@@ -266,6 +301,7 @@ async function main() {
     dirty: run('git', ['status', '--porcelain', '--', 'src', 'web', 'docs', 'assets', 'tests', 'scripts']).stdout.trim() !== '',
     ...checks,
     uiAssets: { ok: true, count: uiAssets.length },
+    s1Original: { ok: true, frames: s1Assets.frames.length, metadata: S1_METADATA },
     files: files.length,
     pages: PAGES.map((p) => p.path),
   };

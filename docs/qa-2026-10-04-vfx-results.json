@@ -1,0 +1,2562 @@
+{
+  "date": "2026-10-04",
+  "unit": {
+    "success": true,
+    "numTotalTests": 526,
+    "numPassedTests": 526,
+    "numFailedTests": 0,
+    "numPendingTests": 0
+  },
+  "s1": {
+    "viewport": [
+      1280,
+      720
+    ],
+    "pixel_ratio": 1,
+    "shot": "combat",
+    "comparison": "공간형 효과 켬과 끔의 최대 RGB 채널 차이 > 8. 바탕 혼합색이므로 원본 텍스처 RGB와 직접 등치하지 않는다.",
+    "cases": [
+      {
+        "name": "s1-t300-yaw+0-pitch0-ribbon-source-original",
+        "skill": "s1",
+        "age_ms": 300,
+        "yaw": 0,
+        "pitch": 0,
+        "layers": "ribbon",
+        "source": "original",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "original",
+          "sourceFrame": 2,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 300,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 11,
+          "programs": 5
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 7590,
+          "strong_pixel_count": 6551,
+          "blue_pixel_count": 6341,
+          "bright_pixel_count": 365,
+          "bbox": [
+            470,
+            184,
+            699,
+            281
+          ],
+          "width": 229,
+          "height": 97,
+          "major_span_4sigma": 240.66,
+          "minor_span_4sigma": 69.75,
+          "mask_mean_rgb": [
+            76.75,
+            98.22,
+            136.18
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              8.0,
+              36.0,
+              70.0
+            ],
+            [
+              75.0,
+              96.0,
+              129.0
+            ],
+            [
+              149.1,
+              174.0,
+              217.0
+            ]
+          ],
+          "mean_max_channel_difference": 77.85,
+          "bbox_fill_ratio": 0.3417,
+          "equivalent_thickness_pixels": 31.54
+        }
+      },
+      {
+        "name": "s1-t300-yaw+0-pitch0-ribbon-source-strip",
+        "skill": "s1",
+        "age_ms": 300,
+        "yaw": 0,
+        "pitch": 0,
+        "layers": "ribbon",
+        "source": "strip",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "strip",
+          "sourceFrame": 2,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 300,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 10,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 5656,
+          "strong_pixel_count": 5305,
+          "blue_pixel_count": 5124,
+          "bright_pixel_count": 443,
+          "bbox": [
+            469,
+            185,
+            696,
+            280
+          ],
+          "width": 227,
+          "height": 95,
+          "major_span_4sigma": 237.33,
+          "minor_span_4sigma": 66.75,
+          "mask_mean_rgb": [
+            81.35,
+            107.25,
+            171.14
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              26.0,
+              41.0,
+              90.0
+            ],
+            [
+              66.0,
+              91.0,
+              187.0
+            ],
+            [
+              166.0,
+              201.0,
+              235.0
+            ]
+          ],
+          "mean_max_channel_difference": 104.94,
+          "bbox_fill_ratio": 0.2623,
+          "equivalent_thickness_pixels": 23.83
+        }
+      },
+      {
+        "name": "s1-t300-yaw-60-pitch20-ribbon-source-original",
+        "skill": "s1",
+        "age_ms": 300,
+        "yaw": -60,
+        "pitch": 20,
+        "layers": "ribbon",
+        "source": "original",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "original",
+          "sourceFrame": 2,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 300,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 11,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 7601,
+          "strong_pixel_count": 6876,
+          "blue_pixel_count": 6488,
+          "bright_pixel_count": 407,
+          "bbox": [
+            496,
+            180,
+            679,
+            323
+          ],
+          "width": 183,
+          "height": 143,
+          "major_span_4sigma": 179.32,
+          "minor_span_4sigma": 71.18,
+          "mask_mean_rgb": [
+            71.61,
+            95.02,
+            136.27
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              2.0,
+              32.0,
+              72.0
+            ],
+            [
+              71.0,
+              90.0,
+              125.0
+            ],
+            [
+              153.0,
+              179.0,
+              225.0
+            ]
+          ],
+          "mean_max_channel_difference": 82.35,
+          "bbox_fill_ratio": 0.2905,
+          "equivalent_thickness_pixels": 42.39
+        }
+      },
+      {
+        "name": "s1-t300-yaw-60-pitch20-ribbon-source-strip",
+        "skill": "s1",
+        "age_ms": 300,
+        "yaw": -60,
+        "pitch": 20,
+        "layers": "ribbon",
+        "source": "strip",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "strip",
+          "sourceFrame": 2,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 300,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 10,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 5911,
+          "strong_pixel_count": 5567,
+          "blue_pixel_count": 5278,
+          "bright_pixel_count": 568,
+          "bbox": [
+            495,
+            182,
+            676,
+            323
+          ],
+          "width": 181,
+          "height": 141,
+          "major_span_4sigma": 180.94,
+          "minor_span_4sigma": 71.38,
+          "mask_mean_rgb": [
+            83.83,
+            110.33,
+            175.05
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              28.0,
+              44.0,
+              88.0
+            ],
+            [
+              67.0,
+              92.0,
+              190.0
+            ],
+            [
+              177.0,
+              207.0,
+              237.0
+            ]
+          ],
+          "mean_max_channel_difference": 102.86,
+          "bbox_fill_ratio": 0.2316,
+          "equivalent_thickness_pixels": 32.67
+        }
+      },
+      {
+        "name": "s1-t300-yaw+60-pitch20-ribbon-source-original",
+        "skill": "s1",
+        "age_ms": 300,
+        "yaw": 60,
+        "pitch": 20,
+        "layers": "ribbon",
+        "source": "original",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "original",
+          "sourceFrame": 2,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 300,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 11,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 8282,
+          "strong_pixel_count": 7089,
+          "blue_pixel_count": 6834,
+          "bright_pixel_count": 414,
+          "bbox": [
+            482,
+            133,
+            730,
+            304
+          ],
+          "width": 248,
+          "height": 171,
+          "major_span_4sigma": 278.19,
+          "minor_span_4sigma": 122.38,
+          "mask_mean_rgb": [
+            80.47,
+            101.54,
+            138.41
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              14.0,
+              43.0,
+              79.0
+            ],
+            [
+              80.0,
+              97.0,
+              131.0
+            ],
+            [
+              150.0,
+              172.0,
+              210.0
+            ]
+          ],
+          "mean_max_channel_difference": 74.08,
+          "bbox_fill_ratio": 0.1953,
+          "equivalent_thickness_pixels": 29.77
+        }
+      },
+      {
+        "name": "s1-t300-yaw+60-pitch20-ribbon-source-strip",
+        "skill": "s1",
+        "age_ms": 300,
+        "yaw": 60,
+        "pitch": 20,
+        "layers": "ribbon",
+        "source": "strip",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "strip",
+          "sourceFrame": 2,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 300,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 10,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 6442,
+          "strong_pixel_count": 6000,
+          "blue_pixel_count": 5753,
+          "bright_pixel_count": 452,
+          "bbox": [
+            482,
+            132,
+            728,
+            294
+          ],
+          "width": 246,
+          "height": 162,
+          "major_span_4sigma": 270.93,
+          "minor_span_4sigma": 124.37,
+          "mask_mean_rgb": [
+            80.64,
+            106.43,
+            169.83
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              27.0,
+              42.0,
+              86.0
+            ],
+            [
+              67.0,
+              88.0,
+              186.0
+            ],
+            [
+              162.0,
+              198.0,
+              233.0
+            ]
+          ],
+          "mean_max_channel_difference": 102.37,
+          "bbox_fill_ratio": 0.1616,
+          "equivalent_thickness_pixels": 23.78
+        }
+      },
+      {
+        "name": "s1-t400-yaw+0-pitch0-ribbon-source-original",
+        "skill": "s1",
+        "age_ms": 400,
+        "yaw": 0,
+        "pitch": 0,
+        "layers": "ribbon",
+        "source": "original",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "original",
+          "sourceFrame": 2,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 400,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 11,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 7590,
+          "strong_pixel_count": 6551,
+          "blue_pixel_count": 6341,
+          "bright_pixel_count": 365,
+          "bbox": [
+            470,
+            184,
+            699,
+            281
+          ],
+          "width": 229,
+          "height": 97,
+          "major_span_4sigma": 240.66,
+          "minor_span_4sigma": 69.75,
+          "mask_mean_rgb": [
+            76.75,
+            98.22,
+            136.18
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              8.0,
+              36.0,
+              70.0
+            ],
+            [
+              75.0,
+              96.0,
+              129.0
+            ],
+            [
+              149.1,
+              174.0,
+              217.0
+            ]
+          ],
+          "mean_max_channel_difference": 77.85,
+          "bbox_fill_ratio": 0.3417,
+          "equivalent_thickness_pixels": 31.54
+        }
+      },
+      {
+        "name": "s1-t400-yaw+0-pitch0-ribbon-source-strip",
+        "skill": "s1",
+        "age_ms": 400,
+        "yaw": 0,
+        "pitch": 0,
+        "layers": "ribbon",
+        "source": "strip",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "strip",
+          "sourceFrame": 2,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 400,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 10,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 5657,
+          "strong_pixel_count": 5304,
+          "blue_pixel_count": 5086,
+          "bright_pixel_count": 438,
+          "bbox": [
+            469,
+            185,
+            696,
+            280
+          ],
+          "width": 227,
+          "height": 95,
+          "major_span_4sigma": 237.36,
+          "minor_span_4sigma": 66.74,
+          "mask_mean_rgb": [
+            81.48,
+            107.39,
+            171.07
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              27.0,
+              41.0,
+              90.0
+            ],
+            [
+              67.0,
+              93.0,
+              189.0
+            ],
+            [
+              164.0,
+              199.0,
+              232.0
+            ]
+          ],
+          "mean_max_channel_difference": 104.68,
+          "bbox_fill_ratio": 0.2623,
+          "equivalent_thickness_pixels": 23.83
+        }
+      },
+      {
+        "name": "s1-t400-yaw-60-pitch20-ribbon-source-original",
+        "skill": "s1",
+        "age_ms": 400,
+        "yaw": -60,
+        "pitch": 20,
+        "layers": "ribbon",
+        "source": "original",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "original",
+          "sourceFrame": 2,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 400,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 11,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 7601,
+          "strong_pixel_count": 6876,
+          "blue_pixel_count": 6488,
+          "bright_pixel_count": 407,
+          "bbox": [
+            496,
+            180,
+            679,
+            323
+          ],
+          "width": 183,
+          "height": 143,
+          "major_span_4sigma": 179.32,
+          "minor_span_4sigma": 71.18,
+          "mask_mean_rgb": [
+            71.61,
+            95.02,
+            136.27
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              2.0,
+              32.0,
+              72.0
+            ],
+            [
+              71.0,
+              90.0,
+              125.0
+            ],
+            [
+              153.0,
+              179.0,
+              225.0
+            ]
+          ],
+          "mean_max_channel_difference": 82.35,
+          "bbox_fill_ratio": 0.2905,
+          "equivalent_thickness_pixels": 42.39
+        }
+      },
+      {
+        "name": "s1-t400-yaw-60-pitch20-ribbon-source-strip",
+        "skill": "s1",
+        "age_ms": 400,
+        "yaw": -60,
+        "pitch": 20,
+        "layers": "ribbon",
+        "source": "strip",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "strip",
+          "sourceFrame": 2,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 400,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 10,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 5911,
+          "strong_pixel_count": 5567,
+          "blue_pixel_count": 5222,
+          "bright_pixel_count": 557,
+          "bbox": [
+            495,
+            182,
+            676,
+            323
+          ],
+          "width": 181,
+          "height": 141,
+          "major_span_4sigma": 180.94,
+          "minor_span_4sigma": 71.38,
+          "mask_mean_rgb": [
+            83.96,
+            110.46,
+            174.91
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              29.0,
+              45.0,
+              88.0
+            ],
+            [
+              68.0,
+              94.0,
+              192.0
+            ],
+            [
+              176.0,
+              206.0,
+              233.0
+            ]
+          ],
+          "mean_max_channel_difference": 102.41,
+          "bbox_fill_ratio": 0.2316,
+          "equivalent_thickness_pixels": 32.67
+        }
+      },
+      {
+        "name": "s1-t400-yaw+60-pitch20-ribbon-source-original",
+        "skill": "s1",
+        "age_ms": 400,
+        "yaw": 60,
+        "pitch": 20,
+        "layers": "ribbon",
+        "source": "original",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "original",
+          "sourceFrame": 2,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 400,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 11,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 8282,
+          "strong_pixel_count": 7089,
+          "blue_pixel_count": 6834,
+          "bright_pixel_count": 414,
+          "bbox": [
+            482,
+            133,
+            730,
+            304
+          ],
+          "width": 248,
+          "height": 171,
+          "major_span_4sigma": 278.19,
+          "minor_span_4sigma": 122.38,
+          "mask_mean_rgb": [
+            80.47,
+            101.54,
+            138.41
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              14.0,
+              43.0,
+              79.0
+            ],
+            [
+              80.0,
+              97.0,
+              131.0
+            ],
+            [
+              150.0,
+              172.0,
+              210.0
+            ]
+          ],
+          "mean_max_channel_difference": 74.08,
+          "bbox_fill_ratio": 0.1953,
+          "equivalent_thickness_pixels": 29.77
+        }
+      },
+      {
+        "name": "s1-t400-yaw+60-pitch20-ribbon-source-strip",
+        "skill": "s1",
+        "age_ms": 400,
+        "yaw": 60,
+        "pitch": 20,
+        "layers": "ribbon",
+        "source": "strip",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "strip",
+          "sourceFrame": 2,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 400,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 10,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 6443,
+          "strong_pixel_count": 6001,
+          "blue_pixel_count": 5735,
+          "bright_pixel_count": 447,
+          "bbox": [
+            482,
+            132,
+            728,
+            294
+          ],
+          "width": 246,
+          "height": 162,
+          "major_span_4sigma": 270.94,
+          "minor_span_4sigma": 124.36,
+          "mask_mean_rgb": [
+            80.69,
+            106.45,
+            169.63
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              27.0,
+              42.0,
+              86.0
+            ],
+            [
+              67.0,
+              89.0,
+              188.0
+            ],
+            [
+              160.8,
+              196.0,
+              230.0
+            ]
+          ],
+          "mean_max_channel_difference": 102.16,
+          "bbox_fill_ratio": 0.1617,
+          "equivalent_thickness_pixels": 23.78
+        }
+      },
+      {
+        "name": "s1-t650-yaw+0-pitch0-ribbon-source-original",
+        "skill": "s1",
+        "age_ms": 650,
+        "yaw": 0,
+        "pitch": 0,
+        "layers": "ribbon",
+        "source": "original",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "original",
+          "sourceFrame": 4,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 650,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 11,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 6479,
+          "strong_pixel_count": 5508,
+          "blue_pixel_count": 5317,
+          "bright_pixel_count": 547,
+          "bbox": [
+            469,
+            184,
+            700,
+            282
+          ],
+          "width": 231,
+          "height": 98,
+          "major_span_4sigma": 231.15,
+          "minor_span_4sigma": 67.89,
+          "mask_mean_rgb": [
+            77.05,
+            101.64,
+            144.13
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              8.0,
+              33.0,
+              65.0
+            ],
+            [
+              70.0,
+              97.0,
+              134.0
+            ],
+            [
+              167.0,
+              194.0,
+              235.0
+            ]
+          ],
+          "mean_max_channel_difference": 85.36,
+          "bbox_fill_ratio": 0.2862,
+          "equivalent_thickness_pixels": 28.03
+        }
+      },
+      {
+        "name": "s1-t650-yaw+0-pitch0-ribbon-source-strip",
+        "skill": "s1",
+        "age_ms": 650,
+        "yaw": 0,
+        "pitch": 0,
+        "layers": "ribbon",
+        "source": "strip",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "strip",
+          "sourceFrame": 4,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 650,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 10,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 5626,
+          "strong_pixel_count": 5279,
+          "blue_pixel_count": 5039,
+          "bright_pixel_count": 428,
+          "bbox": [
+            469,
+            185,
+            692,
+            280
+          ],
+          "width": 223,
+          "height": 95,
+          "major_span_4sigma": 234.7,
+          "minor_span_4sigma": 65.94,
+          "mask_mean_rgb": [
+            81.54,
+            107.39,
+            170.81
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              27.0,
+              42.0,
+              90.0
+            ],
+            [
+              67.0,
+              93.0,
+              189.0
+            ],
+            [
+              164.0,
+              198.0,
+              229.0
+            ]
+          ],
+          "mean_max_channel_difference": 104.09,
+          "bbox_fill_ratio": 0.2656,
+          "equivalent_thickness_pixels": 23.97
+        }
+      },
+      {
+        "name": "s1-t650-yaw-60-pitch20-ribbon-source-original",
+        "skill": "s1",
+        "age_ms": 650,
+        "yaw": -60,
+        "pitch": 20,
+        "layers": "ribbon",
+        "source": "original",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "original",
+          "sourceFrame": 4,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 650,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 11,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 6954,
+          "strong_pixel_count": 6167,
+          "blue_pixel_count": 5786,
+          "bright_pixel_count": 675,
+          "bbox": [
+            500,
+            183,
+            680,
+            320
+          ],
+          "width": 180,
+          "height": 137,
+          "major_span_4sigma": 180.5,
+          "minor_span_4sigma": 64.73,
+          "mask_mean_rgb": [
+            71.04,
+            98.56,
+            146.7
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              3.0,
+              27.0,
+              66.3
+            ],
+            [
+              60.0,
+              92.0,
+              135.0
+            ],
+            [
+              176.7,
+              204.0,
+              242.0
+            ]
+          ],
+          "mean_max_channel_difference": 94.33,
+          "bbox_fill_ratio": 0.282,
+          "equivalent_thickness_pixels": 38.53
+        }
+      },
+      {
+        "name": "s1-t650-yaw-60-pitch20-ribbon-source-strip",
+        "skill": "s1",
+        "age_ms": 650,
+        "yaw": -60,
+        "pitch": 20,
+        "layers": "ribbon",
+        "source": "strip",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "strip",
+          "sourceFrame": 4,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 650,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 10,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 5906,
+          "strong_pixel_count": 5560,
+          "blue_pixel_count": 5195,
+          "bright_pixel_count": 544,
+          "bbox": [
+            495,
+            185,
+            676,
+            323
+          ],
+          "width": 181,
+          "height": 138,
+          "major_span_4sigma": 181.01,
+          "minor_span_4sigma": 70.39,
+          "mask_mean_rgb": [
+            83.97,
+            110.42,
+            174.67
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              30.0,
+              46.0,
+              88.0
+            ],
+            [
+              68.0,
+              93.0,
+              192.0
+            ],
+            [
+              175.0,
+              204.0,
+              231.0
+            ]
+          ],
+          "mean_max_channel_difference": 101.73,
+          "bbox_fill_ratio": 0.2364,
+          "equivalent_thickness_pixels": 32.63
+        }
+      },
+      {
+        "name": "s1-t650-yaw+60-pitch20-ribbon-source-original",
+        "skill": "s1",
+        "age_ms": 650,
+        "yaw": 60,
+        "pitch": 20,
+        "layers": "ribbon",
+        "source": "original",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "original",
+          "sourceFrame": 4,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 650,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 11,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 6229,
+          "strong_pixel_count": 5176,
+          "blue_pixel_count": 5000,
+          "bright_pixel_count": 473,
+          "bbox": [
+            488,
+            135,
+            728,
+            304
+          ],
+          "width": 240,
+          "height": 169,
+          "major_span_4sigma": 260.4,
+          "minor_span_4sigma": 131.97,
+          "mask_mean_rgb": [
+            79.8,
+            104.77,
+            146.33
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              9.0,
+              39.0,
+              81.0
+            ],
+            [
+              78.0,
+              99.0,
+              135.0
+            ],
+            [
+              160.0,
+              189.0,
+              233.0
+            ]
+          ],
+          "mean_max_channel_difference": 81.3,
+          "bbox_fill_ratio": 0.1536,
+          "equivalent_thickness_pixels": 23.92
+        }
+      },
+      {
+        "name": "s1-t650-yaw+60-pitch20-ribbon-source-strip",
+        "skill": "s1",
+        "age_ms": 650,
+        "yaw": 60,
+        "pitch": 20,
+        "layers": "ribbon",
+        "source": "strip",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "strip",
+          "sourceFrame": 4,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 650,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 10,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 6370,
+          "strong_pixel_count": 5910,
+          "blue_pixel_count": 5618,
+          "bright_pixel_count": 429,
+          "bbox": [
+            482,
+            132,
+            722,
+            294
+          ],
+          "width": 240,
+          "height": 162,
+          "major_span_4sigma": 265.32,
+          "minor_span_4sigma": 124.43,
+          "mask_mean_rgb": [
+            80.65,
+            105.99,
+            168.26
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              27.0,
+              42.0,
+              86.0
+            ],
+            [
+              68.0,
+              89.0,
+              186.0
+            ],
+            [
+              159.1,
+              194.0,
+              227.0
+            ]
+          ],
+          "mean_max_channel_difference": 100.5,
+          "bbox_fill_ratio": 0.1638,
+          "equivalent_thickness_pixels": 24.01
+        }
+      },
+      {
+        "name": "s1-t950-yaw+0-pitch0-ribbon-source-original",
+        "skill": "s1",
+        "age_ms": 950,
+        "yaw": 0,
+        "pitch": 0,
+        "layers": "ribbon",
+        "source": "original",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "original",
+          "sourceFrame": 11,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 950,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 11,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 1142,
+          "strong_pixel_count": 779,
+          "blue_pixel_count": 632,
+          "bright_pixel_count": 60,
+          "bbox": [
+            471,
+            184,
+            550,
+            261
+          ],
+          "width": 79,
+          "height": 77,
+          "major_span_4sigma": 87.27,
+          "minor_span_4sigma": 40.02,
+          "mask_mean_rgb": [
+            111.28,
+            119.3,
+            137.41
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              68.0,
+              81.0,
+              96.1
+            ],
+            [
+              110.0,
+              114.0,
+              132.0
+            ],
+            [
+              157.0,
+              169.0,
+              194.0
+            ]
+          ],
+          "mean_max_channel_difference": 49.54,
+          "bbox_fill_ratio": 0.1877,
+          "equivalent_thickness_pixels": 13.09
+        }
+      },
+      {
+        "name": "s1-t950-yaw+0-pitch0-ribbon-source-strip",
+        "skill": "s1",
+        "age_ms": 950,
+        "yaw": 0,
+        "pitch": 0,
+        "layers": "ribbon",
+        "source": "strip",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "strip",
+          "sourceFrame": 11,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 950,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 10,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 3918,
+          "strong_pixel_count": 3708,
+          "blue_pixel_count": 3479,
+          "bright_pixel_count": 376,
+          "bbox": [
+            469,
+            185,
+            640,
+            276
+          ],
+          "width": 171,
+          "height": 91,
+          "major_span_4sigma": 165.9,
+          "minor_span_4sigma": 56.13,
+          "mask_mean_rgb": [
+            87.27,
+            113.71,
+            176.37
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              31.0,
+              47.0,
+              96.0
+            ],
+            [
+              72.0,
+              99.0,
+              193.0
+            ],
+            [
+              177.0,
+              204.0,
+              230.0
+            ]
+          ],
+          "mean_max_channel_difference": 103.3,
+          "bbox_fill_ratio": 0.2518,
+          "equivalent_thickness_pixels": 23.62
+        }
+      },
+      {
+        "name": "s1-t950-yaw-60-pitch20-ribbon-source-original",
+        "skill": "s1",
+        "age_ms": 950,
+        "yaw": -60,
+        "pitch": 20,
+        "layers": "ribbon",
+        "source": "original",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "original",
+          "sourceFrame": 11,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 950,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 11,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 1967,
+          "strong_pixel_count": 1436,
+          "blue_pixel_count": 1167,
+          "bright_pixel_count": 134,
+          "bbox": [
+            503,
+            255,
+            658,
+            314
+          ],
+          "width": 155,
+          "height": 59,
+          "major_span_4sigma": 151.03,
+          "minor_span_4sigma": 40.07,
+          "mask_mean_rgb": [
+            106.85,
+            117.66,
+            138.96
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              56.6,
+              85.0,
+              98.0
+            ],
+            [
+              104.0,
+              107.0,
+              131.0
+            ],
+            [
+              164.0,
+              175.0,
+              198.0
+            ]
+          ],
+          "mean_max_channel_difference": 56.12,
+          "bbox_fill_ratio": 0.2151,
+          "equivalent_thickness_pixels": 13.02
+        }
+      },
+      {
+        "name": "s1-t950-yaw-60-pitch20-ribbon-source-strip",
+        "skill": "s1",
+        "age_ms": 950,
+        "yaw": -60,
+        "pitch": 20,
+        "layers": "ribbon",
+        "source": "strip",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "strip",
+          "sourceFrame": 11,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 950,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 10,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 5400,
+          "strong_pixel_count": 5120,
+          "blue_pixel_count": 4772,
+          "bright_pixel_count": 531,
+          "bbox": [
+            495,
+            252,
+            676,
+            323
+          ],
+          "width": 181,
+          "height": 71,
+          "major_span_4sigma": 175.17,
+          "minor_span_4sigma": 60.25,
+          "mask_mean_rgb": [
+            86.01,
+            112.87,
+            176.91
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              30.0,
+              47.0,
+              90.0
+            ],
+            [
+              69.0,
+              97.0,
+              193.0
+            ],
+            [
+              179.0,
+              205.0,
+              229.0
+            ]
+          ],
+          "mean_max_channel_difference": 103.01,
+          "bbox_fill_ratio": 0.4202,
+          "equivalent_thickness_pixels": 30.83
+        }
+      },
+      {
+        "name": "s1-t950-yaw+60-pitch20-ribbon-source-original",
+        "skill": "s1",
+        "age_ms": 950,
+        "yaw": 60,
+        "pitch": 20,
+        "layers": "ribbon",
+        "source": "original",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "original",
+          "sourceFrame": 11,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 950,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 11,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 787,
+          "strong_pixel_count": 518,
+          "blue_pixel_count": 423,
+          "bright_pixel_count": 35,
+          "bbox": [
+            495,
+            136,
+            582,
+            227
+          ],
+          "width": 87,
+          "height": 91,
+          "major_span_4sigma": 119.2,
+          "minor_span_4sigma": 24.48,
+          "mask_mean_rgb": [
+            108.6,
+            116.19,
+            133.68
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              75.0,
+              89.0,
+              96.0
+            ],
+            [
+              105.0,
+              108.0,
+              124.0
+            ],
+            [
+              151.0,
+              163.0,
+              188.0
+            ]
+          ],
+          "mean_max_channel_difference": 47.12,
+          "bbox_fill_ratio": 0.0994,
+          "equivalent_thickness_pixels": 6.6
+        }
+      },
+      {
+        "name": "s1-t950-yaw+60-pitch20-ribbon-source-strip",
+        "skill": "s1",
+        "age_ms": 950,
+        "yaw": 60,
+        "pitch": 20,
+        "layers": "ribbon",
+        "source": "strip",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "strip",
+          "sourceFrame": 11,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 950,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 10,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 3314,
+          "strong_pixel_count": 3126,
+          "blue_pixel_count": 2922,
+          "bright_pixel_count": 294,
+          "bbox": [
+            488,
+            132,
+            625,
+            280
+          ],
+          "width": 137,
+          "height": 148,
+          "major_span_4sigma": 158.06,
+          "minor_span_4sigma": 103.78,
+          "mask_mean_rgb": [
+            86.55,
+            112.72,
+            175.03
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              31.0,
+              48.0,
+              92.0
+            ],
+            [
+              72.0,
+              97.0,
+              192.0
+            ],
+            [
+              172.0,
+              202.0,
+              230.0
+            ]
+          ],
+          "mean_max_channel_difference": 100.91,
+          "bbox_fill_ratio": 0.1634,
+          "equivalent_thickness_pixels": 20.97
+        }
+      },
+      {
+        "name": "s1-t1080-yaw+0-pitch0-ribbon-source-original",
+        "skill": "s1",
+        "age_ms": 1080,
+        "yaw": 0,
+        "pitch": 0,
+        "layers": "ribbon",
+        "source": "original",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "original",
+          "sourceFrame": 15,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 1080,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 11,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 0,
+          "bbox": null
+        }
+      },
+      {
+        "name": "s1-t1080-yaw+0-pitch0-ribbon-source-strip",
+        "skill": "s1",
+        "age_ms": 1080,
+        "yaw": 0,
+        "pitch": 0,
+        "layers": "ribbon",
+        "source": "strip",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "strip",
+          "sourceFrame": 15,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 1080,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 10,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 1958,
+          "strong_pixel_count": 1875,
+          "blue_pixel_count": 1753,
+          "bright_pixel_count": 174,
+          "bbox": [
+            469,
+            187,
+            579,
+            262
+          ],
+          "width": 110,
+          "height": 75,
+          "major_span_4sigma": 111.66,
+          "minor_span_4sigma": 42.5,
+          "mask_mean_rgb": [
+            86.11,
+            113.69,
+            178.69
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              33.0,
+              50.0,
+              101.0
+            ],
+            [
+              70.0,
+              102.0,
+              193.0
+            ],
+            [
+              173.3,
+              200.0,
+              226.0
+            ]
+          ],
+          "mean_max_channel_difference": 99.73,
+          "bbox_fill_ratio": 0.2373,
+          "equivalent_thickness_pixels": 17.54
+        }
+      },
+      {
+        "name": "s1-t1080-yaw-60-pitch20-ribbon-source-original",
+        "skill": "s1",
+        "age_ms": 1080,
+        "yaw": -60,
+        "pitch": 20,
+        "layers": "ribbon",
+        "source": "original",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "original",
+          "sourceFrame": 15,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 1080,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 11,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 0,
+          "bbox": null
+        }
+      },
+      {
+        "name": "s1-t1080-yaw-60-pitch20-ribbon-source-strip",
+        "skill": "s1",
+        "age_ms": 1080,
+        "yaw": -60,
+        "pitch": 20,
+        "layers": "ribbon",
+        "source": "strip",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "strip",
+          "sourceFrame": 15,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 1080,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 10,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 3337,
+          "strong_pixel_count": 3226,
+          "blue_pixel_count": 2982,
+          "bright_pixel_count": 341,
+          "bbox": [
+            501,
+            255,
+            668,
+            318
+          ],
+          "width": 167,
+          "height": 63,
+          "major_span_4sigma": 166.73,
+          "minor_span_4sigma": 43.41,
+          "mask_mean_rgb": [
+            88.47,
+            117.03,
+            182.51
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              33.0,
+              51.0,
+              102.0
+            ],
+            [
+              71.0,
+              104.0,
+              196.0
+            ],
+            [
+              182.4,
+              206.0,
+              228.0
+            ]
+          ],
+          "mean_max_channel_difference": 104.35,
+          "bbox_fill_ratio": 0.3172,
+          "equivalent_thickness_pixels": 20.01
+        }
+      },
+      {
+        "name": "s1-t1080-yaw+60-pitch20-ribbon-source-original",
+        "skill": "s1",
+        "age_ms": 1080,
+        "yaw": 60,
+        "pitch": 20,
+        "layers": "ribbon",
+        "source": "original",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "original",
+          "sourceFrame": 15,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 1080,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 11,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 0,
+          "bbox": null
+        }
+      },
+      {
+        "name": "s1-t1080-yaw+60-pitch20-ribbon-source-strip",
+        "skill": "s1",
+        "age_ms": 1080,
+        "yaw": 60,
+        "pitch": 20,
+        "layers": "ribbon",
+        "source": "strip",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "strip",
+          "sourceFrame": 15,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 1080,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 10,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 1452,
+          "strong_pixel_count": 1399,
+          "blue_pixel_count": 1301,
+          "bright_pixel_count": 103,
+          "bbox": [
+            496,
+            136,
+            579,
+            245
+          ],
+          "width": 83,
+          "height": 109,
+          "major_span_4sigma": 137.09,
+          "minor_span_4sigma": 37.0,
+          "mask_mean_rgb": [
+            82.54,
+            110.05,
+            175.75
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              31.0,
+              49.0,
+              95.0
+            ],
+            [
+              70.0,
+              98.5,
+              191.5
+            ],
+            [
+              161.0,
+              193.9,
+              225.0
+            ]
+          ],
+          "mean_max_channel_difference": 97.56,
+          "bbox_fill_ratio": 0.1605,
+          "equivalent_thickness_pixels": 10.59
+        }
+      },
+      {
+        "name": "s1-t400-yaw+0-pitch0-full-source-original",
+        "skill": "s1",
+        "age_ms": 400,
+        "yaw": 0,
+        "pitch": 0,
+        "layers": "full",
+        "source": "original",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "original",
+          "sourceFrame": 2,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 400,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 11,
+          "programs": 6
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 7590,
+          "strong_pixel_count": 6551,
+          "blue_pixel_count": 6341,
+          "bright_pixel_count": 365,
+          "bbox": [
+            470,
+            184,
+            699,
+            281
+          ],
+          "width": 229,
+          "height": 97,
+          "major_span_4sigma": 240.66,
+          "minor_span_4sigma": 69.75,
+          "mask_mean_rgb": [
+            76.75,
+            98.22,
+            136.18
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              8.0,
+              36.0,
+              70.0
+            ],
+            [
+              75.0,
+              96.0,
+              129.0
+            ],
+            [
+              149.1,
+              174.0,
+              217.0
+            ]
+          ],
+          "mean_max_channel_difference": 77.85,
+          "bbox_fill_ratio": 0.3417,
+          "equivalent_thickness_pixels": 31.54
+        }
+      },
+      {
+        "name": "s1-t400-yaw+0-pitch0-full-source-strip",
+        "skill": "s1",
+        "age_ms": 400,
+        "yaw": 0,
+        "pitch": 0,
+        "layers": "full",
+        "source": "strip",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s1",
+          "selected": "s1",
+          "s1Source": "strip",
+          "sourceFrame": 2,
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 400,
+          "pre": 240,
+          "loopMs": 1400,
+          "enemyOcclusion": true,
+          "calls": 13,
+          "programs": 8
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 9118,
+          "strong_pixel_count": 7007,
+          "blue_pixel_count": 5736,
+          "bright_pixel_count": 454,
+          "bbox": [
+            417,
+            157,
+            719,
+            330
+          ],
+          "width": 302,
+          "height": 173,
+          "major_span_4sigma": 283.35,
+          "minor_span_4sigma": 99.56,
+          "mask_mean_rgb": [
+            88.38,
+            104.98,
+            149.75
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              32.0,
+              49.0,
+              91.0
+            ],
+            [
+              93.0,
+              99.0,
+              134.0
+            ],
+            [
+              139.0,
+              179.0,
+              223.0
+            ]
+          ],
+          "mean_max_channel_difference": 76.95,
+          "bbox_fill_ratio": 0.1745,
+          "equivalent_thickness_pixels": 32.18
+        }
+      }
+    ],
+    "http_errors": [],
+    "page_errors": [],
+    "source_sha256": {
+      "web/vfx-space.js": "dd65f8c87a0d6218af199b557d7609d943d46762832e9553658058e1084bf18a",
+      "assets/kyle/realtime-vfx.json": "6ee8d225862b6c7b85afff60dbd226a54ac817252d1ff58e28a57cb3d0fec999",
+      "assets/kyle/space-fx.json": "051b989eecd886227eaf0d55b235fc0a1ffc5a96da01db912f37caa4df34a470"
+    },
+    "initial_state": {
+      "skill": "s1",
+      "selected": "s1",
+      "s1Source": "original",
+      "sourceFrame": 1,
+      "pendingSkill": null,
+      "selectionError": "",
+      "age": 199.89999999999998,
+      "pre": 240,
+      "loopMs": 1400,
+      "enemyOcclusion": true,
+      "calls": 9,
+      "programs": 4
+    },
+    "valid": true
+  },
+  "s3": {
+    "viewport": [
+      1280,
+      720
+    ],
+    "pixel_ratio": 1,
+    "shot": "combat",
+    "comparison": "공간형 효과 켬과 끔의 최대 RGB 채널 차이 > 8. 바탕 혼합색이므로 원본 텍스처 RGB와 직접 등치하지 않는다.",
+    "cases": [
+      {
+        "name": "s3-t700-yaw+0-pitch0-full",
+        "skill": "s3",
+        "age_ms": 700,
+        "yaw": 0,
+        "pitch": 0,
+        "layers": "full",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s3",
+          "selected": "s3",
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 700,
+          "pre": 240,
+          "loopMs": 3670,
+          "enemyOcclusion": true,
+          "calls": 11,
+          "programs": 8
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 771,
+          "strong_pixel_count": 676,
+          "blue_pixel_count": 669,
+          "bright_pixel_count": 42,
+          "bbox": [
+            626,
+            181,
+            684,
+            275
+          ],
+          "width": 58,
+          "height": 94,
+          "major_span_4sigma": 133.3,
+          "minor_span_4sigma": 39.51,
+          "mask_mean_rgb": [
+            66.32,
+            96.58,
+            157.7
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              4.0,
+              55.0,
+              95.0
+            ],
+            [
+              57.0,
+              90.0,
+              160.0
+            ],
+            [
+              134.0,
+              148.0,
+              218.0
+            ]
+          ],
+          "mean_max_channel_difference": 84.09,
+          "bbox_fill_ratio": 0.1414,
+          "equivalent_thickness_pixels": 5.78,
+          "area_vs_front": 1.0
+        }
+      },
+      {
+        "name": "s3-t700-yaw-60-pitch20-full",
+        "skill": "s3",
+        "age_ms": 700,
+        "yaw": -60,
+        "pitch": 20,
+        "layers": "full",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s3",
+          "selected": "s3",
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 700,
+          "pre": 240,
+          "loopMs": 3670,
+          "enemyOcclusion": true,
+          "calls": 11,
+          "programs": 8
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 1162,
+          "strong_pixel_count": 1035,
+          "blue_pixel_count": 991,
+          "bright_pixel_count": 120,
+          "bbox": [
+            533,
+            159,
+            595,
+            239
+          ],
+          "width": 62,
+          "height": 80,
+          "major_span_4sigma": 86.94,
+          "minor_span_4sigma": 45.27,
+          "mask_mean_rgb": [
+            73.22,
+            102.3,
+            162.83
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              3.0,
+              51.1,
+              101.1
+            ],
+            [
+              61.0,
+              90.0,
+              162.5
+            ],
+            [
+              182.9,
+              190.0,
+              227.0
+            ]
+          ],
+          "mean_max_channel_difference": 88.68,
+          "bbox_fill_ratio": 0.2343,
+          "equivalent_thickness_pixels": 13.36,
+          "area_vs_front": 1.5071
+        }
+      },
+      {
+        "name": "s3-t700-yaw+60-pitch20-full",
+        "skill": "s3",
+        "age_ms": 700,
+        "yaw": 60,
+        "pitch": 20,
+        "layers": "full",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s3",
+          "selected": "s3",
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 700,
+          "pre": 240,
+          "loopMs": 3670,
+          "enemyOcclusion": true,
+          "calls": 11,
+          "programs": 8
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 1166,
+          "strong_pixel_count": 1020,
+          "blue_pixel_count": 994,
+          "bright_pixel_count": 90,
+          "bbox": [
+            653,
+            199,
+            721,
+            295
+          ],
+          "width": 68,
+          "height": 96,
+          "major_span_4sigma": 117.22,
+          "minor_span_4sigma": 38.66,
+          "mask_mean_rgb": [
+            71.28,
+            99.78,
+            158.87
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              3.0,
+              55.0,
+              101.0
+            ],
+            [
+              66.0,
+              91.0,
+              158.0
+            ],
+            [
+              156.5,
+              169.0,
+              220.0
+            ]
+          ],
+          "mean_max_channel_difference": 82.66,
+          "bbox_fill_ratio": 0.1786,
+          "equivalent_thickness_pixels": 9.95,
+          "area_vs_front": 1.5123
+        }
+      },
+      {
+        "name": "s3-t700-yaw-90-pitch20-full",
+        "skill": "s3",
+        "age_ms": 700,
+        "yaw": -90,
+        "pitch": 20,
+        "layers": "full",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s3",
+          "selected": "s3",
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 700,
+          "pre": 240,
+          "loopMs": 3670,
+          "enemyOcclusion": true,
+          "calls": 11,
+          "programs": 8
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 1048,
+          "strong_pixel_count": 927,
+          "blue_pixel_count": 907,
+          "bright_pixel_count": 93,
+          "bbox": [
+            499,
+            181,
+            561,
+            258
+          ],
+          "width": 62,
+          "height": 77,
+          "major_span_4sigma": 94.81,
+          "minor_span_4sigma": 38.03,
+          "mask_mean_rgb": [
+            72.52,
+            101.37,
+            161.33
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              3.0,
+              56.0,
+              99.0
+            ],
+            [
+              67.0,
+              90.0,
+              164.0
+            ],
+            [
+              172.0,
+              180.3,
+              223.0
+            ]
+          ],
+          "mean_max_channel_difference": 84.14,
+          "bbox_fill_ratio": 0.2195,
+          "equivalent_thickness_pixels": 11.05,
+          "area_vs_front": 1.3593
+        }
+      },
+      {
+        "name": "s3-t700-yaw+90-pitch20-full",
+        "skill": "s3",
+        "age_ms": 700,
+        "yaw": 90,
+        "pitch": 20,
+        "layers": "full",
+        "view": "space",
+        "occlusion": true,
+        "state": {
+          "skill": "s3",
+          "selected": "s3",
+          "pendingSkill": null,
+          "selectionError": "",
+          "age": 700,
+          "pre": 240,
+          "loopMs": 3670,
+          "enemyOcclusion": true,
+          "calls": 11,
+          "programs": 8
+        },
+        "off_stability_pixels": 0,
+        "metrics": {
+          "pixel_count": 638,
+          "strong_pixel_count": 551,
+          "blue_pixel_count": 555,
+          "bright_pixel_count": 22,
+          "bbox": [
+            648,
+            237,
+            721,
+            326
+          ],
+          "width": 73,
+          "height": 89,
+          "major_span_4sigma": 123.93,
+          "minor_span_4sigma": 29.07,
+          "mask_mean_rgb": [
+            72.09,
+            99.51,
+            157.7
+          ],
+          "mask_rgb_percentiles_10_50_90": [
+            [
+              10.0,
+              68.0,
+              100.7
+            ],
+            [
+              70.5,
+              93.0,
+              155.0
+            ],
+            [
+              131.3,
+              150.6,
+              215.0
+            ]
+          ],
+          "mean_max_channel_difference": 76.9,
+          "bbox_fill_ratio": 0.0982,
+          "equivalent_thickness_pixels": 5.15,
+          "area_vs_front": 0.8275
+        }
+      }
+    ],
+    "http_errors": [],
+    "page_errors": [],
+    "source_sha256": {
+      "web/vfx-space.js": "b5b6b1cbc05c287097882bf0754701edb42babb2e8b8e432ac8a04d50f574f25",
+      "assets/kyle/realtime-vfx.json": "6ee8d225862b6c7b85afff60dbd226a54ac817252d1ff58e28a57cb3d0fec999",
+      "assets/kyle/space-fx.json": "051b989eecd886227eaf0d55b235fc0a1ffc5a96da01db912f37caa4df34a470"
+    },
+    "valid": true
+  },
+  "s3BeforeAfter": [
+    {
+      "yaw": 0,
+      "pitch": 0,
+      "before_pixels": 772,
+      "after_pixels": 771,
+      "pixel_ratio": 0.999,
+      "before_equivalent_thickness": 5.79,
+      "after_equivalent_thickness": 5.78,
+      "changed_pixels_above8": 0,
+      "max_rgb_change": 5
+    },
+    {
+      "yaw": -60,
+      "pitch": 20,
+      "before_pixels": 1719,
+      "after_pixels": 1162,
+      "pixel_ratio": 0.676,
+      "before_equivalent_thickness": 16.75,
+      "after_equivalent_thickness": 13.36,
+      "changed_pixels_above8": 1742,
+      "max_rgb_change": 250
+    },
+    {
+      "yaw": 60,
+      "pitch": 20,
+      "before_pixels": 400,
+      "after_pixels": 1166,
+      "pixel_ratio": 2.915,
+      "before_equivalent_thickness": 2.82,
+      "after_equivalent_thickness": 9.95,
+      "changed_pixels_above8": 1175,
+      "max_rgb_change": 190
+    },
+    {
+      "yaw": -90,
+      "pitch": 20,
+      "before_pixels": 2085,
+      "after_pixels": 1048,
+      "pixel_ratio": 0.503,
+      "before_equivalent_thickness": 20.73,
+      "after_equivalent_thickness": 11.05,
+      "changed_pixels_above8": 2105,
+      "max_rgb_change": 249
+    },
+    {
+      "yaw": 90,
+      "pitch": 20,
+      "before_pixels": 1067,
+      "after_pixels": 638,
+      "pixel_ratio": 0.598,
+      "before_equivalent_thickness": 8.95,
+      "after_equivalent_thickness": 5.15,
+      "changed_pixels_above8": 1223,
+      "max_rgb_change": 234
+    }
+  ],
+  "s1FrontReferenceComparison": {
+    "method": "두 모드의 효과 on/off 차이 마스크 합집합에서 같은 평면 원본과 비교. 깊이 가림·곡면 투영·필터링 차이가 포함된 화면 오차이며 원본 파일 RGB 동일성 검증이 아니다.",
+    "cases": [
+      {
+        "age_ms": 300,
+        "common_effect_union_pixels": 7811,
+        "original": {
+          "source_frame": 2,
+          "effect_pixel_count": 7590,
+          "rgb_mae_on_common_mask": 12.13,
+          "max_channel_error_p95": 56.5
+        },
+        "strip": {
+          "source_frame": 2,
+          "effect_pixel_count": 5656,
+          "rgb_mae_on_common_mask": 39.69,
+          "max_channel_error_p95": 133.0
+        }
+      },
+      {
+        "age_ms": 400,
+        "common_effect_union_pixels": 7811,
+        "original": {
+          "source_frame": 2,
+          "effect_pixel_count": 7590,
+          "rgb_mae_on_common_mask": 12.13,
+          "max_channel_error_p95": 56.5
+        },
+        "strip": {
+          "source_frame": 2,
+          "effect_pixel_count": 5657,
+          "rgb_mae_on_common_mask": 39.5,
+          "max_channel_error_p95": 133.0
+        }
+      },
+      {
+        "age_ms": 650,
+        "common_effect_union_pixels": 7815,
+        "original": {
+          "source_frame": 4,
+          "effect_pixel_count": 6479,
+          "rgb_mae_on_common_mask": 12.47,
+          "max_channel_error_p95": 60.0
+        },
+        "strip": {
+          "source_frame": 4,
+          "effect_pixel_count": 5626,
+          "rgb_mae_on_common_mask": 49.56,
+          "max_channel_error_p95": 156.0
+        }
+      },
+      {
+        "age_ms": 950,
+        "common_effect_union_pixels": 4101,
+        "original": {
+          "source_frame": 11,
+          "effect_pixel_count": 1142,
+          "rgb_mae_on_common_mask": 4.95,
+          "max_channel_error_p95": 35.0
+        },
+        "strip": {
+          "source_frame": 11,
+          "effect_pixel_count": 3918,
+          "rgb_mae_on_common_mask": 60.35,
+          "max_channel_error_p95": 166.0
+        }
+      },
+      {
+        "age_ms": 1080,
+        "common_effect_union_pixels": 1958,
+        "original": {
+          "source_frame": 15,
+          "effect_pixel_count": 0,
+          "rgb_mae_on_common_mask": 0.27,
+          "max_channel_error_p95": 0.0
+        },
+        "strip": {
+          "source_frame": 15,
+          "effect_pixel_count": 1958,
+          "rgb_mae_on_common_mask": 63.36,
+          "max_channel_error_p95": 149.0
+        }
+      }
+    ]
+  }
+}
