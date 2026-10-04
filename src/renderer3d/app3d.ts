@@ -779,7 +779,8 @@ async function main(): Promise<void> {
   requestAnimationFrame(loop);
   if (loaded.missing.length > 0) status.textContent += ` · 그림 ${loaded.missing.length}개 없음`;
   loading?.setAttribute('hidden', '');
-  if (!seen) modals.open(help, helpOpen);
+  //처음 뜨는 도움말은 누른 버튼이 없다. 닫은 뒤 ? 버튼에 포커스 테두리가 남지 않게 돌려줄 곳을 비운다
+  if (!seen) modals.open(help, null);
 }
 
 void main().catch((error: unknown) => {

@@ -1,6 +1,7 @@
 #카일 전 스킬 효과 분리 v3 묶음을 반입하고, 통합 장에서 효과를 빼 몸만 남긴 장을 만든다 (SPEC-005 §15.4)
 #
 #받은 묶음: 드라이브 2026-10-03_카일_전스킬_효과분리_v3 (manifest.json · files.json)
+#  S1/        물금 효과 15장                          1700x720, 발 760,600 → vfx/s1-original/
 #  S2/        찌르기 효과 15장 + 받아내기 효과(빈 장)   1700x720, 발 760,600
 #  S3-game/   쳐내기·올려베기·내려베기 효과 39장       1700x720, 발 760,600 (게임 캔버스로 맞춘 판)
 #  Ultimate-play-01~04/  결행 베기 4획, 획마다 15장  768x512, 중심 400,280 (적 맞는 자리 기준)
@@ -89,6 +90,11 @@ def main():
         if not os.path.exists(integrated):
             integrated = os.path.join(ROOT, 'norm', '13-skill3-ready.png' if i < 3 else '00-idle.png')
         body_only(integrated, dst).save(os.path.join(OUT, 'body', f's3-{i:02d}.png'))
+
+    #물금 원본 컬러 15장 (SPEC-005 §15.3.2). 공간형 시험 화면의 S1 원본 모드가 읽는다
+    #fx3 폴더 밖에 두므로 위에서 지우지 않는다. 같은 해시인지 files.json 으로 확인한다
+    for rel in manifest['s1']['files']:
+        copy_frame(src, index, rel, os.path.join(ROOT, 'vfx', 's1-original', os.path.basename(rel)))
 
     #결행 4획 (순차 재생판)
     for k, folder in enumerate(manifest['ultimate']['play_folders'], 1):
