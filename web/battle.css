@@ -231,6 +231,10 @@ button:disabled { cursor: default; }
 .card .title { position: absolute; left: 48px; top: 14px; width: 136px; height: 28px; font-size: 24px; line-height: 28px; font-weight: 800; text-align: center; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .card.chosen .title { color: var(--select); }
 .card .art { position: absolute; left: 25px; top: 44px; width: 180px; height: 70px; display: grid; place-items: center; }
+/* 예약 순서·행동력 비용 (SPEC-001 v4.0 §6). 누른 순서가 턴 순서다 */
+.card .order { position: absolute; right: 8px; top: 8px; z-index: 2; width: 40px; height: 40px; border-radius: 50%; background: var(--select); color: #120d06; font-size: 26px; line-height: 40px; font-weight: 900; text-align: center; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6); }
+.card .cost { position: absolute; left: 0; right: 0; bottom: -26px; font-size: 18px; color: #c9b8e8; text-align: center; letter-spacing: 0.04em; }
+.hint strong.debt { color: #e0574f; }
 .card .pw { position: absolute; top: 125px; height: 30px; font-size: 28px; line-height: 30px; font-weight: 800; color: var(--ink); font-variant-numeric: tabular-nums; white-space: nowrap; }
 .card .pw small { margin-right: 6px; font-size: 20px; font-weight: 700; color: var(--gold); }
 .card .pw.front { left: 30px; }
@@ -363,6 +367,20 @@ html.kit .tag3d small::before { content: none; }
 .tag3d.picked b { background: #3a2a18; border-bottom-color: var(--gold); color: #fff2da; }
 .tag3d.picked::before { content: '▼'; display: block; color: var(--gold); font-size: 0.8em; }
 .tag3d.down { opacity: 0.35; }
+/* 이름표 위 행동력 칸과 예약 줄 (SPEC-001 v4.0 §6). 빚은 붉은 칸, 지금 턴 칸은 밝게 */
+.tag3d .plan { display: flex; flex-direction: column; align-items: center; gap: calc(var(--u) * 4px); margin-bottom: calc(var(--u) * 6px); }
+.tag3d .plan:empty { display: none; }
+.tag3d .plan .ap { display: inline-flex; align-items: center; gap: calc(var(--u) * 4px); }
+.tag3d .plan .ap i { width: calc(var(--u) * 14px); height: calc(var(--u) * 14px); transform: rotate(45deg); border: calc(var(--u) * 2px) solid #9d8ec4; background: rgba(10, 9, 8, 0.6); }
+.tag3d .plan .ap i.on { background: #b9a6f0; border-color: #e6dcff; box-shadow: 0 0 calc(var(--u) * 6px) #8f7ad8; }
+.tag3d .plan .ap i.debt { border-color: #b3262b; background: rgba(120, 20, 24, 0.85); }
+.tag3d .plan .ap .n { margin-left: calc(var(--u) * 4px); font-size: calc(var(--u) * 20px); font-weight: 800; color: #e6dcff; text-shadow: 0 1px 2px #000; }
+.tag3d .plan .ap .n.neg { color: #ff7a6e; }
+.tag3d .plan .steps { display: inline-flex; gap: calc(var(--u) * 4px); }
+.tag3d .plan .steps em { font-style: normal; font-size: calc(var(--u) * 18px); padding: calc(var(--u) * 2px) calc(var(--u) * 8px); background: rgba(10, 9, 8, 0.78); border: calc(var(--u) * 1px) solid #5d5243; color: #cfc4b2; opacity: 0.75; }
+.tag3d .plan .steps em .k { margin-right: calc(var(--u) * 4px); color: #9d8ec4; font-size: 0.85em; }
+.tag3d .plan .steps em.now { opacity: 1; border-color: var(--gold); color: #fff2da; }
+.tag3d .plan .steps em.idle { opacity: 1; border-color: #b3262b; color: #ffb3aa; }
 .callout3d { position: absolute; transform: translate(-50%, -100%); padding: 0.25em 0.9em 0.3em; background: rgba(12, 10, 9, 0.84); border-top: calc(var(--u) * 4px) solid #8fb0c8; text-align: center; white-space: nowrap; animation: callout3d 1.1s ease-out forwards; }
 .callout3d b { display: block; font-size: 1.15em; letter-spacing: 0.08em; color: #f3e6cc; }
 .callout3d small { display: block; font-size: 0.8em; color: #9a8e80; font-variant-numeric: tabular-nums; }

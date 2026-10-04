@@ -6,6 +6,7 @@
 import type { BattleCatalog } from '../domain/data.js';
 import type { Attribute } from '../domain/types.js';
 import { cardView, type CardView, type InputMember, type OrderInput } from '../ui/input.js';
+import { PlanInput } from '../ui/plan-input.js';
 import type { DisplayData, SideData } from '../ui/data.js';
 import type { ActorSnapshot } from './canvas.js';
 
@@ -43,6 +44,7 @@ const TRACE_NAME: Record<Attribute, string> = { attack: '각인', defense: '통�
 const TRACE_FILE: Record<Attribute, string> = { attack: 'R_mark', defense: 'R_insight', support: 'R_resolve' };
 //잠김 이유 (SPEC-004 §14.6)
 const LOCKED_CARD = '먼저 칠 적을 무대에서 고른다';
+const LOCKED_DEBT = '행동력이 빚 한도 아래로 내려가 더할 수 없다';
 
 //패널에 보일 사람 한 명
 export interface PanelMember {
@@ -168,10 +170,12 @@ export class CommandPanel {
   }
 
   //입력 상태를 버튼으로 다시 그린다. 누를 때마다 부른다
-  show(input: OrderInput, allies: readonly (PanelMember & InputMember)[], enemies: readonly PanelMember[]): void {
+  //여러 턴 예약(PlanInput)이면 누른 순서·행동력을 같이 보인다 (SPEC-001 v4.0 §6)
+  show(input: OrderInput | PlanInput, allies: readonly (PanelMember & InputMember)[], enemies: readonly PanelMember[]): void {
     this.root.classList.remove('off');
     const current = allies.find((a) => a.id === input.selectedAlly) ?? null;
     const target = enemies.find((e) => e.id === input.selectedTarget) ?? null;
+    const plan = input instanceof PlanInput ? input : null;
 
     //지금 할 일 한 줄. 순서는 아군 → 대상 → 카드 (§10.1)
     if (input.ready && !current) {
@@ -190,6 +194,16 @@ export class CommandPanel {
         this.hint.append(' — 같이 노리면 합, 다른 적을 치면 서로 한 대씩 맞는다');
       } else {
         this.hint.textContent = '이번 턴에 나를 노리는 적이 없다. 누구를 쳐도 일방 공격이다';
+      }
+    } else if (plan) {
+      this.step.textContent = `③ ${current.name} → ${target.name} — 쓸 순서대로 카드를 누른다`;
+      const budget = plan.budgetOf(current.id);
+      this.hint.replaceChildren();
+      if (budget) {
+        this.hint.append(`행동력 ${budget.actionPoints} → 예약 뒤 `);
+        this.hint.append(el('strong', budget.after < 0 ? 'debt' : '', String(budget.after)));
+        this.hint.append(` · 예약이 끝나면 ${budget.end}`);
+        if (budget.end < 1) this.hint.append(el('strong', 'debt', ' — 그다음 턴은 행동 없이 맞는다'));
       }
     } else {
       this.step.textContent = `③ ${current.name} → ${target.name} — 카드를 고른다`;
@@ -215,7 +229,10 @@ export class CommandPanel {
           frame.append(img);
           button.prepend(frame);
         }
-        const note = order
+        const planned = plan?.stepsOf(ally.id) ?? [];
+        const note = planned.length > 0
+          ? planned.map((st) => this.view(ally.characterId, st.skillId).name).join(' → ')
+          : order
           ? `${enemies.find((e) => e.id === order.targetId)?.name ?? '?'} · ${this.view(ally.characterId, order.skillId).name}`
           : ally.id === input.selectedAlly
             ? '지시 중'
@@ -243,7 +260,8 @@ export class CommandPanel {
       ...(current ? current.deck : []).map((skillId) => {
         const view = this.view(current?.characterId ?? '', skillId);
         //슬롯 홈 개수로 판을 고른다 (U2·U16). 카일 완성 카드면 K 판 (§14.5). 지금 아군이 이미 고른 카드는 선택 판
-        const chosen = current ? input.orderOf(current.id)?.skillId === skillId : false;
+        const turn = plan && current ? plan.stepsOf(current.id).findIndex((st) => st.skillId === skillId) + 1 : 0;
+        const chosen = plan ? turn > 0 : current ? input.orderOf(current.id)?.skillId === skillId : false;
         const complete = !!this.detail?.kit && !!current && this.detail.display?.cardKit[current.characterId]?.[skillId] !== undefined;
         const button = el('button', `card ${view.slot === 'ULT' ? 'ult' : view.slot.toLowerCase()}${chosen ? ' chosen' : ''}${complete ? ' k' : ''}`);
         button.type = 'button';
@@ -261,7 +279,13 @@ export class CommandPanel {
         const back = el('span', 'pw back');
         back.append(el('small', '', '뒤'), String(view.backPower));
         button.append(el('span', 'title', view.name), art, front, back, el('span', 'kind', kind));
-        const locked = !target;
+        //예약이면 몇 번째 턴인지와 비용을 단다
+        if (plan) {
+          if (turn > 0) button.append(el('span', 'order', String(turn)));
+          button.append(el('span', 'cost', `행동 ${this.catalog.skill(skillId).apCost}`));
+        }
+        const debt = !!plan && !!target && !plan.canToggle(skillId);
+        const locked = !target || debt;
         this.lock(button, locked);
         //가리키면 그 카드 설명, 떼면 기본 상세 줄
         const explain = (): void => {
@@ -276,7 +300,7 @@ export class CommandPanel {
         button.addEventListener('pointerleave', rest);
         button.addEventListener('blur', rest);
         button.addEventListener('click', () => {
-          if (locked) this.say(LOCKED_CARD);
+          if (locked) this.say(debt ? LOCKED_DEBT : LOCKED_CARD);
           else this.handlers.card(skillId);
         });
         return button;
@@ -285,7 +309,7 @@ export class CommandPanel {
 
     //교전 시작. 지시가 다 안 찼으면 잠그고 남은 아군을 이유로
     const waiting = allies.filter((a) => !input.orderOf(a.id)).map((a) => a.name);
-    this.goLocked = waiting.length > 0 ? `지시가 남은 아군: ${waiting.join(', ')}` : '';
+    this.goLocked = waiting.length > 0 ? `${plan ? '예약이' : '지시가'} 남은 아군: ${waiting.join(', ')}` : '';
     this.goButton.disabled = false;
     this.lock(this.goButton, !input.ready);
   }

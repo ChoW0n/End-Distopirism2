@@ -39,6 +39,18 @@ interface Tag {
   gauge: Gauge;
   //이름표 오른쪽 상태 아이콘 (SPEC-004 §13.5 U10)
   status: HTMLElement;
+  //이름표 위 행동력 칸과 예약 줄 (SPEC-001 v4.0 §6)
+  plan: HTMLElement;
+}
+
+//이름표 위에 보일 예약 사정. 칸 이름은 턴 순서대로
+export interface PlanMark {
+  actionPoints: number;
+  max: number;
+  floor: number;
+  steps: readonly { name: string; slot: string }[];
+  //예약도 행동력도 없어 이번 턴 행동이 없다
+  idle: boolean;
 }
 
 //이름표 옆에 띄울 상태 하나. 남은 턴을 숫자로
@@ -222,12 +234,13 @@ export class Overlay {
       name.style.setProperty('--fit', String(Math.max(0.6, Math.min(1, 7 / Math.max(1, [...actor.name].length)))));
       const note = el('small', '');
       const status = el('div', 'status');
-      box.append(name, note, status);
+      const plan = el('div', 'plan');
+      box.append(plan, name, note, status);
       const gauge = this.kit ? this.makeGauge(actor.side) : null;
       if (gauge) this.root.append(gauge.el);
       this.root.append(box);
       //게이지 그림 경로가 없으면 빈 상자로 둔다 (게이지만 빠지고 게임은 돈다)
-      this.tags.set(actor.combatantId, { el: box, name, note, gauge: gauge ?? this.emptyGauge(), status });
+      this.tags.set(actor.combatantId, { el: box, name, note, gauge: gauge ?? this.emptyGauge(), status, plan });
     }
   }
 
@@ -294,6 +307,30 @@ export class Overlay {
         return icon;
       }),
     );
+  }
+
+  //이름표 위 행동력 칸(빚은 붉은 칸)과 남은 예약을 다시 그린다. null 이면 지운다 (SPEC-001 v4.0 §6)
+  setPlan(combatantId: string, mark: PlanMark | null): void {
+    const tag = this.tags.get(combatantId);
+    if (!tag) return;
+    if (!mark) {
+      tag.plan.replaceChildren();
+      return;
+    }
+    const pips = el('span', 'ap');
+    pips.title = `행동력 ${mark.actionPoints} / ${mark.max}`;
+    const debt = Math.max(0, -mark.actionPoints);
+    for (let i = 0; i < mark.max; i++) pips.append(el('i', i < mark.actionPoints ? 'on' : ''));
+    for (let i = 0; i < debt; i++) pips.append(el('i', 'debt'));
+    pips.append(el('span', mark.actionPoints < 0 ? 'n neg' : 'n', String(mark.actionPoints)));
+    const row = el('span', 'steps');
+    if (mark.idle) row.append(el('em', 'idle', '행동 없음'));
+    mark.steps.forEach((step, i) => {
+      const chip = el('em', `step ${step.slot.toLowerCase()}${i === 0 ? ' now' : ''}`);
+      chip.append(el('span', 'k', String(i + 1)), step.name);
+      row.append(chip);
+    });
+    tag.plan.replaceChildren(pips, row);
   }
 
   //결과 알림을 띄운다. 실제 시간으로 흐른다

@@ -22,7 +22,7 @@ import { CutsceneOverlay } from './cutscene.js';
 import { EnvFxLayer } from './envfx.js';
 import { EffectLayer, effectTextures } from './effects.js';
 import { frameTexture, PaperDoll } from './doll.js';
-import { Overlay, type GaugeKit, type ScreenPoint, type Selection3d, type StatusMark, type UltimateGauge } from './overlay.js';
+import { Overlay, type GaugeKit, type ScreenPoint, type Selection3d, type PlanMark, type StatusMark, type UltimateGauge } from './overlay.js';
 import { SparkField } from './sparks.js';
 
 //무대에 세울 사람 한 명
@@ -1381,6 +1381,11 @@ export class Stage3D {
   }
 
   //이름표 아래 한 줄 (적이 노리는 대상 등). clash 면 합 표지
+  //이름표 위 행동력 칸과 예약 줄 (SPEC-001 v4.0 §6)
+  setPlan(combatantId: string, mark: PlanMark | null): void {
+    this.overlay.setPlan(combatantId, mark);
+  }
+
   setNote(combatantId: string, text: string, clash = false): void {
     this.overlay.setNote(combatantId, text, clash);
   }

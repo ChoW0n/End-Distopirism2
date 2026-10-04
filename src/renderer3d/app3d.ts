@@ -4,7 +4,8 @@
 //명령 패널·현황판·단축키는 2D 화면과 같은 DOM 을 그대로 쓴다. 이 파일은 배선만 한다
 
 import { WeightedEnemyAi, type EnemyAiContext } from '../domain/ai.js';
-import { Battle, type BattleOrder } from '../domain/battle.js';
+import { Battle } from '../domain/battle.js';
+import { PlanBoard, plannedBattleOptions } from '../domain/plan.js';
 import { ClashResolver } from '../domain/clash.js';
 import { BattleCatalog, parseBattleData } from '../domain/data.js';
 import { createSeededRng, type Rng } from '../domain/rng.js';
@@ -17,7 +18,8 @@ import { parseEnvVfx, usedAtlases, type EnvVfx } from '../render/envvfx.js';
 import { parseCharacterSounds, type CharacterSounds } from '../render/sounds.js';
 import { parseUltimateArt, type UltimateArt } from '../render/ultimate.js';
 import type { UiData } from '../ui/data.js';
-import { cardView, OrderInput, type InputMember } from '../ui/input.js';
+import { cardView, type InputMember } from '../ui/input.js';
+import { PlanInput, type PlanBudget } from '../ui/plan-input.js';
 import { loadCharacter, loadIndex, loadUi } from '../renderer/assets.js';
 import { CommandPanel } from '../renderer/command-panel.js';
 import { SynthSound } from '../renderer/sound.js';
@@ -195,8 +197,10 @@ async function boot(progress: (text: string, ratio: number) => void): Promise<Bo
 }
 
 //전투 한 판을 들고 있는 통. 재시작하면 통째로 갈아 끼운다
+//행동력·예약판(SPEC-001 v4.0)도 여기서 같이 든다
 class Session {
   readonly battle: Battle;
+  readonly board: PlanBoard;
   private readonly ai = new WeightedEnemyAi();
   private readonly aiContext: EnemyAiContext;
 
@@ -207,9 +211,11 @@ class Session {
   ) {
     const roster = (side: Side, ids: readonly string[]) =>
       ids.map((characterId, i) => ({ id: `${side === 'ally' ? 'a' : 'e'}${i + 1}`, characterId, side }));
-    this.battle = new Battle(catalog, roster('ally', setup.ally), roster('enemy', setup.enemy), { rng, enemyAi: this.ai });
     const resolver = new ClashResolver(catalog, rng);
     this.aiContext = { catalog, resolver, rng };
+    this.board = new PlanBoard(catalog, this.ai, this.aiContext);
+    this.battle = new Battle(catalog, roster('ally', setup.ally), roster('enemy', setup.enemy), { rng, ...plannedBattleOptions(this.board) });
+    this.board.attach(this.battle);
   }
 
   //무대에 세울 사람들
@@ -231,10 +237,11 @@ class Session {
     });
   }
 
+  //이번 턴 예약을 짜야 하는 아군만 (예약이 비고 행동력 1 이상)
   inputAllies(): (InputMember & { name: string })[] {
     return this.battle
       .sideOf('ally')
-      .filter((c) => !c.isDefeated)
+      .filter((c) => !c.isDefeated && this.board.needsPlan(c.id))
       .map((c) => ({ id: c.id, characterId: c.base.id, deck: [...c.deck], name: c.base.name }));
   }
 
@@ -245,20 +252,20 @@ class Session {
       .map((c) => ({ id: c.id, name: c.base.name }));
   }
 
-  //자동 관전일 때 아군도 적과 같은 AI 로 둔다
-  autoOrders(enemyTargets: Map<string, string>): BattleOrder[] {
-    const enemies = this.battle.sideOf('enemy').filter((c) => !c.isDefeated);
-    const orders: BattleOrder[] = [];
-    const taken = new Set<string>();
+  //아군 행동력 사정. 예약 입력이 비용·빚 한도를 미리 막는 데 쓴다
+  budgets(): Map<string, PlanBudget> {
+    const { floor, regenPerTurn } = this.catalog.rules.actionPoints;
+    const cost = (skillId: number): number => this.catalog.skill(skillId).apCost;
+    return new Map(this.battle.sideOf('ally').map((c) => [c.id, { actionPoints: this.board.actionPoints(c.id), max: this.board.maxActionPoints(c.id), floor, regenPerTurn, cost }]));
+  }
+
+  //자동 관전일 때 아군도 적과 같은 AI 로 예약을 짠다
+  autoPlan(): BattleEvent[] {
+    const events: BattleEvent[] = [];
     for (const ally of this.battle.sideOf('ally')) {
-      if (ally.isDefeated || enemies.length === 0) continue;
-      const targetId = this.ai.chooseTarget(ally, enemies, taken, this.aiContext);
-      taken.add(targetId);
-      const target = this.battle.combatant(targetId);
-      const skillId = this.ai.chooseSkill(ally, { target, isClash: enemyTargets.get(targetId) === ally.id, opponentSkillId: null }, this.aiContext);
-      orders.push({ actorId: ally.id, targetId, skillId });
+      if (this.board.needsPlan(ally.id)) events.push(...this.board.submit(ally.id, this.board.choosePlan(ally)));
     }
-    return orders;
+    return events;
   }
 }
 
@@ -402,7 +409,7 @@ async function main(): Promise<void> {
   type Phase = 'waitInput' | 'input' | 'resolving' | 'turnEnd' | 'done' | 'showcase';
   let phase: Phase = 'done';
   let session: Session | null = null;
-  let input: OrderInput | null = null;
+  let input: PlanInput | null = null;
   let enemyTargets = new Map<string, string>();
   let restSec = 0;
   const playing = (): boolean => (modeSelect?.value ?? 'play') === 'play';
@@ -444,6 +451,24 @@ async function main(): Promise<void> {
   const showStatuses = (): void => {
     if (!session) return;
     for (const c of session.battle.combatants) stage.setStatuses(c.id, c.isDefeated ? [] : c.statuses.map((st) => ({ id: st.id, turns: st.turns })));
+  };
+
+  //이름표 위 행동력 칸과 남은 예약 (SPEC-001 v4.0 §6). 적 예약도 같은 수만큼 공개한다
+  const showPlans = (): void => {
+    if (!session) return;
+    const s = session;
+    const floor = loaded.catalog.rules.actionPoints.floor;
+    for (const c of s.battle.combatants) {
+      if (c.isDefeated) {
+        stage.setPlan(c.id, null);
+        continue;
+      }
+      const steps = s.board.steps(c.id).map((st) => {
+        const view = cardView(loaded.catalog, st.skillId, { name: display?.cardKit[c.base.id]?.[st.skillId], terms: display?.terms });
+        return { name: view.name, slot: view.slot };
+      });
+      stage.setPlan(c.id, { actionPoints: s.board.actionPoints(c.id), max: s.board.maxActionPoints(c.id), floor, steps, idle: s.board.isIdle(c.id) });
+    }
   };
 
   //적이 노리는 대상을 적 이름표 아래에 적는다 (§9.6). 노림 받는 아군이 그 적을 치라고 이미 지시했으면 합 표지 (U5)
@@ -488,6 +513,15 @@ async function main(): Promise<void> {
   const refresh = (): void => {
     if (!session || !input || phase !== 'input') return;
     panel.show(input, session.inputAllies(), session.inputEnemies());
+    //짜는 중인 예약을 아군 이름표에 미리 보인다
+    for (const ally of session.inputAllies()) {
+      const budget = input.budgetOf(ally.id);
+      const steps = input.stepsOf(ally.id).map((st) => {
+        const view = cardView(loaded.catalog, st.skillId, { name: display?.cardKit[ally.characterId]?.[st.skillId], terms: display?.terms });
+        return { name: view.name, slot: view.slot };
+      });
+      if (budget) stage.setPlan(ally.id, { actionPoints: budget.after, max: session.board.maxActionPoints(ally.id), floor: budget.floor, steps, idle: false });
+    }
     showTargets(true);
     stage.setSelection({
       ally: input.selectedAlly,
@@ -585,6 +619,15 @@ async function main(): Promise<void> {
     openTurn();
   };
 
+  //예약 맨 앞 칸으로 이번 턴 교전을 돌린다
+  const proceed = (): void => {
+    if (!session) return;
+    session.battle.submitOrders(session.board.orders(enemyTargets));
+    showPlans();
+    feed(session.battle.resolve());
+    phase = 'resolving';
+  };
+
   const openTurn = (): void => {
     if (!session || session.battle.isFinished) return end();
     const startEvents = session.battle.startTurn();
@@ -595,20 +638,34 @@ async function main(): Promise<void> {
     if (session.battle.isFinished) return end();
     enemyTargets = new Map<string, string>();
     for (const event of startEvents) if (event.type === 'enemyTargeted') enemyTargets.set(event.enemyId, event.targetId);
+    showPlans();
     if (playing()) {
+      //예약이 남아 있거나 행동력이 없으면 고를 게 없다. 바로 교전한다 (v4.0 §6)
+      if (session.inputAllies().length === 0) {
+        panel.idle(idleText());
+        proceed();
+        return;
+      }
       phase = 'waitInput';
-      panel.idle('적이 노릴 대상을 고르는 중…');
+      panel.idle('적의 예약을 읽는 중…');
       return;
     }
-    session.battle.submitOrders(session.autoOrders(enemyTargets));
-    feed(session.battle.resolve());
-    phase = 'resolving';
+    feed(session.autoPlan());
+    proceed();
     panel.idle('자동 관전 중');
+  };
+
+  //입력 없이 넘어가는 턴의 안내
+  const idleText = (): string => {
+    if (!session) return '';
+    const ally = session.battle.sideOf('ally').find((c) => !c.isDefeated);
+    if (!ally) return '';
+    return session.board.isIdle(ally.id) ? `${ally.base.name} — 행동력이 없다. 이번 턴은 막지 못하고 맞는다` : `${ally.base.name} — 예약대로 진행 중`;
   };
 
   const beginInput = (): void => {
     if (!session) return;
-    input = new OrderInput(session.inputAllies(), session.inputEnemies().map((e) => e.id), enemyTargets);
+    input = new PlanInput(session.inputAllies(), session.inputEnemies().map((e) => e.id), enemyTargets, session.budgets());
     phase = 'input';
     //쓰러진 사람을 빼고 남은 사람으로 대기 카메라를 다시 잡는다
     stage.reframe();
@@ -618,12 +675,12 @@ async function main(): Promise<void> {
 
   const submit = (): void => {
     if (!session || !input || phase !== 'input' || !input.ready) return;
-    session.battle.submitOrders(input.submitted);
+    const plans = input.submitted;
     input = null;
+    for (const [id, steps] of plans) feed(session.board.submit(id, steps));
     showTargets(false);
     stage.setSelection({ ally: null, target: null, pickable: [] });
-    feed(session.battle.resolve());
-    phase = 'resolving';
+    proceed();
     panel.idle('교전 중…');
   };
 
@@ -714,9 +771,8 @@ async function main(): Promise<void> {
       input = null;
       showTargets(false);
       stage.setSelection({ ally: null, target: null, pickable: [] });
-      session.battle.submitOrders(session.autoOrders(enemyTargets));
-      feed(session.battle.resolve());
-      phase = 'resolving';
+      feed(session.autoPlan());
+      proceed();
       panel.idle('자동 관전 중');
     }
   });
@@ -757,7 +813,8 @@ async function main(): Promise<void> {
         if (session.battle.isFinished) end();
         else {
           //턴 마감을 먼저 재생하고 결행 칸을 다시 읽는다. 다음 턴 카드는 그다음에 들어온다
-          feed(session.battle.endTurn());
+          feed([...session.battle.endTurn(), ...session.board.endTurn()]);
+          showPlans();
           showGauges();
           showStatuses();
           phase = 'turnEnd';
