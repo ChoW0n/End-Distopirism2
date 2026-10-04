@@ -55,11 +55,11 @@ describe('SPEC-005 §11.4 카드 뒤집기 수치', () => {
     expect(config.cardFlip).toEqual({
       slowScale: 0.15,
       approachShare: 0.55,
-      spinTime: 0.6,
-      spinTurns: 3,
+      spinTime: 0.42,
+      spinTurns: 2,
       revealPop: 0.18,
-      holdTime: 0.4,
-      height: 0.9,
+      holdTime: 0.3,
+      height: 1.25,
       headLift: 0.45,
       fadeTime: 0.2,
     });

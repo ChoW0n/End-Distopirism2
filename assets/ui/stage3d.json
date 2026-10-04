@@ -30,19 +30,19 @@
     "knockMax": 5.0,
     "staggerDrop": -0.12,
     "staggerHold": 0.22,
-    "lingerAfterHit": 0.22,
+    "lingerAfterHit": 0.14,
     "strikeTrailTime": 0.1,
     "strikeTrailPeakShare": 0.5,
-    "settleTime": 0.55,
+    "settleTime": 0.4,
     "settleAmplitude": 1.1,
     "settlePeriod": 0.35,
-    "returnTime": 0.3,
+    "returnTime": 0.22,
     "clashWinnerRecoil": 0.25,
     "_clash": "§9.3 합 라운드. 진 쪽이 밀리는 거리, 교착 때 둘 다 밀리는 거리, 다시 부딪히는 시간, 라운드 사이 쉼",
     "clashPush": 0.55,
     "deadlockPush": 0.35,
     "reengageTime": 0.12,
-    "roundRest": 0.18,
+    "roundRest": 0.1,
     "downTime": 0.6,
     "downSink": 0.25,
     "downOpacity": 0.35,
@@ -63,13 +63,14 @@
   "_footGauge": "SPEC-004 §14.3 발밑 반원 게이지. 폭 = 캐릭터 화면 키 × widthRatio 를 minWidth~maxWidth(UI 기준 단위, 그림 320) 사이에 가둔다. 체력 비 criticalRatio 이하면 위험 표시, 감소 잔상 lossSeconds 초, 쓰러지면 downFade 초 동안 흐려진다",
   "footGauge": { "widthRatio": 0.9, "minWidth": 220, "maxWidth": 320, "criticalRatio": 0.3, "lossSeconds": 0.25, "downFade": 1.0 },
   "camera": {
-    "focusSizeGain": 1.08,
-    "focusHeight": 0.1,
-    "panYawDeg": 24,
-    "dutchDeg": 2.5,
+    "focusSizeGain": 1.6,
+    "focusHeight": 0.6,
+    "panYawDeg": 28,
+    "dutchDeg": 4,
     "fovZoom": 4,
     "followTime": 0.12,
-    "returnFollowTime": 0.35
+    "returnFollowTime": 0.35,
+    "fitShare": 0.7
   },
   "shake": {
     "damageForMaxShake": 30,
@@ -82,7 +83,7 @@
     "kickImpulse": 0.25,
     "kickStiffness": 220,
     "kickDamping": 18,
-    "fovPunch": 3.5,
+    "fovPunch": 6,
     "clashPower": 0.35
   },
   "hitStop": {
@@ -109,7 +110,7 @@
     "coreLife": 0.08,
     "contactBias": 0.7
   },
-  "_cardFlip": "SPEC-005 §11 카드 뒤집기. 달려가며 슬로우 → 머리 위 카드 회전 → 띵 → 비교 → 한 방. 시간은 초(회전·비교는 실제 시간)", "cardFlip": { "slowScale": 0.15, "approachShare": 0.55, "spinTime": 0.6, "spinTurns": 3, "revealPop": 0.18, "holdTime": 0.4, "height": 0.9, "headLift": 0.45, "fadeTime": 0.2 }, "callout": {
+  "_cardFlip": "SPEC-005 §11 카드 뒤집기. 달려가며 슬로우 → 머리 위 카드 회전 → 띵 → 비교 → 한 방. 시간은 초(회전·비교는 실제 시간)", "cardFlip": { "slowScale": 0.15, "approachShare": 0.55, "spinTime": 0.42, "spinTurns": 2, "revealPop": 0.18, "holdTime": 0.3, "height": 1.25, "headLift": 0.45, "fadeTime": 0.2 }, "callout": {
     "seconds": 1.1,
     "headOffset": 0.35
   },
@@ -127,5 +128,18 @@
     "pan": { "width": 0.7 },
     "voiceGain": { "intermediate": 0.8, "final": 1.0 },
     "ultimate": { "payoffDelay": 0.12, "slashIntervals": [0.16, 0.16, 0.24] }
-  }
+  },
+  "_impact": "SPEC-005 §17.2 타격 반응. 무거운 타·마지막 타·궁극기 마지막 베기에 배경을 누르고, 무거운 타·궁극기 마지막 베기에 흰 섬광. 시간은 실제 초",
+  "impact": {
+    "dim": { "level": 0.45, "in": 0.03, "hold": 0.12, "out": 0.3 },
+    "flash": { "alpha": 0.28, "seconds": 0.06 }
+  },
+  "_ambient": "SPEC-005 §17.3 상시 환경 입자. 길이는 월드 단위(캐릭터 키 2.0). 깊이는 무대 줄 z=0 기준, 카메라 쪽이 +. 속도는 초당",
+  "ambient": {
+    "dust": { "count": 90, "size": 0.05, "rise": 0.08, "drift": 0.12, "opacity": 0.55, "near": 6.0, "far": -6.0, "width": 16, "height": 5 },
+    "drips": { "count": 14, "speed": 7.5, "length": 0.35, "top": 6.5, "ringSize": 0.6, "ringTime": 0.6, "opacity": 0.5, "depthMin": -5.0, "depthMax": -1.5, "width": 14 },
+    "fog": { "layers": 3, "height": 1.2, "width": 22, "speed": 0.18, "opacity": 0.22, "depthMin": -4.0, "depthMax": 1.5 }
+  },
+  "_tempo": "SPEC-005 §17.4 교전 끝 → 턴 닫기, 턴 닫기 → 다음 턴 쉼 (초)",
+  "tempo": { "restSeconds": 0.15 }
 }

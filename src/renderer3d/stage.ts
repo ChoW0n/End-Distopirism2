@@ -22,6 +22,7 @@ import { CutsceneOverlay } from './cutscene.js';
 import { EnvFxLayer } from './envfx.js';
 import { EffectLayer, effectTextures } from './effects.js';
 import { frameTexture, PaperDoll } from './doll.js';
+import { AmbientField } from './ambient.js';
 import { Overlay, type GaugeKit, type ScreenPoint, type Selection3d, type PlanMark, type StatusMark, type UltimateGauge } from './overlay.js';
 import { SparkField } from './sparks.js';
 
@@ -151,6 +152,7 @@ export class Stage3D {
   private envSerial = 0;
   //연출 실험 모드 (SPEC-005 §15). null 이면 끈다
   private lab: LabOptions | null = null;
+  private readonly ambient: AmbientField;
   //배속. 소리를 앞당겨 예약할 때 실제 시간으로 바꾸는 데 쓴다
   private speed = 1;
   //배경 누르기 세대. 새 누르기가 오면 앞 것의 풀기를 건너뛴다
@@ -228,6 +230,8 @@ export class Stage3D {
     this.sparks = new SparkField(this.scene, config.sparks);
     this.mapSurface = backdropConfig.surface;
     this.envFx = envFx ? { vfx: envFx.vfx, layer: new EnvFxLayer(this.scene, envFx.vfx, envFx.images, config.layout.characterHeight) } : null;
+    //상시 환경 입자 (SPEC-005 §17.3)
+    this.ambient = new AmbientField(this.scene, config.ambient);
     this.overlay = new Overlay(host, config.footGauge);
     this.effects = new EffectLayer(this.scene, config.layout.characterHeight);
     this.cutscene = new CutsceneOverlay(host);
@@ -865,15 +869,19 @@ export class Stage3D {
     const power = damage > 0 ? Math.min(1, damage / s.damageForMaxShake) : s.clashPower;
     //실험 모드: 중간 타는 작게, 마지막·궁극기는 크게 (E06·E07). 흔들림 줄이기면 흔들지 않는다
     if (!(this.lab?.reducedMotion && lab)) this.rig.impact(lab && tier ? power * lab.shake[tier] : power, dir);
-    if (lab && (tier === 'heavy' || tier === 'climax')) void this.dimBackdrop();
-    if (lab && tier === 'climax' && !this.lab?.reducedFlash) void this.impactFrame();
+    //타격 반응 (SPEC-005 §17.2). 무거운 타·여러 타의 마지막 타·궁극기 마지막 베기에 배경을 누른다
+    const finalOfMany = total > damage;
+    if (heavy || finalOfMany || tier === 'climax' || (lab && tier === 'heavy')) void this.dimBackdrop();
+    //무거운 타·궁극기 마지막 베기는 흰 섬광. 궁극기 마지막 베기는 실루엣 임팩트 프레임도
+    if ((heavy || tier === 'climax') && !this.lab?.reducedFlash) this.overlay.flash(this.config.impact.flash.alpha, this.config.impact.flash.seconds);
+    if (tier === 'climax' && !this.lab?.reducedFlash) void this.impactFrame();
     this.sound.play(damage <= 0 ? 'clash' : heavy ? 'hitHeavy' : 'hit');
     //중간 타는 이벤트가 없어 현황판 체력만 그 타만큼 줄인다. 마지막 타의 이벤트가 규칙 값으로 맞춘다
     const actor = this.actors.get(target.combatantId);
     if (actor && damage > 0 && events.length === 0 && !clash) actor.hp = Math.max(0, actor.hp - damage);
     this.applyAll(events);
     if (damage > 0) {
-      this.overlay.number(this.headPoint(target.combatantId, 0.1), String(damage), heavy ? 'heavy' : '');
+      this.overlay.number(this.headPoint(target.combatantId, 0.1), String(damage), heavy ? 'heavy' : finalOfMany ? 'last' : '');
       if (heavy) this.overlay.number(this.headPoint(target.combatantId, 0.55), '흐트러짐', 'tag');
     }
   }
@@ -931,6 +939,18 @@ export class Stage3D {
     this.sound.play('reveal');
     for (const { card } of pairs) card.state.scale = 1.3;
     await this.wait(all(pairs.map(({ card }) => this.clock.tweenReal(card.state, 'scale', 1, c.revealPop, ease.outQuad))), epoch);
+  }
+
+  //두 사람 사이에 위력을 맞부딪혀 보인다. 화면 왼쪽에 선 사람의 위력을 왼쪽에 둔다
+  private showPowerClash(aId: string, dId: string, aPower: number, dPower: number, winnerId: string | null): void {
+    const a = this.headPoint(aId, -0.3);
+    const d = this.headPoint(dId, -0.3);
+    if (!a || !d) return;
+    const aLeft = a.x <= d.x;
+    const mid = { x: (a.x + d.x) / 2, y: (a.y + d.y) / 2 };
+    const [left, right] = aLeft ? [aPower, dPower] : [dPower, aPower];
+    const winner = winnerId === null ? null : (winnerId === aId) === aLeft ? 'left' : 'right';
+    this.overlay.powerClash(mid, left, right, winner);
   }
 
   //⑤ 진 쪽 카드는 어두워지며 작아진다
@@ -1057,8 +1077,9 @@ export class Stage3D {
         epoch,
       );
 
-      //⑤ 비교. 진 쪽 카드가 어두워진다. 아군이면 결과 알림
+      //⑤ 비교. 진 쪽 카드가 어두워진다. 아군이면 결과 알림. 두 위력을 가운데에서 맞부딪힌다 (§17.2)
       this.showCallouts(round.callouts, [step.attackerId, step.defenderId]);
+      this.showPowerClash(step.attackerId, step.defenderId, round.attackerFlip.power, round.defenderFlip.power, round.type === 'win' ? (round.loserId === step.attackerId ? step.defenderId : step.attackerId) : null);
       if (round.type === 'win') this.dimCard(round.loserId === step.attackerId ? cardA : cardD);
       await this.wait(this.clock.waitReal(c.holdTime), epoch);
       if (run) await this.wait(run as Promise<void>, epoch);
@@ -1285,6 +1306,10 @@ export class Stage3D {
     const rect = this.canvas.getBoundingClientRect();
     this.sparks.step(gameDt, this.camera, rect.width, rect.height);
     this.envFx?.layer.update(realDt, this.camera);
+    //전투 맵이 보일 때만 돈다 (밤바다에서는 끈다). 흔들림 줄이기면 느리게
+    this.ambient.root.visible = this.backdrop.root.visible;
+    this.ambient.slow = (this.lab?.reducedMotion ?? false) || this.overlay.reducedMotion;
+    this.ambient.update(realDt, this.camera);
     //실험 모드: 대기 장만 발을 고정한 채 아주 작게 숨쉰다 (§15 A05). 사람마다 박자를 조금 어긋낸다
     if (this.lab) {
       const b = this.config.lab.breath;
@@ -1381,6 +1406,11 @@ export class Stage3D {
   }
 
   //이름표 아래 한 줄 (적이 노리는 대상 등). clash 면 합 표지
+  //교전 중에는 예약 줄을 숨긴다
+  setCombat(on: boolean): void {
+    this.overlay.setCombat(on);
+  }
+
   //이름표 위 행동력 칸과 예약 줄 (SPEC-001 v4.0 §6)
   setPlan(combatantId: string, mark: PlanMark | null): void {
     this.overlay.setPlan(combatantId, mark);
@@ -1412,7 +1442,8 @@ export class Stage3D {
 
   //배경 정보 억제·암부 (§15 F04·C04). 배경만 잠깐 눌렀다 푼다. 인물·카드·바는 그대로
   private async dimBackdrop(): Promise<void> {
-    const d = this.config.lab.dim;
+    //본편은 §17.2 수치, 실험 모드는 §15 수치
+    const d = this.lab ? this.config.lab.dim : this.config.impact.dim;
     const token = ++this.dimToken;
     await this.clock.tweenReal(this.dimKnob, 'v', d.level, d.in);
     await this.clock.waitReal(d.hold);

@@ -624,6 +624,7 @@ async function main(): Promise<void> {
     if (!session) return;
     session.battle.submitOrders(session.board.orders(enemyTargets));
     showPlans();
+    stage.setCombat(true);
     feed(session.battle.resolve());
     phase = 'resolving';
   };
@@ -814,19 +815,20 @@ async function main(): Promise<void> {
         else {
           //턴 마감을 먼저 재생하고 결행 칸을 다시 읽는다. 다음 턴 카드는 그다음에 들어온다
           feed([...session.battle.endTurn(), ...session.board.endTurn()]);
+          stage.setCombat(false);
           showPlans();
           showGauges();
           showStatuses();
           phase = 'turnEnd';
         }
-        restSec = 0.5;
+        restSec = loaded.stage.tempo.restSeconds;
       }
     }
     if (session && phase === 'turnEnd' && stage.idle) {
       restSec -= deltaSec;
       if (restSec <= 0) {
         openTurn();
-        restSec = 0.5;
+        restSec = loaded.stage.tempo.restSeconds;
       }
     }
     requestAnimationFrame(loop);

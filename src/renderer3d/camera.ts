@@ -108,13 +108,20 @@ export class CameraRig {
 
   //두 가슴 가운데로 다가가며 공격자 쪽 측면으로 돌고 기운다.
   //거리는 캐릭터 화면 크기가 대기의 focusSizeGain 배를 넘지 않게 정한다
+  //두 사람이 멀어지면 둘 다 화면 가로 fitShare 안에 들 만큼만 물러선다 (SPEC-005 §17.1)
   focus(a: THREE.Vector3, b: THREE.Vector3, dir: number): void {
     const c = this.config;
     const middle = a.clone().add(b).multiplyScalar(0.5);
     middle.y += c.focusHeight;
     const zoomFov = this.baseFov - c.fovZoom;
-    const dist =
+    const sizeDist =
       (this.homePos.distanceTo(middle) * Math.tan((this.baseFov * DEG) / 2)) / Math.tan((zoomFov * DEG) / 2) / c.focusSizeGain;
+    //가로 반 화각. 몸 폭(키의 절반쯤)을 양쪽에 더한 폭이 들어가야 한다
+    const halfH = Math.tan((zoomFov * DEG) / 2);
+    //몸 폭·뻗은 칼까지 양쪽에 캐릭터 키 1.2 배를 더 둔다
+    const span = Math.abs(a.x - b.x) + 2.4;
+    const fitDist = span / 2 / (halfH * Math.max(0.1, this.camera.aspect) * c.fitShare);
+    const dist = Math.max(sizeDist, fitDist);
     const fwd = new THREE.Vector3(0, 0, -1)
       .applyQuaternion(this.homeQuat)
       .applyAxisAngle(new THREE.Vector3(0, 1, 0), -dir * c.panYawDeg * DEG)

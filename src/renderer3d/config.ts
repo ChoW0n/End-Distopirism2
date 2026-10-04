@@ -93,6 +93,26 @@ export interface CameraConfig {
   fovZoom: number;
   followTime: number;
   returnFollowTime: number;
+  //두 사람이 멀어지면 둘 다 화면 가로 이 몫 안에 들게 물러선다 (SPEC-005 §17.1)
+  fitShare: number;
+}
+
+//타격 반응 (SPEC-005 §17.2). 배경 누르기와 흰 섬광
+export interface ImpactConfig {
+  dim: { level: number; in: number; hold: number; out: number };
+  flash: { alpha: number; seconds: number };
+}
+
+//상시 환경 입자 (SPEC-005 §17.3). 먼지·물방울·낮은 안개
+export interface AmbientConfig {
+  dust: { count: number; size: number; rise: number; drift: number; opacity: number; near: number; far: number; width: number; height: number };
+  drips: { count: number; speed: number; length: number; top: number; ringSize: number; ringTime: number; opacity: number; depthMin: number; depthMax: number; width: number };
+  fog: { layers: number; height: number; width: number; speed: number; opacity: number; depthMin: number; depthMax: number };
+}
+
+//템포 (SPEC-005 §17.4)
+export interface TempoConfig {
+  restSeconds: number;
 }
 
 export interface ShakeConfig {
@@ -201,6 +221,9 @@ export interface Stage3dConfig {
   footGauge: FootGaugeConfig;
   framing: FramingConfig;
   lab: LabConfig;
+  impact: ImpactConfig;
+  ambient: AmbientConfig;
+  tempo: TempoConfig;
 }
 
 //배경 층 한 장 (SPEC-005 §8.8)
@@ -297,7 +320,7 @@ export function parseStage3dConfig(raw: unknown): Stage3dConfig {
       'bystanderFade', 'foregroundFade', 'readyHold', 'followTime', 'hitKnock', 'parryLunge', 'hitSlowScale', 'hitSlowTime', 'followSpeed',
       'decayEase',
     ]),
-    camera: numbers<CameraConfig>(root['camera'], 'camera', ['focusSizeGain', 'focusHeight', 'panYawDeg', 'dutchDeg', 'fovZoom', 'followTime', 'returnFollowTime']),
+    camera: numbers<CameraConfig>(root['camera'], 'camera', ['focusSizeGain', 'focusHeight', 'panYawDeg', 'dutchDeg', 'fovZoom', 'followTime', 'returnFollowTime', 'fitShare']),
     shake: numbers<ShakeConfig>(root['shake'], 'shake', [
       'damageForMaxShake', 'traumaPerHit', 'traumaPerDamage', 'traumaDecay', 'maxOffset', 'maxAngle', 'frequency',
       'kickImpulse', 'kickStiffness', 'kickDamping', 'fovPunch', 'clashPower',
@@ -314,6 +337,9 @@ export function parseStage3dConfig(raw: unknown): Stage3dConfig {
     footGauge: numbers<FootGaugeConfig>(root['footGauge'], 'footGauge', ['widthRatio', 'minWidth', 'maxWidth', 'criticalRatio', 'lossSeconds', 'downFade']),
     framing: numbers<FramingConfig>(root['framing'], 'framing', ['maxZoomOut', 'cover', 'tagMargin', 'footMargin', 'sideMargin', 'bodyHalfWidth', 'headHeight']),
     lab: parseLab(root['lab']),
+    impact: parseImpact(root['impact']),
+    ambient: parseAmbient(root['ambient']),
+    tempo: numbers<TempoConfig>(root['tempo'], 'tempo', ['restSeconds']),
   };
 }
 
@@ -421,5 +447,24 @@ function parseLab(raw: unknown): LabConfig {
     pan: numbers<LabConfig['pan']>(o['pan'], 'lab.pan', ['width']),
     voiceGain: numbers<LabConfig['voiceGain']>(o['voiceGain'], 'lab.voiceGain', ['intermediate', 'final']),
     ultimate,
+  };
+}
+
+//타격 반응 수치를 읽는다 (SPEC-005 §17.2)
+function parseImpact(raw: unknown): ImpactConfig {
+  const o = obj(raw, 'impact');
+  return {
+    dim: numbers<ImpactConfig['dim']>(o['dim'], 'impact.dim', ['level', 'in', 'hold', 'out']),
+    flash: numbers<ImpactConfig['flash']>(o['flash'], 'impact.flash', ['alpha', 'seconds']),
+  };
+}
+
+//상시 환경 입자 수치를 읽는다 (SPEC-005 §17.3)
+function parseAmbient(raw: unknown): AmbientConfig {
+  const o = obj(raw, 'ambient');
+  return {
+    dust: numbers<AmbientConfig['dust']>(o['dust'], 'ambient.dust', ['count', 'size', 'rise', 'drift', 'opacity', 'near', 'far', 'width', 'height']),
+    drips: numbers<AmbientConfig['drips']>(o['drips'], 'ambient.drips', ['count', 'speed', 'length', 'top', 'ringSize', 'ringTime', 'opacity', 'depthMin', 'depthMax', 'width']),
+    fog: numbers<AmbientConfig['fog']>(o['fog'], 'ambient.fog', ['layers', 'height', 'width', 'speed', 'opacity', 'depthMin', 'depthMax']),
   };
 }

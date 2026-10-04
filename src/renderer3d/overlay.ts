@@ -345,13 +345,40 @@ export class Overlay {
   }
 
   //피해 숫자. 뜬 자리에 머물다 사라진다
-  number(at: ScreenPoint, text: string, kind: '' | 'heavy' | 'tag'): void {
+  //last 는 여러 타의 마지막 타(금색 테두리, SPEC-005 §17.2)
+  number(at: ScreenPoint, text: string, kind: '' | 'heavy' | 'tag' | 'last'): void {
     if (!at) return;
     const box = el('div', `num3d ${kind}`, text);
     box.style.left = `${at.x * 100}%`;
     box.style.top = `${at.y * 100}%`;
     this.root.append(box);
     window.setTimeout(() => box.remove(), 1300);
+  }
+
+  //교전 중에는 이름표 위 예약 줄을 숨긴다. 머리 위 카드 뒤집기와 겹친다 (SPEC-001 v4.0 §6)
+  setCombat(on: boolean): void {
+    this.root.classList.toggle('combat', on);
+  }
+
+  //화면 전체 흰 섬광 한 번 (SPEC-005 §17.2). 흔들림 줄이기면 하지 않는다
+  flash(alpha: number, seconds: number): void {
+    if (this.reducedMotion) return;
+    const box = el('div', 'flash3d');
+    box.style.setProperty('--a', String(alpha));
+    box.style.animationDuration = `${seconds}s`;
+    this.root.append(box);
+    window.setTimeout(() => box.remove(), seconds * 1000 + 50);
+  }
+
+  //합 위력 충돌 (SPEC-005 §17.2). 두 사람 사이에 왼쪽·오른쪽 위력을 맞부딪혀 보인다. winner 가 null 이면 교착
+  powerClash(at: ScreenPoint, left: number, right: number, winner: 'left' | 'right' | null): void {
+    if (!at) return;
+    const box = el('div', `clash3d${winner ? ` win-${winner}` : ' draw'}${this.reducedMotion ? ' still' : ''}`);
+    box.style.left = `${at.x * 100}%`;
+    box.style.top = `${at.y * 100}%`;
+    box.append(el('b', 'l', String(left)), el('i', '', ':'), el('b', 'r', String(right)));
+    this.root.append(box);
+    window.setTimeout(() => box.remove(), 900);
   }
 
   //매 프레임 이름표·알림·발밑 바 자리를 옮긴다. head 는 사람 머리 위, foot 은 발 화면 좌표
