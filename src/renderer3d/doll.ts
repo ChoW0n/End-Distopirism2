@@ -159,6 +159,15 @@ export class PaperDoll {
     return this.shownId === this.poseFrame('idle');
   }
 
+  //지금 보이는 판의 실제 모서리. 피격·밀려남·발도 장의 폭까지 화면 경계 검사에 쓴다
+  frameCorners(): THREE.Vector3[] {
+    if (this.hidden || !this.shown || this.opacity <= 0) return [];
+    const mesh = this.shown.mesh;
+    mesh.updateWorldMatrix(true, false);
+    const positions = mesh.geometry.getAttribute('position');
+    return Array.from({ length: positions.count }, (_, i) => new THREE.Vector3().fromBufferAttribute(positions, i).applyMatrix4(mesh.matrixWorld));
+  }
+
   //판 전부의 색을 곱한다. 검정이면 실루엣이다 (SPEC-005 §15 C01). 흰색이 원래 그림
   setTint(color: number): void {
     for (const plate of this.plates.values()) plate.material.color.setHex(color);

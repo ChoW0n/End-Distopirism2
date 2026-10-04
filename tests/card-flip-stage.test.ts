@@ -58,6 +58,7 @@ describe('SPEC-005 §11.4 카드 뒤집기 수치', () => {
       spinTime: 0.42,
       spinTurns: 2,
       revealPop: 0.18,
+      revealScale: 1.3,
       holdTime: 0.3,
       height: 1.25,
       headLift: 0.45,

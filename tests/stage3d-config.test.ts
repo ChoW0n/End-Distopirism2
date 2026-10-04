@@ -14,7 +14,7 @@ describe('3D 무대 수치', () => {
     const config = parseStage3dConfig(read('assets/ui/stage3d.json'));
     expect(config.layout.characterHeight).toBe(2);
     expect(config.motion.strikeTrailTime).toBe(0.1);
-    //SPEC-005 §17.1 카메라 압박: 측면 28°·초점 크기 2배·넘침 막기
+    //SPEC-005 §17.1 카메라 압박: 측면 28°·초점 크기 1.6배·넘침 막기
     expect(config.camera.panYawDeg).toBe(28);
     expect(config.camera.focusSizeGain).toBe(1.6);
     expect(config.camera.fitShare).toBeGreaterThan(0);

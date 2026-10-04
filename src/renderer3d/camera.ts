@@ -3,6 +3,13 @@
 
 import * as THREE from 'three';
 import type { CameraConfig, ShakeConfig } from './config.js';
+import { containViewPoints, type ScreenRect, type Vec3 } from '../render/framing.js';
+
+//이번 화면에서 보호할 실제 판 모서리. 카메라 자세를 쓴 뒤 요청하므로 기울기·흔들림도 반영한다
+export interface FrameBounds {
+  points: readonly THREE.Vector3[];
+  rect: ScreenRect;
+}
 
 const DEG = Math.PI / 180;
 
@@ -55,6 +62,8 @@ export class CameraRig {
   private fovKick = 0;
   private fovKickVel = 0;
   private readonly probe = new THREE.PerspectiveCamera();
+  private safetyFov = 0;
+  private readonly safetyShift = new THREE.Vector2();
   //환경 이펙트 카메라 요청 (SPEC-005 §16.1). 사건 하나에 한 번, 가장 센 것 하나만 돈다
   private env: { start: number; amplitude: number; duration: number; zoom: number; dir: number } | null = null;
   private readonly envSeen: string[] = [];
@@ -92,6 +101,8 @@ export class CameraRig {
     this.kickVel.set(0, 0, 0);
     this.fovKick = 0;
     this.fovKickVel = 0;
+    this.safetyFov = 0;
+    this.safetyShift.set(0, 0);
     for (const v of Object.values(this.vel)) v.v = 0;
   }
 
@@ -164,7 +175,7 @@ export class CameraRig {
   }
 
   //카메라를 쓰는 유일한 곳. 실제 시간으로 흐른다
-  write(dt: number, realNow: number): void {
+  write(dt: number, realNow: number, bounds?: (camera: THREE.PerspectiveCamera) => FrameBounds | null): void {
     if (dt <= 0) return;
     const c = this.config;
     const s = this.shake;
@@ -217,11 +228,27 @@ export class CameraRig {
     this.camera.position.copy(this.pos).add(off.applyQuaternion(this.quat)).add(this.kick).add(envOff);
     this.camera.quaternion.copy(this.quat).multiply(new THREE.Quaternion().setFromEuler(ang));
     this.camera.fov = Math.min(170, Math.max(5, (this.fov + this.fovKick) * envFov));
+    //안전 보정은 바깥으로 즉시, 원래 구도로는 천천히 푼다. 내부 목표에 누적하지 않는다
+    const decay = Math.exp(-dt / Math.max(1e-4, c.returnFollowTime));
+    this.safetyFov *= decay;
+    this.safetyShift.multiplyScalar(decay);
+    this.camera.updateMatrixWorld();
+    const frame = bounds?.(this.camera);
+    const baseFov = this.camera.fov;
+    const safe = frame ? containViewPoints(
+      frame.points.map((p) => p.clone().applyMatrix4(this.camera.matrixWorldInverse).toArray() as Vec3),
+      this.camera.aspect,
+      { fov: baseFov + this.safetyFov, offsetX: this.shift.x + this.safetyShift.x, offsetY: this.shift.y + this.safetyShift.y },
+      frame.rect,
+    ) : { fov: baseFov, offsetX: this.shift.x, offsetY: this.shift.y };
+    this.safetyFov = safe.fov - baseFov;
+    this.safetyShift.set(safe.offsetX - this.shift.x, safe.offsetY - this.shift.y);
+    this.camera.fov = safe.fov;
     this.camera.updateProjectionMatrix();
     //렌즈 이동: 투영 행렬의 가운데 칸만 바꾼다. 원근은 그대로라 배경과 인형이 어긋나지 않는다
     const e = this.camera.projectionMatrix.elements;
-    e[8] = this.shift.x;
-    e[9] = this.shift.y;
+    e[8] = safe.offsetX;
+    e[9] = safe.offsetY;
     this.camera.projectionMatrixInverse.copy(this.camera.projectionMatrix).invert();
   }
 }

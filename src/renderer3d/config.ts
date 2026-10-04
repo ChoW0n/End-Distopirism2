@@ -72,6 +72,8 @@ export interface FootGaugeConfig {
 export interface FramingConfig {
   //화각을 넓히는 한도 (원화 화각 탄젠트 배수)
   maxZoomOut: number;
+  //교전 중 상단·좌우 화면 여백 (UI 단위)
+  combatPadding: number;
   //배경 층이 위아래로 덮는 범위 (원화 화면 반 높이 배수)
   cover: number;
   //머리 위 이름표·노림 표지 자리
@@ -163,6 +165,7 @@ export interface CardFlipConfig {
   spinTime: number;
   spinTurns: number;
   revealPop: number;
+  revealScale: number;
   holdTime: number;
   height: number;
   headLift: number;
@@ -332,10 +335,10 @@ export function parseStage3dConfig(raw: unknown): Stage3dConfig {
     ]),
     callout: numbers<CalloutConfig>(root['callout'], 'callout', ['seconds', 'headOffset']),
     cardFlip: numbers<CardFlipConfig>(root['cardFlip'], 'cardFlip', [
-      'slowScale', 'approachShare', 'spinTime', 'spinTurns', 'revealPop', 'holdTime', 'height', 'headLift', 'fadeTime',
+      'slowScale', 'approachShare', 'spinTime', 'spinTurns', 'revealPop', 'revealScale', 'holdTime', 'height', 'headLift', 'fadeTime',
     ]),
     footGauge: numbers<FootGaugeConfig>(root['footGauge'], 'footGauge', ['widthRatio', 'minWidth', 'maxWidth', 'criticalRatio', 'lossSeconds', 'downFade']),
-    framing: numbers<FramingConfig>(root['framing'], 'framing', ['maxZoomOut', 'cover', 'tagMargin', 'footMargin', 'sideMargin', 'bodyHalfWidth', 'headHeight']),
+    framing: numbers<FramingConfig>(root['framing'], 'framing', ['maxZoomOut', 'combatPadding', 'cover', 'tagMargin', 'footMargin', 'sideMargin', 'bodyHalfWidth', 'headHeight']),
     lab: parseLab(root['lab']),
     impact: parseImpact(root['impact']),
     ambient: parseAmbient(root['ambient']),
