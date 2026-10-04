@@ -1,0 +1,283 @@
+{
+  "schemaVersion": 1,
+  "id": "kyle-s1-original-effect-frames",
+  "canvas": [
+    1700,
+    720
+  ],
+  "pivot": [
+    760,
+    600
+  ],
+  "color": "RGBA8 sRGB straight alpha",
+  "unionAlphaBBox": [
+    128,
+    99,
+    1203,
+    558
+  ],
+  "source": {
+    "title": "2026-10-03_카일_전스킬_효과분리_v3",
+    "folderUrl": "https://drive.google.com/drive/folders/1ce0nW2xFviLDvoYpv0HqWY3WZcefhYFj",
+    "s1FolderUrl": "https://drive.google.com/drive/folders/1PjVpeZba8nWbyk_0ShnKt3D_d9JZWyG2",
+    "readmeFileId": "1INqdgtwLcMk0CmRA6zW3KQzV3MSvfyK3",
+    "manifestFileId": "1dROd6PnDGY0rIpNSKWfFXSz_byER8vdx",
+    "manifestSha256": "212a38e7ea2390f9fa223e17475351e48460c6f4a310a511e22bd63378fc7b98",
+    "inventoryFileId": "1I97Cmo3vmNFI2XntYROVF-k4CYFP_yjf",
+    "inventorySha256": "f26d8e037561034af1826bf319d9883087fbd469453dc8f51b1406d1e68b2f89",
+    "deliveredAtUtc": "2026-10-03T11:13:30.743Z/2026-10-03T11:15:14.277Z",
+    "approvalBasis": "납품 README가 승인 원본의 검증 완료 S1 효과를 그대로 포함한다고 명시한다. 사용자 개별 승인 시각은 원본 메타데이터에 없다.",
+    "approvalTimestamp": null
+  },
+  "body": {
+    "file": "norm/11-skill1-15.png",
+    "relativeTo": "assets/kyle",
+    "sha256": "8a732edad7790893055b237e044b761055b59b733f2d9d8719979afc04f43386",
+    "sourceFileId": "1R7OOItKnSMyyU3i3lItlm-o0e9KSYkA6",
+    "sourceTitle": "attack-fixed.png",
+    "sourceCreatedAt": "2026-09-29T11:43:58.503Z",
+    "sourceSha256": "e7284be3b17cc4063fac8698087e9432b42abe97be458eea3a985cf64c81f955",
+    "sourceCanvas": [
+      1280,
+      720
+    ],
+    "sourceToGameOffset": [
+      103,
+      -59
+    ],
+    "scale": 1,
+    "visiblePixelDifferenceAfterPlacement": 0
+  },
+  "timing": {
+    "durationsMs": [
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      60,
+      160
+    ],
+    "totalMs": 1000,
+    "frame15IsTransparent": true,
+    "note": "원본 프레임 시간이다. 실시간 실험의 준비·유지·p² 소멸 시간 계약으로 바꾸면 원본 시간별 픽셀 일치와는 구분한다."
+  },
+  "validation": {
+    "sha256MatchesDeliveryInventory": true,
+    "rgba8AndCanvasVerified": true,
+    "compositeAgainstCurrentNormVisiblePixelDifferences": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "compositeOrder": "clean body, then effect",
+    "visuallyInspectedFrames": [
+      1,
+      8
+    ],
+    "engineVerified": false,
+    "imageEditsPerformed": false
+  },
+  "frames": [
+    {
+      "index": 1,
+      "file": "s1-fx-01.png",
+      "kyleRelativeFile": "vfx/s1-original/s1-fx-01.png",
+      "combinedFile": "norm/11-skill1-01.png",
+      "durationMs": 60,
+      "sha256": "6a94b517d28504ca1adccf5b5bc1788f8791b89cbf22ae9cf58d0862c0ac1972",
+      "bytes": 408118,
+      "alphaNonzeroPixels": 146326,
+      "sourceFileId": "1QbFiQJ47TuRRN7993fLKWRZ0Rvfp-tmg",
+      "sourceCreatedAt": "2026-10-03T11:13:30.743Z"
+    },
+    {
+      "index": 2,
+      "file": "s1-fx-02.png",
+      "kyleRelativeFile": "vfx/s1-original/s1-fx-02.png",
+      "combinedFile": "norm/11-skill1-02.png",
+      "durationMs": 60,
+      "sha256": "ff12c3ac945ffbeb86466bfd52fbfed0e012ecdf4a7d540320075e34b159118b",
+      "bytes": 525878,
+      "alphaNonzeroPixels": 182236,
+      "sourceFileId": "12EQ0aYOjPVF0c83i3Ew7qknpmnmbDb08",
+      "sourceCreatedAt": "2026-10-03T11:13:35.070Z"
+    },
+    {
+      "index": 3,
+      "file": "s1-fx-03.png",
+      "kyleRelativeFile": "vfx/s1-original/s1-fx-03.png",
+      "combinedFile": "norm/11-skill1-03.png",
+      "durationMs": 60,
+      "sha256": "a670f26efe1f0cb1d4e0f9a2177b1149a0920e1696cabe97c20cabf3755b05ad",
+      "bytes": 535760,
+      "alphaNonzeroPixels": 192922,
+      "sourceFileId": "1hxOFlLObvihf8ut5XCEcrL1fG82DDvzL",
+      "sourceCreatedAt": "2026-10-03T11:13:39.737Z"
+    },
+    {
+      "index": 4,
+      "file": "s1-fx-04.png",
+      "kyleRelativeFile": "vfx/s1-original/s1-fx-04.png",
+      "combinedFile": "norm/11-skill1-04.png",
+      "durationMs": 60,
+      "sha256": "c9e685d4698f4eac6b3ec27cdad997776f3f5a5510ddf7c2d29c47d3b0d6033f",
+      "bytes": 453926,
+      "alphaNonzeroPixels": 169835,
+      "sourceFileId": "18BNgxBdX53rsQOK5j50x5dpD6kU-OHP_",
+      "sourceCreatedAt": "2026-10-03T11:13:44.375Z"
+    },
+    {
+      "index": 5,
+      "file": "s1-fx-05.png",
+      "kyleRelativeFile": "vfx/s1-original/s1-fx-05.png",
+      "combinedFile": "norm/11-skill1-05.png",
+      "durationMs": 60,
+      "sha256": "296b92528eb2e6cc842da1b2e877b0578e2040d16cfdea670731a2382e2f5ee9",
+      "bytes": 465515,
+      "alphaNonzeroPixels": 172252,
+      "sourceFileId": "1lbM7tpU1g1HdLufd3lnrAeOLR-72Td-o",
+      "sourceCreatedAt": "2026-10-03T11:14:30.866Z"
+    },
+    {
+      "index": 6,
+      "file": "s1-fx-06.png",
+      "kyleRelativeFile": "vfx/s1-original/s1-fx-06.png",
+      "combinedFile": "norm/11-skill1-06.png",
+      "durationMs": 60,
+      "sha256": "0a630e96360f940b45626b3ffbb9675cbf9e5514bc5fe8748ff9d0910153d810",
+      "bytes": 457156,
+      "alphaNonzeroPixels": 157772,
+      "sourceFileId": "1Uqo8KGea9X0eRxVVY6GDDwoG3LL77wDx",
+      "sourceCreatedAt": "2026-10-03T11:14:34.702Z"
+    },
+    {
+      "index": 7,
+      "file": "s1-fx-07.png",
+      "kyleRelativeFile": "vfx/s1-original/s1-fx-07.png",
+      "combinedFile": "norm/11-skill1-07.png",
+      "durationMs": 60,
+      "sha256": "2d2da9b15ec1d5900b1a4224148d5bb9c4f66f352048e2121815adfda02e271f",
+      "bytes": 393775,
+      "alphaNonzeroPixels": 131694,
+      "sourceFileId": "1BJrchceL_Aoj9jNG1qxIU83I_E44Ub6x",
+      "sourceCreatedAt": "2026-10-03T11:14:38.588Z"
+    },
+    {
+      "index": 8,
+      "file": "s1-fx-08.png",
+      "kyleRelativeFile": "vfx/s1-original/s1-fx-08.png",
+      "combinedFile": "norm/11-skill1-08.png",
+      "durationMs": 60,
+      "sha256": "8612938cf02ea16332c4268fb35e91021b167740f017981422d08fd064d11f05",
+      "bytes": 270755,
+      "alphaNonzeroPixels": 94558,
+      "sourceFileId": "1JWMG5dfYynN0CYSZxdT8v7lHfhWPzjLQ",
+      "sourceCreatedAt": "2026-10-03T11:14:42.631Z"
+    },
+    {
+      "index": 9,
+      "file": "s1-fx-09.png",
+      "kyleRelativeFile": "vfx/s1-original/s1-fx-09.png",
+      "combinedFile": "norm/11-skill1-09.png",
+      "durationMs": 60,
+      "sha256": "81d2f77e2786b3d3f1365d75188f02fa014290c48ba28ce9e1719ebc946acf4e",
+      "bytes": 264404,
+      "alphaNonzeroPixels": 83592,
+      "sourceFileId": "11lZAiseUYWSWb6K3qcYFYE4OFfbayh44",
+      "sourceCreatedAt": "2026-10-03T11:14:46.998Z"
+    },
+    {
+      "index": 10,
+      "file": "s1-fx-10.png",
+      "kyleRelativeFile": "vfx/s1-original/s1-fx-10.png",
+      "combinedFile": "norm/11-skill1-10.png",
+      "durationMs": 60,
+      "sha256": "4c137bf015d1029cc7fbe6e8bf500646f8ccecdd47629a52aa162652acabd867",
+      "bytes": 236910,
+      "alphaNonzeroPixels": 72206,
+      "sourceFileId": "1lXbluGchnm1GN-PTEJWvW9q1cNa8nfCo",
+      "sourceCreatedAt": "2026-10-03T11:14:51.362Z"
+    },
+    {
+      "index": 11,
+      "file": "s1-fx-11.png",
+      "kyleRelativeFile": "vfx/s1-original/s1-fx-11.png",
+      "combinedFile": "norm/11-skill1-11.png",
+      "durationMs": 60,
+      "sha256": "0b4264f1f0290c264d2301e007a62030ae07c34ac5fbfcda69be386ef9d91365",
+      "bytes": 125282,
+      "alphaNonzeroPixels": 39102,
+      "sourceFileId": "1YqApZJnIgNZRM_yuIIdYpasOhGYCAKMK",
+      "sourceCreatedAt": "2026-10-03T11:14:55.105Z"
+    },
+    {
+      "index": 12,
+      "file": "s1-fx-12.png",
+      "kyleRelativeFile": "vfx/s1-original/s1-fx-12.png",
+      "combinedFile": "norm/11-skill1-12.png",
+      "durationMs": 60,
+      "sha256": "e6e379ce5366eaa7aa562d8ce76f157be0145eba2a703bbe84b3e3cfc4727227",
+      "bytes": 123079,
+      "alphaNonzeroPixels": 35463,
+      "sourceFileId": "1C0Zs4ArW9zJqCf47YIipvzHcajFJbghA",
+      "sourceCreatedAt": "2026-10-03T11:14:58.941Z"
+    },
+    {
+      "index": 13,
+      "file": "s1-fx-13.png",
+      "kyleRelativeFile": "vfx/s1-original/s1-fx-13.png",
+      "combinedFile": "norm/11-skill1-13.png",
+      "durationMs": 60,
+      "sha256": "1af8981f187e187f4e0ff308f96868dffe63d78cf2d5c9ac65704af0c365845b",
+      "bytes": 51387,
+      "alphaNonzeroPixels": 14014,
+      "sourceFileId": "1AKqORHPM73de1cOGjTCaolSuVUjr4ikh",
+      "sourceCreatedAt": "2026-10-03T11:15:04.650Z"
+    },
+    {
+      "index": 14,
+      "file": "s1-fx-14.png",
+      "kyleRelativeFile": "vfx/s1-original/s1-fx-14.png",
+      "combinedFile": "norm/11-skill1-14.png",
+      "durationMs": 60,
+      "sha256": "df8e6a9a2a2723274f218e9702a3c491dfd90f0190709ee3b1cc004285da7499",
+      "bytes": 46147,
+      "alphaNonzeroPixels": 9999,
+      "sourceFileId": "1tAciX_kLrBH8BY1aPmcn5g5avf_F-eUX",
+      "sourceCreatedAt": "2026-10-03T11:15:09.509Z"
+    },
+    {
+      "index": 15,
+      "file": "s1-fx-15.png",
+      "kyleRelativeFile": "vfx/s1-original/s1-fx-15.png",
+      "combinedFile": "norm/11-skill1-15.png",
+      "durationMs": 160,
+      "sha256": "fb90bd451b21a00798f8e6cb01c10b1ddceb3bddcf99c583b5cea174c157f4f2",
+      "bytes": 4838,
+      "alphaNonzeroPixels": 0,
+      "sourceFileId": "1cdKBIPos7lAUyYVS5U11x2X1ofTATqPw",
+      "sourceCreatedAt": "2026-10-03T11:15:14.277Z"
+    }
+  ]
+}

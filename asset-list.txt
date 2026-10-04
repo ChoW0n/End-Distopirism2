@@ -264,6 +264,7 @@ assets/kyle/sound/ult_draw_cut.wav
 assets/kyle/sound/ult_sheath_click.wav
 assets/kyle/sound/ult_water_rise.wav
 assets/kyle/sounds.json
+assets/kyle/source-vfx.json
 assets/kyle/space-fx.json
 assets/kyle/sprite-manifest.json
 assets/kyle/ult/cut-line.png
@@ -299,6 +300,22 @@ assets/kyle/ult/water/13.png
 assets/kyle/ult/water/14.png
 assets/kyle/ult/water/15.png
 assets/kyle/ultimate.json
+assets/kyle/vfx/s1-original/manifest.json
+assets/kyle/vfx/s1-original/s1-fx-01.png
+assets/kyle/vfx/s1-original/s1-fx-02.png
+assets/kyle/vfx/s1-original/s1-fx-03.png
+assets/kyle/vfx/s1-original/s1-fx-04.png
+assets/kyle/vfx/s1-original/s1-fx-05.png
+assets/kyle/vfx/s1-original/s1-fx-06.png
+assets/kyle/vfx/s1-original/s1-fx-07.png
+assets/kyle/vfx/s1-original/s1-fx-08.png
+assets/kyle/vfx/s1-original/s1-fx-09.png
+assets/kyle/vfx/s1-original/s1-fx-10.png
+assets/kyle/vfx/s1-original/s1-fx-11.png
+assets/kyle/vfx/s1-original/s1-fx-12.png
+assets/kyle/vfx/s1-original/s1-fx-13.png
+assets/kyle/vfx/s1-original/s1-fx-14.png
+assets/kyle/vfx/s1-original/s1-fx-15.png
 assets/kyle/vfx/s1-strip.png
 assets/map-gate3-v4/01-far-gallery.png
 assets/map-gate3-v4/02-gate-booth.png
@@ -399,6 +416,7 @@ assets/ui/kit/manifest.json
 assets/ui/stage3d.json
 assets/ui/ui-data.json
 docs/QA-002-수정결과-2026-10-04.md
+docs/QA-003-공간형원본검수-2026-10-04.md
 docs/REVIEW-001-아스트라-검토요청.md
 docs/SPEC-001-v2.0-개정.md
 docs/SPEC-001-v3.0-개정.md
@@ -411,6 +429,8 @@ docs/SPEC-006-아트디렉션.md
 docs/SPEC-007-전투개편.md
 docs/STORY-001-닫힌물길-세계관.md
 docs/battle-data.json
+docs/qa-2026-10-04-results.json
+docs/qa-2026-10-04-vfx-results.json
 docs/참고/gpt-astra-이미지제작-능력.md
 web/battle.css
 web/battle.html

@@ -1,0 +1,39 @@
+{
+  "_주석": "물금 효과분리 v3 원본 RGBA 15장. 평면 비교와 같은 장 선택·원래 색/알파를 보존하며 공간형 시험에만 쓴다. 기존 질감 띠 설정은 realtime-vfx.json에 보존한다.",
+  "canvas": [
+    1700,
+    720
+  ],
+  "pivot": [
+    760,
+    600
+  ],
+  "bodyPx": 580,
+  "crop": [
+    0,
+    0,
+    1700,
+    720
+  ],
+  "grid": [
+    128,
+    64
+  ],
+  "frames": [
+    "vfx/s1-original/s1-fx-01.png",
+    "vfx/s1-original/s1-fx-02.png",
+    "vfx/s1-original/s1-fx-03.png",
+    "vfx/s1-original/s1-fx-04.png",
+    "vfx/s1-original/s1-fx-05.png",
+    "vfx/s1-original/s1-fx-06.png",
+    "vfx/s1-original/s1-fx-07.png",
+    "vfx/s1-original/s1-fx-08.png",
+    "vfx/s1-original/s1-fx-09.png",
+    "vfx/s1-original/s1-fx-10.png",
+    "vfx/s1-original/s1-fx-11.png",
+    "vfx/s1-original/s1-fx-12.png",
+    "vfx/s1-original/s1-fx-13.png",
+    "vfx/s1-original/s1-fx-14.png",
+    "vfx/s1-original/s1-fx-15.png"
+  ]
+}

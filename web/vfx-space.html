@@ -43,6 +43,9 @@
   <div class="row"><b>스킬</b>
     <select id="skill" aria-label="스킬"><option value="s1" selected>S1 물금</option><option value="s2">S2 찌르기</option><option value="s3">S3 쳐내기·올려베기·내려베기</option><option value="ult">결행 (궁극기)</option></select>
   </div>
+  <div class="row" id="s1-source-row"><b>S1 질감</b>
+    <select id="s1-source" aria-label="S1 질감"><option value="original" selected>원본 컬러 15장</option><option value="strip">기존 질감 띠</option></select>
+  </div>
   <div class="row"><b>보기</b>
     <select id="viewmode" aria-label="보기"><option value="side" selected>나란히 (같은 카메라)</option><option value="flat">평면만</option><option value="space">공간형만</option></select>
     <select id="shot" aria-label="카메라"><option value="combat" selected>게임 교전 카메라</option><option value="close">근접 (교전 카메라에서 다가감)</option><option value="home">게임 대기 카메라</option></select>
@@ -57,11 +60,11 @@
     <label><input id="ly-occlude" type="checkbox" checked> 몸 가림</label>
     <label><input id="ly-mask" type="checkbox"> 가림 판 보기</label>
   </div>
-  <div class="row"><b>옵션 (S1)</b>
+  <div class="row" id="s1-options"><b>옵션 (S1)</b>
     <label><input id="opt-flow" type="checkbox" checked> 흐름</label>
     <label><input id="opt-sparkle" type="checkbox" checked> 반짝임</label>
   </div>
-  <div class="note">시험 화면 — 본편 아님. 궤도·높이 0° 가 게임 카메라. 돌리면 몸 판은 게임처럼 카메라를 향하고 효과는 공간에 그대로 있다.<br>S1 물금: 평면 = 원본 15장, 공간형 = 승인 질감·색의 띠가 몸 둘레를 도는 휘두름 궤적(§15.3). S2·S3·결행: 평면 = 게임과 같은 장, 공간형 = 몸만 남긴 장 + 받은 효과 장을 투영 곡면에 얹음(§15.4) — 게임 카메라에서는 원화와 같은 자리, 돌리면 깊이가 드러나고 몸 뒤쪽은 몸에 가린다.</div>
+  <div class="note">시험 화면 — 본편 아님. 궤도·높이 0° 가 게임 카메라. 돌리면 몸 판은 게임처럼 카메라를 향하고 효과는 공간에 그대로 있다.<br>S1 원본 컬러: 받은 효과 15장의 색·붓결·투명도를 유지한다. 평면과 같은 박자로 재생하며 몸 둘레를 도는 깊이와 몸 가림을 적용한다. 기존 질감 띠를 고르면 색 보정·흐름·반짝임·추가 층도 비교할 수 있다.<br>S2·S3·결행: 몸만 남긴 장과 효과 곡면을 같은 카메라에서 비교한다.</div>
 </div>
 <script type="module" src="vfx-space.js"></script>
 </body>
