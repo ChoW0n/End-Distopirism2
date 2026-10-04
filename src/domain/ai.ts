@@ -116,6 +116,8 @@ export class WeightedEnemyAi implements EnemyAi {
   //카드를 고른다. 방어 태세만 위협도 단계 가중치를 따로 받는다 (§13.1)
   chooseSkill(enemy: Combatant, engagement: EnemyEngagement, context: EnemyAiContext): number {
     const deck = engagement.candidates ? requireList(enemy, engagement.candidates) : selectableDeck(enemy, context.catalog);
+    //새 예약에서 결행이 비용을 만족하면 먼저 둔다. 이미 확정한 예약은 바꾸지 않는다
+    if (deck.includes(context.catalog.rules.ultimateSkillId)) return context.catalog.rules.ultimateSkillId;
     const ai = context.catalog.enemyAi;
     const guardWeight = this.guardWeight(enemy, engagement, context);
     const inMentalityDanger =
