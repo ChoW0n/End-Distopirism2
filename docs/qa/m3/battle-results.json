@@ -1,0 +1,116 @@
+{
+  "viewport": [
+    1600,
+    900
+  ],
+  "reducedMotion": false,
+  "artPreview": "remnantWalker",
+  "source": "08da74e5237e08e224891e1276327654594dd4a3",
+  "hashes": {
+    "src/renderer3d/ambient.ts": "302cac9629887c00f85d4d7d1bc16c2f4e9ac42f00991fd208255fc7c5ac5aca",
+    "src/renderer3d/clock.ts": "f25e169429ea6743a42410f526eaac8c1a75c85be00ae9fd65418737da45360c",
+    "src/renderer3d/overlay.ts": "02d1e5654c05dad4d6642b56c1519cb43d5eb393fd82a89a1a715aa98905283d",
+    "src/renderer3d/sparks.ts": "231749868d75b28bd04e57e2fa6495b14b7d9fa8773da32dae135c942d75825b",
+    "src/renderer3d/config.ts": "ed03d205e374be3dde94d518255fa22431a7092316fa6eb4ea9641261f701f42",
+    "src/renderer3d/envfx.ts": "72deaec70bbca8020fee9005b6f9812cf4f3551c291de7887627adf31be8e9b2",
+    "src/renderer3d/camera.ts": "b18f49cce94c1098493ae10dfbfefeff41d9f0f5c6e82b84c8fb189c7617ea1b",
+    "src/renderer3d/stage.ts": "3601e019c52da5e48f6fea8b155b77d9d8a78c30fb321f8b23f788825185c899",
+    "src/renderer3d/strip-loader.ts": "1e88838426fe325a01fd68ee5c5795bff645c7a832906627ef96c9654deb6b21",
+    "src/renderer3d/backdrop.ts": "14f0b80ca71c79ab07c63bd2d0c82673ddeac6535d194d90f2459eae20f7b3da",
+    "src/renderer3d/doll.ts": "29a220e1a99058a1290eb22e9dcbc63afed715e03b74f8d009c9e96ec002310a",
+    "src/renderer3d/ribbon-slash.ts": "4ea2a6e98496036b7b1fa6de5f428feac9fcf33d1e541e05351789740f19a672",
+    "src/renderer3d/cutscene.ts": "3541114eff76789854a90d67cc1082732f9fe3b5ea0237a4691d62a1b2605eb6",
+    "src/renderer3d/space-fx.ts": "07b8f2cab313100770dc72dc6943345f252d4462c5e4ca9ec8c4141d88c2827b",
+    "src/renderer3d/effects.ts": "576d4e1eb3cd0a53b21611c8f6044430c76c8f2c72dc3ee086945de046aabbb6",
+    "src/renderer3d/fullscreen.ts": "f7b04b23bcf886819fd88d3e8b6c9c5b578d2936d756794143d6bec7b100a9b1",
+    "src/renderer3d/app3d.ts": "34df56f846ba29404bad634aa757505102695539c216245125bafa5a3d29f53a",
+    "src/renderer3d/modal.ts": "8820721cc363445995eb7f90a2e9d43759c8c10df74e43e99a370a941f64bec0",
+    "src/renderer3d/source-slash.ts": "605a73b29b9739810d687351a1f8c741fa237881f2325f3211dd789bb5180c5e",
+    "src/renderer3d/vfx-space.ts": "b3327870dbb29ec067510b82d3393b91c0d6d08d26bd50601f4e5de9f16be03a",
+    "src/renderer3d/space-projection.ts": "b7b7de8409f0ce055901dc420fdc3073a8bbc9fcf3847ce25fbefc874f9b2c49",
+    "src/renderer3d/space-slash.ts": "39c014f5c27cb7d2151b38d0275b3a1f812fcb7a9779ea388b93c463a369a13f",
+    "src/renderer3d/vfx-lab.ts": "f5f80f151227608157d77d5e7a1b15d5d53f84e039dbb867d32d1ef17ea2e4d2",
+    "src/renderer3d/card.ts": "7904995521b3e5ce368f41d1fb8bbd3bf4fab2f439c9db6fbe04a65aeb7cc639",
+    "src/render/presenter.ts": "15dcbc98811eb9190b4ea3e1848242f588f6b8cac9aeb546afe7d6307b1f5708",
+    "src/render/decay.ts": "d6bcd2147794702914e137bca72af3bfaae8f5f438908946995ab0c36309377f",
+    "src/render/arc-gauge.ts": "ee7e6e2aa1aec6333b7e02877afb06219606e5a20eb0c18372ee1b558f9a2efe",
+    "src/render/framing.ts": "3deee5b86bed16acbfec676441329540f400647cf91ab444603f03ad8106e0c6",
+    "src/render/envvfx.ts": "8c397aa70a45d862682526f8f15d2cab57317de6be5f1e055b99734bfd5d23ee",
+    "src/render/stage.ts": "92134c78d23086204066cece1b0bd8f215d574df79cb1988e2b914e04f1a59e5",
+    "src/render/cutscene-mesh.ts": "761cdd8acbe68376889ccf69ef0f5c1798a94e54c3ce3c2999eb5b2d884dba27",
+    "src/render/ribbon-slash.ts": "3c25c2f017d33e10a038765d18c858e2cbb18898ded3439c97d02f14cca87aca",
+    "src/render/cutscene.ts": "ed9fbaded5b7b9c76d303c08c2542761a62154588b7027e809cdcaf24e517349",
+    "src/render/space-fx.ts": "6acc2d758dcd9583a604aca0cbd9e59f2aa04135232e310d345a6f7bde484977",
+    "src/render/exchange.ts": "8a4557dbb021b0d48c054c3aac32bacbfb4864666b676a81587603a640794166",
+    "src/render/ultimate.ts": "8dad724f4bd4c9ec691c2666ce318288acb7dadcb2f5c7eb6026b46ad9bf0e33",
+    "src/render/source-slash.ts": "dd7c0778b05ed6ac4967ae089f9bc90faacc14f08ea20f25d86f9d38d19016f0",
+    "src/render/sounds.ts": "c79df41926d1cc46a378b24be2d8a14412c915c42d7d5246300fdefbadd7ec90",
+    "src/render/manifest.ts": "0360906ce32d5bea3c9dc21c27bca6328dbd1475448aa929a4131ec0e60e06c7",
+    "src/render/space-slash.ts": "30c650090c0e0b43d1aedaad9ffb58c53b0768a1e40ef05636f76bb071e0329c",
+    "src/render/showcase.ts": "c1e284483e3f60e1bde9b2bc75f7e09f999fbb1fff18c3818cf5009182f3f247",
+    "assets/ui/stage3d.json": "ee47d4612fba404adbf537ccf5c21168f54dc96944c6b6895aab9aa3f8ea1520",
+    "assets/ui/ui-data.json": "43167e5a6b2ad36893fbb4dcd60326d7fad11b4eeecfb3268e3815ca7a4e7616"
+  },
+  "cases": {
+    "watch:2": {
+      "frames": 379,
+      "actualSeed": 2,
+      "bodyOutsideFrames": 0,
+      "cardCoveredFrames": 0,
+      "nightAmbientFrames": 0,
+      "nightFrames": 0,
+      "cutsceneFrames": 0,
+      "cutsceneFlashFrames": 0,
+      "maxTrauma": 0.8066199999999989,
+      "renderSeconds": 16.433,
+      "wallSeconds": 107.813,
+      "turns": 5,
+      "result": "패배",
+      "events": {
+        "flash": 3,
+        "dimBackdrop": 4,
+        "powerClash": 4,
+        "ultimateStart": 0,
+        "ultimateEnd": 0,
+        "impactFrame": 0
+      },
+      "errors": [],
+      "complete": true,
+      "screenshots": [
+        {
+          "file": "watch-2-cards.png",
+          "frame": 8
+        },
+        {
+          "file": "watch-2-skill1.png",
+          "frame": 39
+        },
+        {
+          "file": "watch-2-skill3.png",
+          "frame": 100
+        },
+        {
+          "file": "watch-2-skill2.png",
+          "frame": 224
+        }
+      ],
+      "roster": [
+        {
+          "id": "a1",
+          "art": "kyle",
+          "plate": true,
+          "frames": 76,
+          "loaded": 76
+        },
+        {
+          "id": "e1",
+          "art": "remnantWalker",
+          "plate": true,
+          "frames": 11,
+          "loaded": 11
+        }
+      ],
+      "pass": true
+    }
+  }
+}

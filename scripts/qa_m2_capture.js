@@ -30,7 +30,7 @@
     };
     for (const [id, actor] of stage.actors) {
       const d = actor.doll;
-      if (!d.hidden && d.shown && d.opacity > 0.1) row.bodies.push({ id, frame: d.shownId, impact: !!d.catalog.frame(d.shownId).impact, down: d.down, box: bounds(d.shown.mesh) });
+      if (!d.hidden && d.shown && d.opacity > 0.1) row.bodies.push({ id, art: d.catalog.manifest.character, frame: d.shownId, impact: !!d.catalog.frame(d.shownId).impact, down: d.down, box: bounds(d.shown.mesh) });
     }
     for (const [card, owner] of stage.cards) {
       if (card.state.opacity > 0.1 && card.state.scale > 0.1) row.cards.push({ id: owner.combatantId, box: bounds(card.front), ...card.state });

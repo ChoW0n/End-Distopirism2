@@ -1,0 +1,238 @@
+{
+  "version": 1,
+  "character": "remnantWalker",
+  "status": "사용자 채택 승인 대기",
+  "canvas": [
+    1700,
+    1000
+  ],
+  "ground": [
+    760,
+    840
+  ],
+  "notes": "생성 원본 보존. 외형 수정 없이 등비 축소와 평행이동만 적용. 덮치기 타격 접지점은 공중 자세 아래 가상 기준점. 크기는 머리와 몸 비례를 나란히 검수해 수동 보정.",
+  "frames": [
+    {
+      "id": "00-idle",
+      "label": "대기",
+      "source": "source/00-idle.png",
+      "sha256": "53e3892a4613b60f36741d20ec440e911c6050845c653ba692e11f7aa92359d9",
+      "scale": 0.392,
+      "sourceGround": [
+        600,
+        1495
+      ],
+      "sourceHead": [
+        740,
+        150
+      ],
+      "ms": 500,
+      "windup": false,
+      "impact": false
+    },
+    {
+      "id": "01-advance",
+      "label": "돌진",
+      "source": "source/01-advance.png",
+      "sha256": "c734441123842f58f9cb40f85e7b24a474a69c5ab76a1fe5a39a8cd677bf05ee",
+      "scale": 0.392,
+      "sourceGround": [
+        1040,
+        1004
+      ],
+      "sourceHead": [
+        1240,
+        134
+      ],
+      "ms": 500,
+      "windup": false,
+      "impact": false
+    },
+    {
+      "id": "02-retreat",
+      "label": "물러남",
+      "source": "source/02-retreat.png",
+      "sha256": "e8c1c58e8cdd749c57f80a1b7d47aa022f80ab37a28aeb73971982aa4f407beb",
+      "scale": 0.392,
+      "sourceGround": [
+        620,
+        1497
+      ],
+      "sourceHead": [
+        700,
+        166
+      ],
+      "ms": 500,
+      "windup": false,
+      "impact": false
+    },
+    {
+      "id": "03-guard",
+      "label": "막기",
+      "source": "source/03-guard.png",
+      "sha256": "6096ba14c6b1817f1707d107770dc0d3f27e4cbd89f2e1cd58ecfe2c498a1d21",
+      "scale": 0.392,
+      "sourceGround": [
+        575,
+        1434
+      ],
+      "sourceHead": [
+        700,
+        167
+      ],
+      "ms": 500,
+      "windup": false,
+      "impact": false
+    },
+    {
+      "id": "04-hit",
+      "label": "피격",
+      "source": "source/04-hit.png",
+      "sha256": "8de14876ca31d2f03b0aaf6e53077ed421203b3a991f12b7f4c4041328767102",
+      "scale": 0.392,
+      "sourceGround": [
+        635,
+        1495
+      ],
+      "sourceHead": [
+        372,
+        145
+      ],
+      "ms": 500,
+      "windup": false,
+      "impact": false
+    },
+    {
+      "id": "05-skill1-ready",
+      "label": "할퀴기 · 준비",
+      "source": "source/05-skill1-ready.png",
+      "sha256": "e06c2d8e752f62cdd53f32963a4d4962ab8ff5a856caa0e77335a276167ed9dd",
+      "scale": 0.392,
+      "sourceGround": [
+        575,
+        1458
+      ],
+      "sourceHead": [
+        795,
+        282
+      ],
+      "ms": 180,
+      "windup": true,
+      "impact": false,
+      "sourceTip": [
+        548,
+        158
+      ]
+    },
+    {
+      "id": "06-skill1-impact",
+      "label": "할퀴기 · 타격",
+      "source": "source/06-skill1-impact.png",
+      "sha256": "dbc008fca6ae7a09e21c4953778b7a1a2c6dd07a58459ade3fdc51b98270e480",
+      "scale": 0.49,
+      "sourceGround": [
+        610,
+        1350
+      ],
+      "sourceHead": [
+        617,
+        293
+      ],
+      "ms": 140,
+      "windup": false,
+      "impact": true,
+      "sourceTip": [
+        1000,
+        465
+      ]
+    },
+    {
+      "id": "07-skill2-ready",
+      "label": "덮치기 · 준비",
+      "source": "source/07-skill2-ready.png",
+      "sha256": "77509553cfcb24c32e756d9d9b62f9cfad0d98bd827b5f7a5dfe7f9d9e2dba6c",
+      "scale": 0.392,
+      "sourceGround": [
+        625,
+        1325
+      ],
+      "sourceHead": [
+        888,
+        440
+      ],
+      "ms": 180,
+      "windup": true,
+      "impact": false,
+      "sourceTip": [
+        974,
+        925
+      ]
+    },
+    {
+      "id": "08-skill2-impact",
+      "label": "덮치기 · 타격",
+      "source": "source/08-skill2-impact.png",
+      "sha256": "8df2d66354918f778a4a940d4195a4c990cc265f39acb574245d9c73e0a7ad2b",
+      "scale": 0.49,
+      "sourceGround": [
+        745,
+        1080
+      ],
+      "sourceHead": [
+        1030,
+        151
+      ],
+      "ms": 140,
+      "windup": false,
+      "impact": true,
+      "sourceTip": [
+        1496,
+        235
+      ]
+    },
+    {
+      "id": "09-skill3-ready",
+      "label": "짓누르기 · 준비",
+      "source": "source/09-skill3-ready.png",
+      "sha256": "9ecce01566b542026712a5849360be98f8efc0ed9ccb68793939a09eaa16a44e",
+      "scale": 0.49,
+      "sourceGround": [
+        628,
+        1510
+      ],
+      "sourceHead": [
+        745,
+        350
+      ],
+      "ms": 180,
+      "windup": true,
+      "impact": false,
+      "sourceTip": [
+        632,
+        85
+      ]
+    },
+    {
+      "id": "10-skill3-impact",
+      "label": "짓누르기 · 타격",
+      "source": "source/10-skill3-impact.png",
+      "sha256": "37a89cc9bdc9d8ce624486504bd97ebc973a9d296747f0dfa1e5abdbfd8d9d13",
+      "scale": 0.445,
+      "sourceGround": [
+        586,
+        1319
+      ],
+      "sourceHead": [
+        909,
+        527
+      ],
+      "ms": 140,
+      "windup": false,
+      "impact": true,
+      "sourceTip": [
+        940,
+        1118
+      ]
+    }
+  ]
+}

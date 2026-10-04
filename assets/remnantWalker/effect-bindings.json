@@ -1,0 +1,13 @@
+{
+  "_comment": "M3 최소 본체 세트. 생성 원화에는 효과를 합치지 않는다. 카일 전용 효과·컷신·녹음 소리는 재사용하지 않는다.",
+  "version": 2,
+  "character": "remnantWalker",
+  "frames": {},
+  "ultimate": [],
+  "defeat": [],
+  "ready": [],
+  "dash": [],
+  "clash": [],
+  "recoil": [],
+  "glow": []
+}

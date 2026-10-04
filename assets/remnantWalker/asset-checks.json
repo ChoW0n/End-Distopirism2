@@ -1,0 +1,211 @@
+[
+  {
+    "id": "00-idle",
+    "rgba": true,
+    "size": [
+      1700,
+      1000
+    ],
+    "bbox": [
+      570,
+      258,
+      883,
+      844
+    ],
+    "transparentPixels": 1611739,
+    "visiblePixels": 84031,
+    "sourceSha256": "53e3892a4613b60f36741d20ec440e911c6050845c653ba692e11f7aa92359d9",
+    "normalizedSha256": "cb2db6eaf413ad6911042704018bb29fc1a0eae41cebf1ffbb95403aa37b2e28",
+    "fullSourceInsideCanvas": true
+  },
+  {
+    "id": "01-advance",
+    "rgba": true,
+    "size": [
+      1700,
+      1000
+    ],
+    "bbox": [
+      404,
+      448,
+      943,
+      845
+    ],
+    "transparentPixels": 1626478,
+    "visiblePixels": 69644,
+    "sourceSha256": "c734441123842f58f9cb40f85e7b24a474a69c5ab76a1fe5a39a8cd677bf05ee",
+    "normalizedSha256": "4a91d016972d649daaab656295d05da75adc3489ab6a8cdcdbf143c4f8116cc7",
+    "fullSourceInsideCanvas": true
+  },
+  {
+    "id": "02-retreat",
+    "rgba": true,
+    "size": [
+      1700,
+      1000
+    ],
+    "bbox": [
+      522,
+      266,
+      913,
+      843
+    ],
+    "transparentPixels": 1610301,
+    "visiblePixels": 85398,
+    "sourceSha256": "e8c1c58e8cdd749c57f80a1b7d47aa022f80ab37a28aeb73971982aa4f407beb",
+    "normalizedSha256": "f596583ee567fb15e17c5686488e0cf5c350250a79b4aa24316666fe958e2eee",
+    "fullSourceInsideCanvas": true
+  },
+  {
+    "id": "03-guard",
+    "rgba": true,
+    "size": [
+      1700,
+      1000
+    ],
+    "bbox": [
+      540,
+      291,
+      939,
+      846
+    ],
+    "transparentPixels": 1606243,
+    "visiblePixels": 89514,
+    "sourceSha256": "6096ba14c6b1817f1707d107770dc0d3f27e4cbd89f2e1cd58ecfe2c498a1d21",
+    "normalizedSha256": "e159b16a5e9f367249d18a801cb62a087871289f7179d78ba2062f53d58c21ea",
+    "fullSourceInsideCanvas": true
+  },
+  {
+    "id": "04-hit",
+    "rgba": true,
+    "size": [
+      1700,
+      1000
+    ],
+    "bbox": [
+      521,
+      258,
+      910,
+      845
+    ],
+    "transparentPixels": 1602934,
+    "visiblePixels": 92908,
+    "sourceSha256": "8de14876ca31d2f03b0aaf6e53077ed421203b3a991f12b7f4c4041328767102",
+    "normalizedSha256": "6605729c81ebb1c60fb6b738ae8f75f68cd99844a35218961110b9f14f3ab38b",
+    "fullSourceInsideCanvas": true
+  },
+  {
+    "id": "05-skill1-ready",
+    "rgba": true,
+    "size": [
+      1700,
+      1000
+    ],
+    "bbox": [
+      554,
+      311,
+      922,
+      844
+    ],
+    "transparentPixels": 1607617,
+    "visiblePixels": 87679,
+    "sourceSha256": "e06c2d8e752f62cdd53f32963a4d4962ab8ff5a856caa0e77335a276167ed9dd",
+    "normalizedSha256": "185f20ce9868dd2f1e91a9b71ffb1a176a61b0f771ce28c033a3639ed4b7d9ed",
+    "fullSourceInsideCanvas": true
+  },
+  {
+    "id": "06-skill1-impact",
+    "rgba": true,
+    "size": [
+      1700,
+      1000
+    ],
+    "bbox": [
+      462,
+      269,
+      963,
+      848
+    ],
+    "transparentPixels": 1594773,
+    "visiblePixels": 99522,
+    "sourceSha256": "dbc008fca6ae7a09e21c4953778b7a1a2c6dd07a58459ade3fdc51b98270e480",
+    "normalizedSha256": "acd27bce9fb67921d202ab4479b3763b4d7ed90661b1a758b8cd0ee2ed6b41a5",
+    "fullSourceInsideCanvas": true
+  },
+  {
+    "id": "07-skill2-ready",
+    "rgba": true,
+    "size": [
+      1700,
+      1000
+    ],
+    "bbox": [
+      518,
+      442,
+      916,
+      846
+    ],
+    "transparentPixels": 1611563,
+    "visiblePixels": 84123,
+    "sourceSha256": "77509553cfcb24c32e756d9d9b62f9cfad0d98bd827b5f7a5dfe7f9d9e2dba6c",
+    "normalizedSha256": "fb6f250831c67f3b29c1c78817a051166776f1eb225e5b004369cc54d3a5ef9a",
+    "fullSourceInsideCanvas": true
+  },
+  {
+    "id": "08-skill2-impact",
+    "rgba": true,
+    "size": [
+      1700,
+      1000
+    ],
+    "bbox": [
+      407,
+      331,
+      1146,
+      797
+    ],
+    "transparentPixels": 1581071,
+    "visiblePixels": 112350,
+    "sourceSha256": "8df2d66354918f778a4a940d4195a4c990cc265f39acb574245d9c73e0a7ad2b",
+    "normalizedSha256": "91297c968ba0a7a8043cd0729eb47d31b536848d6f8bd4835f56c8514bd4a944",
+    "fullSourceInsideCanvas": true
+  },
+  {
+    "id": "09-skill3-ready",
+    "rgba": true,
+    "size": [
+      1700,
+      1000
+    ],
+    "bbox": [
+      473,
+      101,
+      948,
+      848
+    ],
+    "transparentPixels": 1571183,
+    "visiblePixels": 123337,
+    "sourceSha256": "9ecce01566b542026712a5849360be98f8efc0ed9ccb68793939a09eaa16a44e",
+    "normalizedSha256": "bcec62fb3cb3d1a697b9d883a0ab1cec67a4ecfa97e63c1b696ef7a85ea833c1",
+    "fullSourceInsideCanvas": true
+  },
+  {
+    "id": "10-skill3-impact",
+    "rgba": true,
+    "size": [
+      1700,
+      1000
+    ],
+    "bbox": [
+      498,
+      382,
+      958,
+      850
+    ],
+    "transparentPixels": 1585124,
+    "visiblePixels": 110625,
+    "sourceSha256": "37a89cc9bdc9d8ce624486504bd97ebc973a9d296747f0dfa1e5abdbfd8d9d13",
+    "normalizedSha256": "91788cecc18fbf7cb705c1165d2012636709eff20b73ff5c990191d1687da534",
+    "fullSourceInsideCanvas": true
+  }
+]

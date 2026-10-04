@@ -1,0 +1,319 @@
+{
+  "version": 2,
+  "character": "remnantWalker",
+  "canvas": [
+    1700,
+    1000
+  ],
+  "ground": [
+    760,
+    840
+  ],
+  "frames": [
+    {
+      "id": "00-idle",
+      "file": "norm/00-idle.png",
+      "scale": 0.392,
+      "scaleMatch": 1,
+      "anchor": [
+        760,
+        840
+      ],
+      "headCenter": [
+        815,
+        313
+      ],
+      "axeHead": null,
+      "bladeTip": null,
+      "tipSource": "무기 없음",
+      "bbox": [
+        570,
+        258,
+        883,
+        844
+      ],
+      "ms": 500,
+      "windup": false,
+      "impact": false
+    },
+    {
+      "id": "01-advance",
+      "file": "norm/01-advance.png",
+      "scale": 0.392,
+      "scaleMatch": 1,
+      "anchor": [
+        760,
+        840
+      ],
+      "headCenter": [
+        838,
+        499
+      ],
+      "axeHead": null,
+      "bladeTip": null,
+      "tipSource": "무기 없음",
+      "bbox": [
+        404,
+        448,
+        943,
+        845
+      ],
+      "ms": 500,
+      "windup": false,
+      "impact": false
+    },
+    {
+      "id": "02-retreat",
+      "file": "norm/02-retreat.png",
+      "scale": 0.392,
+      "scaleMatch": 1,
+      "anchor": [
+        760,
+        840
+      ],
+      "headCenter": [
+        791,
+        318
+      ],
+      "axeHead": null,
+      "bladeTip": null,
+      "tipSource": "무기 없음",
+      "bbox": [
+        522,
+        266,
+        913,
+        843
+      ],
+      "ms": 500,
+      "windup": false,
+      "impact": false
+    },
+    {
+      "id": "03-guard",
+      "file": "norm/03-guard.png",
+      "scale": 0.392,
+      "scaleMatch": 1,
+      "anchor": [
+        760,
+        840
+      ],
+      "headCenter": [
+        809,
+        343
+      ],
+      "axeHead": null,
+      "bladeTip": null,
+      "tipSource": "무기 없음",
+      "bbox": [
+        540,
+        291,
+        939,
+        846
+      ],
+      "ms": 500,
+      "windup": false,
+      "impact": false
+    },
+    {
+      "id": "04-hit",
+      "file": "norm/04-hit.png",
+      "scale": 0.392,
+      "scaleMatch": 1,
+      "anchor": [
+        760,
+        840
+      ],
+      "headCenter": [
+        657,
+        311
+      ],
+      "axeHead": null,
+      "bladeTip": null,
+      "tipSource": "무기 없음",
+      "bbox": [
+        521,
+        258,
+        910,
+        845
+      ],
+      "ms": 500,
+      "windup": false,
+      "impact": false
+    },
+    {
+      "id": "05-skill1-ready",
+      "file": "norm/05-skill1-ready.png",
+      "scale": 0.392,
+      "scaleMatch": 1,
+      "anchor": [
+        760,
+        840
+      ],
+      "headCenter": [
+        847,
+        379
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        750,
+        330
+      ],
+      "tipSource": "손끝·주먹 접점 수동 지정",
+      "bbox": [
+        554,
+        311,
+        922,
+        844
+      ],
+      "ms": 180,
+      "windup": true,
+      "impact": false
+    },
+    {
+      "id": "06-skill1-impact",
+      "file": "norm/06-skill1-impact.png",
+      "scale": 0.49,
+      "scaleMatch": 1,
+      "anchor": [
+        760,
+        840
+      ],
+      "headCenter": [
+        763,
+        322
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        951,
+        406
+      ],
+      "tipSource": "손끝·주먹 접점 수동 지정",
+      "bbox": [
+        462,
+        269,
+        963,
+        848
+      ],
+      "ms": 140,
+      "windup": false,
+      "impact": true
+    },
+    {
+      "id": "07-skill2-ready",
+      "file": "norm/07-skill2-ready.png",
+      "scale": 0.392,
+      "scaleMatch": 1,
+      "anchor": [
+        760,
+        840
+      ],
+      "headCenter": [
+        863,
+        493
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        897,
+        684
+      ],
+      "tipSource": "손끝·주먹 접점 수동 지정",
+      "bbox": [
+        518,
+        442,
+        916,
+        846
+      ],
+      "ms": 180,
+      "windup": true,
+      "impact": false
+    },
+    {
+      "id": "08-skill2-impact",
+      "file": "norm/08-skill2-impact.png",
+      "scale": 0.49,
+      "scaleMatch": 1,
+      "anchor": [
+        760,
+        840
+      ],
+      "headCenter": [
+        900,
+        385
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        1128,
+        426
+      ],
+      "tipSource": "손끝·주먹 접점 수동 지정",
+      "bbox": [
+        407,
+        331,
+        1146,
+        797
+      ],
+      "ms": 140,
+      "windup": false,
+      "impact": true
+    },
+    {
+      "id": "09-skill3-ready",
+      "file": "norm/09-skill3-ready.png",
+      "scale": 0.49,
+      "scaleMatch": 1,
+      "anchor": [
+        760,
+        840
+      ],
+      "headCenter": [
+        817,
+        272
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        762,
+        142
+      ],
+      "tipSource": "손끝·주먹 접점 수동 지정",
+      "bbox": [
+        473,
+        101,
+        948,
+        848
+      ],
+      "ms": 180,
+      "windup": true,
+      "impact": false
+    },
+    {
+      "id": "10-skill3-impact",
+      "file": "norm/10-skill3-impact.png",
+      "scale": 0.445,
+      "scaleMatch": 1,
+      "anchor": [
+        760,
+        840
+      ],
+      "headCenter": [
+        904,
+        488
+      ],
+      "axeHead": null,
+      "bladeTip": [
+        917,
+        751
+      ],
+      "tipSource": "손끝·주먹 접점 수동 지정",
+      "bbox": [
+        498,
+        382,
+        958,
+        850
+      ],
+      "ms": 140,
+      "windup": false,
+      "impact": true
+    }
+  ],
+  "effects": []
+}

@@ -42,9 +42,10 @@ def main():
     parser.add_argument('--reduced-motion', action='store_true')
     parser.add_argument('--width', type=int, default=1600)
     parser.add_argument('--height', type=int, default=900)
+    parser.add_argument('--art-preview', choices=['remnantWalker'])
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
-    result = {'viewport': [args.width, args.height], 'reducedMotion': args.reduced_motion, 'source': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(), 'hashes': {}, 'cases': {}}
+    result = {'viewport': [args.width, args.height], 'reducedMotion': args.reduced_motion, 'artPreview': args.art_preview, 'source': subprocess.check_output(['git', 'rev-parse', 'HEAD'], text=True).strip(), 'hashes': {}, 'cases': {}}
     for folder in ['src/renderer3d', 'src/render', 'assets/ui']:
         for file in Path(folder).glob('*'):
             if file.suffix in ['.ts', '.json']:
@@ -62,8 +63,15 @@ def main():
             errors = []
             page.on('pageerror', lambda error: errors.append(str(error)))
             page.on('response', lambda response: errors.append(f'{response.status} {response.url}') if response.status >= 400 else None)
-            page.goto(args.base_url + '/web/battle.html', wait_until='networkidle', timeout=90000)
+            preview = f'?art={args.art_preview}' if args.art_preview else ''
+            page.goto(args.base_url + '/web/battle.html' + preview, wait_until='networkidle', timeout=90000)
             page.wait_for_selector('#loading', state='hidden', timeout=60000)
+            #빈 적으로 전투가 끝난 경우는 렌더 검증으로 인정하지 않는다
+            roster = page.evaluate("Array.from(window.__m2.stage.actors, ([id,a]) => ({id, art:a.doll.catalog.manifest.character, plate:!!a.doll.pickTarget, frames:a.doll.catalog.manifest.frames.length, loaded:a.doll.plates.size}))")
+            if len(roster) != 2 or not all(a['plate'] and a['frames'] > 0 and a['loaded'] == a['frames'] for a in roster):
+                raise RuntimeError(f'검수 대진의 인물 판이 빠졌다: {roster}')
+            if args.art_preview and not any(a['id'] == 'e1' and a['art'] == args.art_preview for a in roster):
+                raise RuntimeError(f'요청한 후보 그림이 실제 적과 다르다: {roster}')
             page.evaluate(Path('scripts/qa_m2_capture.js').read_text())
             page.locator('#menu-open').click()
             if seed:
@@ -104,6 +112,7 @@ def main():
             record.update({'wallSeconds': round(time.monotonic() - start, 3), 'result': page.locator('#result').inner_text() if mode == 'watch' else '시연 1주기', 'complete': complete, 'errors': errors, 'screenshots': shots})
             (args.output / (case.replace(':', '-') + '-raw.json')).write_text(json.dumps(record, ensure_ascii=False))
             summary = summarize(record)
+            summary['roster'] = roster
             summary['pass'] = complete and not errors and all(summary[key] == 0 for key in ['bodyOutsideFrames', 'cardCoveredFrames', 'nightAmbientFrames'])
             if args.reduced_motion:
                 summary['pass'] &= all(summary['events'][key] == 0 for key in ['flash', 'impactFrame']) and summary['cutsceneFlashFrames'] == 0 and summary['maxTrauma'] == 0

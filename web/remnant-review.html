@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>걸음 잔형 · M3 그림 검토</title>
+  <link rel="stylesheet" href="remnant-review.css">
+</head>
+<body>
+  <header>
+    <div><span class="project">End-Distopirism</span><h1>걸음 잔형</h1></div>
+    <span class="status">채택 전 검토본 · 11장</span>
+  </header>
+  <main>
+    <section class="viewer" aria-label="스프라이트 미리보기">
+      <div class="view-heading"><h2 id="pose-name">불러오는 중</h2><span id="frame-count"></span></div>
+      <canvas id="sprite-view" width="1400" height="860" aria-label="발 기준점에 정렬한 걸음 잔형"></canvas>
+      <p id="load-state" role="status">그림을 불러오는 중</p>
+      <div class="view-tools">
+        <label>바탕 <select id="background"><option value="dark">어두운 면</option><option value="light">밝은 면</option></select></label>
+        <label>크기 <select id="size"><option value="270">실전 크기</option><option value="460" selected>확대</option></select></label>
+        <button id="flip" type="button" aria-pressed="true">왼쪽 보기</button>
+        <label class="check"><input id="baseline" type="checkbox" checked> 발 기준선</label>
+      </div>
+    </section>
+    <section class="motion" aria-label="동작 연결 검토">
+      <div class="motion-heading"><h2>동작 연결</h2><span>준비 → 타격 → 복귀</span></div>
+      <div class="sequence-buttons" role="group" aria-label="공격 선택">
+        <button type="button" data-skill="1" aria-pressed="true">할퀴기</button>
+        <button type="button" data-skill="2" aria-pressed="false">덮치기</button>
+        <button type="button" data-skill="3" aria-pressed="false">짓누르기</button>
+        <button id="play" type="button" class="primary" disabled>한 번 재생</button>
+      </div>
+    </section>
+    <nav id="frames" class="frames" aria-label="11개 스프라이트"></nav>
+    <footer>
+      <p>젖은 천과 침전물이 남긴 걸음. 본체만 제작한 최소 세트야.</p>
+      <a id="battle-preview" href="battle.html?art=remnantWalker">전투에서 보기</a>
+      <details><summary>파일·검토 범위</summary><p>오른쪽을 보는 원본을 전투에서 좌우 반전해 사용해. 발 기준점·머리 위치·타격 장은 매니페스트에 기록돼 있어. 이 화면의 재생은 포즈 연결 검토용이며 실제 전투 박자는 전투 화면에서 확인해.</p><p id="offline-note" hidden>다운로드한 단독 검토본이야. 실제 전투는 소스 묶음에서 <code>web/battle.html?art=remnantWalker</code>를 열어 확인할 수 있어.</p><a id="manifest-download" download="sprite-manifest.json">매니페스트 받기</a></details>
+    </footer>
+  </main>
+  <script src="remnant-review.js" defer></script>
+</body>
+</html>

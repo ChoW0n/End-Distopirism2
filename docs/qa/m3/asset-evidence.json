@@ -1,0 +1,15 @@
+{
+  "manifestSha256": "e042324140f192a76015359344d9b612f827aaa46b4ad696de992b951a876754",
+  "renderedEnemyFrames": [
+    "00-idle",
+    "01-advance",
+    "02-retreat",
+    "04-hit",
+    "05-skill1-ready",
+    "06-skill1-impact",
+    "09-skill3-ready",
+    "10-skill3-impact"
+  ],
+  "renderedEnemyRows": 379,
+  "rawSha256": "fa11ee2f9745959d4421e3cf1f1c9c9429ea4bce4e50086ed5dd290a65616b59"
+}

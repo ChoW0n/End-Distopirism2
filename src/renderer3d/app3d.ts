@@ -81,6 +81,15 @@ async function boot(progress: (text: string, ratio: number) => void): Promise<Bo
   const mapDir = stage.battle.map;
   const backdrop = parseBackdropConfig(await json(`${ASSETS}/${mapDir}/placement.json`));
   const drawn = await loadIndex(ASSETS);
+  const index = (await json(`${ASSETS}/index.json`)) as Record<string, unknown>;
+  //승인 전 그림은 명시적인 검토 주소에서만 세운다. 기본 대진 파일과 저장 설정은 바꾸지 않는다
+  const preview = new URLSearchParams(location.search).get('art');
+  if (preview === 'remnantWalker' && Array.isArray(index['previewCharacters']) && index['previewCharacters'].includes(preview)) {
+    drawn.add(preview);
+    delete stage.battle.artAlias[preview];
+    const note = document.getElementById('art-review-note');
+    if (note) note.hidden = false;
+  }
 
   const sprites = new Map<string, SpriteCatalog>();
   //지금 대진에 실제로 세울 그림만 받는다. 자리 표시가 같은 그림을 쓰면 한 번만 받는다
@@ -92,9 +101,12 @@ async function boot(progress: (text: string, ratio: number) => void): Promise<Bo
       if (loaded) sprites.set(id, loaded);
     }),
   );
+  //검토 대상으로 고른 그림이 잘못되면 빈 적을 세우지 않고 로딩 오류로 알린다
+  if (preview === 'remnantWalker' && drawn.has(preview) && !sprites.has(preview)) {
+    throw new Error('걸음 잔형 검토 그림의 매니페스트를 읽을 수 없다.');
+  }
 
   //궁극기 시간표가 있는 캐릭터 (assets/index.json 의 ultimates). 없는 파일을 찔러 404 를 내지 않는다 (SPEC-004 §12)
-  const index = (await json(`${ASSETS}/index.json`)) as Record<string, unknown>;
   const ultimateIds = Array.isArray(index['ultimates']) ? (index['ultimates'] as unknown[]).filter((id): id is string => typeof id === 'string') : [];
   const arts = new Map<string, { art: UltimateArt; environment: BackdropConfig | null }>();
   await Promise.all(
