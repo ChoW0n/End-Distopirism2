@@ -133,3 +133,19 @@ rollCoins(): number { }
 2. `docs/STORY-001-닫힌물길-세계관.md` — 인물·적·배경·연출 관련이면 필수
 3. `docs/00_현황파악_보고서.md` — 원본이 어떤 상태인지
 4. 스펙의 TBD 항목이 미결이면 **구현하지 말고 먼저 묻는다**
+
+---
+
+## 작업 절차 (스킬)
+
+전체 절차와 스킬 사용표는 `.claude/skills/ed2-workflow/SKILL.md`. 요약:
+
+- 순서: 분류 → 이해(graft) → 설계 게이트 → 계획(TaskCreate) → 구현 → 검증 → 리뷰 → 커밋·푸시
+- **규칙·구조 변경은 물어서 결정 → 스펙 먼저 커밋 → 구현.** 규칙의 뜻이 바뀌는 것은 수치 조정이 아니다
+- 사용자가 구체적으로 지시한 한정 변경은 계획 한 줄을 알리고 바로 진행한다 (지시가 승인)
+- TDD 는 `src/domain`·`src/render`·`src/ui` 순수 로직에. 렌더러·CSS 는 실제 브라우저 캡처로 검증
+- **이번 턴에 돌린 결과 없이 완료·통과를 말하지 않는다.** 못 돌린 것은 "미검증"
+- superpowers 의 강한 문구보다 이 문서가 앞선다. `using-git-worktrees`·`finishing-a-development-branch`·`requesting-code-review`·`subagent-driven-development`·`dispatching-parallel-agents` 는 쓰지 않는다. 서브에이전트는 사용자가 시킬 때만
+- 새 웹 화면은 `frontend-design`, 단 전투 UI 는 SPEC-004 v4·STORY-001 §18 체계가 먼저
+- 병합·PR·릴리스는 사용자가 요청할 때만
+
