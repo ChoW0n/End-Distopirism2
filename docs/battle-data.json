@@ -1,7 +1,7 @@
 {
-  "_comment": "End-Distopirism 전투 데이터. SPEC-001 v1.0 본문 + v2.0 개정(전용기·궁극기) + v3.0 개정(코인 폐지, 카드 앞/뒤)",
-  "_version": "3.0.0",
-  "_updated": "2026-09-28",
+  "_comment": "End-Distopirism 전투 데이터. SPEC-001 v1.0~v4.0 (전용기·카드 앞뒤·행동력 예약). 2026-10-04 M1 튜닝 근거: v4.0 §9",
+  "_version": "4.0.1",
+  "_updated": "2026-10-04",
 
   "rules": {
     "_cardFlip": "SPEC-001 v3.0 §2. 앞면 확률 = 카드 최소 + (최대 − 최소) × (정신력 가중 × 정신력 비 + 체력 가중 × 체력 비). 카드 확률은 30~80% 밖으로 못 나간다",
@@ -91,7 +91,7 @@
     {
       "id": "kyle",
       "name": "카일",
-      "maxHp": 96,
+      "maxHp": 100,
       "atkLevel": 34,
       "defLevel": 6,
       "mentality": 100,
@@ -101,7 +101,7 @@
     {
       "id": "remnantWalker",
       "name": "걸음 잔형",
-      "maxHp": 110,
+      "maxHp": 120,
       "atkLevel": 30,
       "defLevel": 8,
       "mentality": 100,
@@ -348,7 +348,7 @@
       "slot": "S1",
       "apCost": 1,
       "attribute": "attack",
-      "frontPower": 16,
+      "frontPower": 18,
       "backPower": 7,
       "frontChance": [0.3, 0.8],
       "archetype": "안정",
@@ -376,7 +376,7 @@
       "slot": "S3",
       "apCost": 2,
       "attribute": "support",
-      "frontPower": 17,
+      "frontPower": 19,
       "backPower": 11,
       "frontChance": [0.3, 0.8],
       "archetype": "안정",
@@ -389,7 +389,7 @@
       "name": "궁극기",
       "character": null,
       "slot": "ULT",
-      "apCost": 2,
+      "apCost": 1,
       "attribute": null,
       "frontPower": 33,
       "backPower": 18,

@@ -329,14 +329,14 @@ describe('§11-5 전용기 수치가 v3.0 §7 표와 일치한다', () => {
   });
 });
 
-describe('§7 [D-22] 카일·걸음 잔형 제안값 (v3.0 §7 앞/뒤)', () => {
+describe('§7 [D-22] 카일·걸음 잔형 수치 (v3.0 §7 · v4.0 §9 튜닝)', () => {
   const table = [
     { id: 'kyle', slot: 'S1', attribute: 'attack', frontPower: 24, backPower: 8, frontChance: [0.3, 0.75] },
     { id: 'kyle', slot: 'S2', attribute: 'defense', frontPower: 18, backPower: 6, frontChance: [0.3, 0.7] },
     { id: 'kyle', slot: 'S3', attribute: 'support', frontPower: 19, backPower: 7, frontChance: [0.3, 0.75] },
-    { id: 'remnantWalker', slot: 'S1', attribute: 'attack', frontPower: 16, backPower: 7, frontChance: [0.3, 0.8] },
+    { id: 'remnantWalker', slot: 'S1', attribute: 'attack', frontPower: 18, backPower: 7, frontChance: [0.3, 0.8] },
     { id: 'remnantWalker', slot: 'S2', attribute: 'defense', frontPower: 18, backPower: 9, frontChance: [0.3, 0.8] },
-    { id: 'remnantWalker', slot: 'S3', attribute: 'support', frontPower: 17, backPower: 11, frontChance: [0.3, 0.8] },
+    { id: 'remnantWalker', slot: 'S3', attribute: 'support', frontPower: 19, backPower: 11, frontChance: [0.3, 0.8] },
   ] as const;
 
   it.each(table)('$id $slot 수치가 표와 같다', (row) => {
@@ -359,7 +359,7 @@ describe('§7 [D-22] 카일·걸음 잔형 제안값 (v3.0 §7 앞/뒤)', () => 
   });
 
   it('카일 스탯이 표와 같다', () => {
-    expect(catalog.character('kyle')).toMatchObject({ maxHp: 96, atkLevel: 34, defLevel: 6, mentality: 100 });
-    expect(catalog.character('remnantWalker')).toMatchObject({ maxHp: 110, atkLevel: 30, defLevel: 8, mentality: 100 });
+    expect(catalog.character('kyle')).toMatchObject({ maxHp: 100, atkLevel: 34, defLevel: 6, mentality: 100 });
+    expect(catalog.character('remnantWalker')).toMatchObject({ maxHp: 120, atkLevel: 30, defLevel: 8, mentality: 100 });
   });
 });
