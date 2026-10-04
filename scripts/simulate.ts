@@ -1,61 +1,48 @@
-//콘솔 전투 시뮬레이터. 카드 수치가 실제로 어떻게 굴러가는지 보려고 만든 것이다
-//도메인은 건드리지 않고 Battle 과 WeightedEnemyAi 를 그대로 가져다 쓰기만 한다
-//
-//  npm run sim -- --seed 1          한 판을 로그와 함께
-//  npm run sim -- --runs 200        200판 돌리고 승률만
-//  npm run sim -- --roster helper,main   로스터를 직접 지정 (기본은 데이터의 캐릭터 전원)
+//예약 전투 시뮬레이터. 기본 대진은 실제 3D 무대 데이터와 같다
+//npm run sim -- --seed 1 --bot greedy
+//npm run sim -- --runs 200 --bot all --json docs/qa-m1-results.json
+//--roster helper,main 은 미러 비교, --data 경로 는 튜닝 전후 비교용이다
 
+import { readFileSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
-import { Battle, type BattleOrder } from '../src/domain/battle.js';
-import { WeightedEnemyAi, type EnemyAiContext } from '../src/domain/ai.js';
-import { ClashResolver } from '../src/domain/clash.js';
+import { Battle } from '../src/domain/battle.js';
 import { CameraDirector, type CameraCommand } from '../src/camera/director.js';
-import { createSeededRng } from '../src/domain/rng.js';
 import { loadBattleCatalog } from '../src/platform/node-data.js';
 import { loadUiData } from '../src/platform/node-ui.js';
 import type { BattleCatalog } from '../src/domain/data.js';
-import type { CombatantInit } from '../src/domain/combatant.js';
-import type { BattleEvent, Side } from '../src/domain/types.js';
+import type { BattleEvent } from '../src/domain/types.js';
+import { BOT_KINDS, runSimulation, summarize, type BotKind, type SimulationResult } from './simulation.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const DATA_PATH = resolve(here, '../docs/battle-data.json');
 const UI_PATH = resolve(here, '../assets/ui/ui-data.json');
+const STAGE_PATH = resolve(here, '../assets/ui/stage3d.json');
 
-//서로 물고 늘어져 끝나지 않는 판을 잘라내는 상한. 도메인 규칙이 아니라 러너의 안전장치다
-const MAX_TURNS = 100;
-
-//한 판의 결과
-interface RunResult {
-  winner: Side | null;
-  turns: number;
-  survivors: { label: string; hp: number; maxHp: number; mentality: number }[];
-}
-
-//명령줄 인자를 읽는다
-function parseArgs(argv: string[]): { seed: number; runs: number; roster: string[] | null } {
-  let seed = 1;
-  let runs = 1;
-  let roster: string[] | null = null;
-  for (let i = 0; i < argv.length; i += 1) {
-    const next = argv[i + 1];
-    const value = Number(next);
-    if (argv[i] === '--seed' && Number.isFinite(value)) seed = value;
-    if (argv[i] === '--runs' && Number.isFinite(value)) runs = Math.max(1, Math.floor(value));
-    //캐릭터가 늘어날 때 코드를 고치지 않도록 로스터를 밖에서 받는다
-    if (argv[i] === '--roster' && next) roster = next.split(',').map((s) => s.trim()).filter(Boolean);
+//잘못된 인자로 다른 측정을 하지 않도록 누락·오타를 여기서 막는다
+function parseArgs(argv: string[]) {
+  const args = { seed: 1, runs: 1, roster: null as string[] | null, bot: 'ai' as BotKind | 'all', data: DATA_PATH, json: null as string | null };
+  for (let i = 0; i < argv.length; i += 2) {
+    const key = argv[i];
+    const value = argv[i + 1];
+    if (!value) throw new Error(`${key}: 값이 필요하다`);
+    if (key === '--seed' || key === '--runs') {
+      const n = Number(value);
+      if (!Number.isSafeInteger(n) || (key === '--runs' && n < 1)) throw new Error(`${key}: 유효한 정수가 필요하다`);
+      args[key === '--seed' ? 'seed' : 'runs'] = n;
+    } else if (key === '--roster') {
+      args.roster = value.split(',').map((s) => s.trim()).filter(Boolean);
+      if (!args.roster.length) throw new Error('로스터가 비었다');
+    } else if (key === '--bot') {
+      if (value !== 'all' && !BOT_KINDS.includes(value as BotKind)) throw new Error(`알 수 없는 봇: ${value}`);
+      args.bot = value as BotKind | 'all';
+    } else if (key === '--data') args.data = resolve(value);
+    else if (key === '--json') args.json = resolve(value);
+    else throw new Error(`알 수 없는 인자: ${key}`);
   }
-  return { seed, runs, roster };
-}
-
-//미러 구성. 양 진영이 같은 캐릭터 목록을 쓴다. 덱은 캐릭터의 전용기에서 나온다
-function makeRoster(side: Side, characterIds: readonly string[]): CombatantInit[] {
-  const prefix = side === 'ally' ? 'a' : 'e';
-  return characterIds.map((characterId, index) => ({
-    id: `${prefix}${index + 1}`,
-    characterId,
-    side,
-  }));
+  return args;
 }
 
 //로그에 쓸 이름표. 같은 캐릭터가 양쪽에 있어서 적은 표시를 붙인다
@@ -87,6 +74,7 @@ class BattleLogger {
   private lastFace = new Map<string, string>();
   private turn = 0;
 
+  //전투 상태와 이름표를 받아 교전 로그를 묶는다
   constructor(
     private readonly catalog: BattleCatalog,
     private readonly battle: Battle,
@@ -204,6 +192,15 @@ class BattleLogger {
         this.flush();
         return;
 
+      case 'planSet':
+        this.print(`예약 ${this.name(event.combatantId)}: ${event.steps.map((s) => this.catalog.skill(s.skillId).name).join(' → ')} / 행동력 ${event.actionPoints}`);
+        return;
+      case 'idle':
+        this.print(`${this.name(event.combatantId)} 행동 없음`);
+        return;
+      case 'ultimateUsed':
+        this.print(`${this.name(event.combatantId)} 결행 사용`);
+        return;
       default:
         return;
     }
@@ -245,67 +242,6 @@ class BattleLogger {
   }
 }
 
-//한 판을 끝까지 돌린다. verbose 면 매 교전을 한 줄씩 찍는다
-function runBattle(
-  catalog: BattleCatalog,
-  seed: number,
-  verbose: boolean,
-  roster: readonly string[],
-): RunResult {
-  const rng = createSeededRng(seed);
-  const ai = new WeightedEnemyAi();
-  const battle = new Battle(catalog, makeRoster('ally', roster), makeRoster('enemy', roster), {
-    rng,
-    enemyAi: ai,
-  });
-
-  //아군도 같은 AI 로 둔다. 지금은 밸런스 관찰이 목적이라 전용 AI 가 필요 없다
-  const resolver = new ClashResolver(catalog, rng);
-  const aiContext: EnemyAiContext = { catalog, resolver, rng };
-
-  const labels = makeLabels(battle);
-  const logger = verbose ? new BattleLogger(catalog, battle, labels) : null;
-  //카메라 감독은 전투당 하나. 도메인이 낸 이벤트를 로거와 같이 나눠 본다
-  const director = verbose ? new CameraDirector(loadUiData(UI_PATH).camera) : null;
-
-  let turns = 0;
-  while (!battle.isFinished && turns < MAX_TURNS) {
-    turns += 1;
-
-    const startEvents = battle.startTurn();
-    logger?.consume(startEvents);
-    if (battle.isFinished) break;
-
-    //적이 누구를 겨눴는지는 턴 시작 이벤트에 들어 있다. 아군은 이걸 보고 합을 걸지 정한다
-    const enemyTargets = new Map<string, string>();
-    for (const event of startEvents) {
-      if (event.type === 'enemyTargeted') enemyTargets.set(event.enemyId, event.targetId);
-    }
-
-    battle.submitOrders(makeAllyOrders(battle, ai, aiContext, enemyTargets));
-    //전투 진행을 먼저 시키고 로그를 넘긴다. 로거가 없을 때 호출이 통째로 생략되면 안 된다
-    const resolveEvents = battle.resolve();
-    logger?.consume(resolveEvents);
-    //같은 이벤트 배열을 그대로 넘긴다. 카메라용으로 따로 만들지 않는다
-    if (director) printCameraCommands(turns, director.consume(resolveEvents), labels);
-    if (battle.isFinished) break;
-
-    const endEvents = battle.endTurn();
-    logger?.consume(endEvents);
-  }
-
-  const survivors = battle.combatants
-    .filter((c) => !c.isDefeated)
-    .map((c) => ({
-      label: labels.get(c.id) ?? c.id,
-      hp: c.hp,
-      maxHp: c.base.maxHp,
-      mentality: c.mentality,
-    }));
-
-  return { winner: battle.winner, turns, survivors };
-}
-
 //카메라 명령을 한 줄씩 찍는다. 이 턴의 교전 로그 바로 뒤에 붙는다
 function printCameraCommands(
   turn: number,
@@ -339,37 +275,8 @@ function printCameraCommands(
   }
 }
 
-//아군의 타겟과 카드를 적 AI 로직 그대로 고른다
-function makeAllyOrders(
-  battle: Battle,
-  ai: WeightedEnemyAi,
-  context: EnemyAiContext,
-  enemyTargets: Map<string, string>,
-): BattleOrder[] {
-  const enemies = battle.sideOf('enemy').filter((c) => !c.isDefeated);
-  const orders: BattleOrder[] = [];
-  const alreadyTargeted = new Set<string>();
-
-  for (const ally of battle.sideOf('ally')) {
-    if (ally.isDefeated) continue;
-    if (enemies.length === 0) break;
-
-    const targetId = ai.chooseTarget(ally, enemies, alreadyTargeted, context);
-    alreadyTargeted.add(targetId);
-
-    //상대가 나를 겨누고 있으면 합이 된다. 적이 낼 카드는 모르므로 덱 평균으로 판단한다
-    const isClash = enemyTargets.get(targetId) === ally.id;
-    const target = battle.combatant(targetId);
-    const skillId = ai.chooseSkill(ally, { target, isClash, opponentSkillId: null }, context);
-
-    orders.push({ actorId: ally.id, targetId, skillId });
-  }
-
-  return orders;
-}
-
 //한 판의 마무리 요약
-function printSummary(result: RunResult): void {
+function printSummary(result: SimulationResult): void {
   const winner = result.winner === 'ally' ? '아군' : result.winner === 'enemy' ? '적' : '무승부';
   console.log('');
   console.log(`결과: ${winner} / ${result.turns}턴`);
@@ -382,42 +289,45 @@ function printSummary(result: RunResult): void {
   }
 }
 
-//N 판을 돌리고 승률과 평균 턴 수만 낸다
-function printBatch(catalog: BattleCatalog, seed: number, runs: number, roster: readonly string[]): void {
-  const tally = { ally: 0, enemy: 0, draw: 0 };
-  let totalTurns = 0;
-  let shortest = Number.POSITIVE_INFINITY;
-  let longest = 0;
-
-  for (let i = 0; i < runs; i += 1) {
-    const result = runBattle(catalog, seed + i, false, roster);
-    if (result.winner === 'ally') tally.ally += 1;
-    else if (result.winner === 'enemy') tally.enemy += 1;
-    else tally.draw += 1;
-
-    totalTurns += result.turns;
-    shortest = Math.min(shortest, result.turns);
-    longest = Math.max(longest, result.turns);
+//기계용 결과에는 원시 판별 값·입력 사본·해시를 같이 남겨 전후 측정을 재현한다
+const args = parseArgs(process.argv.slice(2));
+const catalog = loadBattleCatalog(args.data);
+const stage = JSON.parse(readFileSync(STAGE_PATH, 'utf8'));
+const setup = args.roster ? { ally: args.roster, enemy: args.roster } : { ally: stage.battle.ally as string[], enemy: stage.battle.enemy as string[] };
+const bots = args.bot === 'all' ? BOT_KINDS : [args.bot];
+const verbose = args.runs === 1 && bots.length === 1;
+const batches = bots.map((bot) => {
+  let logger: BattleLogger | null = null;
+  const director = verbose ? new CameraDirector(loadUiData(UI_PATH).camera) : null;
+  const results = Array.from({ length: args.runs }, (_, i) => runSimulation(catalog, setup, args.seed + i, bot, stage.motion.heavyDamage,
+    verbose ? (events, battle) => {
+      const labels = makeLabels(battle);
+      logger ??= new BattleLogger(catalog, battle, labels);
+      logger.consume(events);
+      if (director) printCameraCommands(battle.turn, director.consume(events), labels);
+    } : undefined));
+  const summary = summarize(results);
+  if (verbose) printSummary(results[0]!);
+  console.log(`${bot} / ${args.runs}판 / 시드 ${args.seed}~${args.seed + args.runs - 1} / ${setup.ally.join(',')} 대 ${setup.enemy.join(',')}`);
+  console.log(`  아군 승률 ${(summary.allyWinRate * 100).toFixed(1)}% · 평균 ${summary.turns.mean.toFixed(3)}턴 · 합 ${(summary.clashRate * 100).toFixed(1)}% · 무거운 타 ${summary.heavyHits.toFixed(3)}회`);
+  console.log(`  아군 결행 사용 ${summary.sides.ally.ultimateUses.toFixed(3)}회 / 공격 ${summary.sides.ally.ultimateAttacks.toFixed(3)}회 · 행동 없음 ${summary.sides.ally.idleTurns.toFixed(3)}턴 · 미종료 ${summary.wins.timeout}판`);
+  console.log(`  양측 결행 사용 ${summary.ultimate.uses.toFixed(3)}회 / 공격 ${summary.ultimate.attacks.toFixed(3)}회 · 결행 사용이 있는 판 ${(summary.ultimate.useBattleRate * 100).toFixed(1)}%`);
+  return { bot, summary, results };
+});
+if (args.json) {
+  const hash = (path: string): string => createHash('sha256').update(readFileSync(path)).digest('hex');
+  let sourceCommit: string | null = null;
+  let dirty: boolean | null = null;
+  try {
+    sourceCommit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: here, encoding: 'utf8' }).trim();
+    dirty = execFileSync('git', ['status', '--porcelain'], { cwd: here, encoding: 'utf8' }).trim().length > 0;
+  } catch {
+    //소스 ZIP으로 실행해도 입력 해시와 사본은 남긴다
   }
-
-  const percent = (n: number): string => `${((n / runs) * 100).toFixed(1)}%`;
-  console.log(`${runs}판 (시드 ${seed}~${seed + runs - 1})`);
-  console.log(`  아군 승  ${tally.ally}  (${percent(tally.ally)})`);
-  console.log(`  적 승    ${tally.enemy}  (${percent(tally.enemy)})`);
-  console.log(`  무승부   ${tally.draw}  (${percent(tally.draw)})`);
-  console.log(`  평균 턴  ${(totalTurns / runs).toFixed(1)}  (최소 ${shortest} / 최대 ${longest})`);
-}
-
-const { seed, runs, roster: rosterArg } = parseArgs(process.argv.slice(2));
-const catalog = loadBattleCatalog(DATA_PATH);
-//로스터를 안 주면 데이터에 있는 캐릭터 전원이 나온다. 캐릭터 추가가 데이터만으로 끝난다
-const roster = rosterArg ?? catalog.data.characters.map((c) => c.id);
-for (const id of roster) catalog.character(id);
-
-if (runs > 1) {
-  console.log(`로스터: ${roster.join(', ')}`);
-  printBatch(catalog, seed, runs, roster);
-} else {
-  console.log(`시드 ${seed} / 로스터: ${roster.join(', ')}`);
-  printSummary(runBattle(catalog, seed, true, roster));
+  const report = { schemaVersion: 1, sourceCommit, dirty, command: process.argv.slice(2), seedStart: args.seed, runsPerBot: args.runs,
+    setup, heavyDamage: stage.motion.heavyDamage,
+    hashes: { battleData: hash(args.data), stage: hash(STAGE_PATH), runner: hash(fileURLToPath(import.meta.url)), simulation: hash(resolve(here, 'simulation.ts')) },
+    battleData: JSON.parse(readFileSync(args.data, 'utf8')), batches };
+  writeFileSync(args.json, JSON.stringify(report, null, 2) + '\n');
+  console.log(`결과 저장: ${args.json}`);
 }

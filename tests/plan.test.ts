@@ -69,8 +69,8 @@ describe('행동력', () => {
     expect(board.actionPoints('a1')).toBe(rules.max);
   });
 
-  it('카드 비용: S1 1 · S2 1 · S3 2 · 결행 2', () => {
-    expect([K1, K2, K3, catalog.rules.ultimateSkillId].map((id) => catalog.skill(id).apCost)).toEqual([1, 1, 2, 2]);
+  it('카드 비용: S1 1 · S2 1 · S3 2 · 결행 1 (v4.0 §9)', () => {
+    expect([K1, K2, K3, catalog.rules.ultimateSkillId].map((id) => catalog.skill(id).apCost)).toEqual([1, 1, 2, 1]);
   });
 });
 

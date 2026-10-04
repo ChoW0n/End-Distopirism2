@@ -1,0 +1,61 @@
+{
+  "date": "2026-10-04",
+  "status": "M1 simulation targets complete",
+  "approval": "User replied 시작 to ultimate-priority implementation request",
+  "appliedToMain": true,
+  "historicalResults": "qa-2026-10-04-m1-results.json",
+  "historicalResultsSha256": "c2b07ce91ab585df4f43f8b271d7bd82c19f7aa28e59e9c40c3effc16766245f",
+  "aiSourceSha256": "fa6c9452f92ef1c3a2ba8d9a4189421cf29d1bcd0b3d6a2512cfc3bece726145",
+  "verification": [
+    {
+      "seedStart": 1,
+      "runsPerBot": 200,
+      "command": [
+        "--runs",
+        "200",
+        "--bot",
+        "all",
+        "--json",
+        "/tmp/m1-final-training.json"
+      ],
+      "hashes": {
+        "battleData": "1fce8adb2ffa863ca801cfe08b807d47d41b5227b92d51031b7af293f8b701d8",
+        "stage": "50b9b2af052af62305e73f940048ff9529ddcb63fe7c0c5fdf07e0e9ede98271",
+        "runner": "5eae53859892d5d80bfdb8022da3092a29e1711e379271371a3caacce63042c9",
+        "simulation": "ad2e3117b83fdd4813de64da451ca0e64023cf142876a43162ff8c041370c933"
+      },
+      "matchesHistoricalMeasurement": "proposalTraining",
+      "allBatchesExactlyEqual": true
+    },
+    {
+      "seedStart": 20001,
+      "runsPerBot": 200,
+      "command": [
+        "--seed",
+        "20001",
+        "--runs",
+        "200",
+        "--bot",
+        "all",
+        "--json",
+        "/tmp/m1-final-validation.json"
+      ],
+      "hashes": {
+        "battleData": "1fce8adb2ffa863ca801cfe08b807d47d41b5227b92d51031b7af293f8b701d8",
+        "stage": "50b9b2af052af62305e73f940048ff9529ddcb63fe7c0c5fdf07e0e9ede98271",
+        "runner": "5eae53859892d5d80bfdb8022da3092a29e1711e379271371a3caacce63042c9",
+        "simulation": "ad2e3117b83fdd4813de64da451ca0e64023cf142876a43162ff8c041370c933"
+      },
+      "matchesHistoricalMeasurement": "proposalValidation",
+      "allBatchesExactlyEqual": true
+    }
+  ],
+  "tests": {
+    "passed": 548,
+    "skipped": 1,
+    "failed": 0,
+    "typecheck": "passed",
+    "webBuild": "passed"
+  },
+  "remaining": "M2 browser framing, effects and real-time pacing; M3 sprites; M4 demo flow; M5 adoption; M6 review"
+}

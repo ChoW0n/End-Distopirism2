@@ -1,19 +1,21 @@
 import { describe, expect, it } from 'vitest';
 import { Battle } from '../src/domain/battle.js';
+import type { Rng } from '../src/domain/rng.js';
 import { alwaysFrontRng, catalog, makeCombatant, makeResolver, skillOf } from './helpers.js';
 
 const KYLE_S1 = skillOf('kyle', 'S1');
 const KYLE_S2 = skillOf('kyle', 'S2');
 const KYLE_S3 = skillOf('kyle', 'S3');
 
-//적의 선택과 카드 앞면을 고정해 실제 전투 두 턴을 재현한다
-function makeBattle() {
+//이면 앞면·적 뒷면으로 승리를 고정한다. 적 위력이 튜닝돼도 상태 수명 검증의 전제가 바뀌지 않는다
+function makeBattle(rng?: Rng) {
+  let flip = 0;
   return new Battle(
     catalog,
     [{ id: 'kyle', characterId: 'kyle', side: 'ally' }],
     [{ id: 'enemy', characterId: 'remnantWalker', side: 'enemy' }],
     {
-      rng: alwaysFrontRng,
+      rng: rng ?? { next: () => flip++ % 2 === 0 ? 0 : 1 },
       enemyAi: {
         chooseTarget: () => 'kyle',
         chooseSkill: () => skillOf('remnantWalker', 'S1'),
@@ -28,6 +30,15 @@ function resolveTurn(battle: Battle, skillId: number) {
 }
 
 describe('QA-02 상태이상의 부여 턴과 지속 턴', () => {
+  it('튜닝 뒤 이면과 할퀴기 앞면은 동점이므로 교착 한도에서 방어 감소를 걸지 않는다', () => {
+    const battle = makeBattle(alwaysFrontRng);
+    battle.startTurn();
+    const events = resolveTurn(battle, KYLE_S2);
+    expect(events).toContainEqual({ type: 'deadlockLimit', attackerId: 'kyle', defenderId: 'enemy' });
+    expect(events.some((e) => e.type === 'statusApplied')).toBe(false);
+    expect(battle.combatant('enemy').hp).toBe(catalog.character('remnantWalker').maxHp);
+  });
+
   it.each([
     { skillId: KYLE_S1, name: '물금', power: 24, calculated: 31, applied: 31 },
     { skillId: KYLE_S3, name: '잔향', power: 19, calculated: 26, applied: 29 },
@@ -111,9 +122,11 @@ describe('QA-02 상태이상의 부여 턴과 지속 턴', () => {
     battle.startTurn();
     expect(enemy.mentality).toBe(23);
     expect(resolver.effectiveMentality(enemy)).toBe(3);
+    //스펙의 확률 식을 대조한다. 체력 튜닝에 따라 분모가 바뀌어도 혼란 -20 검증은 유지한다
+    const expectedChance = 0.3 + 0.5 * (0.5 * 3 / 100 + 0.5 * enemy.hp / enemy.base.maxHp);
     const next = resolveTurn(battle, KYLE_S1);
     const flip = next.find((event) => event.type === 'cardFlipped' && event.combatantId === 'enemy');
-    expect(flip).toMatchObject({ chance: expect.closeTo(0.4893181818, 8) });
+    expect(flip).toMatchObject({ chance: expect.closeTo(expectedChance, 8) });
     expect(next.some((event) => event.type === 'statusApplied')).toBe(false);
     expect(battle.endTurn()).toContainEqual({ type: 'statusExpired', combatantId: 'enemy', status: 'confusion' });
     expect(enemy.hasStatus('confusion')).toBe(false);

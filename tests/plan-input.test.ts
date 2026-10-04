@@ -14,6 +14,16 @@ function make(actionPoints: number): PlanInput {
 }
 
 describe('예약 입력', () => {
+  it('행동력 1에서 얻은 결행을 빚 없이 예약하고 비용 미리보기를 맞춘다', () => {
+    const skillId = catalog.rules.ultimateSkillId;
+    const budget: PlanBudget = { actionPoints: 1, floor: 0, max: ap.max, regenPerTurn: ap.regenPerTurn, cost: (id) => catalog.skill(id).apCost };
+    const input = new PlanInput([{ id: 'a1', characterId: 'kyle', deck: [K1, K2, K3, skillId] }],
+      ['e1'], new Map(), new Map([['a1', budget]]));
+    expect(input.selectCard(skillId)).toBe(true);
+    expect(input.budgetOf('a1')).toMatchObject({ after: 0, end: 1 });
+    expect(input.ready).toBe(true);
+  });
+
   it('적이 하나면 대상이 미리 골라지고, 누른 순서가 턴 순서다', () => {
     const input = make(2);
     expect(input.selectedTarget).toBe('e1');
