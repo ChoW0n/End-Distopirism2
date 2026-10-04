@@ -248,6 +248,7 @@ describe('§11-4 상태이상 4종이 명시된 타이밍에 발동한다', () =
     combatant.applyStatus('confusion', 1, false);
     expect(combatant.stackCount('confusion')).toBe(1);
 
+    combatant.beginTurn();
     expect(combatant.expireStatuses()).toEqual(['confusion']);
     expect(combatant.hasStatus('confusion')).toBe(false);
   });

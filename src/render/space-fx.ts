@@ -61,6 +61,60 @@ export interface SpaceFxConfig {
 
 export class SpaceFxError extends Error {}
 
+//효과의 발 기준 로컬 좌표계로 바꾼 원근 카메라. 모든 길이는 캐릭터 키 H 단위다
+export interface SpacePaintView {
+  readonly eye: Vec3;
+  readonly right: Vec3;
+  readonly up: Vec3;
+}
+
+//원화 판 위 점. 인형과 같은 카메라 회전을 적용하므로 기울어진 교전 화면도 맞는다
+export function paintPoint(view: SpacePaintView, x: number, y: number): Vec3 {
+  return [view.right[0] * x + view.up[0] * y, view.right[1] * x + view.up[1] * y, view.right[2] * x + view.up[2] * y];
+}
+
+//원화 점을 통과하는 실제 원근 광선 위에서 깊이만 바꾼다. 같은 광선이라 화면 위치가 보존된다
+export function placePaintPoint(view: SpacePaintView, point: Vec3, depth: number, lift?: number, floor = false): Vec3 {
+  const eye = view.eye;
+  const ray: Vec3 = [point[0] - eye[0], point[1] - eye[1], point[2] - eye[2]];
+  let t = Math.abs(ray[2]) > 1e-8 ? 1 + depth / ray[2] : 1;
+  if (lift !== undefined && (floor || eye[1] + ray[1] * t < lift) && Math.abs(ray[1]) > 1e-8) {
+    const floorT = (lift - eye[1]) / ray[1];
+    if (floorT > 0) t = floorT;
+  }
+  return [eye[0] + ray[0] * t, eye[1] + ray[1] * t, eye[2] + ray[2] * t];
+}
+
+//카메라 정면으로 잰 깊이. 인형 원화 판은 이 깊이가 같은 평면이다
+export function paintDepth(view: SpacePaintView, point: Vec3): number {
+  const r = view.right;
+  const u = view.up;
+  const normal: Vec3 = [r[1] * u[2] - r[2] * u[1], r[2] * u[0] - r[0] * u[2], r[0] * u[1] - r[1] * u[0]];
+  return (view.eye[0] - point[0]) * normal[0] + (view.eye[1] - point[1]) * normal[1] + (view.eye[2] - point[2]) * normal[2];
+}
+
+//원본 합성에서 앞에 있던 적 판 뒤로 곡면 전체를 물린다. 깊이 차와 화면 자리를 함께 보존한다
+//발보다 아래인 광선은 지면에서 멈춘다. 적 실루엣과 겹치는 몸 높이의 점은 적 판 뒤에 남는다
+export function placeGridBehind(view: SpacePaintView, positions: Float32Array, minimumDepth: number, lift: number): void {
+  let nearest = Infinity;
+  for (let i = 0; i < positions.length; i += 3) {
+    nearest = Math.min(nearest, paintDepth(view, [positions[i] as number, positions[i + 1] as number, positions[i + 2] as number]));
+  }
+  const shift = Math.max(0, minimumDepth - nearest);
+  if (shift === 0) return;
+  for (let i = 0; i < positions.length; i += 3) {
+    const p: Vec3 = [positions[i] as number, positions[i + 1] as number, positions[i + 2] as number];
+    const depth = paintDepth(view, p);
+    if (depth <= 0) continue;
+    let t = 1 + shift / depth;
+    const ray: Vec3 = [p[0] - view.eye[0], p[1] - view.eye[1], p[2] - view.eye[2]];
+    if (view.eye[1] + ray[1] * t < lift && ray[1] < 0) t = (lift - view.eye[1]) / ray[1];
+    positions[i] = view.eye[0] + ray[0] * t;
+    positions[i + 1] = view.eye[1] + ray[1] * t;
+    positions[i + 2] = view.eye[2] + ray[2] * t;
+  }
+}
+
 function num(v: unknown, where: string): number {
   if (typeof v !== 'number' || !Number.isFinite(v)) throw new SpaceFxError(`${where} 는 수여야 한다`);
   return v;
@@ -154,21 +208,9 @@ export function surfaceDepth(s: SpaceFxSurface, x: number, y: number): number {
   return s.c + s.kx * dx + s.ky * dy + s.kxx * dx * dx + s.kyy * dy * dy + s.kxy * dx * dy;
 }
 
-//원화 한 점을 공간에 놓는다. 게임 카메라(내려다보는 각 p)에서 화면 자리는 (X, Y) 그대로다
-//바닥 밑으로 가면 z 를 카메라 쪽으로 늘려 바닥(lift)에 올린다. floor 는 늘 바닥에 눕힌다
-//base 는 기준점이 발에서 떨어진 정도(H). 곡면 깊이는 기준점 기준 (x, y), 높이는 발 기준 (x + bx, y + by) 로 정한다
-export function placeOnSurface(s: SpaceFxSurface, x: number, y: number, pitchDeg: number, lift: number, base: readonly [number, number] = [0, 0]): Vec3 {
-  const a = (pitchDeg * Math.PI) / 180;
-  const sin = Math.sin(a);
-  const cos = Math.cos(a);
-  const X = x + base[0];
-  const Y = y + base[1];
-  const floorZ = (lift * cos - Y) / sin;
-  if (s.mode === 'floor') return [X, lift, floorZ];
-  const z = surfaceDepth(s, x, y);
-  const h = (Y + z * sin) / cos;
-  if (h >= lift) return [X, h, z];
-  return [X, lift, floorZ];
+//깊이는 몸 판에서 떨어진 양이다. 바닥 보정도 같은 광선에서 하므로 원화와 어긋나지 않는다
+export function placeOnSurface(s: SpaceFxSurface, x: number, y: number, view: SpacePaintView, lift: number, base: readonly [number, number] = [0, 0]): Vec3 {
+  return placePaintPoint(view, paintPoint(view, x + base[0], y + base[1]), surfaceDepth(s, x, y), lift, s.mode === 'floor');
 }
 
 //캔버스 px 한 칸이 몇 H 인지. 캐릭터 장과 같은 배율이면 캐릭터 키 px 로 나눈다
@@ -204,10 +246,11 @@ export function surfaceGrid(
   track: SpaceFxTrack,
   surface: SpaceFxSurface,
   hPerPx: number,
-  pitchDeg: number,
+  view: SpacePaintView,
   lift: number,
   grid: readonly [number, number],
   base: readonly [number, number] = [0, 0],
+  flat = false,
 ): { positions: Float32Array; uvs: Float32Array; indices: number[] } {
   const [gx, gy] = grid;
   const [x0, y0, x1, y1] = track.crop;
@@ -221,7 +264,7 @@ export function surfaceGrid(
       const py = y0 + ((y1 - y0) * j) / gy;
       const X = (px - track.pivot[0]) * hPerPx;
       const Y = (track.pivot[1] - py) * hPerPx;
-      const [wx, wy, wz] = placeOnSurface(surface, X, Y, pitchDeg, lift, base);
+      const [wx, wy, wz] = flat ? paintPoint(view, X + base[0], Y + base[1]) : placeOnSurface(surface, X, Y, view, lift, base);
       positions[p++] = wx;
       positions[p++] = wy;
       positions[p++] = wz;

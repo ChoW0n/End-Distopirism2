@@ -1,27 +1,9 @@
 //전 스킬 공간형 효과 한 묶음 (SPEC-005 §15.4). 효과 분리 장을 격자 메시에 얹고 장마다 그림과 곡면을 바꾼다
-//평면 비교용은 깊이 0 인 면(월드 위로 선 판)을 쓰고 깊이 시험을 끈다 (게임처럼 늘 위에 그린다)
+//평면 비교용은 인형과 같은 카메라 방향의 원화 판을 쓰고 깊이 시험을 끈다
 
 import * as THREE from 'three';
-import { surfaceGrid, trackFrameAt, type SpaceFxConfig, type SpaceFxTrack } from '../render/space-fx.js';
-
-//캔버스 PNG 의 crop 칸만 잘라 텍스처로 만든다. 긴 변은 maxSide 로 줄인다
-//올린 그림이 줄어 있을 수 있어(공유본은 절반) 실제 그림 크기 비율로 맞춘다
-export function cropTexture(image: HTMLImageElement, track: SpaceFxTrack, maxSide: number): THREE.Texture {
-  const r = image.naturalWidth > 0 ? image.naturalWidth / track.canvas[0] : 1;
-  const [x0, y0, x1, y1] = track.crop;
-  const w = Math.max(1, (x1 - x0) * r);
-  const h = Math.max(1, (y1 - y0) * r);
-  const k = Math.min(1, maxSide / Math.max(w, h));
-  const canvas = document.createElement('canvas');
-  canvas.width = Math.max(1, Math.round(w * k));
-  canvas.height = Math.max(1, Math.round(h * k));
-  const ctx = canvas.getContext('2d');
-  if (ctx) ctx.drawImage(image, x0 * r, y0 * r, w, h, 0, 0, canvas.width, canvas.height);
-  const texture = new THREE.CanvasTexture(canvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.anisotropy = 4;
-  return texture;
-}
+import { paintDepth, placeGridBehind, surfaceGrid, trackFrameAt, type SpaceFxConfig, type SpaceFxTrack, type SpacePaintView } from '../render/space-fx.js';
+import { samePaintView, spacePaintView } from './space-projection.js';
 
 export class SpaceFxTrackMesh {
   //기준점에 놓이는 뿌리. 그 밑에 좌우만 게임 카메라 쪽으로 돈 틀, 그 밑에 H 배율 메시
@@ -31,18 +13,19 @@ export class SpaceFxTrackMesh {
   private readonly material: THREE.MeshBasicMaterial;
   //곡면 이름 → 격자
   private readonly geometries = new Map<string, THREE.BufferGeometry>();
+  private paintView: SpacePaintView | undefined;
+  private minimumDepth = 0;
 
   //textures 는 장마다 하나 (빈 장은 null). flat 이면 깊이 0 면·깊이 시험 끔
   constructor(
-    config: SpaceFxConfig,
+    private readonly config: SpaceFxConfig,
     private readonly track: SpaceFxTrack,
     private readonly textures: readonly (THREE.Texture | null)[],
-    hPerPx: number,
-    pitchDeg: number,
-    H: number,
+    private readonly hPerPx: number,
+    private readonly H: number,
     private readonly flat: boolean,
     //기준점이 발에서 떨어진 정도(H). 결행 베기는 적 몸통 높이
-    base: readonly [number, number] = [0, 0],
+    private readonly base: readonly [number, number] = [0, 0],
   ) {
     this.material = new THREE.MeshBasicMaterial({
       transparent: true,
@@ -55,7 +38,8 @@ export class SpaceFxTrackMesh {
     for (const name of names) {
       const surface = config.surfaces[name];
       if (!surface) continue;
-      const g = surfaceGrid(track, surface, hPerPx, pitchDeg, config.groundLift, config.grid, base);
+      const view: SpacePaintView = { eye: [0, 2, 10], right: [1, 0, 0], up: [0, 1, 0] };
+      const g = surfaceGrid(track, surface, hPerPx, view, config.groundLift, config.grid, base, flat);
       const geometry = new THREE.BufferGeometry();
       geometry.setAttribute('position', new THREE.BufferAttribute(g.positions, 3));
       geometry.setAttribute('uv', new THREE.BufferAttribute(g.uvs, 2));
@@ -71,9 +55,24 @@ export class SpaceFxTrackMesh {
     this.root.visible = false;
   }
 
-  //좌우만 게임 카메라 방향으로 돌린다 (월드 위는 그대로)
-  orient(q: THREE.Quaternion): void {
-    this.oriented.rotation.set(0, new THREE.Euler().setFromQuaternion(q, 'YXZ').y, 0);
+  //월드 위를 유지한 틀 안에서 기준 카메라 광선에 맞춰 원화 점을 배치한다
+  orient(camera: THREE.Camera, foregroundAt?: THREE.Vector3): void {
+    this.oriented.rotation.set(0, new THREE.Euler().setFromQuaternion(camera.quaternion, 'YXZ').y, 0);
+    const view = spacePaintView(camera, this.oriented, this.H);
+    const front = foregroundAt?.clone().applyMatrix4(this.oriented.matrixWorld.clone().invert()).divideScalar(this.H);
+    const minimumDepth = front && !this.flat ? paintDepth(view, [front.x, front.y, front.z]) + 0.004 : 0;
+    if (samePaintView(this.paintView, view) && Math.abs(this.minimumDepth - minimumDepth) < 1e-6) return;
+    this.paintView = view;
+    this.minimumDepth = minimumDepth;
+    for (const [name, geometry] of this.geometries) {
+      const surface = this.config.surfaces[name];
+      if (!surface) continue;
+      const grid = surfaceGrid(this.track, surface, this.hPerPx, view, this.config.groundLift, this.config.grid, this.base, this.flat);
+      if (minimumDepth > 0) placeGridBehind(view, grid.positions, minimumDepth, this.config.groundLift);
+      const position = geometry.getAttribute('position') as THREE.BufferAttribute;
+      position.array.set(grid.positions);
+      position.needsUpdate = true;
+    }
   }
 
   //스킬 시작 기준 시각(ms)에 보일 장을 고른다. 그림이 없으면 숨긴다

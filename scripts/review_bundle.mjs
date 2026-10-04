@@ -1,5 +1,5 @@
 //아스트라 검토 묶음을 만든다 (docs/REVIEW-001 §7)
-//그림·소리는 리포에 없어서(SPEC-002 §9) 화면이 실제로 부르는 파일만 골라 실행 묶음 하나로 싼다
+//그림·소리는 리포에 없어서(SPEC-002 §9) 요청 파일과 전체 UI 상태 의존성을 실행 묶음 하나로 싼다
 //
 //1. 화면을 빌드하고 타입 검사·테스트 결과를 BUILD.json 에 적는다
 //2. 정적 서버를 띄우고 Playwright 로 세 화면을 열어 요청한 파일을 모은다. 404·페이지 오류가 하나라도 나면 멈춘다
@@ -14,6 +14,7 @@ import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync,
 import { createServer } from 'node:http';
 import { dirname, extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { assertUiAssets, collectUiAssets } from './review_ui_assets.mjs';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const run = (cmd, args) => spawnSync(cmd, args, { cwd: ROOT, encoding: 'utf-8', maxBuffer: 64 * 1024 * 1024 });
@@ -75,10 +76,10 @@ function buildAndCheck() {
   const tsc = run('npm', ['run', 'typecheck']);
   step('테스트 (vitest)');
   const test = run('npx', ['vitest', 'run', '--reporter=json']);
-  let tests = { ok: false, total: 0, passed: 0, failed: 0, files: 0 };
+  let tests = { ok: false, total: 0, passed: 0, failed: 0, skipped: 0, files: 0 };
   try {
     const j = JSON.parse(test.stdout.slice(test.stdout.indexOf('{')));
-    tests = { ok: j.success, total: j.numTotalTests, passed: j.numPassedTests, failed: j.numFailedTests, files: j.testResults?.length ?? 0 };
+    tests = { ok: j.success, total: j.numTotalTests, passed: j.numPassedTests, failed: j.numFailedTests, skipped: j.numPendingTests ?? 0, files: j.testResults?.length ?? 0 };
   } catch {
     tests.error = test.stderr.slice(-2000);
   }
@@ -171,6 +172,7 @@ async function crawl(origin, shots) {
   for (const ms of [200, 450]) {
     await page.evaluate((t) => {
       window.__vfxLab.compare('side');
+      window.__vfxLab.pause();
       window.__vfxLab.seek(t);
     }, ms);
     await page.waitForTimeout(400);
@@ -216,8 +218,8 @@ ${pages}
   </ul><p>정적 서버로 열어야 한다 (<code>python3 -m http.server 8000</code>). <code>file://</code> 로는 데이터를 못 읽는다.</p></section>
   <section><h2>자동 검사</h2><table>
     <tr><td>타입 검사</td><td>${check(info.typecheck.ok)}</td></tr>
-    <tr><td>테스트</td><td>${check(info.tests.ok)} ${info.tests.passed}/${info.tests.total} (${info.tests.files} 파일)</td></tr>
-    <tr><td>묶음 파일</td><td>${info.files} 개 · 화면이 요청한 것만</td></tr>
+    <tr><td>테스트</td><td>${check(info.tests.ok)} ${info.tests.passed}/${info.tests.total} · 건너뜀 ${info.tests.skipped} (${info.tests.files} 파일)</td></tr>
+    <tr><td>묶음 파일</td><td>${info.files} 개 · 요청 파일과 전체 UI 상태 의존성</td></tr>
   </table></section>
   <section><h2>스크린샷 (작업 쪽에서 찍음, 1600×900)</h2><div class="grid">
 ${pics}
@@ -227,6 +229,9 @@ ${pics}
 }
 
 async function main() {
+  //누락된 UI가 있으면 빌드·화면 순회 전에 멈춘다
+  const uiAssets = collectUiAssets(ROOT);
+  assertUiAssets(ROOT, uiAssets);
   const checks = buildAndCheck();
   const server = await serve();
   const origin = `http://127.0.0.1:${server.address().port}`;
@@ -243,22 +248,24 @@ async function main() {
     throw new Error(`화면에서 오류가 났다. 묶음을 만들지 않는다\n${result.errors.join('\n')}`);
   }
 
-  //요청한 파일 + 읽을 문서
-  step(`파일 ${result.seen.length}개 복사`);
+  //요청한 파일 + 모든 UI 상태 + 읽을 문서
   const docs = readdirSync(join(ROOT, 'docs')).filter((f) => f.endsWith('.md')).map((f) => `docs/${f}`);
-  const files = [...new Set([...result.seen, ...docs, 'docs/참고/gpt-astra-이미지제작-능력.md'])];
+  const files = [...new Set([...result.seen, ...uiAssets, ...docs, 'docs/참고/gpt-astra-이미지제작-능력.md'])].sort();
+  step(`파일 ${files.length}개 복사`);
   for (const rel of files) {
     const dst = join(OUT, rel);
     mkdirSync(dirname(dst), { recursive: true });
     copyFileSync(join(ROOT, rel), dst);
   }
+  assertUiAssets(OUT, uiAssets);
   const info = {
     name: NAME,
     commit: run('git', ['rev-parse', 'HEAD']).stdout.trim(),
     branch: run('git', ['rev-parse', '--abbrev-ref', 'HEAD']).stdout.trim(),
     date: new Date().toISOString(),
-    dirty: run('git', ['status', '--porcelain', '--', 'src', 'web', 'docs', 'assets', 'tests']).stdout.trim() !== '',
+    dirty: run('git', ['status', '--porcelain', '--', 'src', 'web', 'docs', 'assets', 'tests', 'scripts']).stdout.trim() !== '',
     ...checks,
+    uiAssets: { ok: true, count: uiAssets.length },
     files: files.length,
     pages: PAGES.map((p) => p.path),
   };

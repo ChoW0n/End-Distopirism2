@@ -81,15 +81,15 @@ describe('턴 진행', () => {
     expect(main.mentality).toBe(30);
   });
 
-  it('턴이 끝나면 상태이상 지속 턴이 줄어든다', () => {
+  it('턴 시작부터 있던 상태는 턴이 끝나면 지속 턴이 줄어든다', () => {
     const battle = makeBattle();
     const enemy = battle.combatant('e1');
 
+    enemy.applyStatus('defenseDown', 1, false);
     battle.startTurn();
     battle.submitOrders([{ actorId: 'a1', targetId: 'e1', skillId: MAIN_S1 }]);
     battle.resolve();
 
-    enemy.applyStatus('defenseDown', 1, false);
     const events = battle.endTurn();
 
     expect(enemy.hasStatus('defenseDown')).toBe(false);

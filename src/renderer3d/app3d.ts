@@ -25,14 +25,21 @@ import { parseBackdropConfig, parseStage3dConfig, type BackdropConfig, type Batt
 import type { CardPlates } from './card.js';
 import { Stage3D, type EnvFxBundle, type RosterEntry, type UltimateBundle } from './stage.js';
 import { bindFullscreen } from './fullscreen.js';
+import { ModalController } from './modal.js';
 
 const view = document.getElementById('view') as HTMLCanvasElement | null;
 const ASSETS = view?.dataset['assets'] ?? '../assets';
 const DATA = view?.dataset['battle'] ?? '../docs/battle-data.json';
 
+class HttpLoadError extends Error {
+  constructor(url: string, readonly status: number) {
+    super(`${url} 를 읽을 수 없다 (${status})`);
+  }
+}
+
 async function json(url: string): Promise<unknown> {
   const response = await fetch(url);
-  if (!response.ok) throw new Error(`${url} 를 읽을 수 없다 (${response.status})`);
+  if (!response.ok) throw new HttpLoadError(url, response.status);
   return response.json();
 }
 
@@ -74,11 +81,13 @@ async function boot(progress: (text: string, ratio: number) => void): Promise<Bo
   const drawn = await loadIndex(ASSETS);
 
   const sprites = new Map<string, SpriteCatalog>();
+  //지금 대진에 실제로 세울 그림만 받는다. 자리 표시가 같은 그림을 쓰면 한 번만 받는다
+  const artIds = new Set([...stage.battle.ally, ...stage.battle.enemy].map((id) => stage.battle.artAlias[id] ?? id));
   await Promise.all(
-    catalog.data.characters.map(async (character) => {
-      if (!drawn.has(character.id)) return;
-      const loaded = await loadCharacter(ASSETS, character.id);
-      if (loaded) sprites.set(character.id, loaded);
+    [...artIds].map(async (id) => {
+      if (!drawn.has(id)) return;
+      const loaded = await loadCharacter(ASSETS, id);
+      if (loaded) sprites.set(id, loaded);
     }),
   );
 
@@ -314,7 +323,6 @@ async function main(): Promise<void> {
     .then((r) => (r.ok ? (r.json() as Promise<GaugeLayout>) : null))
     .catch(() => null);
   if (kitProbe) document.documentElement.classList.add('kit');
-  loading?.setAttribute('hidden', '');
   //장소 이름은 맵 데이터가 정한다
   const stageName = document.querySelector('.stage-name');
   if (stageName && loaded.backdrop.name) stageName.textContent = loaded.backdrop.name;
@@ -642,11 +650,11 @@ async function main(): Promise<void> {
 
   //무대 위 사람을 눌러 고른다 (§9.6)
   const pickAt = (event: MouseEvent): string | null => {
-    if (phase !== 'input' || !session) return null;
+    if (modals.isOpen || phase !== 'input' || !session) return null;
     return stage.hitTest(event.clientX, event.clientY);
   };
   const pick = (id: string | null): void => {
-    if (!id || !session || !input || phase !== 'input') return;
+    if (modals.isOpen || !id || !session || !input || phase !== 'input') return;
     if (session.inputAllies().some((a) => a.id === id)) input.selectAlly(id);
     else if (session.inputEnemies().some((e) => e.id === id)) input.selectTarget(id);
     refresh();
@@ -659,27 +667,26 @@ async function main(): Promise<void> {
   });
 
   const help = document.getElementById('help');
-  const closeHelp = (): void => {
-    help?.setAttribute('hidden', '');
+  const menu = document.getElementById('menu');
+  const helpOpen = document.getElementById('help-open');
+  const menuOpen = document.getElementById('menu-open');
+  const modals = new ModalController((dialog) => {
+    if (dialog !== help) return;
     try {
       localStorage.setItem('ed.helpSeen', '1');
     } catch {
       //저장이 막혀 있으면 다음에 또 뜰 뿐이다
     }
-  };
-  document.getElementById('help-open')?.addEventListener('click', () => {
-    document.getElementById('menu')?.setAttribute('hidden', '');
-    help?.removeAttribute('hidden');
   });
-  document.getElementById('help-close')?.addEventListener('click', closeHelp);
+  helpOpen?.addEventListener('click', () => modals.open(help, helpOpen));
+  document.getElementById('help-close')?.addEventListener('click', () => modals.close());
   window.addEventListener('keydown', (event) => {
-    if (event.key === 'Escape') {
-      document.getElementById('menu')?.setAttribute('hidden', '');
-      return closeHelp();
-    }
+    if (modals.isOpen) return;
     if (phase !== 'input' || !input || !session) return;
     if (event.target instanceof HTMLInputElement || event.target instanceof HTMLSelectElement) return;
     if (event.key === 'Enter') {
+      //포커스가 있는 버튼은 기본 클릭을 쓴다. 숫자키 카드 선택은 그대로 허용한다
+      if (event.target instanceof HTMLButtonElement) return;
       event.preventDefault();
       submit();
       return;
@@ -697,7 +704,6 @@ async function main(): Promise<void> {
   } catch {
     seen = false;
   }
-  if (!seen) help?.removeAttribute('hidden');
 
   document.getElementById('restart')?.addEventListener('click', restart);
   modeSelect?.addEventListener('change', () => {
@@ -734,13 +740,9 @@ async function main(): Promise<void> {
   modeSelect?.addEventListener('change', showAuto);
   showAuto();
   //메뉴 겹창
-  const menu = document.getElementById('menu');
-  document.getElementById('menu-open')?.addEventListener('click', () => {
-    help?.setAttribute('hidden', '');
-    menu?.removeAttribute('hidden');
-  });
-  document.getElementById('menu-close')?.addEventListener('click', () => menu?.setAttribute('hidden', ''));
-  document.getElementById('restart')?.addEventListener('click', () => menu?.setAttribute('hidden', ''));
+  menuOpen?.addEventListener('click', () => modals.open(menu, menuOpen));
+  document.getElementById('menu-close')?.addEventListener('click', () => modals.close());
+  document.getElementById('restart')?.addEventListener('click', () => modals.close());
 
   let last = performance.now();
   const loop = (now: number): void => {
@@ -776,6 +778,24 @@ async function main(): Promise<void> {
   restart();
   requestAnimationFrame(loop);
   if (loaded.missing.length > 0) status.textContent += ` · 그림 ${loaded.missing.length}개 없음`;
+  loading?.setAttribute('hidden', '');
+  if (!seen) modals.open(help, helpOpen);
 }
 
-void main();
+void main().catch((error: unknown) => {
+  console.error('전투 화면 초기화 실패', error);
+  const loading = document.getElementById('loading');
+  const title = document.getElementById('loading-title');
+  const text = document.getElementById('loading-text');
+  const retry = document.getElementById('loading-retry');
+  loading?.removeAttribute('hidden');
+  loading?.setAttribute('role', 'alert');
+  if (title) title.textContent = '불러오기 실패';
+  if (text) text.textContent = `전투를 준비하지 못했어${error instanceof HttpLoadError ? ` (HTTP ${error.status})` : ''}. 연결을 확인하고 다시 시도해.`;
+  if (retry) {
+    retry.hidden = false;
+    //처음부터 새로 열어 부분 초기화된 무대와 이벤트가 중복되지 않게 한다
+    retry.addEventListener('click', () => window.location.reload());
+    retry.focus();
+  }
+});

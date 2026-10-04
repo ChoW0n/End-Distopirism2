@@ -1,0 +1,482 @@
+{
+  "environment": "Headless Chromium / SwiftShader; desktop 1280×720; mobile touch 844×390 and 390×844",
+  "cases": [
+    {
+      "case": "현재 대진의 에셋만 요청",
+      "pass": true,
+      "request_count": 192,
+      "evidence_directory": "fixed",
+      "unrelated_requests_count": 0
+    },
+    {
+      "case": "도움말 Enter 전투 입력 차단",
+      "pass": true,
+      "before": "준비 완료 — 교전 시작",
+      "after": "준비 완료 — 교전 시작",
+      "help_visible": false,
+      "screenshot": "help-enter.png",
+      "http_errors": [],
+      "page_errors": [],
+      "evidence_directory": "fixed",
+      "requests_count": 207
+    },
+    {
+      "case": "메뉴 Enter 전투 입력 차단",
+      "pass": true,
+      "step": "준비 완료 — 교전 시작",
+      "screenshot": "menu-enter.png",
+      "evidence_directory": "fixed"
+    },
+    {
+      "case": "카드 포커스 중 숫자 2로 S2 선택",
+      "pass": true,
+      "order": "카일\n걸음 잔형 · 이면",
+      "evidence_directory": "fixed"
+    },
+    {
+      "case": "카드 포커스 Enter로 S3 선택",
+      "pass": true,
+      "order": "카일\n걸음 잔형 · 잔향",
+      "step": "준비 완료 — 교전 시작",
+      "evidence_directory": "fixed"
+    },
+    {
+      "case": "교전 시작 버튼 Enter 진행",
+      "pass": true,
+      "step": "교전 중…",
+      "evidence_directory": "fixed"
+    },
+    {
+      "case": "필수 데이터 503 오류 안내",
+      "pass": true,
+      "loading_text": "불러오기 실패\n전투를 준비하지 못했어 (HTTP 503). 연결을 확인하고 다시 시도해.\n다시 불러오기",
+      "retry_count": 1,
+      "screenshot": "loading-503.png",
+      "http_errors": [
+        {
+          "url": "http://127.0.0.1:8012/docs/battle-data.json",
+          "status": 503
+        }
+      ],
+      "page_errors": [],
+      "evidence_directory": "fixed",
+      "requests_count": 198
+    },
+    {
+      "case": "필수 데이터 복구 후 다시 시도",
+      "pass": true,
+      "screenshot": "loading-retry.png",
+      "evidence_directory": "fixed"
+    },
+    {
+      "case": "VFX 늦은 S2 요청이 최신 S1을 덮지 않음",
+      "pass": true,
+      "selection": "s1",
+      "state": {
+        "skill": "s1",
+        "selected": "s1",
+        "pendingSkill": null,
+        "selectionError": "",
+        "age": 200,
+        "pre": 240,
+        "loopMs": 1400,
+        "enemyOcclusion": true,
+        "calls": 9,
+        "programs": 7
+      },
+      "readout": "시각  200 ms (타 -40 ms) · 1× · 준비 장 · 카메라 교전 궤도 0° · 높이 0°",
+      "held_requests": 1,
+      "screenshot": "vfx-race.png",
+      "http_errors": [],
+      "page_errors": [],
+      "evidence_directory": "fixed",
+      "requests_count": 270
+    },
+    {
+      "case": "VFX 선택 s2",
+      "pass": true,
+      "state": {
+        "skill": "s2",
+        "selected": "s2",
+        "pendingSkill": null,
+        "selectionError": "",
+        "age": 500,
+        "pre": 240,
+        "loopMs": 1780,
+        "enemyOcclusion": true,
+        "calls": 11,
+        "programs": 8
+      },
+      "selection": "s2",
+      "screenshot": "vfx-s2.png",
+      "evidence_directory": "fixed"
+    },
+    {
+      "case": "VFX 선택 s3",
+      "pass": true,
+      "state": {
+        "skill": "s3",
+        "selected": "s3",
+        "pendingSkill": null,
+        "selectionError": "",
+        "age": 500,
+        "pre": 240,
+        "loopMs": 3670,
+        "enemyOcclusion": true,
+        "calls": 11,
+        "programs": 8
+      },
+      "selection": "s3",
+      "screenshot": "vfx-s3.png",
+      "evidence_directory": "fixed"
+    },
+    {
+      "case": "VFX 선택 ult",
+      "pass": true,
+      "state": {
+        "skill": "ult",
+        "selected": "ult",
+        "pendingSkill": null,
+        "selectionError": "",
+        "age": 500,
+        "pre": 240,
+        "loopMs": 1750,
+        "enemyOcclusion": true,
+        "calls": 13,
+        "programs": 8
+      },
+      "selection": "ult",
+      "screenshot": "vfx-ult.png",
+      "evidence_directory": "fixed"
+    },
+    {
+      "case": "VFX 선택 s1",
+      "pass": true,
+      "state": {
+        "skill": "s1",
+        "selected": "s1",
+        "pendingSkill": null,
+        "selectionError": "",
+        "age": 500,
+        "pre": 240,
+        "loopMs": 1400,
+        "enemyOcclusion": true,
+        "calls": 21,
+        "programs": 8
+      },
+      "selection": "s1",
+      "screenshot": "vfx-s1.png",
+      "evidence_directory": "fixed"
+    },
+    {
+      "case": "VFX 요청 오류 없음",
+      "pass": true,
+      "http_errors": [],
+      "page_errors": [],
+      "evidence_directory": "fixed",
+      "requests_count": 270
+    },
+    {
+      "case": "원문 시각 s1 가림 켬",
+      "pass": true,
+      "at_ms": 400,
+      "state": {
+        "skill": "s1",
+        "selected": "s1",
+        "pendingSkill": null,
+        "selectionError": "",
+        "age": 400,
+        "pre": 240,
+        "loopMs": 1400,
+        "enemyOcclusion": true,
+        "calls": 13,
+        "programs": 7
+      },
+      "occlusion": true,
+      "readout": "시각  400 ms (타 160 ms) · 1× · head 1.000 · tail 0.000 · 평면 장 02 · 카메라 교전 궤도 0° · 높이 0°",
+      "screenshot": "s1-t400-occlusion-on.png",
+      "evidence_directory": "vfx-depth-fixed"
+    },
+    {
+      "case": "도움말 포커스 순환과 배경·숫자 차단",
+      "pass": true,
+      "focus_cycle": [
+        "help-close",
+        "help-close",
+        "help-close"
+      ],
+      "before": "③ 카일 → 걸음 잔형 — 카드를 고른다",
+      "after": "③ 카일 → 걸음 잔형 — 카드를 고른다",
+      "background_auto_blocked": true,
+      "restored_focus": "help-open",
+      "evidence_directory": "fixed-remaining"
+    },
+    {
+      "case": "메뉴 포커스 순환과 배경·숫자 차단",
+      "pass": true,
+      "focus_cycle": [
+        "restart",
+        "menu-close",
+        "restart"
+      ],
+      "before": "③ 카일 → 걸음 잔형 — 카드를 고른다",
+      "after": "③ 카일 → 걸음 잔형 — 카드를 고른다",
+      "background_auto_blocked": true,
+      "restored_focus": "menu-open",
+      "http_errors": [],
+      "page_errors": [],
+      "evidence_directory": "fixed-remaining",
+      "requests_count": 198
+    },
+    {
+      "case": "원문 시각 s2 가림 켬",
+      "pass": true,
+      "at_ms": 200,
+      "state": {
+        "skill": "s2",
+        "selected": "s2",
+        "pendingSkill": null,
+        "selectionError": "",
+        "age": 200,
+        "pre": 240,
+        "loopMs": 1780,
+        "enemyOcclusion": true,
+        "calls": 11,
+        "programs": 8
+      },
+      "occlusion": true,
+      "readout": "시각  200 ms · 1× · S2 찌르기 · 장 1 · 카메라 교전 궤도 0° · 높이 0°",
+      "screenshot": "s2-t200-occlusion-on.png",
+      "evidence_directory": "vfx-depth-fixed"
+    },
+    {
+      "case": "원문 시각 s2 가림 끔",
+      "pass": true,
+      "at_ms": 200,
+      "state": {
+        "skill": "s2",
+        "selected": "s2",
+        "pendingSkill": null,
+        "selectionError": "",
+        "age": 200,
+        "pre": 240,
+        "loopMs": 1780,
+        "enemyOcclusion": false,
+        "calls": 9,
+        "programs": 8
+      },
+      "occlusion": false,
+      "readout": "시각  200 ms · 1× · S2 찌르기 · 장 1 · 카메라 교전 궤도 0° · 높이 0°",
+      "screenshot": "s2-t200-occlusion-off.png",
+      "evidence_directory": "vfx-depth-fixed"
+    },
+    {
+      "case": "원문 시각 s3 가림 켬",
+      "pass": true,
+      "at_ms": 700,
+      "state": {
+        "skill": "s3",
+        "selected": "s3",
+        "pendingSkill": null,
+        "selectionError": "",
+        "age": 700,
+        "pre": 240,
+        "loopMs": 3670,
+        "enemyOcclusion": true,
+        "calls": 11,
+        "programs": 8
+      },
+      "occlusion": true,
+      "readout": "시각  700 ms · 1× · S3 쳐내기·올려베기·내려베기 · 장 8 · 카메라 교전 궤도 0° · 높이 0°",
+      "screenshot": "s3-t700-occlusion-on.png",
+      "evidence_directory": "vfx-depth-fixed"
+    },
+    {
+      "case": "원문 시각 s3 가림 끔",
+      "pass": true,
+      "at_ms": 700,
+      "state": {
+        "skill": "s3",
+        "selected": "s3",
+        "pendingSkill": null,
+        "selectionError": "",
+        "age": 700,
+        "pre": 240,
+        "loopMs": 3670,
+        "enemyOcclusion": false,
+        "calls": 9,
+        "programs": 8
+      },
+      "occlusion": false,
+      "readout": "시각  700 ms · 1× · S3 쳐내기·올려베기·내려베기 · 장 8 · 카메라 교전 궤도 0° · 높이 0°",
+      "screenshot": "s3-t700-occlusion-off.png",
+      "evidence_directory": "vfx-depth-fixed"
+    },
+    {
+      "case": "원문 시각 ult 가림 켬",
+      "pass": true,
+      "at_ms": 350,
+      "state": {
+        "skill": "ult",
+        "selected": "ult",
+        "pendingSkill": null,
+        "selectionError": "",
+        "age": 350,
+        "pre": 240,
+        "loopMs": 1750,
+        "enemyOcclusion": true,
+        "calls": 21,
+        "programs": 8
+      },
+      "occlusion": true,
+      "readout": "시각  350 ms · 1× · 결행 · 장 6/5/3/1/1/1 · 카메라 교전 궤도 0° · 높이 0°",
+      "screenshot": "ult-t350-occlusion-on.png",
+      "evidence_directory": "vfx-depth-fixed"
+    },
+    {
+      "case": "원문 시각 캡처 요청 오류 없음",
+      "pass": true,
+      "http_errors": [],
+      "page_errors": [],
+      "evidence_directory": "vfx-depth-fixed",
+      "requests_count": 270
+    },
+    {
+      "case": "직접 조작 시드 1 S1 S2 S3 궁극기 승리",
+      "pass": true,
+      "outcome": "승리",
+      "turns": [
+        {
+          "turn": "1",
+          "slot": "s1",
+          "order": "카일\n걸음 잔형 · 물금"
+        },
+        {
+          "turn": "2",
+          "slot": "s2",
+          "order": "카일\n걸음 잔형 · 이면"
+        },
+        {
+          "turn": "3",
+          "slot": "s3",
+          "order": "카일\n걸음 잔형 · 잔향"
+        },
+        {
+          "turn": "4",
+          "slot": "ult",
+          "order": "카일\n걸음 잔형 · 미명"
+        }
+      ],
+      "screenshot": "manual-result.png",
+      "evidence_directory": "fixed-remaining"
+    },
+    {
+      "case": "자동 관전 시드 2",
+      "pass": true,
+      "outcome": "패배",
+      "expected": "패배",
+      "turn": "8",
+      "screenshot": "auto-seed-2.png",
+      "evidence_directory": "fixed-remaining"
+    },
+    {
+      "case": "자동 관전 시드 3",
+      "pass": true,
+      "outcome": "승리",
+      "expected": "승리",
+      "turn": "5",
+      "screenshot": "auto-seed-3.png",
+      "evidence_directory": "fixed-remaining"
+    },
+    {
+      "case": "전투 전체 요청 오류 없음",
+      "pass": true,
+      "http_errors": [],
+      "page_errors": [],
+      "evidence_directory": "fixed-remaining",
+      "requests_count": 229
+    },
+    {
+      "case": "모바일 가로 입력과 세로 회전 안내",
+      "pass": true,
+      "portrait_hint": "⟳\n가로로 돌려 주세요",
+      "screenshot": "mobile-portrait.png",
+      "http_errors": [],
+      "page_errors": [],
+      "evidence_directory": "fixed-touch",
+      "requests_count": 200
+    },
+    {
+      "case": "공간 궤도 검수 s2",
+      "pass": true,
+      "at_ms": 200,
+      "orbit": 60,
+      "height": 20,
+      "state": {
+        "skill": "s2",
+        "selected": "s2",
+        "pendingSkill": null,
+        "selectionError": "",
+        "age": 200,
+        "pre": 240,
+        "loopMs": 1780,
+        "enemyOcclusion": true,
+        "calls": 11,
+        "programs": 8
+      },
+      "readout": "시각  200 ms · 1× · S2 찌르기 · 장 1 · 카메라 교전 궤도 60° · 높이 20°",
+      "screenshot": "s2-t200-orbit60-height20.png",
+      "evidence_directory": "vfx-depth-orbit"
+    },
+    {
+      "case": "공간 궤도 검수 s3",
+      "pass": true,
+      "at_ms": 700,
+      "orbit": 60,
+      "height": 20,
+      "state": {
+        "skill": "s3",
+        "selected": "s3",
+        "pendingSkill": null,
+        "selectionError": "",
+        "age": 700,
+        "pre": 240,
+        "loopMs": 3670,
+        "enemyOcclusion": true,
+        "calls": 11,
+        "programs": 8
+      },
+      "readout": "시각  700 ms · 1× · S3 쳐내기·올려베기·내려베기 · 장 8 · 카메라 교전 궤도 60° · 높이 20°",
+      "screenshot": "s3-t700-orbit60-height20.png",
+      "evidence_directory": "vfx-depth-orbit"
+    },
+    {
+      "case": "공간 궤도 검수 요청 오류 없음",
+      "pass": true,
+      "http_errors": [],
+      "page_errors": [],
+      "evidence_directory": "vfx-depth-orbit",
+      "requests_count": 193
+    }
+  ],
+  "passed": 31,
+  "failed": [],
+  "visual_notes": [
+    "정면 S2 200ms/S3 700ms에서 적 몸이 원본과 같이 효과 앞에 유지됨",
+    "궤도 +60도/높이 20도에서 S2 곡면의 원근 변화 유지; S3 효과는 옆면으로 보이며 얇은 선이 됨",
+    "iOS Safari 실기기는 검증하지 않았으며 모바일은 Chromium 터치 에뮬레이션"
+  ],
+  "unitTests": {
+    "numTotalTests": 510,
+    "numPassedTests": 510,
+    "numFailedTests": 0,
+    "numPendingTests": 0
+  },
+  "typecheck": "passed",
+  "baseSourceCommit": "b9894c2aab69452b486076533a083f6d8c7c78ad",
+  "remaining": [
+    "S1 원본 색·붓결 일치 승인 보류",
+    "S3 측면 가독성 후속 검수",
+    "실제 기기 Safari 미검증"
+  ]
+}

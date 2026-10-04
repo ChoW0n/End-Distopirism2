@@ -17,8 +17,8 @@ import { CameraRig } from './camera.js';
 import { parseBackdropConfig, parseStage3dConfig } from './config.js';
 import { PaperDoll, frameTexture, plateGeometry } from './doll.js';
 import { SpaceSlashEffect } from './space-slash.js';
-import { SpaceFxTrackMesh, cropTexture } from './space-fx.js';
-import { loadStrip } from './strip-loader.js';
+import { SpaceFxTrackMesh } from './space-fx.js';
+import { cropTexture, loadStrip } from './strip-loader.js';
 
 //쓰는 장 id. 준비 장, 원본 S1 15장, 대기(인형 기본), 맞은 장(자리 표시 적)
 const READY = '11-skill1-ready';
@@ -173,7 +173,6 @@ async function main(): Promise<void> {
   const spaceFxGroup = new THREE.Group();
   const flatFxGroup = new THREE.Group();
   scene.add(spaceFxGroup, flatFxGroup);
-  const pitch = viewPitchDeg(backdropConfig.camera);
 
   //── 카메라 ──
   const camera = new THREE.PerspectiveCamera(backdrop.fov, 16 / 9, 0.1, 300);
@@ -193,14 +192,15 @@ async function main(): Promise<void> {
   //게임 카메라가 자리를 잡게 미리 흘린다
   for (let i = 0; i < 120; i++) rig.write(1 / 60, i / 60);
   //카메라를 쓰는 유일한 곳: 게임 리그를 흘리고, 근접이면 카일 가슴 쪽으로 다가가고, 궤도 각만큼 카일 발 둘레로 돌린다
-  //궤도 전 게임 카메라 회전은 baseQuat 에 남긴다 (원화 판 방향 = 공간형 띠 방향)
+  //궤도 조작 전 원근 카메라를 보관한다. 궤도만 돌릴 때는 효과가 공간에 그대로 남는다
   let realSec = 2;
-  const baseQuat = new THREE.Quaternion();
+  const paintCamera = camera.clone();
   const writeCamera = (dtSec: number): void => {
     realSec += dtSec;
     rig.write(Math.max(1e-4, dtSec), realSec);
-    baseQuat.copy(camera.quaternion);
     if (shot === 'close') camera.position.lerp(chest(pivotDoll), space.lab.closeIn);
+    camera.updateMatrixWorld();
+    paintCamera.copy(camera);
     if (orbitUpDeg !== 0) {
       const pivot = chest(pivotDoll);
       const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion);
@@ -225,6 +225,10 @@ async function main(): Promise<void> {
   let skillId: SkillId = 's1';
   let current: LoadedSkill | null = null;
   const loaded = new Map<SkillId, LoadedSkill>();
+  const loading = new Map<SkillId, Promise<LoadedSkill | null>>();
+  let selectionRequest = 0;
+  let pendingSkill: SkillId | null = null;
+  let selectionError = '';
   let age = 0;
   let playing = true;
   let rate = 1;
@@ -235,13 +239,16 @@ async function main(): Promise<void> {
 
   //시각에 맞춰 두 카일의 장·효과를 맞춘다
   const applyAge = (): void => {
+    const enemyId = current?.skill.enemyFrame ?? HIT;
+    enemyDoll.showFrame(enemyId);
+    enemyOccluder(occlusionOn ? enemyId : null, textures.get(enemyId));
+    enemyOccluderOn = occlusionOn;
     if (skillId === 's1' || !current) {
       const t = age - pre;
       flatDoll.showFrame(t < 0 ? READY : (S1[originalFrameAt(t, config.timingMs.reveal)] as string));
       const bodyId = t < 0 ? READY : BODY;
       spaceDoll.showFrame(bodyId);
       kyleOccluder(occlusionOn ? bodyId : null, textures.get(bodyId));
-      enemyOccluderOn = false;
       effect.setAge(Math.max(0, t));
       if (t < 0) effect.root.visible = false;
       return;
@@ -252,9 +259,6 @@ async function main(): Promise<void> {
       flatDoll.showFrame(kyleId);
       spaceDoll.showFrame(kyleId);
       kyleOccluder(occlusionOn ? kyleId : null, textures.get(kyleId));
-      const enemyId = sk.enemyFrame ?? HIT;
-      enemyOccluder(occlusionOn ? enemyId : null, textures.get(enemyId));
-      enemyOccluderOn = occlusionOn;
       for (const m of [...current.space, ...current.flat]) m.setTime(age);
       return;
     }
@@ -273,7 +277,6 @@ async function main(): Promise<void> {
     flatDoll.showFrame(id);
     spaceDoll.showFrame(id);
     kyleOccluder(occlusionOn ? id : null, current.bodies.get(id) ?? textures.get(id));
-    enemyOccluderOn = false;
     for (const m of current.space) m.setTime(tt);
   };
 
@@ -285,13 +288,12 @@ async function main(): Promise<void> {
     const hy = (frame.anchor.y - frame.headCenter.y) * worldPerPixel;
     return [hx / 2 / H, hy / 2 / H];
   };
-  const loadSkill = async (id: SkillId): Promise<LoadedSkill | null> => {
+  const buildSkill = async (id: SkillId): Promise<LoadedSkill | null> => {
     if (id === 's1') return null;
     const known = loaded.get(id);
     if (known) return known;
     const sk = fxConfig.skills.find((k) => k.id === id);
     if (!sk) throw new Error(`space-fx.json 에 ${id} 가 없다`);
-    readout.textContent = `${sk.name} 그림 받는 중…`;
     const flatIds = new Set<string>();
     if (sk.ready) flatIds.add(sk.ready.flat);
     if (sk.kyleFrame) flatIds.add(sk.kyleFrame);
@@ -337,13 +339,13 @@ async function main(): Promise<void> {
       );
       const k = hPerPixel(track, catalog.characterHeight);
       const at = track.anchor === 'enemyHit' ? base : ([0, 0] as const);
-      const sm = new SpaceFxTrackMesh(fxConfig, track, texs, k, pitch, H, false, at);
+      const sm = new SpaceFxTrackMesh(fxConfig, track, texs, k, H, false, at);
       sm.root.userData['anchor'] = track.anchor;
       spaceFxGroup.add(sm.root);
       spaceMeshes.push(sm);
       //평면 칸: 결행만 효과 장을 따로 얹는다 (S2·S3 는 통합 장에 이미 있다)
       if (sk.scene === 'ultimate') {
-        const fm = new SpaceFxTrackMesh(fxConfig, track, texs, k, pitch, H, true, at);
+        const fm = new SpaceFxTrackMesh(fxConfig, track, texs, k, H, true, at);
         fm.root.userData['anchor'] = track.anchor;
         flatFxGroup.add(fm.root);
         flatMeshes.push(fm);
@@ -352,6 +354,14 @@ async function main(): Promise<void> {
     const result: LoadedSkill = { skill: sk, space: spaceMeshes, flat: flatMeshes, bodies };
     loaded.set(id, result);
     return result;
+  };
+  //같은 스킬을 빠르게 다시 골라도 텍스처와 메시를 중복 생성하지 않는다
+  const loadSkill = (id: SkillId): Promise<LoadedSkill | null> => {
+    const known = loading.get(id);
+    if (known) return known;
+    const request = buildSkill(id).finally(() => loading.delete(id));
+    loading.set(id, request);
+    return request;
   };
   //자리 잡기: 결행은 카일이 적 뒤 behindGap 자리에 선다. 그 밖에는 기본 자리
   const enemyAt = new THREE.Vector3(space.lab.enemyX, 0, 0);
@@ -367,13 +377,30 @@ async function main(): Promise<void> {
     }
   };
   const selectSkill = async (id: SkillId): Promise<void> => {
-    const next = await loadSkill(id);
+    const request = ++selectionRequest;
+    pendingSkill = id;
+    selectionError = '';
+    let next: LoadedSkill | null;
+    try {
+      next = await loadSkill(id);
+    } catch (error) {
+      if (request !== selectionRequest) return;
+      pendingSkill = null;
+      selectionError = `불러오기 실패: ${String(error)}`;
+      skillBox.value = skillId;
+      return;
+    }
+    //늦게 끝난 이전 요청은 캐시에만 남기고 최신 선택·시간 범위를 덮지 않는다
+    if (request !== selectionRequest) return;
+    pendingSkill = null;
     for (const l of loaded.values()) for (const m of [...l.space, ...l.flat]) m.root.visible = false;
     skillId = id;
+    skillBox.value = id;
     current = next;
     loopMs = next ? skillDuration(next.skill) + AFTER_HOLD : s1LoopMs;
     slider.max = String(loopMs);
     age = 0;
+    slider.value = '0';
     placeActors();
     applyShot();
     resize();
@@ -421,7 +448,7 @@ async function main(): Promise<void> {
   });
   const skillBox = byId<HTMLSelectElement>('skill');
   skillBox.addEventListener('change', () => {
-    void selectSkill(skillBox.value as SkillId).catch((error: unknown) => (readout.textContent = `불러오기 실패: ${String(error)}`));
+    void selectSkill(skillBox.value as SkillId);
   });
   const shotBox = byId<HTMLSelectElement>('shot');
   shotBox.addEventListener('change', () => {
@@ -470,7 +497,7 @@ async function main(): Promise<void> {
     showOccluder = on;
     for (const m of occluderMaterials) m.colorWrite = on;
     spaceDoll.setOpacity(on ? 0.35 : 1);
-    enemyDoll.setOpacity(on && skillId === 'ult' ? 0.35 : 1);
+    enemyDoll.setOpacity(on ? 0.35 : 1);
   });
   showPlay();
 
@@ -557,15 +584,16 @@ async function main(): Promise<void> {
     applyAge();
     writeCamera(dtReal / 1000);
     for (const doll of [flatDoll, spaceDoll, enemyDoll]) doll.faceCamera(camera);
-    effect.orient(baseQuat);
-    for (const l of loaded.values()) for (const m of [...l.space, ...l.flat]) m.orient(baseQuat);
+    if (skillId === 's1') effect.orient(paintCamera);
+    const foregroundAt = current?.skill.scene === 'self' ? enemyDoll.root.position : undefined;
+    for (const m of [...(current?.space ?? []), ...(current?.flat ?? [])]) m.orient(paintCamera, foregroundAt);
     renderer.setScissor(0, 0, canvas.clientWidth, canvas.clientHeight);
     renderer.setViewport(0, 0, canvas.clientWidth, canvas.clientHeight);
     renderer.clear();
     for (const p of panels) drawPanel(p);
     const t = age - pre;
     const s = slashSample(config, Math.max(0, t));
-    readout.textContent =
+    readout.textContent = (pendingSkill ? `${pendingSkill.toUpperCase()} 그림 받는 중… · ` : selectionError ? `${selectionError} · ` : '') +
       `시각 ${age.toFixed(0).padStart(4, ' ')} ms${skillId === 's1' ? ` (타 ${t.toFixed(0)} ms)` : ''} · ${rate}× · ` +
       (skillId !== 's1'
         ? `${current?.skill.name ?? ''} · 장 ${current ? current.skill.tracks.map((tr) => trackFrameAt(tr, age - (current?.skill.ready?.ms ?? 0)) + 1).join('/') : ''}`
@@ -614,7 +642,7 @@ async function main(): Promise<void> {
       skillBox.value = id;
       await selectSkill(id);
     },
-    state: () => ({ skill: skillId, age, pre, loopMs, calls: renderer.info.render.calls, programs: renderer.info.programs?.length ?? 0 }),
+    state: () => ({ skill: skillId, selected: skillBox.value, pendingSkill, selectionError, age, pre, loopMs, enemyOcclusion: enemyOccluderOn, calls: renderer.info.render.calls, programs: renderer.info.programs?.length ?? 0 }),
   };
 }
 

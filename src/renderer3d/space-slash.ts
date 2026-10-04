@@ -4,9 +4,11 @@
 //시각은 게임 ms 하나로만 정해진다 (같은 시각이면 같은 그림). 시험 화면 전용이라 인스턴스는 하나다
 
 import * as THREE from 'three';
-import { slashSample, type RibbonSlashConfig } from '../render/ribbon-slash.js';
+import { arcLengthPoints, slashSample, type RibbonSlashConfig } from '../render/ribbon-slash.js';
 import { crossPoint, rippleSources, spaceDroplets, spacePath, type SpaceSlashConfig } from '../render/space-slash.js';
+import { paintPoint, placePaintPoint, type SpacePaintView } from '../render/space-fx.js';
 import { createStripMaterial, stripTexture, type StripSource } from './ribbon-slash.js';
+import { samePaintView, spacePaintView } from './space-projection.js';
 
 //물결 출처 최대 수 (셰이더 배열 크기)
 const MAX_RIPPLES = 8;
@@ -170,6 +172,8 @@ export class SpaceSlashEffect {
   private readonly materials: THREE.ShaderMaterial[] = [];
   private readonly geometries: THREE.BufferGeometry[] = [];
   private readonly texture: THREE.Texture;
+  private readonly ribbonSamples: { x: number; y: number; depth: number }[] = [];
+  private paintView: SpacePaintView | undefined;
   private age = 0;
 
   //승인 띠 질감(strip)과 캐릭터 키(월드), 게임 카메라가 내려다보는 각(도)으로 메시를 한 번 만든다
@@ -289,6 +293,7 @@ export class SpaceSlashEffect {
     const rows = this.space.crossRows;
     const H = this.H;
     const path = spacePath(config, this.space, Math.max(128, config.path.segments), this.pitchDeg);
+    const painted = arcLengthPoints(config.path.points, path.length - 1);
     const positions: number[] = [];
     const uvs: number[] = [];
     const us: number[] = [];
@@ -296,11 +301,15 @@ export class SpaceSlashEffect {
     const index: number[] = [];
     const innerMax = Math.max(Math.abs(dBottom), 1e-3);
     path.forEach((pt, i) => {
+      const flat = painted[i];
+      if (!flat) return;
       const tu = (pt.u - u0) / (u1 - u0);
       for (let r = 0; r <= rows; r++) {
         //r=0 위(바깥 끝) → r=rows 아래(안쪽 끝)
         const d = dTop + ((dBottom - dTop) * r) / rows;
         const p = crossPoint(this.space, pt, d, innerMax);
+        //질감의 원래 호·단면 좌표는 고정하고, 휘두름 면의 깊이만 공간에 남긴다
+        this.ribbonSamples.push({ x: flat.p[0] - flat.tangent[1] * d, y: flat.p[1] + flat.tangent[0] * d, depth: p[2] });
         positions.push(p[0] * H, p[1] * H, p[2] * H);
         uvs.push(tu, 1 - r / rows);
         us.push(pt.u);
@@ -337,9 +346,18 @@ export class SpaceSlashEffect {
     return geometry;
   }
 
-  //게임 카메라 회전을 받아 좌우(요)만 따른다. 월드 위·바닥은 그대로라 궤적이 실제 공간에 선다
-  orient(q: THREE.Quaternion): void {
-    this.oriented.rotation.set(0, new THREE.Euler().setFromQuaternion(q, 'YXZ').y, 0);
+  //기준 카메라의 원근에 질감 좌표를 맞춘다. 궤도 카메라는 넘기지 않아 공간 깊이가 남는다
+  orient(camera: THREE.Camera): void {
+    this.oriented.rotation.set(0, new THREE.Euler().setFromQuaternion(camera.quaternion, 'YXZ').y, 0);
+    const view = spacePaintView(camera, this.oriented, this.H);
+    if (samePaintView(this.paintView, view)) return;
+    this.paintView = view;
+    const position = this.ribbonBody.geometry.getAttribute('position') as THREE.BufferAttribute;
+    this.ribbonSamples.forEach((sample, i) => {
+      const p = placePaintPoint(view, paintPoint(view, sample.x, sample.y), sample.depth, 0.004);
+      position.setXYZ(i, p[0] * this.H, p[1] * this.H, p[2] * this.H);
+    });
+    position.needsUpdate = true;
   }
 
   //화면 높이(장치 px). 물방울 크기 계산에 쓴다

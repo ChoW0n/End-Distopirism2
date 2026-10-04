@@ -21,6 +21,8 @@ export class Combatant {
   hp: number;
   mentality: number;
   readonly statuses: ActiveStatus[] = [];
+  //이번 턴에 새로 걸렸거나 갱신된 상태는 다음 턴부터 지속 턴을 센다
+  private readonly freshStatuses = new Set<ActiveStatus>();
   //누적 속성 3종. 합 승리로만 오른다 (v2.0 §2)
   readonly attributes: Record<Attribute, number> = { attack: 0, defense: 0, support: 0 };
   //턴 종료 판정에서 조건을 채웠다는 표시. 다음 턴 시작에 궁극기 카드가 덱에 들어간다
@@ -88,26 +90,33 @@ export class Combatant {
     return this.statuses.filter((s) => s.id === id).length;
   }
 
-  //상태이상을 건다. 중첩 불가면 지속 턴만 긴 쪽으로 갱신한다
-  applyStatus(id: StatusId, turns: number, stackable: boolean): void {
-    if (stackable) {
-      this.statuses.push({ id, turns });
-      return;
-    }
-    const existing = this.statuses.find((s) => s.id === id);
-    if (existing) {
-      existing.turns = Math.max(existing.turns, turns);
-      return;
-    }
-    this.statuses.push({ id, turns });
+  //턴 시작 전에 있던 상태는 이번 턴 종료부터 지속 턴을 줄인다
+  beginTurn(): void {
+    this.freshStatuses.clear();
   }
 
-  //지속 턴을 1 줄이고 다 된 것을 걷어낸다. 걷어낸 종류를 돌려준다
+  //상태이상을 건다. 중첩 불가면 지속 턴만 긴 쪽으로 갱신한다
+  applyStatus(id: StatusId, turns: number, stackable: boolean): void {
+    const existing = stackable ? undefined : this.statuses.find((s) => s.id === id);
+    if (existing) {
+      //짧은 효과를 덧걸어 기존의 긴 지속 시간까지 늘리지는 않는다
+      if (turns >= existing.turns) {
+        existing.turns = turns;
+        this.freshStatuses.add(existing);
+      }
+      return;
+    }
+    const status = { id, turns };
+    this.statuses.push(status);
+    this.freshStatuses.add(status);
+  }
+
+  //부여한 턴은 건너뛰고 지속 턴을 1 줄인다. 다 된 상태의 종류를 돌려준다
   expireStatuses(): StatusId[] {
     const expired: StatusId[] = [];
     for (let i = this.statuses.length - 1; i >= 0; i -= 1) {
       const status = this.statuses[i];
-      if (!status) continue;
+      if (!status || this.freshStatuses.has(status)) continue;
       status.turns -= 1;
       if (status.turns <= 0) {
         expired.push(status.id);

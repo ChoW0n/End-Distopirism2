@@ -123,6 +123,7 @@ export class Battle {
 
     for (const combatant of this.combatants) {
       if (combatant.isDefeated) continue;
+      combatant.beginTurn();
 
       //지난 턴 종료에 조건을 채운 캐릭터에게 궁극기 카드가 들어온다 (v2.0 §3.1)
       if (combatant.ultimatePending) {
