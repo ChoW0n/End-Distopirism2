@@ -37,6 +37,28 @@ export interface Framing {
   offsetY: number;
 }
 
+//흔들림까지 반영한 카메라 공간 점들을 빈 구역에 담는다. 기존 구도가 안전하면 그대로 돌려준다
+//필요한 만큼만 화각을 넓히고 렌즈를 옮긴다. 점의 z 는 카메라 앞에서 음수다
+export function containViewPoints(points: readonly Vec3[], aspect: number, current: Framing, rect: ScreenRect): Framing {
+  const front = points.filter((p) => p[2] < -1e-6);
+  if (front.length === 0) return current;
+  const us = front.map((p) => p[0] / -p[2]);
+  const vs = front.map((p) => p[1] / -p[2]);
+  const u0 = Math.min(...us), u1 = Math.max(...us);
+  const v0 = Math.min(...vs), v1 = Math.max(...vs);
+  const t = Math.max(
+    Math.tan(current.fov * Math.PI / 360),
+    (u1 - u0) / (2 * aspect * Math.max(1e-3, rect.right - rect.left)),
+    (v1 - v0) / (2 * Math.max(1e-3, rect.bottom - rect.top)),
+  );
+  const clamp = (value: number, lo: number, hi: number): number => Math.min(hi, Math.max(lo, value));
+  return {
+    fov: Math.atan(t) * 360 / Math.PI,
+    offsetX: clamp(current.offsetX, u1 / (t * aspect) - (2 * rect.right - 1), u0 / (t * aspect) - (2 * rect.left - 1)),
+    offsetY: clamp(current.offsetY, v1 / t - (1 - 2 * rect.top), v0 / t - (1 - 2 * rect.bottom)),
+  };
+}
+
 const DEG = Math.PI / 180;
 
 function sub(a: Vec3, b: Vec3): [number, number, number] {

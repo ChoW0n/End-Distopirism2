@@ -868,13 +868,13 @@ export class Stage3D {
     if (damage > 0) this.hitSlow(seconds + this.config.motion.knockTime);
     const power = damage > 0 ? Math.min(1, damage / s.damageForMaxShake) : s.clashPower;
     //실험 모드: 중간 타는 작게, 마지막·궁극기는 크게 (E06·E07). 흔들림 줄이기면 흔들지 않는다
-    if (!(this.lab?.reducedMotion && lab)) this.rig.impact(lab && tier ? power * lab.shake[tier] : power, dir);
+    if (!this.overlay.reducedMotion) this.rig.impact(lab && tier ? power * lab.shake[tier] : power, dir);
     //타격 반응 (SPEC-005 §17.2). 무거운 타·여러 타의 마지막 타·궁극기 마지막 베기에 배경을 누른다
     const finalOfMany = total > damage;
     if (heavy || finalOfMany || tier === 'climax' || (lab && tier === 'heavy')) void this.dimBackdrop();
     //무거운 타·궁극기 마지막 베기는 흰 섬광. 궁극기 마지막 베기는 실루엣 임팩트 프레임도
-    if ((heavy || tier === 'climax') && !this.lab?.reducedFlash) this.overlay.flash(this.config.impact.flash.alpha, this.config.impact.flash.seconds);
-    if (tier === 'climax' && !this.lab?.reducedFlash) void this.impactFrame();
+    if ((heavy || tier === 'climax') && !this.lab?.reducedFlash && !this.overlay.reducedMotion) this.overlay.flash(this.config.impact.flash.alpha, this.config.impact.flash.seconds);
+    if (tier === 'climax' && !this.lab?.reducedFlash && !this.overlay.reducedMotion) void this.impactFrame();
     this.sound.play(damage <= 0 ? 'clash' : heavy ? 'hitHeavy' : 'hit');
     //중간 타는 이벤트가 없어 현황판 체력만 그 타만큼 줄인다. 마지막 타의 이벤트가 규칙 값으로 맞춘다
     const actor = this.actors.get(target.combatantId);
@@ -937,7 +937,7 @@ export class Stage3D {
     }
     await this.wait(all(spins), epoch);
     this.sound.play('reveal');
-    for (const { card } of pairs) card.state.scale = 1.3;
+    for (const { card } of pairs) card.state.scale = c.revealScale;
     await this.wait(all(pairs.map(({ card }) => this.clock.tweenReal(card.state, 'scale', 1, c.revealPop, ease.outQuad))), epoch);
   }
 
@@ -1203,7 +1203,7 @@ export class Stage3D {
       if (this.cutscene.active) ultVoice('cutLine');
     });
     //섬광 줄이기면 선을 그을 때 화면이 번쩍이지 않는다 (§15)
-    this.cutscene.flash = !this.lab?.reducedFlash;
+    this.cutscene.flash = !this.lab?.reducedFlash && !this.overlay.reducedMotion;
     this.cutscene.play(u.art.cutscene, { background: u.background, foreground: u.foreground, line: u.line }, this.clock.realNow, t.cutsceneEnd - t.cutsceneStart, t.cutLine - t.cutsceneStart);
 
     //컷신이 걷히면 적 뒤편에 납도 직전 장으로 서 있다
@@ -1307,7 +1307,7 @@ export class Stage3D {
     this.sparks.step(gameDt, this.camera, rect.width, rect.height);
     this.envFx?.layer.update(realDt, this.camera);
     //전투 맵이 보일 때만 돈다 (밤바다에서는 끈다). 흔들림 줄이기면 느리게
-    this.ambient.root.visible = this.backdrop.root.visible;
+    this.ambient.root.visible = this.envSurface === null && this.backdrop.root.visible;
     this.ambient.slow = (this.lab?.reducedMotion ?? false) || this.overlay.reducedMotion;
     this.ambient.update(realDt, this.camera);
     //실험 모드: 대기 장만 발을 고정한 채 아주 작게 숨쉰다 (§15 A05). 사람마다 박자를 조금 어긋낸다
@@ -1319,7 +1319,26 @@ export class Stage3D {
         phase += 0.37;
       }
     }
-    this.rig.write(realDt, this.clock.realNow);
+    this.rig.write(realDt, this.clock.realNow, (camera) => {
+      if (!this.zones) return null;
+      const points: THREE.Vector3[] = [];
+      for (const a of this.actors.values()) {
+        a.doll.faceCamera(camera);
+        points.push(...a.doll.frameCorners());
+      }
+      for (const [card, owner] of this.cards) {
+        card.update(this.cardAnchor(owner), camera);
+        points.push(...card.frameCorners(camera, this.config.cardFlip.revealScale));
+      }
+      const padX = this.config.framing.combatPadding * this.uiUnit / rect.width;
+      const padY = this.config.framing.combatPadding * this.uiUnit / rect.height;
+      const zone = this.zones.focus;
+      return { points, rect: {
+        left: zone.left + padX, right: zone.right - padX,
+        top: zone.top + padY,
+        bottom: zone.bottom - this.config.framing.footMargin * this.uiUnit / rect.height,
+      } };
+    });
     //겹층(이름표·발밑 바)이 이번 프레임 카메라로 투영하게 행렬을 먼저 맞춘다. 안 하면 한 프레임 늦게 따라온다
     this.camera.updateMatrixWorld();
     for (const a of this.actors.values()) a.doll.faceCamera(this.camera);
@@ -1423,9 +1442,9 @@ export class Stage3D {
   //연출 실험 모드를 켜고 끈다 (SPEC-005 §15)
   setLab(options: LabOptions | null): void {
     this.lab = options ? { ...options } : null;
-    this.rig.envMuted = this.lab?.reducedMotion ?? false;
     //감소 잔상도 같이 끈다. 기기 설정(prefers-reduced-motion)도 따른다 (SPEC-004 §14.3)
     this.overlay.reducedMotion = (this.lab?.reducedMotion ?? false) || (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches);
+    this.rig.envMuted = this.overlay.reducedMotion;
     if (!this.lab) for (const a of this.actors.values()) a.doll.breath = 0;
   }
 

@@ -199,6 +199,19 @@ export class FlipCard {
     }
   }
 
+  //공개 순간 커지는 크기를 미리 확보한다. 회전 중 깊이가 생긴 실제 모서리도 함께 지킨다
+  frameCorners(camera: THREE.Camera, revealScale: number): THREE.Vector3[] {
+    this.front.updateWorldMatrix(true, false);
+    const positions = this.front.geometry.getAttribute('position');
+    const points: THREE.Vector3[] = [];
+    for (let i = 0; i < positions.count; i++) {
+      const p = new THREE.Vector3().fromBufferAttribute(positions, i);
+      points.push(p.clone().applyMatrix4(this.front.matrixWorld));
+      points.push(p.multiplyScalar(revealScale).applyQuaternion(camera.quaternion).add(this.root.position));
+    }
+    return points;
+  }
+
   //장면에서 빼고 텍스처를 푼다
   dispose(): void {
     this.root.removeFromParent();
