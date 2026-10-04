@@ -415,11 +415,13 @@ assets/ui/kit/gauge-layout.json
 assets/ui/kit/manifest.json
 assets/ui/stage3d.json
 assets/ui/ui-data.json
+docs/HANDOFF-001-아스트라-데모까지.md
 docs/QA-002-수정결과-2026-10-04.md
 docs/QA-003-공간형원본검수-2026-10-04.md
 docs/REVIEW-001-아스트라-검토요청.md
 docs/SPEC-001-v2.0-개정.md
 docs/SPEC-001-v3.0-개정.md
+docs/SPEC-001-v4.0-개정.md
 docs/SPEC-001-전투시스템.md
 docs/SPEC-002-에셋파이프라인.md
 docs/SPEC-003-렌더러구조.md

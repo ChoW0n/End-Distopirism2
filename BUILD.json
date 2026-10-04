@@ -1,19 +1,19 @@
 {
-  "name": "end-distopirism2-review-1cf47e8",
-  "commit": "1cf47e8bca419394e40f2bd1cac165e230dce4a0",
+  "name": "end-distopirism2-review-cba6895",
+  "commit": "cba689581bc2d4059fe98b22c6dc51d51897a1ff",
   "branch": "claude/trusting-keller-2qeupr",
-  "date": "2026-10-04T00:57:40.713Z",
+  "date": "2026-10-04T10:01:24.960Z",
   "dirty": false,
   "typecheck": {
     "ok": true
   },
   "tests": {
     "ok": true,
-    "total": 526,
-    "passed": 526,
+    "total": 537,
+    "passed": 537,
     "failed": 0,
     "skipped": 0,
-    "files": 36
+    "files": 38
   },
   "uiAssets": {
     "ok": true,
@@ -27,18 +27,10 @@
       "assets/kyle/vfx/s1-original/manifest.json"
     ]
   },
-  "files": 441,
+  "files": 443,
   "pages": [
     "web/battle.html",
     "web/vfx-space.html",
     "web/vfx-lab.html"
-  ],
-  "sourceTree": "7ccd2bfe1e77aa9d3796751d84acdf18cef15e08",
-  "visualQa": {
-    "report": "docs/QA-003-공간형원본검수-2026-10-04.md",
-    "results": "docs/qa-2026-10-04-vfx-results.json",
-    "cases": 37,
-    "httpErrors": 0,
-    "pageErrors": 0
-  }
+  ]
 }
