@@ -84,6 +84,7 @@
     }
   },
   "enabledPlugins": {
-    "watch@claude-video": true
+    "watch@claude-video": true,
+    "superpowers@claude-plugins-official": true
   }
 }
