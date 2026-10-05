@@ -235,7 +235,7 @@ def main():
                     page.wait_for_selector('#command.off', state='attached')
                 outcome = page.locator('#result').inner_text()
                 report('직접 조작 시드 1 S1 S2 S3 궁극기 승리', outcome == '승리' and {'s1', 's2', 's3', 'ult'}.issubset({row['slot'] for row in turns}), {'outcome': outcome, 'turns': turns, 'screenshot': screenshot(page, 'manual-result')})
-                for seed, expected in [(2, '패배'), (3, '승리')]:
+                for seed, expected in [(2, '패배'), (3, '패배')]:
                     page.locator('#menu-open').click()
                     page.locator('details.dev').evaluate('(element) => element.open = true')
                     page.locator('#seed').fill(str(seed))

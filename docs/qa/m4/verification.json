@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-05",
+  "source": "1940932c9984291f13606c4bfdb74a420513e34f",
+  "commands": {
+    "typecheck": "passed",
+    "tests": {
+      "files": 41,
+      "tests": 553,
+      "failed": 0,
+      "skipped": 0
+    },
+    "web": "passed",
+    "uiAssets": 85,
+    "diffCheck": "passed"
+  },
+  "browser": "Chromium 134.0.6998.35 / SwiftShader",
+  "font": "Noto Sans CJK KR",
+  "limitations": [
+    "사람의 직접 조작 3판·3~5분 미검증",
+    "직접 입력 자동 시드1은9턴으로4~8턴 목표 초과",
+    "실기기 FPS·청음 미검증",
+    "M3 Slack 첨부·Claude 수신·교차 미술 검수·D8 미완료"
+  ],
+  "browserCases": {
+    "firstVisitFlow": 2,
+    "uiRegression": 11,
+    "battleRegression": 4,
+    "m3Restore": 5,
+    "seed3Baseline": 1
+  }
+}

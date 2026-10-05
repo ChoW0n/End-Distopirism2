@@ -1,0 +1,20 @@
+[
+  {
+    "file": "M3-remnantWalker-runtime.zip",
+    "bytes": 5738740,
+    "files": 19,
+    "sha256": "f1b65a0446522dce048ac899a3869974ed485eb77a94a35d0713cf941edb4c57"
+  },
+  {
+    "file": "M3-remnantWalker-source.zip",
+    "bytes": 16719550,
+    "files": 12,
+    "sha256": "0753f2d48afa94ffdc9d88d13684048c32a55b8b0cdf86fb35e26a2ddaf7c3be"
+  },
+  {
+    "file": "M3-remnantWalker-evidence.zip",
+    "bytes": 16467168,
+    "files": 18,
+    "sha256": "c704e63e19b6da59ebc4b681721543799b68fa0ad98942218b32936bc7e32348"
+  }
+]

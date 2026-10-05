@@ -1,0 +1,50 @@
+{
+  "source": "1940932c9984291f13606c4bfdb74a420513e34f",
+  "htmlSha256": "2386e7322a05d27ac698cd396c3cfb059036b358567fa062122a2b8d8bd988bc",
+  "measure": "자동 입력 기능 검사. 사람의 플레이 시간·실기기 성능 검사가 아니다.",
+  "cases": [
+    {
+      "case": "수정 전 첫 방문 도움말",
+      "baseline": "1940932",
+      "scrollHeight": 1274,
+      "clientHeight": 860,
+      "buttonBottom": 1141.6666259765625,
+      "viewportHeight": 900,
+      "fits": false,
+      "koreanFont": "system-ui, sans-serif"
+    },
+    {
+      "case": "첫 방문·예약·재시작 1600×900",
+      "pass": true,
+      "scrollHeight": 803,
+      "clientHeight": 803,
+      "buttonBottom": 749.1666259765625,
+      "viewportHeight": 900,
+      "fits": true,
+      "koreanFont": "system-ui, sans-serif",
+      "loadWallSeconds": 7.999,
+      "soundUnlock": true,
+      "plan": "카일\n물금 → 이면 → 잔향",
+      "restartDuringBattle": true,
+      "helpSeenPersists": true,
+      "errors": []
+    },
+    {
+      "case": "첫 방문·예약·재시작 844×390",
+      "pass": true,
+      "scrollHeight": 803,
+      "clientHeight": 803,
+      "buttonBottom": 324.6388854980469,
+      "viewportHeight": 390,
+      "fits": true,
+      "koreanFont": "system-ui, sans-serif",
+      "loadWallSeconds": 7.816,
+      "soundUnlock": true,
+      "plan": "카일\n물금 → 이면 → 잔향",
+      "restartDuringBattle": true,
+      "helpSeenPersists": true,
+      "errors": []
+    }
+  ],
+  "browser": "134.0.6998.35"
+}

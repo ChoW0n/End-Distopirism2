@@ -1,0 +1,40 @@
+[
+  {
+    "viewport": [
+      1440,
+      1080
+    ],
+    "frameButtons": 11,
+    "threeSequences": true,
+    "cancelPlayback": true,
+    "horizontalOverflow": false,
+    "errors": []
+  },
+  {
+    "viewport": [
+      390,
+      844
+    ],
+    "frameButtons": 11,
+    "threeSequences": true,
+    "cancelPlayback": true,
+    "horizontalOverflow": false,
+    "errors": []
+  },
+  {
+    "standalone": true,
+    "frameButtons": 11,
+    "networkRequests": [],
+    "errors": []
+  },
+  {
+    "query": "",
+    "enemyArt": "kyle",
+    "errors": []
+  },
+  {
+    "query": "?art=remnantWalker",
+    "enemyArt": "remnantWalker",
+    "errors": []
+  }
+]
